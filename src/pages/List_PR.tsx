@@ -2,10 +2,12 @@ import React from 'react';
 import { makeStyles } from '@mui/styles';
 import TabComponent from "../components/tab";
 import prsData from '../pr_data.json';
-import {Container, Grid} from '@mui/material';
+import {Button, Container, Grid} from '@mui/material';
 import github_logo from "../icons/github-logo.png";
+import user_logo from "../icons/user.png";
 import "../styles/common.css";
 import LabelButton from "../components/LabelButton";
+import {Link} from "react-router-dom";
 
 
 const useStyles = makeStyles(() => ({
@@ -58,10 +60,14 @@ const useStyles = makeStyles(() => ({
     icon:{
         width:"30px",
         height:"30px",
+        marginLeft:"10px",
+        borderRadius:"20px",
     },
 
     gridItem:{
         display:"flex",
+
+        //justifyContent:"space-around",
 
     }
 
@@ -79,10 +85,12 @@ const List_PR = () =>{
                     {
                         prsData.map(itm =>
                             <Grid  container className={classes.PR_box_item} >
-                                <Grid  className={classes.gridItem} item xs={6}>
+                                <Grid  className={classes.gridItem} item xs={7}>
+
                                     {
                                         itm.id
                                     }
+                                    <img src={user_logo} className={classes.icon} alt={"logo"}/>
 
                                     <div className={"bold"}>
                                         {itm.prName}
@@ -90,30 +98,35 @@ const List_PR = () =>{
 
                                     <div className={"light"}>
                                         at { }
-                                        {itm.repository}
-                                    </div>
 
+                                    </div>
+                                    {itm.repository}
                                     <div className={"light"}>
                                         created :
                                          { itm.dateCreated}
                                     </div>
                                 </Grid>
-                                <Grid item xs={5} className={classes.gridItem}>
+                                <Grid item xs={4} className={classes.gridItem}>
                                     {
                                         itm.labels.map(lbl =>
-                                            <LabelButton label={lbl}/>
+                                            <LabelButton label={lbl} height={30} width={120}/>
                                         )
                                     }
 
                                 </Grid>
                                 <Grid item xs={1} >
-                                    <img className={classes.icon} src={github_logo}/>
+                                    <img className={classes.icon} src={github_logo} alt={"icon"}/>
                                 </Grid>
                             </Grid>
                         )
                     }
                 </div>
+
+
             </Container>
+            <Link to={"/createPR"}>
+                <Button variant="contained">Create New PR</Button>
+            </Link>
 
         </div>
 
