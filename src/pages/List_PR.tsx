@@ -3,7 +3,8 @@ import { makeStyles } from '@mui/styles';
 import TabComponent from "../components/tab";
 import prsData from '../pr_data.json';
 import {Container, Grid} from '@mui/material';
-import github_logo from "../icons/github-logo.png"
+import github_logo from "../icons/github-logo.png";
+import "./common.css";
 
 
 const useStyles = makeStyles(() => ({
@@ -44,6 +45,10 @@ const useStyles = makeStyles(() => ({
         height:"60px",
         width:"80%",
         display:"flex",
+        '&:hover': {
+            borderColor:"rgba(188,188,188,0.69)" ,
+            cursor:"pointer",
+        },
 
 
     },
@@ -51,9 +56,15 @@ const useStyles = makeStyles(() => ({
     icon:{
         width:"30px",
         height:"30px",
+    },
+
+    gridItem:{
+        display:"flex",
     }
 
+
 }));
+
 
 const List_PR = () =>{
     const classes = useStyles();
@@ -65,19 +76,29 @@ const List_PR = () =>{
                     {
                         prsData.map(itm =>
                             <Grid  container className={classes.PR_box_item} >
+                                <Grid  className={classes.gridItem} item xs={8}>
+                                    {
+                                        itm.id
+                                    }
+
+                                    <div className={"bold"}>
+                                        {itm.prName}
+                                    </div>
+
+                                    <div className={"light"}>
+                                        at { }
+                                        {itm.repository}
+                                    </div>
+
+                                    <div className={"light"}>
+                                        created :
+                                         { itm.dateCreated}
+                                    </div>
+                                </Grid>
+                                <Grid item xs={3}>
+
+                                </Grid>
                                 <Grid item xs={1}>
-                                    {itm.id}
-                                </Grid>
-                                <Grid item xs={2}>
-                                    {itm.prName}
-                                </Grid>
-                                <Grid item xs={2}>
-                                    {itm.repository}
-                                </Grid>
-                                <Grid item xs={2}>
-                                    {itm.author}
-                                </Grid>
-                                <Grid item xs={2}>
                                     <img className={classes.icon} src={github_logo}/>
                                 </Grid>
                             </Grid>
