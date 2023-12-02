@@ -7,17 +7,14 @@ const Navbar: React.FC = () => {
   return (
     <AppBar position="static" sx={{ backgroundColor: '#0D1B2A' }}>
       <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 0.15}}>
+        <Typography variant="h6" component={Link} to="/" sx={{ color: 'white', textDecoration: 'none', flexGrow: 0.05, marginRight: 10 }} >
           HubReview
         </Typography>
         <Button component={Link} to="/" color="inherit">
-          Home
+          Pull Requests
         </Button>
-        <Button component={Link} to="/about" color="inherit">
-          About
-        </Button>
-        <Button component={Link} to="/contact" color="inherit">
-          Contact
+        <Button component={Link} to="/repositories" color="inherit">
+          Repositories
         </Button>
 
         <Button component={Link} to="/analytics" color="inherit">
