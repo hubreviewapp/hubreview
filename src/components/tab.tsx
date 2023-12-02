@@ -4,13 +4,15 @@ import { Tabs, Tab, Paper } from '@mui/material';
 
 interface TabComponentProps {
     tabs: string[];
+    updateNumber: (newNumber: number) => void;
 }
 
-const TabComponent: React.FC<TabComponentProps> = ({ tabs }) => {
+const TabComponent: React.FC<TabComponentProps> = ({ tabs, updateNumber }) => {
     const [value, setValue] = React.useState(0);
 
     const handleChange = (event: React.SyntheticEvent, newValue: number) => {
         setValue(newValue);
+        updateNumber(newValue)
     };
 
     return (

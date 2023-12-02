@@ -1,7 +1,6 @@
 import React from 'react';
 import LabelButton from "../components/LabelButton";
-import { Route } from 'react-router-dom';
-
+import TabComponent from "../components/tab";
 interface PrDetailPageProps {
   // Define the props you want to pass to PrDetailPage
   id: string;
@@ -12,6 +11,15 @@ interface PrDetailPageProps {
 const PrDetailPage: React.FC<PrDetailPageProps> = (props) => {
   // Access the props in the PrDetailPage component
   const { id, name } = props;
+  const tabs = ["comments", "commits", "details", "modified files"];
+
+  const [number, setNumber] = React.useState(0);
+
+  // Function to update the number in the parent component
+  const updateNumber = (newNumber: number) => {
+    setNumber(newNumber);
+  };
+
 
   return (
     <div>
@@ -35,17 +43,21 @@ const PrDetailPage: React.FC<PrDetailPageProps> = (props) => {
 
         <p> 1 issue linked to this pr  ---  </p>
 
-        <LabelButton label={"enhancement"}></LabelButton>
+        <LabelButton label={"enhancement"} width={140} height={35} ></LabelButton>
 
-        <LabelButton label={"bug fix"}></LabelButton>
+        <LabelButton label={"bug fix"}  width={140} height={35} ></LabelButton>
 
         </div>
       </div>
+
+      <TabComponent tabs={tabs} updateNumber={updateNumber}></TabComponent>
+
     </div>
 
   );
 };
 
 export default PrDetailPage;
+
 
 

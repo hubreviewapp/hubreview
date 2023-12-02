@@ -4,9 +4,11 @@ import { Box, ThemeProvider } from '@mui/system';
 interface LabelButtonProps {
   // Define the props you want to pass to PrDetailPage
   label: string;
+  width: number;
+  height: number;
 }
 
-const LabelButton: React.FC<LabelButtonProps> = ({ label }) => {
+const LabelButton: React.FC<LabelButtonProps> = ({ label, width, height }) => {
   // Your component logic here
   const color: string =
     label === "enhancement" ? "green" :
@@ -17,8 +19,8 @@ const LabelButton: React.FC<LabelButtonProps> = ({ label }) => {
     return (
       <Box
         sx={{
-          width: 140,
-          height: 35,
+          width: {width},
+          height: {height},
           borderRadius: 4,
           bgcolor: color,
           display: 'flex',
