@@ -4,8 +4,8 @@ import { makeStyles } from '@mui/styles';
 
 
 const useStyles = makeStyles(() => ({
-    container: {
-        position:"fixed",
+    root: {
+        position:"absolute",
         padding:"0",
         margin:"0",
         top:"0",
@@ -16,13 +16,40 @@ const useStyles = makeStyles(() => ({
 
     },
 
+    container :{
+        padding :"20px",
+        display: "flex",
+        flexDirection: "column"
+    },
+    PR_box:{
+        borderStyle: "solid",
+        borderColor:"#BCBCBC",
+        borderRadius:"10px",
+        borderWidth:"0.5px",
+        margin:"5px",
+        padding:"5px",
+
+    }
+
 }));
 
 const List_PR = () =>{
     const classes = useStyles();
+    const prs = ["pr1", "pr2", "pr3"];
     return(
-        <div className={classes.container}>
-hello bitches
+        <div className={classes.root}>
+            <div className={classes.container}>
+                {
+                    prs.map(itm =>
+                        <div className={classes.PR_box}>
+                            {itm}
+                        </div>
+                    )
+                }
+
+
+
+            </div>
 
         </div>
 
