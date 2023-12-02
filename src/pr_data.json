@@ -4,20 +4,23 @@
     "prName": "Feature X",
     "repository": "my-repo",
     "author": "John Doe",
-    "dateCreated": "2023-01-01"
+    "dateCreated": "2023-01-01",
+    "labels": ["enhancement", "refactoring"]
   },
   {
     "id": 2,
     "prName": "Fix Bug Y",
     "repository": "another-repo",
     "author": "Jane Smith",
-    "dateCreated": "2023-01-02"
+    "dateCreated": "2023-01-02",
+    "labels": ["enhancement", "bug fix"]
   },
   {
     "id": 3,
     "prName": "Refactor Z",
     "repository": "third-repo",
     "author": "Bob Johnson",
-    "dateCreated": "2023-01-03"
+    "dateCreated": "2023-01-03",
+    "labels": ["refactoring"]
   }
 ]

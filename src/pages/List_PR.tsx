@@ -4,7 +4,8 @@ import TabComponent from "../components/tab";
 import prsData from '../pr_data.json';
 import {Container, Grid} from '@mui/material';
 import github_logo from "../icons/github-logo.png";
-import "./common.css";
+import "../styles/common.css";
+import LabelButton from "../components/LabelButton";
 
 
 const useStyles = makeStyles(() => ({
@@ -31,19 +32,20 @@ const useStyles = makeStyles(() => ({
         padding:"5px",
         display:"flex",
         flexDirection: "column",
-        width:"80%",
+        width:"90%",
 
 
     },
     PR_box_item:{
-        margin:"5px",
+        margin:"auto",
+        marginTop:"20px",
         padding:"15px",
         borderStyle: "solid",
         borderColor:"#BCBCBC",
         borderRadius:"10px",
         borderWidth:"0.5px",
         height:"60px",
-        width:"80%",
+        width:"90%",
         display:"flex",
         '&:hover': {
             borderColor:"rgba(188,188,188,0.69)" ,
@@ -60,6 +62,7 @@ const useStyles = makeStyles(() => ({
 
     gridItem:{
         display:"flex",
+
     }
 
 
@@ -68,7 +71,7 @@ const useStyles = makeStyles(() => ({
 
 const List_PR = () =>{
     const classes = useStyles();
-    const pr_tabs: string[] = ["created", "assigned", "merged"];
+    const pr_tabs: string[]  = ["created", "assigned", "merged"];
     return(
         <div className={classes.root}>
             <Container className={classes.container}>
@@ -76,7 +79,7 @@ const List_PR = () =>{
                     {
                         prsData.map(itm =>
                             <Grid  container className={classes.PR_box_item} >
-                                <Grid  className={classes.gridItem} item xs={8}>
+                                <Grid  className={classes.gridItem} item xs={6}>
                                     {
                                         itm.id
                                     }
@@ -95,18 +98,21 @@ const List_PR = () =>{
                                          { itm.dateCreated}
                                     </div>
                                 </Grid>
-                                <Grid item xs={3}>
+                                <Grid item xs={5} className={classes.gridItem}>
+                                    {
+                                        itm.labels.map(lbl =>
+                                            <LabelButton label={lbl}/>
+                                        )
+                                    }
 
                                 </Grid>
-                                <Grid item xs={1}>
+                                <Grid item xs={1} >
                                     <img className={classes.icon} src={github_logo}/>
                                 </Grid>
                             </Grid>
                         )
                     }
                 </div>
-
-
             </Container>
 
         </div>
