@@ -16,17 +16,18 @@ const TabComponent: React.FC<TabComponentProps> = ({ tabs, updateNumber }) => {
     };
 
     return (
-        <div style={{ padding: 16 }}>
-            <Paper elevation={3}>
+        <div style={{ padding: 16, width: "500px", border: "pink"}} >
+            <Paper elevation={3}  >
                 <Tabs
                     value={value}
                     onChange={handleChange}
                     indicatorColor="primary"
                     textColor="primary"
                     centered
+                    sx={{backgroundColor: "#1B263B"}}
                 >
                     {tabs.map((tab, index) => (
-                        <Tab key={index} label={tab} />
+                        <Tab sx={{ color: '#E0E1DD' }} key={index} label={tab} />
                     ))}
                 </Tabs>
             </Paper>

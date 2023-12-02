@@ -1,6 +1,8 @@
 import React from 'react';
 import LabelButton from "../components/LabelButton";
 import TabComponent from "../components/tab";
+import modifiedFilesTab from "../tabs/ModifiedFilesTab";
+import ModifiedFilesTab from "../tabs/ModifiedFilesTab";
 interface PrDetailPageProps {
   // Define the props you want to pass to PrDetailPage
   id: string;
@@ -51,6 +53,11 @@ const PrDetailPage: React.FC<PrDetailPageProps> = (props) => {
       </div>
 
       <TabComponent tabs={tabs} updateNumber={updateNumber}></TabComponent>
+
+      <div> current tab is {tabs[number]}</div>
+
+      {number === 3 && <ModifiedFilesTab id={"1"} name={"name"}/>  }
+
 
     </div>
 
