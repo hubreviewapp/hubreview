@@ -4,6 +4,15 @@
 
 ### Conventions
 
+#### Styling
+
+- Avoid raw CSS, use [MUI's own theming options](https://mui.com/material-ui/customization/how-to-customize/)
+
+#### Syntax
+
+- Use `function` syntax instead of arrow functions for React components.
+  Arrow functions have some pitfalls, albeit small, and [react.dev](https://react.dev) also uses `function` syntax.
+
 #### Symbol Naming
 
 - Components that form a page should preferably be suffixed with `Page`.

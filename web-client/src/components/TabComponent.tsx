@@ -6,7 +6,7 @@ interface TabComponentProps {
     updateNumber: (newNumber: number) => void;
 }
 
-const TabComponent: React.FC<TabComponentProps> = ({ tabs, updateNumber }) => {
+function TabComponent({ tabs, updateNumber }: TabComponentProps) {
     const [value, setValue] = React.useState(0);
 
     const handleChange = (event: React.SyntheticEvent, newValue: number) => {

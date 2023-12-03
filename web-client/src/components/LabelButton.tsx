@@ -1,15 +1,13 @@
 import React from 'react';
-import { Box, ThemeProvider } from '@mui/system';
+import { Box } from '@mui/system';
 
 interface LabelButtonProps {
-  // Define the props you want to pass to PrDetailPage
   label: string;
   width: number;
   height: number;
 }
 
-const LabelButton: React.FC<LabelButtonProps> = ({ label, width, height }) => {
-  // Your component logic here
+function LabelButton({ label, width, height }: LabelButtonProps) {
   const color: string =
     label === "enhancement" ? "green" :
     label === "bug fix" ? "red" :

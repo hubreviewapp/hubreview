@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { AppBar, Toolbar, Typography, Button } from '@mui/material';
 
-const NavBar: React.FC = () => {
+function NavBar() {
   return (
     <AppBar position="static" sx={{ backgroundColor: '#0D1B2A' }}>
       <Toolbar>

@@ -1,6 +1,4 @@
-import React from 'react';
-
-const AnalyticsPage: React.FC = () => {
+function AnalyticsPage() {
   return (
     <div>
       <h2>Analytics Page</h2>
