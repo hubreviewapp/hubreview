@@ -4,4 +4,3 @@ export const dateUtils = {
     timeOnly: "HH:mm",
   },
 };
-

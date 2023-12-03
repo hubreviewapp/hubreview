@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes } from "react-router-dom";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import PRListPage from "./pages/PRListPage";
 import PRCreationPage from "./pages/PRCreationPage";
@@ -19,7 +19,7 @@ function App() {
         */}
       </Route>
     </Routes>
-  )
+  );
 }
 
-export default App
+export default App;

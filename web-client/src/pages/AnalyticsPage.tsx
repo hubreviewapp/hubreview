@@ -5,6 +5,6 @@ function AnalyticsPage() {
       <p>This is the analytics page content.</p>
     </div>
   );
-};
+}
 
 export default AnalyticsPage;
