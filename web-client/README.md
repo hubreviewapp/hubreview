@@ -6,7 +6,8 @@
 
 #### Styling
 
-- Avoid raw CSS, use [MUI's own theming options](https://mui.com/material-ui/customization/how-to-customize/)
+- Avoid raw CSS, use [MUI's own theming options](https://mui.com/material-ui/customization/how-to-customize/).
+- Prefer using MUI's components over raw HTML tags, almost always.
 
 #### Syntax
 

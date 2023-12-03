@@ -2,6 +2,7 @@ import React from "react";
 import LabelButton from "../components/LabelButton";
 import TabComponent from "../components/TabComponent";
 import ModifiedFilesTab from "../tabs/ModifiedFilesTab";
+import { Box, Typography } from "@mui/material";
 
 interface PRDetailsPageProps {
   // Define the props you want to pass to PrDetailPage
@@ -10,7 +11,7 @@ interface PRDetailsPageProps {
   // Add more props as needed
 }
 
-const PRDetailsPage: React.FC<PRDetailsPageProps> = (props) => {
+function PRDetailsPage(props: PRDetailsPageProps) {
   // Access the props in the PrDetailPage component
   const { id, name } = props;
   const tabs = ["comments", "commits", "details", "modified files"];
@@ -23,41 +24,44 @@ const PRDetailsPage: React.FC<PRDetailsPageProps> = (props) => {
   };
 
   return (
-    <div>
-      <div style={{ marginLeft: "auto", marginRight: 16, textAlign: "left" }}>
-        <h2>PR Detail Page</h2>
+    <Box>
+      <Box ml="auto" mr={16} textAlign="left">
+        <Typography variant="h2">PR Detail Page</Typography>
 
-        <div style={{ display: "flex", paddingRight: "16px" }}>
-          <div style={{ textAlign: "right", marginRight: "8px" }}>
-            <h2 style={{ fontSize: "1.2em" }}>
+        <Box display="flex" paddingRight={16}>
+          <Box textAlign="right" mr={8}>
+            <Typography variant="h2">
               {" "}
               {name} #{id} at project x
-            </h2>
-          </div>
-          <div>
-            <p style={{ marginLeft: "10px", marginTop: "18px" }}> created at 4 days ago </p>
-          </div>
+            </Typography>
+          </Box>
+          <Box>
+            <Typography paragraph ml={10} mt={18}>
+              {" "}
+              created at 4 days ago{" "}
+            </Typography>
+          </Box>
 
           {/* Render additional details using props */}
-        </div>
+        </Box>
         {/* Render additional details using props */}
 
-        <div style={{ display: "flex", justifyContent: "flex-start" }}>
+        <Box display="flex" justifyContent="flex-start">
           <p> 1 issue linked to this pr --- </p>
 
           <LabelButton label={"enhancement"} width={140} height={35}></LabelButton>
 
           <LabelButton label={"bug fix"} width={140} height={35}></LabelButton>
-        </div>
-      </div>
+        </Box>
+      </Box>
 
       <TabComponent tabs={tabs} updateNumber={updateNumber}></TabComponent>
 
-      <div> current tab is {tabs[number]}</div>
+      <Box> current tab is {tabs[number]}</Box>
 
-      {number === 3 && <ModifiedFilesTab id={"1"} name={"name"} />}
-    </div>
+      {number === 3 && <ModifiedFilesTab />}
+    </Box>
   );
-};
+}
 
 export default PRDetailsPage;

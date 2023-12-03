@@ -1,9 +1,11 @@
+import { Box, Typography } from "@mui/material";
+
 function AnalyticsPage() {
   return (
-    <div>
-      <h2>Analytics Page</h2>
-      <p>This is the analytics page content.</p>
-    </div>
+    <Box>
+      <Typography variant="h2">Analytics Page</Typography>
+      <Typography paragraph>This is the analytics page content.</Typography>
+    </Box>
   );
 }
 

@@ -1,8 +1,7 @@
-import React from "react";
-import { makeStyles } from "@mui/styles";
+import { Box } from "@mui/material";
 
-const PRCreationPage = () => {
-  return <div>create pr page</div>;
-};
+function PRCreationPage() {
+  return <Box>create pr page</Box>;
+}
 
 export default PRCreationPage;

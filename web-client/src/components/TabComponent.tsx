@@ -1,5 +1,6 @@
 import React from "react";
 import { Tabs, Tab, Paper } from "@mui/material";
+import { Box } from "@mui/system";
 
 interface TabComponentProps {
   tabs: string[];
@@ -9,13 +10,13 @@ interface TabComponentProps {
 function TabComponent({ tabs, updateNumber }: TabComponentProps) {
   const [value, setValue] = React.useState(0);
 
-  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleChange = (_e: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
     updateNumber(newValue);
   };
 
   return (
-    <div style={{ padding: 16, width: "500px", border: "pink" }}>
+    <Box p={16} width={500} border="pink">
       <Paper elevation={3}>
         <Tabs
           value={value}
@@ -32,7 +33,7 @@ function TabComponent({ tabs, updateNumber }: TabComponentProps) {
       </Paper>
       {/* Add your tab content here based on the selected tab value */}
       {tabs.map((content, index) => value === index && <div key={index}>{content} Content</div>)}
-    </div>
+    </Box>
   );
 }
 

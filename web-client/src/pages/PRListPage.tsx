@@ -1,104 +1,70 @@
-import React from "react";
-import { makeStyles } from "@mui/styles";
-import TabComponent from "../components/TabComponent";
 import prsData from "../pr_data.json";
-import { Button, Container, Grid } from "@mui/material";
-import github_logo from "../icons/github-logo.png";
-import user_logo from "../icons/user.png";
+import { Box, Button, Container, Grid, SxProps } from "@mui/material";
+import GitHubLogo from "../assets/icons/github-logo.png";
+import UserLogo from "../assets/icons/user.png";
 import "../styles/common.css";
 import LabelButton from "../components/LabelButton";
 import { Link } from "react-router-dom";
 
-const useStyles = makeStyles(() => ({
-  root: {
-    // position:"absolute",
-    height: "700px",
-    padding: "0",
-    margin: "0",
-    top: "0",
-    left: "0",
-    backgroundColor: "#1B263B",
-    width: "100%",
-  },
+const iconSx: SxProps = {
+  width: 30,
+  height: 30,
+  ml: 10,
+  borderRadius: 20,
+};
 
-  container: {
-    padding: "20px",
-    margin: "auto",
-  },
-  PR_box: {
-    margin: "auto",
-    padding: "5px",
-    display: "flex",
-    flexDirection: "column",
-    width: "90%",
-  },
-  PR_box_item: {
-    margin: "auto",
-    marginTop: "20px",
-    padding: "15px",
-    borderStyle: "solid",
-    borderColor: "#BCBCBC",
-    borderRadius: "10px",
-    borderWidth: "0.5px",
-    height: "60px",
-    width: "90%",
-    display: "flex",
-    "&:hover": {
-      borderColor: "rgba(188,188,188,0.69)",
-      cursor: "pointer",
-    },
-  },
+const gridItemSx: SxProps = {
+  display: "flex",
+};
 
-  icon: {
-    width: "30px",
-    height: "30px",
-    marginLeft: "10px",
-    borderRadius: "20px",
-  },
+function PRList() {
+  // TODO const prTabs: string[] = ["created", "assigned", "merged"];
 
-  gridItem: {
-    display: "flex",
-
-    //justifyContent:"space-around",
-  },
-}));
-
-const PRList = () => {
-  const classes = useStyles();
-  const pr_tabs: string[] = ["created", "assigned", "merged"];
   return (
-    <div className={classes.root}>
-      <Container className={classes.container}>
-        <div className={classes.PR_box}>
-          {prsData.map((itm) => (
-            <Grid container className={classes.PR_box_item}>
-              <Grid className={classes.gridItem} item xs={7}>
-                {itm.id}
-                <img src={user_logo} className={classes.icon} alt={"logo"} />
+    <Box height={700} p={0} m={0} width="100%" sx={{ backgroundColor: "#1B263B" }}>
+      <Container sx={{ p: 20, m: "auto" }}>
+        <Box m="auto" p={5} display="flex" flexDirection="column" width="90%">
+          {prsData.map((item) => (
+            <Grid
+              key={item.id}
+              container
+              m="auto"
+              mt={20}
+              p={15}
+              border="solid 1px #BCBCBC"
+              borderRadius={10}
+              height={60}
+              width="90%"
+              display="flex"
+              sx={{ "&:hover": { borderColor: "rgba(188,188,188,0.69)", cursor: "pointer" } }}
+            >
+              <Grid item xs={7} sx={gridItemSx}>
+                {item.id}
+                <Box component="img" src={UserLogo} alt={"logo"} sx={iconSx} />
 
-                <div className={"bold"}>{itm.prName}</div>
+                <Box className={"bold"}>{item.prName}</Box>
 
-                <div className={"light"}>at {}</div>
-                {itm.repository}
-                <div className={"light"}>created :{itm.dateCreated}</div>
+                <Box className={"light"}>at {}</Box>
+                {item.repository}
+                <Box className={"light"}>created :{item.dateCreated}</Box>
               </Grid>
-              <Grid item xs={4} className={classes.gridItem}>
-                {itm.labels.map((lbl) => (
-                  <LabelButton label={lbl} height={30} width={120} />
+              <Grid item xs={4} sx={gridItemSx}>
+                {item.labels.map((label) => (
+                  <LabelButton key={label} label={label} height={30} width={120} />
                 ))}
               </Grid>
               <Grid item xs={1}>
-                <img className={classes.icon} src={github_logo} alt={"icon"} />
+                <Box component="img" src={GitHubLogo} alt={"icon"} sx={iconSx} />
               </Grid>
             </Grid>
           ))}
-        </div>
+        </Box>
       </Container>
       <Link to={"/createPR"}>
         <Button variant="contained">Create New PR</Button>
       </Link>
-    </div>
+    </Box>
   );
-};
+}
 
 export default PRList;
