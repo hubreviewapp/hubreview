@@ -1,0 +1,41 @@
+services:
+  # TODO:
+  #apiserver:
+  #image: apiserver
+  #build:
+  #context: ..
+  #dockerfile: docker/api-server.Dockerfile
+  #ports:
+  #- "9000:9000"
+  #depends_on:
+  #- postgresdb
+
+  webclient:
+    image: webclient
+    build:
+      context: ..
+      dockerfile: docker/web-client.Dockerfile
+    ports:
+      - "8080:80"
+
+  postgresdb:
+    image: postgres
+    restart: always
+    container_name: postgres-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: hubreview
+    volumes:
+      - hubreview-compose-postgres:/var/lib/postgresql/data
+
+  redis:
+    image: redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+volumes:
+  hubreview-compose-postgres:
+

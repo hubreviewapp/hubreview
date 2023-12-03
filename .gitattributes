@@ -1,0 +1,3 @@
+# Treat package-lock files as non-human-readable files
+**/package-lock.json -diff
+
