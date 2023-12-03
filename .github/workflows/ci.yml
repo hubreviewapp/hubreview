@@ -7,7 +7,29 @@ on:
   workflow_dispatch:
 
 jobs:
-  linter:
+  api-server-linter:
+    name: Lint api-server
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./api-server
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: "7.x"
+          cache: true
+
+      - name: dotnet format
+        run: dotnet format --verify-no-changes
+
+      - name: dotnet publish
+        run: dotnet publish
+
+  web-client-linter:
     name: Lint web-client
     runs-on: ubuntu-latest
     defaults:
