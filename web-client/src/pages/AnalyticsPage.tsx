@@ -1,7 +1,6 @@
-// src/pages/Contact.tsx
 import React from 'react';
 
-const Analytics: React.FC = () => {
+const AnalyticsPage: React.FC = () => {
   return (
     <div>
       <h2>Analytics Page</h2>
@@ -10,4 +9,4 @@ const Analytics: React.FC = () => {
   );
 };
 
-export default Analytics;
+export default AnalyticsPage;

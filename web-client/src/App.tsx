@@ -1,11 +1,11 @@
 import React from 'react';
 import './App.css';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Analytics from "./pages/analytics";
-import List_PR from "./pages/List_PR";
-import CreatePR from "./pages/CreatePR";
-import Navbar from "./components/navbar";
-import PRDetailPage from "./pages/PRDetailPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
+import PRListPage from "./pages/PRListPage";
+import PRCreationPage from "./pages/PRCreationPage";
+import NavBar from "./components/NavBar";
+import PRDetailsPage from "./pages/PRDetailsPage";
 
 
 function App() {
@@ -13,13 +13,13 @@ function App() {
   return (
     <div className="App">
       <Router>
-        <Navbar />
+        <NavBar />
         <Routes>
-          <Route path="/" element={<List_PR/> } />
-          <Route path="/createPR" element={<CreatePR/> } />
-          <Route path="/repositories" element={<PRDetailPage id={"1"} name={"pull request"}/> } />
+          <Route path="/" element={<PRListPage/> } />
+          <Route path="/pulls/create" element={<PRCreationPage/> } />
+          <Route path="/pulls/:pullid" element={<PRDetailsPage id={"1"} name={"pull request"}/> } />
 
-          <Route path="/analytics" element={<Analytics />} /> {/* Use the Contact component here */}
+          <Route path="/analytics" element={<AnalyticsPage />} /> {/* Use the Contact component here */}
         </Routes>
       </Router>
     </div>

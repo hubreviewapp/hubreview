@@ -2,7 +2,7 @@ import React from 'react';
 import { makeStyles } from '@mui/styles';
 
 
-const CreatePR = () =>{
+const PRCreationPage = () =>{
 
     return(
         <div>create pr page</div>
@@ -10,4 +10,4 @@ const CreatePR = () =>{
 
 }
 
-export default CreatePR;
+export default PRCreationPage;

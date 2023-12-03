@@ -1,6 +1,6 @@
 import React from 'react';
 import { makeStyles } from '@mui/styles';
-import TabComponent from "../components/tab";
+import TabComponent from "../components/TabComponent";
 import prsData from '../pr_data.json';
 import {Button, Container, Grid} from '@mui/material';
 import github_logo from "../icons/github-logo.png";
@@ -75,7 +75,7 @@ const useStyles = makeStyles(() => ({
 }));
 
 
-const List_PR = () =>{
+const PRList = () =>{
     const classes = useStyles();
     const pr_tabs: string[]  = ["created", "assigned", "merged"];
     return(
@@ -134,4 +134,4 @@ const List_PR = () =>{
 
 }
 
-export default List_PR;
+export default PRList;

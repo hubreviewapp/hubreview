@@ -1,16 +1,16 @@
 import React from 'react';
 import LabelButton from "../components/LabelButton";
-import TabComponent from "../components/tab";
-import modifiedFilesTab from "../tabs/ModifiedFilesTab";
+import TabComponent from "../components/TabComponent";
 import ModifiedFilesTab from "../tabs/ModifiedFilesTab";
-interface PrDetailPageProps {
+
+interface PRDetailsPageProps {
   // Define the props you want to pass to PrDetailPage
   id: string;
   name: string;
   // Add more props as needed
 }
 
-const PrDetailPage: React.FC<PrDetailPageProps> = (props) => {
+const PRDetailsPage: React.FC<PRDetailsPageProps> = (props) => {
   // Access the props in the PrDetailPage component
   const { id, name } = props;
   const tabs = ["comments", "commits", "details", "modified files"];
@@ -64,7 +64,7 @@ const PrDetailPage: React.FC<PrDetailPageProps> = (props) => {
   );
 };
 
-export default PrDetailPage;
+export default PRDetailsPage;
 
 
 
