@@ -1,6 +1,8 @@
 import UserLogo from "../assets/icons/user.png";
 import GitHubLogo from "../assets/icons/github-logo.png";
-import { Grid, Box , Flex, Badge} from '@mantine/core';
+import { Grid, Box , Flex} from '@mantine/core';
+import classes from "../styles/PRBox.module.css";
+import LabelButton from "./LabelButton";
 
 interface PRBoxProps {
   id: number;
@@ -17,8 +19,7 @@ function PRBox({ id,
                  dateCreated,
                  labels}: PRBoxProps) {
   return(
-    <Grid style={{border: "solid 1px #BCBCBC", borderRadius:"10px",
-      "&:hover": {borderColor: "rgba(188,188,188,0.69)", cursor: "pointer"}}} m={5} p={5}>
+    <Grid className={classes.outlinedBox} m={5} p={5}>
       <Grid.Col span={7}>
         <Flex justify={"flex-start"}>
           <Box className={"bold"}>{id}</Box>
@@ -33,14 +34,7 @@ function PRBox({ id,
       <Grid.Col span={4}>
         <Flex justify={"end"}>
         {labels.map((label) => (
-          <Badge
-            size="lg"
-            variant="gradient"
-            gradient={{ from: 'blue', to: 'cyan', deg: 90 }}
-            key={1}
-            m={3}>
-            {label}
-          </Badge>
+            <LabelButton key={1} label={label} size={"lg"}/>
         ))}
         </Flex>
       </Grid.Col>

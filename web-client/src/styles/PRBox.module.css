@@ -1,0 +1,12 @@
+
+
+.outlinedBox{
+  border: solid 0.5px #BCBCBC;
+  border-radius:10px;
+
+}
+.outlinedBox:hover {
+  background-color: #24314b;
+  border-color: rgba(188,188,188,0.69);
+  cursor: pointer;
+}

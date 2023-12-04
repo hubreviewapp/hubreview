@@ -27,7 +27,7 @@ function RepositoriesPage() {
     <Box h={600} p={5} m={0} w="100%" bg ="#1B263B" >
       <Flex p={5} mt={"20px"} >
         {repos.map((repo) =>(
-          <Card key ={repo.id} w={"300px"} h={"170px"} shadow="sm" padding="lg" radius="md"  m={5}  bg={"#415A77"} >
+          <Card key ={repo.id} w={"300px"} h={"170px"} shadow="sm" padding="lg" radius="md" withBorder m={5}  bg={"#1B263B"} >
             <Flex direction="column" justify="space-between" m={5}>
               <Text fw={500} size="xl"  >{repo.name}</Text>
 
