@@ -9,9 +9,9 @@ function PRList() {
   // TODO const prTabs: string[] = ["created", "assigned", "merged"];
 
   return (
-    <Flex h={"700px"} p={0} m={0} w="100%" justify="start" direction="column" bg ="#1B263B" >
+    <Flex h={"600px"} p={0} m={0} w="100%" justify="space-evenly"  align={"center"} direction="column" bg ="#1B263B" >
 
-        <Flex p={5} direction="column" width="90%">
+        <Flex direction="column" w="70%">
           {prsData.map((item) => (
             <PRBox key={item.id} id={item.id} repository={item.repository} prName={item.prName} labels={item.labels} dateCreated={item.dateCreated}/>
           ))}

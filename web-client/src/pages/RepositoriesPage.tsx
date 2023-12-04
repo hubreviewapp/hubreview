@@ -1,15 +1,6 @@
-import {Box, Button, Card, CardActions, CardContent, SxProps, Typography} from "@mui/material";
 import "../styles/common.css";
-import GitHubLogo from "../assets/icons/github-logo.png";
-
-const iconSx: SxProps = {
-  width: 30,
-  height: 30,
-  ml: 1,
-  mt : -0.5,
-  borderRadius: 20,
-
-};
+//import GitHubLogo from "../assets/icons/github-logo.png";
+import {Flex, Box, Card, Group, Text, Button} from "@mantine/core";
 function RepositoriesPage() {
   const repos = [
     {
@@ -33,40 +24,30 @@ function RepositoriesPage() {
   ]
 
   return (
-    <Box height={600} p={0} m={0} width="100%" display="flex" flexDirection={"column"}
-         padding={"30px"}  sx={{ backgroundColor: "#1B263B" }}>
+    <Box h={600} p={5} m={0} w="100%" bg ="#1B263B" >
+      <Flex p={5} mt={"20px"} >
+        {repos.map((repo) =>(
+          <Card key ={repo.id} w={"300px"} h={"170px"} shadow="sm" padding="lg" radius="md"  m={5}  bg={"#415A77"} >
+            <Flex direction="column" justify="space-between" m={5}>
+              <Text fw={500} size="xl"  >{repo.name}</Text>
 
-      <Box p={5} display="flex"  width="90%">
-        {repos.map((item) => (
-          <Card key={item.id} sx={{
-            width: 250,
-            margin: 3,
-            border: "solid 1px #BCBCBC",
-            borderRadius: "10px",
-            backgroundColor: "#24324f",
-          }}>
-            <CardContent>
-              <Typography variant="h5" component="div">
-                {item.name}
-              </Typography>
-              <Typography sx={{ mb: 1.5 }} color="text.secondary">
-                created by  {item.owner}
-              </Typography>
-              <Typography variant="body2">
-               Last Modified: {item.created}
-                <br />
-              </Typography>
-            </CardContent>
-            <CardActions style={{display:"flex", justifyContent:"space-evenly"}} >
-              <Box component="img" src={GitHubLogo} alt={"icon"} sx={iconSx} />
-              <Button size="small" >Edit</Button>
-              <Button size="small" color={"error"}>Delete</Button>
-            </CardActions>
+            <Text size="sm" c="dimmed">
+              Owner: {repo.owner}
+            </Text>
+            <Text size="sm" c="dimmed">
+              Created: {repo.created}
+            </Text>
+            </Flex>
+              <Group justify={"flex-end"} m={5}>
+                <Button size={"xs"} variant={"outline"} color="white" >Edit</Button>
+                <Button size={"xs"} variant="outline" color="red">Delete</Button>
+              </Group>
+
           </Card>
         ))}
-      </Box>
+      </Flex>
 
-
+      <Button variant={"outline"} m={"20px"}>Add Repository</Button>
     </Box>
   );
 }

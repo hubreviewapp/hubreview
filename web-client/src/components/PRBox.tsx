@@ -1,9 +1,6 @@
 import UserLogo from "../assets/icons/user.png";
 import GitHubLogo from "../assets/icons/github-logo.png";
 import { Grid, Box , Flex, Badge} from '@mantine/core';
-import {border, borderRadius} from "@mui/system";
-
-
 
 interface PRBoxProps {
   id: number;

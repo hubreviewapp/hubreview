@@ -7,6 +7,7 @@ import PRDetailsPage from "./pages/PRDetailsPage";
 import '@mantine/core/styles.css';
 
 import { MantineProvider } from '@mantine/core';
+import RepositoriesPage from "./pages/RepositoriesPage";
 function App() {
   return (
     <MantineProvider>
@@ -14,7 +15,7 @@ function App() {
     <Routes>
       <Route path="/" element={<PRListPage />}>
 
-        <Route path="/pulls/create" element={<PRCreationPage />} />
+        <Route path="/pulls/create" element={<PRDetailsPage />} />
         <Route path="/pulls/:pullid" element={<PRDetailsPage id={"1"} name={"pull request"} />} />
         <Route path="/analytics" element={<AnalyticsPage />} />
 
@@ -22,6 +23,7 @@ function App() {
         <Route path="*" element={<NotFoundPage />} />
         */}
       </Route>
+      <Route path={"/repositories"} element={<RepositoriesPage/>}/>
     </Routes>
     </MantineProvider>
 
