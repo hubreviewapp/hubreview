@@ -1,5 +1,5 @@
 import prsData from "../pr_data.json";
-import {Box, Button, Pagination} from "@mui/material";
+import {Flex, Box, Button, Pagination} from "@mantine/core";
 import "../styles/common.css";
 import { Link } from "react-router-dom";
 import PRBox from "../components/PRBox";
@@ -9,24 +9,23 @@ function PRList() {
   // TODO const prTabs: string[] = ["created", "assigned", "merged"];
 
   return (
-    <Box height={800} p={0} m={0} width="100%" display="flex" flexDirection={"column"}
-         justifyContent={"center"} alignItems={"center"} sx={{ backgroundColor: "#1B263B" }}>
+    <Flex h={"700px"} p={0} m={0} w="100%" justify="start" direction="column" bg ="#1B263B" >
 
-        <Box p={5} display="flex" flexDirection="column" width="90%">
+        <Flex p={5} direction="column" width="90%">
           {prsData.map((item) => (
             <PRBox key={item.id} id={item.id} repository={item.repository} prName={item.prName} labels={item.labels} dateCreated={item.dateCreated}/>
           ))}
-        </Box>
+        </Flex>
 
       <Box m={3}>
-        <Pagination count={10} color="primary" shape={"rounded"} />
+        <Pagination color="primary" shape={"rounded"}  total={10}/>
       </Box>
       <Box m={3}>
         <Link to={"/createPR"}>
           <Button variant="contained">Create New PR</Button>
         </Link>
       </Box>
-    </Box>
+    </Flex>
   );
 }
 

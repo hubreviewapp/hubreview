@@ -4,12 +4,16 @@ import PRListPage from "./pages/PRListPage";
 import PRCreationPage from "./pages/PRCreationPage";
 import NavBar from "./components/NavBar";
 import PRDetailsPage from "./pages/PRDetailsPage";
+import '@mantine/core/styles.css';
 
+import { MantineProvider } from '@mantine/core';
 function App() {
   return (
+    <MantineProvider>
+      <NavBar/>
     <Routes>
-      <Route path="/" element={<NavBar />}>
-        <Route index element={<PRListPage />} />
+      <Route path="/" element={<PRListPage />}>
+
         <Route path="/pulls/create" element={<PRCreationPage />} />
         <Route path="/pulls/:pullid" element={<PRDetailsPage id={"1"} name={"pull request"} />} />
         <Route path="/analytics" element={<AnalyticsPage />} />
@@ -19,6 +23,8 @@ function App() {
         */}
       </Route>
     </Routes>
+    </MantineProvider>
+
   );
 }
 
