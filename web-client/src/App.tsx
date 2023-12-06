@@ -5,12 +5,23 @@ import PRCreationPage from "./pages/PRCreationPage";
 import NavBar from "./components/NavBar";
 import PRDetailsPage from "./pages/PRDetailsPage";
 import '@mantine/core/styles.css';
+import { MantineProvider} from '@mantine/core';
 
-import { MantineProvider } from '@mantine/core';
 import RepositoriesPage from "./pages/RepositoriesPage";
+
+
+
 function App() {
-  return (
-    <MantineProvider>
+
+    return(
+    <MantineProvider theme={{
+   primaryColor: "cyan",
+      colors: {
+        dark: ['#E0E1DD', '#778DA9', '#415A77', '#2f3d60', '#293757', '#222e49', '#1B263B', '#152942', '#0f1f31', '#0D1B2A'],
+
+      },
+
+    }} defaultColorScheme={'dark'}>
       <NavBar/>
     <Routes>
       <Route path="/" element={<PRListPage />}>
