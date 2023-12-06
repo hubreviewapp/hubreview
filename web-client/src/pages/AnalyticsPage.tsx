@@ -1,11 +1,8 @@
-import { Box, Typography } from "@mui/material";
+import {Box} from "@mantine/core";
 
 function AnalyticsPage() {
   return (
-    <Box>
-      <Typography variant="h2">Analytics Page</Typography>
-      <Typography paragraph>This is the analytics page content.</Typography>
-    </Box>
+        <Box>Analytics Page</Box>
   );
 }
 

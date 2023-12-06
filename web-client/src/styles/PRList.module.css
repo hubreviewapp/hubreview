@@ -16,3 +16,15 @@
   margin-left: 10px;
   margin-right: 10px;
 }
+.outlinedBox{
+}
+.outlinedBox:hover {
+  background-color: #24314b;
+  border-color: rgba(188,188,188,0.69);
+  cursor: pointer;
+}
+
+.logo{
+  width: 30px;
+  border-radius: 15px;
+}
