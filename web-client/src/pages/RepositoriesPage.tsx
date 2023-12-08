@@ -1,25 +1,24 @@
 import "../styles/PRList.module.css";
-import GitHubLogo from "../assets/icons/github-logo.png";
+import GitHubLogo from "../assets/icons/github-icon-white.png";
 import {Flex, Box, Card, Group, Text, Button, Badge} from "@mantine/core";
-import UserLogo from "../assets/icons/user.png";
-import classes from "../styles/PRBox.module.css";
+
 function RepositoriesPage() {
   const repos = [
     {
       id: 1,
       name: "HubReview",
-      owner: "Ayse Kelleci",
+      owner: "Ayse_Kelleci",
       created: "01-01-2021"
     },{
     id: 2,
     name: "ReLink",
-    owner: "Cagatay Safak",
+    owner: "Cagatay_Safak",
     created: "01-01-2021"
   },
     {
     id: 3,
     name: "Eventium",
-    owner: "Ece Kahraman",
+    owner: "Ece_Kahraman",
     created: "01-01-2021"
 },
 
@@ -29,7 +28,7 @@ function RepositoriesPage() {
     <Box h={600} p={5} m={0} w="100%" bg ="#1B263B" >
       <Flex p={5} mt={"20px"} justify={"center"}>
         {repos.map((repo) =>(
-          <Card key ={repo.id} w={"300px"} h={"170px"} shadow="sm" padding="lg" radius="md" m={5}  bg={"#415A77"} >
+          <Card key ={repo.id} w={"300px"} h={"170px"} shadow="sm" padding="lg" radius="md" m={5}  bg={"#0D1B2A"} >
             <Flex direction="column" justify="space-between" m={5}>
               <Flex justify={"space-between"}>
                 <Text fw={500} size="xl"  >{repo.name}</Text>
@@ -52,7 +51,7 @@ function RepositoriesPage() {
         ))}
       </Flex>
       <Flex justify={"center"} mt={"30px"}>
-        <Button variant={"outline"}>
+        <Button>
           Add Repository
           <Box component="img" src={GitHubLogo} alt={"logo"} ml={"20px"} w={"25px"} />
         </Button>

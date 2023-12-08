@@ -1,4 +1,3 @@
-import React from "react";
 import { Tabs, Tab, Paper } from "@mui/material";
 import { Box } from "@mui/system";
 
