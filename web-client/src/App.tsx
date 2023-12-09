@@ -9,8 +9,6 @@ import { MantineProvider} from '@mantine/core';
 import RepositoriesPage from "./pages/RepositoriesPage";
 import SignInPage from "./pages/SignInPage";
 
-
-
 function App() {
 
     return(
@@ -23,16 +21,15 @@ function App() {
       <NavBar/>
     <Routes>
       <Route path="/" element={<PRListPage />}>
-        <Route path="/pulls/create" element={<PRDetailsPage  id={"1"} name={"pull request"} />} />
-        <Route path="/pulls/:pullid" element={<PRDetailsPage id={"1"} name={"pull request"} />} />
-
-
         {/* TODO
         <Route path="*" element={<NotFoundPage />} />
         */}
       </Route>
+      <Route path="/pulls/:pullid" element={<PRDetailsPage id={"1"} name={"pull request"} />} />
       <Route path={"/repositories"} element={<RepositoriesPage/>}/>
       <Route path="/analytics" element={<SignInPage />} />
+      <Route path="/pulls/create" element={<PRDetailsPage  id={"1"} name={"pull request"} />} />
+
     </Routes>
     </MantineProvider>
 
