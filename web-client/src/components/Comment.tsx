@@ -19,10 +19,6 @@ export function Comment() {
       </Group>
       <TypographyStylesProvider className={classes.body}>
         <div
-          className={classes.content}
-          dangerouslySetInnerHTML={{
-            __html: "<p>Comment 1</p>",
-          }}
         />
       </TypographyStylesProvider>
     </Paper>
