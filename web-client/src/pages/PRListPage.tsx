@@ -71,7 +71,7 @@ function PRList() {
       </Box>
 
       <Box m={3}>
-        <Pagination color="primary"  shape={"rounded"}  total={4}/>
+        <Pagination color="primary" total={4}/>
       </Box>
       <Box m={3}>
         <Link to={"/createPR"}>

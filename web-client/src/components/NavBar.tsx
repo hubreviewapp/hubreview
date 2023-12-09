@@ -5,7 +5,7 @@ import {useState} from "react";
 function NavBar() {
   const [isActive, setIsActive] = useState(1);
 
-  const handleClick = (buttonId) => {
+  const handleClick = (buttonId:number) => {
     setIsActive(buttonId);
   }
   return (

@@ -10,7 +10,7 @@ interface PRBoxProps {
   prName: string;
   repository: string;
   dateCreated: string;
-  labels: [];
+  labels: string[];
 }
 
 
