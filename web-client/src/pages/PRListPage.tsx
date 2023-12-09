@@ -4,6 +4,7 @@ import PRBox from "../components/PRBox";
 import { IconSparkles, IconSearch } from "@tabler/icons-react";
 import { useState } from "react";
 import { Flex, Box, Button, Pagination, NativeSelect, Grid, TextInput, Badge, rem } from "@mantine/core";
+import TabComp from "../components/Tab";
 
 function PRList() {
   // TODO const prTabs: string[] = ["created", "assigned", "merged"];
@@ -17,6 +18,19 @@ function PRList() {
 
   const iconSparkles = <IconSparkles style={{ width: rem(22), height: rem(22) }} />;
   const iconSearch = <IconSearch style={{ width: rem(18), height: rem(18) }} />;
+
+  const prTabs: string[] = ["created", "assigned", "merged", "closed"];
+  const [currentTab, setCurrentTab] = useState<string|null>(prTabs[1]);
+  const [prList, setPrList] = useState(prsData)
+  const updateTab = (newTab: string|null) => {
+    setCurrentTab(newTab);
+    if (newTab === "created") {
+      setPrList(prsData);
+    }
+    else {
+      setPrList([]);
+    }
+  };
 
   return (
     <Flex h={"550px"} p={0} m={0} w="100%" justify="space-evenly" align={"center"} direction="column" bg="#1B263B">
@@ -48,6 +62,10 @@ function PRList() {
         <Grid.Col span={6}>
           <TextInput leftSection={iconSearch} description="Search a PR" placeholder="Search" />
         </Grid.Col>
+        <Grid.Col>
+          <TabComp tabs={prTabs} updateTab={updateTab}></TabComp>
+          {currentTab === 'modified files' }
+        </Grid.Col>
       </Grid>
       <Box w={"70%"}>
         <Badge
@@ -66,7 +84,7 @@ function PRList() {
               : { border: "solid 0.5px #415A77", borderRadius: "10px" }
           }
         >
-          {prsData.map((item) => (
+          {prList.map((item) => (
             <PRBox
               key={item.id}
               id={item.id}
