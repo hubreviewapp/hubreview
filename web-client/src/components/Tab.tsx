@@ -32,4 +32,3 @@ function TabComp({ tabs, updateTab }: TabComponentProps) {
 }
 
 export default TabComp;
-

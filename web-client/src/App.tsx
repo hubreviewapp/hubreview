@@ -23,7 +23,7 @@ function App() {
       <NavBar/>
     <Routes>
       <Route path="/" element={<PRListPage />}>
-        <Route path="/pulls/create" element={<PRDetailsPage />} />
+        <Route path="/pulls/create" element={<PRDetailsPage  id={"1"} name={"pull request"} />} />
         <Route path="/pulls/:pullid" element={<PRDetailsPage id={"1"} name={"pull request"} />} />
 
 
