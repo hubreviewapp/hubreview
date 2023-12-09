@@ -1,29 +1,19 @@
-import { Box } from "@mui/system";
+import { Badge, Box } from "@mantine/core";
 
 interface LabelButtonProps {
   label: string;
-  width: number;
-  height: number;
+  size: string;
 }
 
-function LabelButton({ label, width, height }: LabelButtonProps) {
-  const color: string =
-    label === "enhancement" ? "green" : label === "bug fix" ? "red" : label === "refactoring" ? "blue" : "";
+function LabelButton({ label, size }: LabelButtonProps) {
+  const color: string[] =
+    label === "enhancement" ? ["pink", "violet"] : label === "bug fix" ? ["red", "pink"] : ["teal", "lime"];
 
   return (
-    <Box
-      sx={{
-        width: { width },
-        height: { height },
-        borderRadius: 4,
-        bgcolor: color,
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        marginRight: "20px",
-      }}
-    >
-      <p style={{ textAlign: "center", margin: 0 }}>{label}</p>
+    <Box>
+      <Badge size={size} variant="gradient" gradient={{ from: color[0], to: color[1], deg: 90 }} key={1} m={3}>
+        {label}
+      </Badge>
     </Box>
   );
 }

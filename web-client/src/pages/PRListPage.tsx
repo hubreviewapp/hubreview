@@ -1,69 +1,93 @@
 import prsData from "../pr_data.json";
-import { Box, Button, Container, Grid, SxProps } from "@mui/material";
-import GitHubLogo from "../assets/icons/github-logo.png";
-import UserLogo from "../assets/icons/user.png";
-import "../styles/common.css";
-import LabelButton from "../components/LabelButton";
 import { Link } from "react-router-dom";
-
-const iconSx: SxProps = {
-  width: 30,
-  height: 30,
-  ml: 10,
-  borderRadius: 20,
-};
-
-const gridItemSx: SxProps = {
-  display: "flex",
-};
+import PRBox from "../components/PRBox";
+import { IconSparkles, IconSearch } from "@tabler/icons-react";
+import { useState } from "react";
+import { Flex, Box, Button, Pagination, NativeSelect, Grid, TextInput, Badge, rem } from "@mantine/core";
 
 function PRList() {
   // TODO const prTabs: string[] = ["created", "assigned", "merged"];
+  const sort: string[] = ["Priority Queue", "Newest", "Oldest"];
+  const repos: string[] = ["All", "ReLink", "Eventium"];
+  const authors: string[] = ["All", "Ece-Kahraman", "Ayse-Kelleci"];
+
+  const [sortValue, setSortValue] = useState("Priority Queue");
+  const [filteredRepo, setFilteredRepo] = useState("All");
+  const [filteredAuthor, setFilteredAuthor] = useState("All");
+
+  const iconSparkles = <IconSparkles style={{ width: rem(22), height: rem(22) }} />;
+  const iconSearch = <IconSearch style={{ width: rem(18), height: rem(18) }} />;
 
   return (
-    <Box height={700} p={0} m={0} width="100%" sx={{ backgroundColor: "#1B263B" }}>
-      <Container sx={{ p: 20, m: "auto" }}>
-        <Box m="auto" p={5} display="flex" flexDirection="column" width="90%">
+    <Flex h={"550px"} p={0} m={0} w="100%" justify="space-evenly" align={"center"} direction="column" bg="#1B263B">
+      <Grid w={"70%"}>
+        <Grid.Col span={2}>
+          <NativeSelect
+            description="Sort"
+            value={sortValue}
+            onChange={(event) => setSortValue(event.currentTarget.value)}
+            data={sort}
+          />
+        </Grid.Col>
+        <Grid.Col span={2}>
+          <NativeSelect
+            description="Select Repo"
+            value={filteredRepo}
+            onChange={(event) => setFilteredRepo(event.currentTarget.value)}
+            data={repos}
+          />
+        </Grid.Col>
+        <Grid.Col span={2}>
+          <NativeSelect
+            description="Select Author"
+            value={filteredAuthor}
+            onChange={(event) => setFilteredAuthor(event.currentTarget.value)}
+            data={authors}
+          />
+        </Grid.Col>
+        <Grid.Col span={6}>
+          <TextInput leftSection={iconSearch} description="Search a PR" placeholder="Search" />
+        </Grid.Col>
+      </Grid>
+      <Box w={"70%"}>
+        <Badge
+          leftSection={iconSparkles}
+          mb={3}
+          variant={"gradient"}
+          style={{ visibility: sortValue == "Priority Queue" ? "visible" : "hidden" }}
+        >
+          Priority Queue
+        </Badge>
+        <Flex
+          direction="column"
+          style={
+            sortValue == "Priority Queue"
+              ? { border: "solid 0.5px cyan", borderRadius: "10px" }
+              : { border: "solid 0.5px #415A77", borderRadius: "10px" }
+          }
+        >
           {prsData.map((item) => (
-            <Grid
+            <PRBox
               key={item.id}
-              container
-              m="auto"
-              mt={20}
-              p={15}
-              border="solid 1px #BCBCBC"
-              borderRadius={10}
-              height={60}
-              width="90%"
-              display="flex"
-              sx={{ "&:hover": { borderColor: "rgba(188,188,188,0.69)", cursor: "pointer" } }}
-            >
-              <Grid item xs={7} sx={gridItemSx}>
-                {item.id}
-                <Box component="img" src={UserLogo} alt={"logo"} sx={iconSx} />
-
-                <Box className={"bold"}>{item.prName}</Box>
-
-                <Box className={"light"}>at {}</Box>
-                {item.repository}
-                <Box className={"light"}>created :{item.dateCreated}</Box>
-              </Grid>
-              <Grid item xs={4} sx={gridItemSx}>
-                {item.labels.map((label) => (
-                  <LabelButton key={label} label={label} height={30} width={120} />
-                ))}
-              </Grid>
-              <Grid item xs={1}>
-                <Box component="img" src={GitHubLogo} alt={"icon"} sx={iconSx} />
-              </Grid>
-            </Grid>
+              id={item.id}
+              repository={item.repository}
+              prName={item.prName}
+              labels={item.labels}
+              dateCreated={item.dateCreated}
+            />
           ))}
-        </Box>
-      </Container>
-      <Link to={"/createPR"}>
-        <Button variant="contained">Create New PR</Button>
-      </Link>
-    </Box>
+        </Flex>
+      </Box>
+
+      <Box m={3}>
+        <Pagination color="primary" total={4} />
+      </Box>
+      <Box m={3}>
+        <Link to={"/createPR"}>
+          <Button variant="contained">Create New PR</Button>
+        </Link>
+      </Box>
+    </Flex>
   );
 }
 

@@ -1,30 +1,51 @@
 import { Link } from "react-router-dom";
-import { AppBar, Toolbar, Typography, Button } from "@mui/material";
+import { Container, Button, Title, Grid, Box } from "@mantine/core";
+import { useState } from "react";
 
 function NavBar() {
-  return (
-    <AppBar position="static" sx={{ backgroundColor: "#0D1B2A" }}>
-      <Toolbar>
-        <Typography
-          variant="h6"
-          component={Link}
-          to="/"
-          sx={{ color: "white", textDecoration: "none", flexGrow: 0.05, marginRight: 10 }}
-        >
-          HubReview
-        </Typography>
-        <Button component={Link} to="/" color="inherit">
-          Pull Requests
-        </Button>
-        <Button component={Link} to="/repositories" color="inherit">
-          Repositories
-        </Button>
+  const [isActive, setIsActive] = useState(1);
 
-        <Button component={Link} to="/analytics" color="inherit">
-          Analytics
-        </Button>
-      </Toolbar>
-    </AppBar>
+  const handleClick = (buttonId: number) => {
+    setIsActive(buttonId);
+  };
+  return (
+    <Box bg={"#0D1B2A"} p={"20px"}>
+      <Container size="xl">
+        <Grid>
+          <Grid.Col span={7}>
+            <Link to="/" style={{ color: "white", textDecoration: "none" }}>
+              <Title order={2}>HubReview</Title>
+            </Link>
+          </Grid.Col>
+          <Grid.Col span={5} style={{ display: "flex", justifyContent: "space-evenly" }}>
+            <Button
+              component={Link}
+              variant={isActive == 1 ? "outline" : "transparent"}
+              to="/"
+              onClick={() => handleClick(1)}
+            >
+              Pull Requests
+            </Button>
+            <Button
+              component={Link}
+              variant={isActive == 2 ? "outline" : "transparent"}
+              to="/repositories"
+              onClick={() => handleClick(2)}
+            >
+              Repositories
+            </Button>
+            <Button
+              component={Link}
+              variant={isActive == 3 ? "outline" : "transparent"}
+              to="/analytics"
+              onClick={() => handleClick(3)}
+            >
+              Analytics
+            </Button>
+          </Grid.Col>
+        </Grid>
+      </Container>
+    </Box>
   );
 }
 
