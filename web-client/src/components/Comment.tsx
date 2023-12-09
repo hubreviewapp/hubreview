@@ -18,8 +18,7 @@ export function Comment() {
         </div>
       </Group>
       <TypographyStylesProvider className={classes.body}>
-        <div
-        />
+        <div />
       </TypographyStylesProvider>
     </Paper>
   );
