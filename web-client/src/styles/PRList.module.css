@@ -1,5 +1,5 @@
-*{
-  color: #EBEBEB;
+* {
+  color: #ebebeb;
 }
 
 .light {
@@ -10,22 +10,20 @@
 }
 
 .bold {
-
   font-size: 17px;
   font-weight: bold;
   margin-left: 10px;
   margin-right: 10px;
 }
-.outlinedBox{
+.outlinedBox {
 }
 .bold:hover {
   background-color: #24314b;
-  border-color: rgba(188,188,188,0.69);
+  border-color: rgba(188, 188, 188, 0.69);
   cursor: pointer;
 }
 
-.logo{
+.logo {
   width: 30px;
   border-radius: 15px;
 }
-
