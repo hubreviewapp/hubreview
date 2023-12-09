@@ -1,9 +1,9 @@
-import React from "react";
 import LabelButton from "../components/LabelButton";
 import ModifiedFilesTab from "../tabs/ModifiedFilesTab";
 import CommentsTab from "../tabs/CommentsTab.tsx";
 import {Box} from "@mantine/core";
 import TabComp from "../components/Tab.tsx"
+import * as React from "react";
 
 interface PRDetailsPageProps {
   // Define the props you want to pass to PrDetailPage
@@ -30,33 +30,20 @@ function PRDetailsPage(props: PRDetailsPageProps) {
             <h3  style={{marginRight:20}} >
               {name} #{id} at project x
             </h3>
-
             <p>
               {" "}
               {"     "} created at 4 days ago{" "}
             </p>
         </div>
-
-
         <Box display="flex" style= {{justifyContent:"flex-start"}}>
           <p style={{marginRight:20}}> 1 issue linked to this pr --- </p>
-
-          <LabelButton label={"enhancement"} width={140} height={35}></LabelButton>
-
-          <LabelButton label={"bug fix"} width={140} height={35}></LabelButton>
+          <LabelButton label={"enhancement"} size={'sm'}/>
+          <LabelButton label={"bug fix"} size={'sm'}/>
         </Box>
-
-      <TabComp tabs={tabs} updateTab={updateTab}></TabComp>
-
-
-
+      <TabComp tabs={tabs} updateTab={updateTab}/>
       <Box> current tab is {currentTab}</Box>
-
       {currentTab === 'modified files' && <ModifiedFilesTab />}
-
       {currentTab === 'comments' && <CommentsTab />}
-
-
     </div>
   );
 }

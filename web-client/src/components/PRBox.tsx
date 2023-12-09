@@ -3,6 +3,7 @@ import GitHubLogo from "../assets/icons/github-mark-white.png";
 import { Grid, Box , Flex} from '@mantine/core';
 import classes from "../styles/PRList.module.css";
 import LabelButton from "./LabelButton";
+import {Link} from "react-router-dom";
 
 interface PRBoxProps {
   id: number;
@@ -18,13 +19,16 @@ function PRBox({ id,
                  repository,
                  dateCreated,
                  labels}: PRBoxProps) {
+
   return(
-    <Grid className={classes.outlinedBox} m={5} p={5}>
+    <Grid  m={5} p={5}>
       <Grid.Col span={7}>
         <Flex justify={"flex-start"}>
           <Box fw={200} mr={"10px"} ml={"10px"}>{id}</Box>
           <Box component="img" src={UserLogo} alt={"logo"} className={classes.logo} />
-          <Box className={classes.bold}>{prName}</Box>
+          <Link to={"pulls/" + id}>
+            <Box  className={classes.bold}>{prName}</Box>
+          </Link>
           <Box className={classes.light}>at {}</Box>
           {repository}
           <Box className={classes.light}>created :{dateCreated}</Box>
