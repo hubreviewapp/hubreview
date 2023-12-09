@@ -1,8 +1,7 @@
 import {Grid, Box, Text, TextInput, Card, Button, Stack, Group} from "@mantine/core";
-import GitHubLogo from "../assets/icons/github-icon-large.png";
+import GitHubLogo from "../assets/icons/github-mark-white.png";
 
 function SignInPage() {
-
 
   return(
     <Box h={600} p={5} m={0} w="100%" bg ="#1B263B">
@@ -15,7 +14,6 @@ function SignInPage() {
                 <Text fw={500} size={"xl"} > SIGN IN WITH GITHUB </Text>
                 <Box component="img" src={GitHubLogo} alt={"logo"} ml={"20px"} w={"55px"} />
               </Group>
-
             <TextInput
               leftSectionPointerEvents="none"
               label="Email or Username"
@@ -33,13 +31,9 @@ function SignInPage() {
             </Stack>
             </Card>
         </Grid.Col>
-
       </Grid>
-
     </Box>
-
   );
-
 }
 
 export default SignInPage;

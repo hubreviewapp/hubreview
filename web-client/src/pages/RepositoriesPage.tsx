@@ -1,6 +1,7 @@
 import "../styles/PRList.module.css";
-import GitHubLogo from "../assets/icons/github-icon-white.png";
-import {Flex, Box, Card, Group, Text, Button, Badge} from "@mantine/core";
+import GitHubLogo from "../assets/icons/github-mark-white.png";
+import {Flex, Box, Card, Group, Text, Button, Badge, rem} from "@mantine/core";
+import {IconLock} from "@tabler/icons-react";
 
 function RepositoriesPage() {
   const repos = [
@@ -23,6 +24,7 @@ function RepositoriesPage() {
 },
 
   ]
+  const iconLock = <IconLock style={{ width: rem(12), height: rem(12) }} />;
 
   return (
     <Box h={600} p={5} m={0} w="100%" bg ="#1B263B" >
@@ -32,7 +34,7 @@ function RepositoriesPage() {
             <Flex direction="column" justify="space-between" m={5}>
               <Flex justify={"space-between"}>
                 <Text fw={500} size="xl"  >{repo.name}</Text>
-                <Badge variant="outline" color="gray" size="sm" mt={4}>Private</Badge>
+                <Badge rightSection={iconLock} variant="outline" color="gray" size="sm" mt={4}>Private</Badge>
               </Flex>
 
               <Text size="sm" c="dimmed">

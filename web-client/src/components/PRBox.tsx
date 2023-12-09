@@ -1,5 +1,5 @@
 import UserLogo from "../assets/icons/user.png";
-import GitHubLogo from "../assets/icons/github-icon-white.png";
+import GitHubLogo from "../assets/icons/github-mark-white.png";
 import { Grid, Box , Flex} from '@mantine/core';
 import classes from "../styles/PRList.module.css";
 import LabelButton from "./LabelButton";
@@ -39,7 +39,7 @@ function PRBox({ id,
         </Flex>
       </Grid.Col>
       <Grid.Col span={1}>
-        <Box component="img" src={GitHubLogo} alt={"icon"}  />
+        <Box component="img" src={GitHubLogo} alt={"icon"} className={classes.logo} />
       </Grid.Col>
     </Grid>
   );

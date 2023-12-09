@@ -7,7 +7,7 @@ interface LabelButtonProps {
 
 function LabelButton({ label, size }: LabelButtonProps) {
   const color: string[]  =
-    label === "enhancement" ? ["blue","cyan"] : label === "bug fix" ? ["red","pink"]  :["teal","lime"];
+    label === "enhancement" ? ["pink","violet"] : label === "bug fix" ? ["red","pink"]  :["teal","lime"];
 
   return (
     <Box>
