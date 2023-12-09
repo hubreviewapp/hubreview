@@ -26,7 +26,7 @@ function PRList() {
 
 
   return (
-    <Flex h={"550px"} p={0} m={0} w="100%" justify="space-evenly"  align={"center"} direction="column" bg = "#1B263B" >
+    <Flex h={"550px"} p={0} m={0} w="100%" justify="space-evenly"  align={"center"} direction="column" >
 
       <Grid w={"70%"}>
         <Grid.Col span={2}>

@@ -13,7 +13,6 @@ interface PRBoxProps {
   labels: string[];
 }
 
-
 function PRBox({ id,
                  prName,
                  repository,
@@ -26,11 +25,13 @@ function PRBox({ id,
         <Flex justify={"flex-start"}>
           <Box fw={200} mr={"10px"} ml={"10px"}>{id}</Box>
           <Box component="img" src={UserLogo} alt={"logo"} className={classes.logo} />
-          <Link to={"pulls/" + id}>
+          <Link to={"pulls/" + id} style={{textDecoration:"none"}}>
             <Box  className={classes.bold}>{prName}</Box>
           </Link>
           <Box className={classes.light}>at {}</Box>
-          {repository}
+          <Link to={"repositories"} style={{textDecoration:"none"}}>
+            <Box>{repository}</Box>
+          </Link>
           <Box className={classes.light}>created :{dateCreated}</Box>
         </Flex>
 
