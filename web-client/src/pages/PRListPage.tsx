@@ -11,7 +11,9 @@ import {
   NativeSelect, Grid, TextInput, Badge, rem,
 } from "@mantine/core";
 
+
 function PRList() {
+
   // TODO const prTabs: string[] = ["created", "assigned", "merged"];
   const sort : string[] = ["Priority Queue", "Newest", "Oldest"];
   const repos :string[] = ["All", "ReLink", "Eventium"]
@@ -27,7 +29,6 @@ function PRList() {
 
   return (
     <Flex h={"500px"} p={0} m={0} w="100%" justify="space-evenly"  align={"center"} direction="column" >
-
       <Grid w={"70%"}>
         <Grid.Col span={2}>
           <NativeSelect

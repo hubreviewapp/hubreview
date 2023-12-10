@@ -1,18 +1,37 @@
 import {
   Container, Grid, Group, Text, Title, Badge, rem,
-  Button, Paper, Stack, List,Flex
+  Button, Paper, Stack, List, Flex, Modal,
 } from "@mantine/core";
 import {IconGitBranch, IconGitCommit, IconStars,IconCirclePlus, IconSquarePlus, IconUsersGroup, IconFile} from "@tabler/icons-react";
 import LabelButton from "../components/LabelButton";
 import WorkloadBarProps from "../components/WorkloadBarProps";
+import {useDisclosure} from "@mantine/hooks";
 
 function PRCreationPage() {
   const branchIcon = <IconGitBranch style={{ width: rem(12), height: rem(12) }} />;
   const sparklesIcon = <IconStars color={"yellow"} style={{ width: rem(18), height: rem(18) }} />;
   const squarePlusIcon = <IconSquarePlus style={{ width: rem(18), height: rem(18) }} />;
+  const [opened, { open, close }] = useDisclosure(false);
+
+  const labelList: { label: string, key: number }[] = [
+    { label: "enhancement", key: 1 },
+    { label: "bug fix", key: 1 },
+    { label: "refactoring", key: 3 },
+    { label: "question", key: 4 }
+  ];
   return (
     <Container size={"lg"}>
-
+      <Modal opened={opened} onClose={close} title="Add Label">
+        <Group>
+          {
+            labelList.map(itm =>
+              <Group key={itm.key}>
+                <LabelButton  label={itm.label} size={"md"}/>
+              </Group>
+            )
+          }
+        </Group>
+      </Modal>
       <Grid>
         <Grid.Col span={8}>
           <Title mt={"md"} order={3} c={"dimmed"}>Create a New PR</Title>
@@ -29,7 +48,7 @@ function PRCreationPage() {
             <Button leftSection={sparklesIcon} size={"xs"} variant={"subtle"} radius={"lg"}>Assign Priority</Button>
             <LabelButton key={1} label={"Refactoring"} size={"md"}/>
             <LabelButton key={2} label={"bug fix"} size={"md"}/>
-            <Button leftSection={squarePlusIcon} size={"xs"} variant={"subtle"} radius={"lg"}>Add Label</Button>
+            <Button onClick={open} leftSection={squarePlusIcon} size={"xs"} variant={"subtle"} radius={"lg"}>Add Label</Button>
           </Group>
           <Group>
           <Paper mt={"md"} p={"sm"} withBorder>
