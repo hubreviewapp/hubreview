@@ -21,7 +21,7 @@ export function Comment() {
         <div
           className={classes.content}
           dangerouslySetInnerHTML={{
-            __html:
+            _html:
               '<p>Comment 1</p>',
           }}
 

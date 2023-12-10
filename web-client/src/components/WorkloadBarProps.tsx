@@ -1,9 +1,9 @@
 import {Progress, Box} from "@mantine/core";
 
-interface workloadBarProps {
+interface WorkloadBarProps {
   workload: number;
 }
-function WorkloadBarProps({ workload }: workloadBarProps){
+function WorkloadBarProps({ workload }: WorkloadBarProps){
   const color : string = workload > 70 ? "red" :
     workload > 50 ? "yellow" :
       "green";
