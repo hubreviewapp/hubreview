@@ -1,17 +1,19 @@
 import {
   Container, Grid, Group, Text, Title, Badge, rem,
-  Button, Paper, Stack, List, Flex, Modal,
+  Button, Paper, Stack, List, Flex, Modal, Checkbox,
 } from "@mantine/core";
 import {IconGitBranch, IconGitCommit, IconStars,IconCirclePlus, IconSquarePlus, IconUsersGroup, IconFile} from "@tabler/icons-react";
 import LabelButton from "../components/LabelButton";
 import WorkloadBarProps from "../components/WorkloadBarProps";
 import {useDisclosure} from "@mantine/hooks";
+import {useState} from "react";
 
 function PRCreationPage() {
   const branchIcon = <IconGitBranch style={{ width: rem(12), height: rem(12) }} />;
   const sparklesIcon = <IconStars color={"yellow"} style={{ width: rem(18), height: rem(18) }} />;
   const squarePlusIcon = <IconSquarePlus style={{ width: rem(18), height: rem(18) }} />;
   const [opened, { open, close }] = useDisclosure(false);
+  const [checkboxValue, setCheckboxValue] = useState<string[]>([]);
 
   const labelList: { label: string, key: number }[] = [
     { label: "enhancement", key: 1 },
@@ -22,21 +24,31 @@ function PRCreationPage() {
   return (
     <Container size={"lg"}>
       <Modal opened={opened} onClose={close} title="Add Label">
-        <Group>
-          {
+        <Checkbox.Group value={checkboxValue} onChange={setCheckboxValue}>
+        {
             labelList.map(itm =>
-              <Group key={itm.key}>
-                <LabelButton  label={itm.label} size={"md"}/>
-              </Group>
+                <Checkbox
+                  key={itm.key}
+                  label={itm.label.toUpperCase()}
+                  value={itm.label}
+                  color="lime"
+                  radius="lg"
+                  size="md"
+                  mt={"md"}
+                />
             )
           }
+        </Checkbox.Group>
+        <Group justify={"flex-end"}>
+          <Button onClick={close} color={"gray"} size={"sm"} >Close</Button>
+          <Button onClick={()=>setCheckboxValue([])} color={"gray"} variant={"outline"} size={"sm"} >Clear</Button>
         </Group>
       </Modal>
       <Grid>
         <Grid.Col span={8}>
           <Title mt={"md"} order={3} c={"dimmed"}>Create a New PR</Title>
           <Group mt={"20px"} mb={"20px"}>
-            <Text order={3}>Eventium</Text>
+            <Title order={3}>Eventium</Title>
             <Text c={"dimmed"}>from</Text>
             <Badge leftSection={branchIcon} color={"gray"} size={"md"} style={{textTransform: "lowercase"}}>add_button</Badge>
             <Text c={"dimmed"}>to</Text>
@@ -46,8 +58,11 @@ function PRCreationPage() {
           </Group>
           <Group>
             <Button leftSection={sparklesIcon} size={"xs"} variant={"subtle"} radius={"lg"}>Assign Priority</Button>
-            <LabelButton key={1} label={"Refactoring"} size={"md"}/>
-            <LabelButton key={2} label={"bug fix"} size={"md"}/>
+            {
+              checkboxValue.map(itm =>(
+                <LabelButton key={itm} label={itm} size={"md"}/>
+              ))
+            }
             <Button onClick={open} leftSection={squarePlusIcon} size={"xs"} variant={"subtle"} radius={"lg"}>Add Label</Button>
           </Group>
           <Group>
