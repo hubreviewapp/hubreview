@@ -1,7 +1,7 @@
 import Comment from "../components/Comment.tsx";
 
 function CommentsTab() {
-  const comments = ["x.py", "y.py", "z.py"];
+  const comments = ["x.py", "y.py", "z.py"]
   return (
     <div>
       {comments.map((comment) => (
@@ -13,6 +13,7 @@ function CommentsTab() {
       ))}
 
       <hr></hr>
+
     </div>
   );
 }

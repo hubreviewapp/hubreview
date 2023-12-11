@@ -1,9 +1,9 @@
-import { Text, Avatar, Group, TypographyStylesProvider, Paper } from "@mantine/core";
-import classes from "../styles/comment.module.css";
+import { Text, Avatar, Group, TypographyStylesProvider, Paper } from '@mantine/core';
+import classes from '../styles/comment.module.css';
 
 export function Comment() {
   return (
-    <Paper withBorder radius="md" className={classes.comment}>
+    <Paper withBorder radius="md" className={classes.comment} >
       <Group>
         <Avatar
           src="https://raw.githubusercontent.com/mantinedev/mantine/master/.demo/avatars/avatar-2.png"
@@ -18,7 +18,14 @@ export function Comment() {
         </div>
       </Group>
       <TypographyStylesProvider className={classes.body}>
-        <div />
+        <div
+          className={classes.content}
+          dangerouslySetInnerHTML={{
+            _html:
+              '<p>Comment 1</p>',
+          }}
+
+        />
       </TypographyStylesProvider>
     </Paper>
   );

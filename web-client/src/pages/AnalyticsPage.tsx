@@ -1,7 +1,9 @@
-import { Box } from "@mantine/core";
+import {Box} from "@mantine/core";
 
 function AnalyticsPage() {
-  return <Box>Analytics Page</Box>;
+  return (
+        <Box>Analytics Page</Box>
+  );
 }
 
 export default AnalyticsPage;
