@@ -2,17 +2,17 @@ import {
   Container, Grid, Group, Text, Title, Badge, rem,
   Button, Paper, Stack, List, Flex, Modal, Checkbox, Textarea, Box, TextInput
 } from "@mantine/core";
-import {IconSquareRoundedCheckFilled,IconGitBranch, IconGitCommit, IconStars,IconCirclePlus, IconSquarePlus, IconUsersGroup, IconFile} from "@tabler/icons-react";
+import {IconSquareRoundedCheckFilled,IconGitBranch, IconGitCommit, IconStars, IconSquarePlus, IconUsersGroup, IconFile} from "@tabler/icons-react";
 import LabelButton from "../components/LabelButton";
-import WorkloadBarProps from "../components/WorkloadBarProps";
 import {useDisclosure} from "@mantine/hooks";
 import {useState} from "react";
+import WorkloadBar from "../components/WorkloadBar";
 
 function PRCreationPage() {
   const branchIcon = <IconGitBranch style={{ width: rem(12), height: rem(12) }} />;
   const sparklesIcon = <IconStars color={"yellow"} style={{ width: rem(18), height: rem(18) }} />;
   const squarePlusIcon = <IconSquarePlus style={{ width: rem(18), height: rem(18) }} />;
-  const   iconSquare = <IconSquareRoundedCheckFilled color={"blue"} style={{ width: rem(18), height: rem(18) }}/>;
+  const iconSquare = <IconSquareRoundedCheckFilled color={"blue"} style={{ width: rem(18), height: rem(18) }}/>;
 
   const [opened, { open, close }] = useDisclosure(false);
   const [checkboxValue, setCheckboxValue] = useState<string[]>([]);
@@ -95,52 +95,7 @@ function PRCreationPage() {
           </Group>
         </Grid.Col>
         <Grid.Col span={4}>
-          <Paper shadow="xl" radius="md" p="md" mt={"lg"} withBorder>
-            <Stack>
-              <Group>
-                <Text fw={500} size={"lg"}>Assign Reviewer</Text>
-                <Text ml={"md"} size={"sm"} color={"#415A77"}>Reviewer Workload</Text>
-              </Group>
-              <Grid>
-                <Grid.Col span={6}>
-                  <Group>
-                    <IconCirclePlus color={"green"} style={{width: rem(22), height: rem(22) }} />
-                    <Text>Ayse_Kelleci</Text>
-                  </Group>
-                </Grid.Col>
-                <Grid.Col span={6}>
-                  <WorkloadBarProps workload={40}/>
-                </Grid.Col>
-              </Grid>
-              <Grid>
-                <Grid.Col span={6}>
-                  <Group>
-                    <IconCirclePlus color={"green"} style={{width: rem(22), height: rem(22) }} />
-                    <Text>Alper_Mumcular</Text>
-                  </Group>
-                </Grid.Col>
-                <Grid.Col span={6}>
-                  <WorkloadBarProps workload={60}/>
-                </Grid.Col>
-              </Grid>
-              <Grid>
-                <Grid.Col span={6}>
-                  <Group>
-                    <IconCirclePlus color={"green"} style={{width: rem(22), height: rem(22) }} />
-                    <Text>Ece_kahraman</Text>
-                  </Group>
-                </Grid.Col>
-                <Grid.Col span={6}>
-                  <WorkloadBarProps workload={90}/>
-                </Grid.Col>
-              </Grid>
-
-              <Flex justify={"space-evenly"}>
-                <Button size={"xs"} variant={"filled"}>Assign</Button>
-                <Button size={"xs"} variant={"light"} >Split PR into Reviewers</Button>
-              </Flex>
-            </Stack>
-          </Paper>
+          <WorkloadBar/>
         </Grid.Col>
       </Grid>
       <Box w={"60%"} mt={"md"}>
