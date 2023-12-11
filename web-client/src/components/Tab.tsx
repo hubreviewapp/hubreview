@@ -15,9 +15,8 @@ function TabComp({ tabs, updateTab }: TabComponentProps) {
     updateTab(newValue);
   };
   //const iconStyle = { width: rem(12), height: rem(12) };
-
   return (
-    <Tabs color="indigo" variant="pills" radius="md" defaultValue={activeTab} onChange={handleChange} >
+    <Tabs color="#415A77" variant="pills" radius="md" defaultValue={activeTab} onChange={handleChange}>
       <Tabs.List>
         {tabs.map((tab) => (
           <Tabs.Tab key={tab} value={tab} leftSection={""}>
