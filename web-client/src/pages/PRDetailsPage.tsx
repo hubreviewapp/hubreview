@@ -17,9 +17,11 @@ function PRDetailsPage(props: PRDetailsPageProps) {
   const { id, name } = props;
   const tabs = ["comments", "commits", "details", "modified files"];
 
+
   const [currentTab, setCurrentTab] = React.useState<string | null>(tabs[0]);
 
   const updateTab = (newTab: string | null) => {
+
     setCurrentTab(newTab);
   };
 

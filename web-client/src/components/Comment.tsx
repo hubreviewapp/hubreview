@@ -13,7 +13,6 @@ interface CommentProps {
 export function Comment({author, text, date }: CommentProps) {
 
   return (
-
     <Paper withBorder radius="md" className={classes.comment} shadow="lg">
       <Group>
         <Avatar
@@ -30,7 +29,6 @@ export function Comment({author, text, date }: CommentProps) {
       </Group>
         <h5> {text}</h5>
         <div />
-
     </Paper>
   );
 }
