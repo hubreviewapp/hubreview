@@ -1,6 +1,6 @@
 import {
   Container, Grid, Group, Text, Title, Badge, rem,
-  Button, Paper, Stack, List, Flex, Modal, Checkbox,
+  Button, Paper, Stack, List, Flex, Modal, Checkbox, Textarea, Box, TextInput
 } from "@mantine/core";
 import {IconGitBranch, IconGitCommit, IconStars,IconCirclePlus, IconSquarePlus, IconUsersGroup, IconFile} from "@tabler/icons-react";
 import LabelButton from "../components/LabelButton";
@@ -139,7 +139,23 @@ function PRCreationPage() {
           </Paper>
         </Grid.Col>
       </Grid>
+      <Box w={"60%"} mt={"md"}>
+        <Stack>
+          <TextInput
+            withAsterisk
+            label="Add a title"
+            placeholder="Enter..."
+          />
+          <Textarea
+            label="Add a description"
+            placeholder="Enter..."
+          />
+          <Flex justify={"flex-end"}>
+            <Button>Create</Button>
+          </Flex>
+        </Stack>
 
+      </Box>
     </Container>
    );
 }
