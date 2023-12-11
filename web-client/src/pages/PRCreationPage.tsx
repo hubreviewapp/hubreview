@@ -2,7 +2,7 @@ import {
   Container, Grid, Group, Text, Title, Badge, rem,
   Button, Paper, Stack, List, Flex, Modal, Checkbox, Textarea, Box, TextInput
 } from "@mantine/core";
-import {IconGitBranch, IconGitCommit, IconStars,IconCirclePlus, IconSquarePlus, IconUsersGroup, IconFile} from "@tabler/icons-react";
+import {IconSquareRoundedCheckFilled,IconGitBranch, IconGitCommit, IconStars,IconCirclePlus, IconSquarePlus, IconUsersGroup, IconFile} from "@tabler/icons-react";
 import LabelButton from "../components/LabelButton";
 import WorkloadBarProps from "../components/WorkloadBarProps";
 import {useDisclosure} from "@mantine/hooks";
@@ -12,6 +12,8 @@ function PRCreationPage() {
   const branchIcon = <IconGitBranch style={{ width: rem(12), height: rem(12) }} />;
   const sparklesIcon = <IconStars color={"yellow"} style={{ width: rem(18), height: rem(18) }} />;
   const squarePlusIcon = <IconSquarePlus style={{ width: rem(18), height: rem(18) }} />;
+  const   iconSquare = <IconSquareRoundedCheckFilled color={"blue"} style={{ width: rem(18), height: rem(18) }}/>;
+
   const [opened, { open, close }] = useDisclosure(false);
   const [checkboxValue, setCheckboxValue] = useState<string[]>([]);
 
@@ -57,6 +59,8 @@ function PRCreationPage() {
             <Text c={"dimmed"} size={"xs"}>Last commit 3 days ago</Text>
           </Group>
           <Group>
+            {iconSquare}
+            Able to merge
             <Button leftSection={sparklesIcon} size={"xs"} variant={"subtle"} radius={"lg"}>Assign Priority</Button>
             {
               checkboxValue.map(itm =>(
@@ -151,7 +155,9 @@ function PRCreationPage() {
             placeholder="Enter..."
           />
           <Flex justify={"flex-end"}>
-            <Button>Create</Button>
+            <Button m={"md"} color={"red"}>Delete</Button>
+            <Button m={"md"} color={"gray"} variant={"outline"}>Save Draft</Button>
+            <Button m={"md"}>Create</Button>
           </Flex>
         </Stack>
 
