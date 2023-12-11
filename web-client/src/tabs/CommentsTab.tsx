@@ -18,11 +18,7 @@ function CommentsTab() {
         </div>
       ))}
 
-      {comments.map((comment) => (
-        <h1 key={comment}>{comment}</h1>
-      ))}
-
-      <hr></hr>
+      <br></br>
     </div>
   );
 }
