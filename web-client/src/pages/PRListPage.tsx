@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import PRBox from "../components/PRBox";
 import { IconSparkles, IconSearch } from '@tabler/icons-react';
 import {useState} from "react";
+import TabComp from "../components/Tab.tsx";
 import {
   Flex,
   Box,
@@ -10,7 +11,6 @@ import {
   Pagination,
   NativeSelect, Grid, TextInput, Badge, rem,
 } from "@mantine/core";
-import TabComp from "../components/Tab";
 
 function PRList() {
 
@@ -80,39 +80,12 @@ function PRList() {
         </Grid.Col>
       </Grid>
       <Box w={"70%"}>
-        <Badge
-          leftSection={iconSparkles}
-          mb={3}
-          variant={"gradient"}
-          style={{ visibility: sortValue == "Priority Queue" ? "visible" : "hidden" }}
-        >
-          Priority Queue
-        </Badge>
-        <Flex
-          direction="column"
-          style={
-            sortValue == "Priority Queue"
-              ? { border: "solid 0.5px cyan", borderRadius: "10px" }
-              : { border: "solid 0.5px #415A77", borderRadius: "10px" }
-          }
-        >
-          {prList.map((item) => (
-            <PRBox
-              key={item.id}
-              id={item.id}
-              repository={item.repository}
-              prName={item.prName}
-              labels={item.labels}
-              dateCreated={item.dateCreated}
-            />))
-          }
 
         <Badge leftSection={iconSparkles} mb={3} variant={"gradient"} style={ {visibility: sortValue == "Priority Queue" ? "visible" : "hidden"}}>Priority Queue</Badge>
         <Flex direction="column" style={sortValue == "Priority Queue" ? {border:"solid 0.5px cyan", borderRadius:"10px"}:{border:"solid 0.5px #415A77", borderRadius:"10px"}}>
-          {prsData.map((item) => (
+          {prList.map((item) => (
             <PRBox key={item.id} id={item.id} repository={item.repository} prName={item.prName} labels={item.labels} dateCreated={item.dateCreated}/>
           ))}
-        </Flex>
         </Flex>
       </Box>
 

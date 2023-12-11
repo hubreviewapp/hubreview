@@ -12,9 +12,9 @@ interface PRDetailsPageProps {
   name: string;
 }
 
-function PRDetailsPage(props: PRDetailsPageProps) {
+function PRDetailsPage({id, name}: PRDetailsPageProps) {
   const PRIcon = <IconGitPullRequest style={{ width: rem(18), height: rem(18) }} />;
-  const { id, name } = props;
+
   const tabs = ["comments", "commits", "details", "modified files"];
 
 

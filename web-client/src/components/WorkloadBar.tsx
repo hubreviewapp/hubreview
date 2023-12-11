@@ -45,44 +45,53 @@ function WorkloadBar(){
   ]
     const iconInfo = <IconInfoCircle style={{ width: rem(18), height: rem(18) }}/>;
   return(
-  <Paper shadow="xl" radius="md" p="sm" mt={"lg"} withBorder>
-    <Stack>
-      <Group>
-        <Text fw={500} size={"lg"}>Assign Reviewer</Text>
-        <Text size={"sm"} color={"#415A77"}>Reviewer Workload</Text>
-        <Box>
-          <Tooltip label={"The workload percentage was calculated based on the number of reviews assigned to " +
-          "users in relation to the specified review capacity."}>
-            <Badge leftSection={iconInfo} variant={"transparent"}/>
-          </Tooltip>
-        </Box>
-      </Group>
-      {
-        reviewers.map(itm=>(
-          <Grid key={itm.id}>
-            <Grid.Col span={6}>
-              <Group>
-                <IconCirclePlus color={"green"} style={{width: rem(22), height: rem(22) }} />
-                <Text size={"sm"}>{itm.username}</Text>
-              </Group>
+    <Box w={"370px"}>
+      <Paper shadow="xl" radius="md" p="sm" mt={"lg"} withBorder>
+        <Stack >
+
+          <Text align={"center"} fw={500} size={"lg"}>Assign Reviewer</Text>
+          <Grid>
+            <Grid.Col span={5}>
+
             </Grid.Col>
-            <Grid.Col span={4}>
-              <Progress m={"5px"} size={"lg"} color={barColor(itm.capacity, itm.waiting)} value={(itm.waiting/ itm.capacity)*100}/>
+            <Grid.Col span={5}>
+              <Text size={"sm"} c={"dimmed"}>Reviewer Workload</Text>
             </Grid.Col>
             <Grid.Col span={2}>
-              <Text c={"dimmed"} size={"sm"}>
-                {itm.waiting}/
-                  {itm.capacity} </Text>
+              <Box>
+                <Tooltip label={"waiting reviews / reviewer capacity"}>
+                  <Badge leftSection={iconInfo} variant={"transparent"}/>
+                </Tooltip>
+              </Box>
             </Grid.Col>
           </Grid>
-        ))
-      }
-      <Flex justify={"space-evenly"}>
-        <Button size={"xs"} variant={"filled"}>Assign</Button>
-        <Button size={"xs"} variant={"light"} >Split PR into Reviewers</Button>
-      </Flex>
-    </Stack>
-  </Paper>
+          {
+            reviewers.map(itm=>(
+              <Grid key={itm.id}>
+                <Grid.Col span={6}>
+                  <Group>
+                    <IconCirclePlus color={"green"} style={{width: rem(22), height: rem(22) }} />
+                    <Text size={"sm"}>{itm.username}</Text>
+                  </Group>
+                </Grid.Col>
+                <Grid.Col span={4}>
+                  <Progress m={"5px"} size={"lg"} color={barColor(itm.capacity, itm.waiting)} value={(itm.waiting/ itm.capacity)*100}/>
+                </Grid.Col>
+                <Grid.Col span={2}>
+                  <Text c={"dimmed"} size={"sm"}>
+                    {itm.waiting}/
+                      {itm.capacity} </Text>
+                </Grid.Col>
+              </Grid>
+            ))
+          }
+          <Flex justify={"space-evenly"}>
+            <Button size={"xs"} variant={"filled"}>Assign</Button>
+            <Button size={"xs"} variant={"light"} >Split PR into Reviewers</Button>
+          </Flex>
+        </Stack>
+      </Paper>
+    </Box>
   );
 }
 

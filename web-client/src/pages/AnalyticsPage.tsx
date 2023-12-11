@@ -1,8 +1,17 @@
-import {Box} from "@mantine/core";
+import {Box, Grid, Group, Container} from "@mantine/core";
+import WorkloadBar from "../components/WorkloadBar";
 
 function AnalyticsPage() {
   return (
-        <Box>Analytics Page</Box>
+        <Container>
+          <Group>
+            <WorkloadBar/>
+            <WorkloadBar/>
+          </Group>
+
+
+
+        </Container>
   );
 }
 
