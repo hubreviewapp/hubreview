@@ -1,5 +1,5 @@
 import { Route, Routes } from "react-router-dom";
-//import AnalyticsPage from "./pages/AnalyticsPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
 import PRListPage from "./pages/PRListPage";
 import NavBar from "./components/NavBar";
 import PRDetailsPage from "./pages/PRDetailsPage";
@@ -28,8 +28,9 @@ function App() {
       </Route>
       <Route path="/pulls/:pullid" element={<PRDetailsPage id={"1"} name={"pull request"} />} />
       <Route path={"/repositories"} element={<RepositoriesPage/>}/>
-      <Route path="/analytics" element={<SignInPage />} />
+      <Route path="/analytics" element={<AnalyticsPage />} />
       <Route path="/createPR" element={<PRCreationPage />} />
+      <Route path="/signIn" element={<SignInPage />} />
       <Route path="/pulls/create" element={<PRDetailsPage  id={"1"} name={"pull request"} />} />
 
     </Routes>

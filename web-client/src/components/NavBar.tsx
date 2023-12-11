@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
-import {Container, Button, Title, Grid, Box} from "@mantine/core";
+import {Container, Button, Title, Grid, Box, rem} from "@mantine/core";
 import {useState} from "react";
+import {IconLogout} from "@tabler/icons-react";
 
 function NavBar() {
-  const [isActive, setIsActive] = useState(1);
-
+  const [isActive, setIsActive] = useState(0);
+  const iconLogout = <IconLogout style={{ width: rem(15), height: rem(15) }} />;
   const handleClick = (buttonId:number) => {
     setIsActive(buttonId);
   }
@@ -26,6 +27,9 @@ function NavBar() {
             </Button>
             <Button component={Link} variant={isActive == 3 ? "outline": "transparent"} to="/analytics" onClick={() => handleClick(3)}>
               Analytics
+            </Button>
+            <Button rightSection={iconLogout} disabled={isActive == 0} component={Link} variant={"transparent"} to="/signIn" onClick={() => handleClick(0)}>
+              Log out
             </Button>
           </Grid.Col>
         </Grid>
