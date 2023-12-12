@@ -1,10 +1,10 @@
 import {
   Container, Grid, Group, Text, Title, Badge, rem,
-  Button, Paper, Stack, List, Flex, Modal, Checkbox, Textarea, Box, TextInput, Select
+  Button, Paper, Stack, List, Flex, Textarea, Box, TextInput, Select, MultiSelect
 } from "@mantine/core";
-import {IconGitBranch, IconGitCommit, IconSquarePlus, IconUsersGroup, IconFile} from "@tabler/icons-react";
+import {IconGitBranch, IconGitCommit, IconUsersGroup, IconFile} from "@tabler/icons-react";
 import LabelButton from "../components/LabelButton";
-import {useDisclosure} from "@mantine/hooks";
+
 import {useState} from "react";
 import WorkloadBar from "../components/WorkloadBar";
 import PriorityBadge from "../components/PriorityBadge";
@@ -12,42 +12,14 @@ import PriorityBadge from "../components/PriorityBadge";
 function PRCreationPage() {
   const branchIcon = <IconGitBranch style={{ width: rem(12), height: rem(12) }} />;
   //const sparklesIcon = <IconStars color={"yellow"} style={{ width: rem(18), height: rem(18) }} />;
-  const squarePlusIcon = <IconSquarePlus style={{ width: rem(18), height: rem(18) }} />;
+ // const squarePlusIcon = <IconSquarePlus style={{ width: rem(18), height: rem(18) }} />;
   //const iconSquare = <IconSquareRoundedCheckFilled color={"blue"} style={{ width: rem(18), height: rem(18) }}/>;
 
-  const [opened, { open, close }] = useDisclosure(false);
-  const [checkboxValue, setCheckboxValue] = useState<string[]>([]);
+  const [labelValue, setLabelValue] = useState<string[]>([]);
   const [priority, setPriority] = useState<string | null>('');
-  const labelList: { label: string, key: number }[] = [
-    { label: "enhancement", key: 1 },
-    { label: "bug fix", key: 1 },
-    { label: "refactoring", key: 3 },
-    { label: "question", key: 4 }
-  ];
 
   return (
     <Container size={"lg"}>
-      <Modal opened={opened} onClose={close} title="Add Label">
-        <Checkbox.Group value={checkboxValue} onChange={setCheckboxValue}>
-        {
-            labelList.map(itm =>
-                <Checkbox
-                  key={itm.key}
-                  label={itm.label.toUpperCase()}
-                  value={itm.label}
-                  color="lime"
-                  radius="lg"
-                  size="md"
-                  mt={"md"}
-                />
-            )
-          }
-        </Checkbox.Group>
-        <Group justify={"flex-end"}>
-          <Button onClick={close} color={"gray"} size={"sm"}>Close</Button>
-          <Button onClick={()=>setCheckboxValue([])} color={"gray"} variant={"outline"} size={"sm"} >Clear</Button>
-        </Group>
-      </Modal>
       <Grid>
         <Grid.Col span={8}>
           <Title mt={"md"} order={3} c={"dimmed"}>Create a New PR</Title>
@@ -61,23 +33,29 @@ function PRCreationPage() {
             <Text c={"dimmed"} size={"xs"}>Last commit 3 days ago</Text>
           </Group>
           <Group>
-
-
             <Select
+              label={"Assign Priority"}
               value={priority} onChange={setPriority}
-
               placeholder="Assign Priority"
               data={["High", "Medium", "Low"]}
               clearable
             />
-
-            <PriorityBadge label={priority} size={"lg"}/>
+            <MultiSelect
+               label={"Add Label"}
+               placeholder="Select Label"
+               data={['bug fix', 'refactoring', 'question', 'enhancement']}
+               defaultValue={['React']}
+               clearable value={labelValue}
+               hidePickedOptions
+               onChange={setLabelValue} />
+          </Group>
+          <Group mt={"md"}>
+            <PriorityBadge label={priority} size={"md"}/>
             {
-              checkboxValue.map(itm =>(
+              labelValue.length == 0 ? <Badge variant={"light"}>No Label Added</Badge> : labelValue.map(itm =>(
                 <LabelButton key={itm} label={itm} size={"md"}/>
               ))
             }
-            <Button onClick={open} leftSection={squarePlusIcon} size={"xs"} variant={"subtle"} radius={"lg"}>Add Label</Button>
           </Group>
           <Group>
           <Paper mt={"md"} p={"sm"} withBorder>
