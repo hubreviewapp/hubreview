@@ -1,28 +1,30 @@
 import {
   Container, Grid, Group, Text, Title, Badge, rem,
-  Button, Paper, Stack, List, Flex, Modal, Checkbox, Textarea, Box, TextInput
+  Button, Paper, Stack, List, Flex, Modal, Checkbox, Textarea, Box, TextInput, Select
 } from "@mantine/core";
-import {IconSquareRoundedCheckFilled,IconGitBranch, IconGitCommit, IconStars, IconSquarePlus, IconUsersGroup, IconFile} from "@tabler/icons-react";
+import {IconGitBranch, IconGitCommit, IconSquarePlus, IconUsersGroup, IconFile} from "@tabler/icons-react";
 import LabelButton from "../components/LabelButton";
 import {useDisclosure} from "@mantine/hooks";
 import {useState} from "react";
 import WorkloadBar from "../components/WorkloadBar";
+import PriorityBadge from "../components/PriorityBadge";
 
 function PRCreationPage() {
   const branchIcon = <IconGitBranch style={{ width: rem(12), height: rem(12) }} />;
-  const sparklesIcon = <IconStars color={"yellow"} style={{ width: rem(18), height: rem(18) }} />;
+  //const sparklesIcon = <IconStars color={"yellow"} style={{ width: rem(18), height: rem(18) }} />;
   const squarePlusIcon = <IconSquarePlus style={{ width: rem(18), height: rem(18) }} />;
-  const iconSquare = <IconSquareRoundedCheckFilled color={"blue"} style={{ width: rem(18), height: rem(18) }}/>;
+  //const iconSquare = <IconSquareRoundedCheckFilled color={"blue"} style={{ width: rem(18), height: rem(18) }}/>;
 
   const [opened, { open, close }] = useDisclosure(false);
   const [checkboxValue, setCheckboxValue] = useState<string[]>([]);
-
+  const [priority, setPriority] = useState<string | null>('');
   const labelList: { label: string, key: number }[] = [
     { label: "enhancement", key: 1 },
     { label: "bug fix", key: 1 },
     { label: "refactoring", key: 3 },
     { label: "question", key: 4 }
   ];
+
   return (
     <Container size={"lg"}>
       <Modal opened={opened} onClose={close} title="Add Label">
@@ -42,7 +44,7 @@ function PRCreationPage() {
           }
         </Checkbox.Group>
         <Group justify={"flex-end"}>
-          <Button onClick={close} color={"gray"} size={"sm"} >Close</Button>
+          <Button onClick={close} color={"gray"} size={"sm"}>Close</Button>
           <Button onClick={()=>setCheckboxValue([])} color={"gray"} variant={"outline"} size={"sm"} >Clear</Button>
         </Group>
       </Modal>
@@ -59,9 +61,17 @@ function PRCreationPage() {
             <Text c={"dimmed"} size={"xs"}>Last commit 3 days ago</Text>
           </Group>
           <Group>
-            {iconSquare}
-            Able to merge
-            <Button leftSection={sparklesIcon} size={"xs"} variant={"subtle"} radius={"lg"}>Assign Priority</Button>
+
+
+            <Select
+              value={priority} onChange={setPriority}
+
+              placeholder="Assign Priority"
+              data={["High", "Medium", "Low"]}
+              clearable
+            />
+
+            <PriorityBadge label={priority} size={"lg"}/>
             {
               checkboxValue.map(itm =>(
                 <LabelButton key={itm} label={itm} size={"md"}/>
