@@ -6,7 +6,7 @@ function ModifiedFilesTab() {
   return (
     <Box style={{border: "2px groove gray", width: 800, borderRadius: 30}}>
       {modifiedFiles.map((file, index) => (
-        <Box style={{display:"flex",
+        <Box key={index} style={{display:"flex",
                     justifyContent: "space-between",
                     borderBottom: index === modifiedFiles.length - 1 ? "none" : "2px groove gray",
                     }}

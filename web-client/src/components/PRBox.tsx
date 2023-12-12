@@ -38,9 +38,9 @@ function PRBox({ id,
       </Grid.Col>
       <Grid.Col span={4}>
         <Flex justify={"end"}>
-        {labels.map((label) => (
+          {labels.map((label) => (
             <LabelButton key={label} label={label} size={"md"}/>
-        ))}
+          ))}
         </Flex>
       </Grid.Col>
       <Grid.Col span={1}>

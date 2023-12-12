@@ -27,8 +27,8 @@ export function Comment({author, text, date }: CommentProps) {
           </Text>
         </div>
       </Group>
-        <h5> {text}</h5>
-        <div />
+      <h5> {text}</h5>
+      <div />
     </Paper>
   );
 }
