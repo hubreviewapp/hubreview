@@ -1,5 +1,8 @@
 import {Badge, Box, Flex, rem, Text, Button} from "@mantine/core";
 import { IconSparkles } from '@tabler/icons-react'
+import UserLogo from "../assets/icons/user.png";
+import classes from "../styles/PRList.module.css";
+
 
 export default function PrContextTab() {
   const contextText = "This pull request addresses a critical bug in the user authentication " +
@@ -13,14 +16,29 @@ export default function PrContextTab() {
   const iconSparkles = <IconSparkles style={{ width: rem(22), height: rem(22) }} />;
 
   return (
-    <Box >
-      <Badge leftSection={iconSparkles} mb={3} variant={"gradient"} style={ {visibility:  "visible" }}>Context</Badge>
-      <Flex direction="column" style={{border:"solid 0.5px cyan", borderRadius:"10px"}}>
-        <Text size="md" style={{ textAlign: "center", padding: "10px"}}> {contextText}</Text>
-      </Flex>
-      <Text size="sm" style={{marginTop:"3px", color:"gray", marginBottom: "3px"}}>
-        Context seems unclear/problematic?</Text>
-      <Button variant="filled" color="#415A77"> Generate new one </Button>
+    <Box>
+      <Box >
+        <Badge leftSection={iconSparkles} mb={3} variant={"gradient"} style={ {visibility:  "visible" }}>Context</Badge>
+        <Flex direction="column" style={{border:"solid 0.5px cyan", borderRadius:"10px"}}>
+          <Text size="md" style={{ textAlign: "center", padding: "10px"}}> {contextText}</Text>
+        </Flex>
+        <Text size="sm" style={{marginTop:"3px", color:"gray", marginBottom: "3px"}}>
+          Context seems unclear/problematic?</Text>
+        <Button variant="filled" color="#415A77"> Generate new one </Button>
+      </Box>
+
+      <Badge size={"lg"} color={""} style={{marginTop:25}}>
+        Contributers
+      </Badge>
+      <Box style={{display:"flex", marginBottom:"3px"}}>
+        <Box component="img" src={UserLogo} alt={"logo"} className={classes.logo} />
+        <Text size={"md"} style={{padding: "3px"}}>aysekelleci</Text>
+      </Box>
+      <Box style={{display:"flex", marginBottom:"3px"}}>
+        <Box component="img" src={UserLogo} alt={"logo"} className={classes.logo} />
+        <Text size={"md"} style={{padding: "3px"}}> irem_aydın</Text>
+      </Box>
+
     </Box>
   )
 }
