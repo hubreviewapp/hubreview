@@ -11,7 +11,7 @@ function PriorityBadge({ label, size }: PriorityBadgeProps) {
     label === "High" ? "red" : label === "Medium" ? "yellow": "green";
   return (
     <Box>{
-      label == null ?
+      label == "" ?
         <Badge size= {size} variant={"light"}>No Priority</Badge> :
         <Badge
           size= {size}

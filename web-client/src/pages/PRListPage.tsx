@@ -39,7 +39,6 @@ function PRList() {
       setPrList([]);
     }
   };
-
   return (
     <Flex h={"500px"} p={0} m={0} w="100%" justify="space-evenly"  align={"center"} direction="column" >
       <Grid w={"70%"}>
@@ -75,7 +74,7 @@ function PRList() {
           />
         </Grid.Col>
         <Grid.Col>
-          <TabComp tabs={prTabs} updateTab={updateTab}></TabComp>
+          <TabComp tabs={prTabs} updateTab={updateTab}/>
           {currentTab === 'modified files' }
         </Grid.Col>
       </Grid>

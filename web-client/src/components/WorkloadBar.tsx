@@ -14,7 +14,6 @@ import {
 } from "@mantine/core";
 import {IconCirclePlus, IconInfoCircle} from "@tabler/icons-react";
 
-
 function barColor(capacity:number, waiting:number){
   const workload = waiting / capacity * 100;
   return workload > 80 ? "red" :
@@ -48,7 +47,6 @@ function WorkloadBar(){
     <Box w={"370px"}>
       <Paper shadow="xl" radius="md" p="sm" mt={"lg"} withBorder>
         <Stack >
-
           <Text align={"center"} fw={500} size={"lg"}>Assign Reviewer</Text>
           <Grid>
             <Grid.Col span={5}>
@@ -65,17 +63,25 @@ function WorkloadBar(){
               </Box>
             </Grid.Col>
           </Grid>
+
+
           {
             reviewers.map(itm=>(
               <Grid key={itm.id}>
                 <Grid.Col span={6}>
                   <Group>
-                    <IconCirclePlus color={"green"} style={{width: rem(22), height: rem(22) }} />
+                    <Box>
+                      <IconCirclePlus color={"green"} style={{width: rem(22), height: rem(22), cursor:"pointer" }} />
+                    </Box>
                     <Text size={"sm"}>{itm.username}</Text>
                   </Group>
                 </Grid.Col>
                 <Grid.Col span={4}>
-                  <Progress m={"5px"} size={"lg"} color={barColor(itm.capacity, itm.waiting)} value={(itm.waiting/ itm.capacity)*100}/>
+                  <Progress.Root m={"5px"} size={"lg"}>
+                  <Progress.Section  color={barColor(itm.capacity, itm.waiting)} value={(itm.waiting/ itm.capacity)*100}>
+                    <Progress.Label>{(itm.waiting/ itm.capacity)*100}%</Progress.Label>
+                  </Progress.Section>
+                  </Progress.Root>
                 </Grid.Col>
                 <Grid.Col span={2}>
                   <Text c={"dimmed"} size={"sm"}>
@@ -87,7 +93,6 @@ function WorkloadBar(){
           }
           <Flex justify={"space-evenly"}>
             <Button size={"xs"} variant={"filled"}>Assign</Button>
-            <Button size={"xs"} variant={"light"} >Split PR into Reviewers</Button>
           </Flex>
         </Stack>
       </Paper>
