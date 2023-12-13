@@ -1,13 +1,13 @@
 import { Group, Container} from "@mantine/core";
-import WorkloadBar from "../components/WorkloadBar";
 import ReviewBuddyBox from "../components/ReviewBuddyBox";
 import ApprovalRejectionRates from "../components/ApprovalRejectionRates";
+import WorkloadAnalytics from "../components/WorkloadAnalytics";
 
 function AnalyticsPage() {
   return (
         <Container>
           <Group>
-            <WorkloadBar/>
+            <WorkloadAnalytics/>
             <ReviewBuddyBox/>
             <ApprovalRejectionRates/>
           </Group>

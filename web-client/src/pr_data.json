@@ -5,7 +5,8 @@
     "repository": "my-repo",
     "author": "John Doe",
     "dateCreated": "2023-01-01",
-    "labels": ["enhancement", "refactoring"]
+    "labels": ["enhancement", "refactoring"],
+    "priority": "High"
   },
   {
     "id": 2,
@@ -13,7 +14,8 @@
     "repository": "another-repo",
     "author": "Jane Smith",
     "dateCreated": "2023-01-02",
-    "labels": ["enhancement", "bug fix"]
+    "labels": ["enhancement", "bug fix"],
+    "priority": "Medium"
   },
   {
     "id": 3,
@@ -21,6 +23,7 @@
     "repository": "third-repo",
     "author": "Bob Johnson",
     "dateCreated": "2023-01-03",
-    "labels": ["refactoring"]
+    "labels": ["refactoring"],
+    "priority": "Low"
   }
 ]
