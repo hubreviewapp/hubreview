@@ -4,6 +4,7 @@ import { Grid, Box , Flex} from '@mantine/core';
 import classes from "../styles/PRList.module.css";
 import LabelButton from "./LabelButton";
 import {Link} from "react-router-dom";
+import PriorityBadge from "./PriorityBadge";
 
 interface PRBoxProps {
   id: number;
@@ -11,17 +12,21 @@ interface PRBoxProps {
   repository: string;
   dateCreated: string;
   labels: string[];
+  priority:string;
+  pQueueActive:boolean;
 }
 
 function PRBox({ id,
                  prName,
                  repository,
                  dateCreated,
-                 labels}: PRBoxProps) {
+                 labels,
+                 priority,
+                 pQueueActive}: PRBoxProps) {
 
   return(
     <Grid  m={5} p={5}>
-      <Grid.Col span={7}>
+      <Grid.Col span={8}>
         <Flex justify={"flex-start"}>
           <Box fw={200} mr={"10px"} ml={"10px"}>{id}</Box>
           <Box component="img" src={UserLogo} alt={"logo"} className={classes.logo} />
@@ -32,11 +37,15 @@ function PRBox({ id,
           <Link to={"repositories"} style={{textDecoration:"none"}}>
             <Box>{repository}</Box>
           </Link>
-          <Box className={classes.light}>created :{dateCreated}</Box>
+          <Box className={classes.light}>created :{dateCreated}</Box>{
+          pQueueActive ? <PriorityBadge label={priority} size={"sm"}/>:
+            <Box/>
+        }
+
         </Flex>
 
       </Grid.Col>
-      <Grid.Col span={4}>
+      <Grid.Col span={3}>
         <Flex justify={"end"}>
           {labels.map((label) => (
             <LabelButton key={label} label={label} size={"md"}/>

@@ -83,7 +83,7 @@ function PRList() {
         <Badge leftSection={iconSparkles} mb={3} variant={"gradient"} style={ {visibility: sortValue == "Priority Queue" ? "visible" : "hidden"}}>Priority Queue</Badge>
         <Flex direction="column" style={sortValue == "Priority Queue" ? {border:"solid 0.5px cyan", borderRadius:"10px"}:{border:"solid 0.5px #415A77", borderRadius:"10px"}}>
           {prList.map((item) => (
-            <PRBox key={item.id} id={item.id} repository={item.repository} prName={item.prName} labels={item.labels} dateCreated={item.dateCreated}/>
+            <PRBox key={item.id} id={item.id} repository={item.repository} prName={item.prName} labels={item.labels} dateCreated={item.dateCreated} priority={item.priority} pQueueActive={sortValue=="Priority Queue"}/>
           ))}
         </Flex>
       </Box>

@@ -30,12 +30,17 @@ function ReviewBuddyBox(){
       usernames: ["alper_mum","vedat_xyz"],
       rates:["30%", "50%"]
     },
+    {
+      id: 4,
+      usernames: ["alper_mum","vedat_xyz"],
+      rates:["30%", "50%"]
+    },
   ];
   const iconInfo = <IconInfoCircle style={{ width: rem(18), height: rem(18) }}/>;
 
   return(
-    <Box w={"400px"}>
-      <Paper shadow="xl" radius="md" p="sm" mt={"lg"} withBorder>
+    <Box w={"400px"} >
+      <Paper  h={"280px"} shadow="xl" radius="md" p="sm" mt={"lg"} withBorder>
         <Text align={"center"} fw={500} size={"lg"} mb={"sm"}>Frequent Review Buddies
           <Tooltip label={"The percentage values indicate the proportion of opened pull requests that were reviewed by the given buddy."}>
             <Badge leftSection={iconInfo} variant={"transparent"}/>

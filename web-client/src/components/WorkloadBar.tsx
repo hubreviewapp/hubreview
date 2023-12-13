@@ -45,7 +45,7 @@ function WorkloadBar(){
     const iconInfo = <IconInfoCircle style={{ width: rem(18), height: rem(18) }}/>;
   return(
     <Box w={"370px"}>
-      <Paper shadow="xl" radius="md" p="sm" mt={"lg"} withBorder>
+      <Paper h={"280px"} shadow="xl" radius="md" p="sm" mt={"lg"} withBorder>
         <Stack >
           <Text align={"center"} fw={500} size={"lg"}>Assign Reviewer</Text>
           <Grid>
