@@ -9,6 +9,7 @@ import { MantineProvider} from '@mantine/core';
 import RepositoriesPage from "./pages/RepositoriesPage";
 import SignInPage from "./pages/SignInPage";
 import PRCreationPage from "./pages/PRCreationPage";
+import ApprRejRatesForAuthorPage from "./pages/ApprRejRatesForAuthorPage.tsx";
 
 function App() {
 
@@ -33,6 +34,7 @@ function App() {
       <Route path="/signIn" element={<SignInPage />} />
       <Route path="/pulls/create" element={<PRDetailsPage  id={"1"} name={"pull request"} />} />
 
+      <Route path="/analytics/author/rates" element={<ApprRejRatesForAuthorPage />} />
     </Routes>
     </MantineProvider>
 

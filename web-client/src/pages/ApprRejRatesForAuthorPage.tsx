@@ -16,7 +16,7 @@ export default function ApprRejRatesForAuthorPage() {
   const [filteredTimeline, setFilteredTimeline] = useState("All");
 
 
-  const elements2 = [
+  const elements = [
     { author: 'aysekelleci', approves: 10, rejects: 4, waiting: 7 },
     { author: 'iremaydın', approves: 20, rejects: 5, waiting: 12 },
     { author: 'ecekahraman', approves: 18, rejects: 6, waiting: 2},
@@ -25,7 +25,7 @@ export default function ApprRejRatesForAuthorPage() {
   ];
 
 
-  const rows = elements2.map((element) => (
+  const rows = elements.map((element) => (
     <Table.Tr key={element.author}>
       <Table.Td>{element.author}</Table.Td>
       <Table.Td>
@@ -60,7 +60,7 @@ export default function ApprRejRatesForAuthorPage() {
   ));
 
   return (
-    <Box>
+    <Box style={{padding: "40px"}}>
       <Text size={"xl"}> Approve Rejection Rates for Author </Text>
       <br/>
       <Box display="flex" >
@@ -95,7 +95,8 @@ export default function ApprRejRatesForAuthorPage() {
 
       </Box>
       <br></br>
-      <Table style={{border: "solid 3px "}}>
+
+      <Table striped highlightOnHover style={{border: "solid 3px ", width:"80%", justifyContent: "center"}}>
         <Table.Thead>
           <Table.Tr>
             <Table.Th>Author</Table.Th>

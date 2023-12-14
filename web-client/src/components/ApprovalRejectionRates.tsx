@@ -9,6 +9,7 @@ import {
   Table, Stack
 } from "@mantine/core";
 import {IconCheck, IconInfoCircle, IconX, IconClock} from "@tabler/icons-react";
+import { Link } from 'react-router-dom';
 
 
 function calculatePercentage(n1:number, n2:number){
@@ -81,7 +82,7 @@ function ApprovalRejectionRates(){
     <Box w={"550px"}>
       <Paper shadow="xl" radius="md" p="sm" mt={"lg"} withBorder>
         <Stack align="center">
-        <Text align={"center"} fw={500} size={"lg"} mb={"sm"}>Approval/Rejection Rates for Author
+        <Text fw={500} size={"lg"} mb={"sm"}>Approval/Rejection Rates for Author
           <Tooltip label={"Approval/Rejection rates of PRs for authors"}>
             <Badge leftSection={iconInfo} variant={"transparent"}/>
           </Tooltip>
@@ -99,7 +100,7 @@ function ApprovalRejectionRates(){
           </Table.Thead>
           <Table.Tbody>{rows}</Table.Tbody>
         </Table>
-        <Button  w={"100px"}>See More</Button>
+        <Button  w={"100px"} component={Link} to="../analytics/author/rates" >See More</Button>
       </Stack>
       </Paper>
     </Box>
