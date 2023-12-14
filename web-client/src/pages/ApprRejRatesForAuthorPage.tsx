@@ -1,0 +1,89 @@
+import { Table, Box, Text } from '@mantine/core';
+import {useState} from "react";
+import {NativeSelect} from "@mantine/core";
+
+export default function ApprRejRatesForAuthorPage() {
+
+  const sort : string[] = ["Priority Queue", "Most approved", "Least approved", "Most rejected", "Least rejected"];
+  const repos :string[] = ["All", "ReLink", "Eventium"]
+  const authors :string[] = ["All", "Ece-Kahraman", "Ayse-Kelleci", "Alper-Mumcular", "Irem-Aydın", "Vedat-Arıcan"]
+  const timeline: string[] = ["All", "Last week", "Last 2 weeks", "Last month", "Last 3 months"]
+
+  const [sortValue, setSortValue] = useState('Least rejected');
+  const [filteredRepo, setFilteredRepo] = useState("All");
+  const [filteredAuthor, setFilteredAuthor] = useState("All");
+  const [filteredTimeline, setFilteredTimeline] = useState("All");
+
+
+  const elements2 = [
+    { author: 'aysekelleci', approves: 10, rejects: 4, waiting: 7 },
+    { author: 'iremaydın', approves: 20, rejects: 5, waiting: 12 },
+    { author: 'ecekahraman', approves: 18, rejects: 6, waiting: 2},
+    { author: 'alpermumcular', approves: 18, rejects: 12, waiting: 12 },
+    { author: 'vedatarican', approves: 15, rejects: 5, waiting: 3 },
+  ];
+
+
+  const rows = elements2.map((element) => (
+    <Table.Tr key={element.author}>
+      <Table.Td>{element.author}</Table.Td>
+      <Table.Td>{element.approves}</Table.Td>
+      <Table.Td>{element.rejects}</Table.Td>
+      <Table.Td>{element.waiting}</Table.Td>
+      <Table.Td>{100 * element.approves / (element.rejects + element.approves)}% </Table.Td>
+      <Table.Td>{100 * element.rejects / (element.rejects + element.approves)}% </Table.Td>
+    </Table.Tr>
+  ));
+
+  return (
+    <Box>
+      <Text size={"xl"}> Approve Rejection Rates for Author </Text>
+      <br/>
+      <Box display="flex" >
+
+        <NativeSelect
+          description="Sort"
+          value={sortValue}
+          onChange={(event:React.ChangeEvent<HTMLSelectElement>) => setSortValue(event.currentTarget.value)}
+          data={sort}
+        /> &ensp;
+
+        <NativeSelect
+          description="Select Author"
+          value={filteredAuthor}
+          onChange={(event) => setFilteredAuthor(event.currentTarget.value)}
+          data={authors}
+        /> &ensp;
+
+        <NativeSelect
+          description="Select Repo"
+          value={filteredRepo}
+          onChange={(event) => setFilteredRepo(event.currentTarget.value)}
+          data={repos}
+        /> &ensp;
+
+        <NativeSelect
+          description="Select Timeline"
+          value={filteredTimeline}
+          onChange={(event) => setFilteredTimeline(event.currentTarget.value)}
+          data={timeline}
+        /> &ensp;
+
+      </Box>
+      <br></br>
+      <Table style={{border: "solid 3px "}}>
+        <Table.Thead>
+          <Table.Tr>
+            <Table.Th>Author</Table.Th>
+            <Table.Th>Approvals</Table.Th>
+            <Table.Th>Rejections</Table.Th>
+            <Table.Th>Waiting</Table.Th>
+            <Table.Th>Approval Rate</Table.Th>
+            <Table.Th>Rejection Rate</Table.Th>
+          </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody>{rows}</Table.Tbody>
+      </Table>
+    </Box>
+  );
+}
