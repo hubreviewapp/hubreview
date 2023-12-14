@@ -1,6 +1,7 @@
-import { Table, Box, Text } from '@mantine/core';
+import { Table, Box, Text, rem } from '@mantine/core';
 import {useState} from "react";
 import {NativeSelect} from "@mantine/core";
+import {IconCheck, IconX, IconClock} from "@tabler/icons-react";
 
 export default function ApprRejRatesForAuthorPage() {
 
