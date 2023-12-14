@@ -1,4 +1,5 @@
 import prsData from "../pr_data.json";
+import repoDataJson from "../repo_data.json";
 import { Link } from "react-router-dom";
 import PRBox from "../components/PRBox";
 import { IconSparkles, IconSearch } from '@tabler/icons-react';
@@ -9,8 +10,9 @@ import {
   Box,
   Button,
   Pagination,
-  NativeSelect, Grid, TextInput, Badge, rem,
+  NativeSelect, Grid, TextInput, Badge, rem, Modal, Group, Stack, Select
 } from "@mantine/core";
+import {useDisclosure} from "@mantine/hooks";
 
 function PRList() {
 
@@ -29,7 +31,13 @@ function PRList() {
 
   const prTabs: string[] = ["created", "assigned", "merged", "closed"];
   const [currentTab, setCurrentTab] = useState<string|null>(prTabs[1]);
-  const [prList, setPrList] = useState(prsData)
+  const [prList, setPrList] = useState(prsData);
+  const [opened, { open, close }] = useDisclosure(false);
+  const [repoValue, setRepoValue] = useState<string | null>('');
+  const [targetBranch, setTargetBranch] = useState('');
+  const [baseBranch, setBaseBranch] = useState('');
+  const repoData = repoDataJson;
+
   const updateTab = (newTab: string|null) => {
     setCurrentTab(newTab);
     if (newTab === "created") {
@@ -92,10 +100,47 @@ function PRList() {
         <Pagination color="primary" total={4}/>
       </Box>
       <Box m={3}>
-        <Link to={"/createPR"}>
-          <Button variant="contained">Create New PR</Button>
-        </Link>
+
+        <Button onClick={open} variant="contained">Create New PR</Button>
+
       </Box>
+
+      <Modal opened={opened} onClose={close} title="Select Repository and Branches">
+          <Stack m={"md"}>
+            <Select
+              label="Select a Repository"
+              withAsterisk
+              clearable
+              value={repoValue}
+              onChange={setRepoValue}
+              data={repoData.map(obj => obj.name)}
+            />
+            <Group>
+              <NativeSelect
+                disabled={repoValue==""}
+                label="Select the base branch"
+                withAsterisk
+                value={baseBranch}
+                onChange={(event) => setBaseBranch(event.currentTarget.value)}
+                data={repoValue=="" ? [] :repoData.find(itm=>itm.name == repoValue).branches}
+              />
+              <NativeSelect
+                disabled={repoValue==""}
+                label="Select the target branch"
+                withAsterisk
+                value={targetBranch}
+                onChange={(event) => setTargetBranch(event.currentTarget.value)}
+                data={repoValue=="" ? [] :repoData.find(itm=>itm.name == repoValue).branches}
+              />
+            </Group>
+          </Stack>
+        <Group justify={"flex-end"}>
+          <Button color={"gray"} onClick={close}>Close</Button>
+          <Link to={"/createPR"}>
+            <Button variant="contained">Create New PR</Button>
+          </Link>
+        </Group>
+      </Modal>
     </Flex>
   );
 }
