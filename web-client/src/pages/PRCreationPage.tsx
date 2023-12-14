@@ -8,6 +8,7 @@ import LabelButton from "../components/LabelButton";
 import {useState} from "react";
 import WorkloadBar from "../components/WorkloadBar";
 import PriorityBadge from "../components/PriorityBadge";
+import FileGrouping from "../components/FileGrouping";
 
 function PRCreationPage() {
   const branchIcon = <IconGitBranch style={{ width: rem(12), height: rem(12) }} />;
@@ -86,6 +87,11 @@ function PRCreationPage() {
           <WorkloadBar/>
         </Grid.Col>
       </Grid>
+
+
+      <FileGrouping name={"Group 1"} id={""} files={["add.py", "add22.py"]} reviewers={["ayse","irem"]}/>
+
+
       <Box w={"60%"} mt={"md"}>
         <Stack>
           <Paper withBorder p={"md"}>

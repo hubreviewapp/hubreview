@@ -4,32 +4,10 @@ import {Flex, Box, Card, Group, Text, Button, Badge, rem, Modal, Switch} from "@
 import {IconLock} from "@tabler/icons-react";
 import {useState} from "react";
 import {useDisclosure} from "@mantine/hooks";
+import repoData from "../repo_data.json";
 
 function RepositoriesPage() {
-  const repos = [
-        {
-          id: 1,
-          name: "HubReview",
-          owner: "Ayse_Kelleci",
-          created: "01-01-2021"
-        },{
-        id: 2,
-        name: "ReLink",
-        owner: "Cagatay_Safak",
-        created: "01-01-2021"
-      },
-        {
-        id: 3,
-        name: "Eventium",
-        owner: "Ece_Kahraman",
-        created: "01-01-2021"
-    },
-    {
-      id: 4,
-      name: "LunarLander",
-      owner: "Alper_Mumcular",
-      created: "21-21-2023"
-    },]
+  const repos = repoData;
   const [selectedRepos, setSelectedRepos] = useState<string[]>(["ReLink"]);
   const iconLock = <IconLock style={{ width: rem(12), height: rem(12) }} />;
   const [opened, { open, close }] = useDisclosure(false);
