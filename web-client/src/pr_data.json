@@ -25,5 +25,14 @@
     "dateCreated": "2023-01-03",
     "labels": ["refactoring"],
     "priority": "Low"
+  },
+  {
+    "id": 4,
+    "prName": "Add Component",
+    "repository": "third-repo",
+    "author": "Ayse Kelleci",
+    "dateCreated": "2023-01-03",
+    "labels": ["bug fix"],
+    "priority": "Low"
   }
 ]
