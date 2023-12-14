@@ -25,7 +25,6 @@ function FileGrouping({files, reviewers}: FileGroupingProps) {
           ))
         }
       </Group>
-
       <Group>
         <Button color={"red"}>Delete</Button>
         <Button>Edit</Button>
