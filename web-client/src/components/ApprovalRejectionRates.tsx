@@ -79,9 +79,6 @@ function ApprovalRejectionRates(){
   ));
   return(
     <Box w={"550px"}>
-
-
-
       <Paper shadow="xl" radius="md" p="sm" mt={"lg"} withBorder>
         <Stack align="center">
         <Text align={"center"} fw={500} size={"lg"} mb={"sm"}>Approval/Rejection Rates for Author

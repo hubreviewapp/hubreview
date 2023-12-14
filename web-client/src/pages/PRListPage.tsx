@@ -39,7 +39,6 @@ function PRList() {
       setPrList([]);
     }
   };
-
   return (
     <Flex h={"500px"} p={0} m={0} w="100%" justify="space-evenly"  align={"center"} direction="column" >
       <Grid w={"70%"}>
@@ -75,7 +74,7 @@ function PRList() {
           />
         </Grid.Col>
         <Grid.Col>
-          <TabComp tabs={prTabs} updateTab={updateTab}></TabComp>
+          <TabComp tabs={prTabs} updateTab={updateTab}/>
           {currentTab === 'modified files' }
         </Grid.Col>
       </Grid>
@@ -84,7 +83,7 @@ function PRList() {
         <Badge leftSection={iconSparkles} mb={3} variant={"gradient"} style={ {visibility: sortValue == "Priority Queue" ? "visible" : "hidden"}}>Priority Queue</Badge>
         <Flex direction="column" style={sortValue == "Priority Queue" ? {border:"solid 0.5px cyan", borderRadius:"10px"}:{border:"solid 0.5px #415A77", borderRadius:"10px"}}>
           {prList.map((item) => (
-            <PRBox key={item.id} id={item.id} repository={item.repository} prName={item.prName} labels={item.labels} dateCreated={item.dateCreated}/>
+            <PRBox key={item.id} id={item.id} repository={item.repository} prName={item.prName} labels={item.labels} dateCreated={item.dateCreated} priority={item.priority} pQueueActive={sortValue=="Priority Queue"}/>
           ))}
         </Flex>
       </Box>
