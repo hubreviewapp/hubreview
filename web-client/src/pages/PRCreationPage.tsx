@@ -12,10 +12,6 @@ import FileGrouping from "../components/FileGrouping";
 
 function PRCreationPage() {
   const branchIcon = <IconGitBranch style={{ width: rem(12), height: rem(12) }} />;
-  //const sparklesIcon = <IconStars color={"yellow"} style={{ width: rem(18), height: rem(18) }} />;
- // const squarePlusIcon = <IconSquarePlus style={{ width: rem(18), height: rem(18) }} />;
-  //const iconSquare = <IconSquareRoundedCheckFilled color={"blue"} style={{ width: rem(18), height: rem(18) }}/>;
-
   const [labelValue, setLabelValue] = useState<string[]>([]);
   const [priority, setPriority] = useState<string | null>('');
 
@@ -89,7 +85,7 @@ function PRCreationPage() {
       </Grid>
 
 
-      <FileGrouping name={"Group 1"} id={""} files={["add.py", "add22.py"]} reviewers={["ayse","irem"]}/>
+      <FileGrouping name={"Group 1"} id={1} files={["add.py", "add22.py"]} reviewers={["ayse","irem"]}/>
 
 
       <Box w={"60%"} mt={"md"}>
