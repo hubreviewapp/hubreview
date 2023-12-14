@@ -10,9 +10,18 @@ import WorkloadBar from "../components/WorkloadBar";
 import PriorityBadge from "../components/PriorityBadge";
 import FileGrouping from "../components/FileGrouping";
 
+interface FileGroup {
+  id: number;
+  name: string;
+  files: string[];
+  reviewers: string[];
+}
+
+
 function PRCreationPage() {
   const branchIcon = <IconGitBranch style={{ width: rem(12), height: rem(12) }} />;
   const [labelValue, setLabelValue] = useState<string[]>([]);
+  const [groupValue, setGroupValue] = useState<FileGroup[]>([]);
   const [priority, setPriority] = useState<string | null>('');
 
   return (
@@ -83,10 +92,10 @@ function PRCreationPage() {
           <WorkloadBar/>
         </Grid.Col>
       </Grid>
-
-
-      <FileGrouping name={"Group 1"} id={1} files={["add.py", "add22.py"]} reviewers={["ayse","irem"]}/>
-
+      <Group>
+        <Button>Add File Group</Button>
+        <FileGrouping name={"Group 1"} id={1} files={["add.py", "add22.py"]} reviewers={["ayse","irem"]}/>
+      </Group>
 
       <Box w={"60%"} mt={"md"}>
         <Stack>
