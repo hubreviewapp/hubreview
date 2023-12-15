@@ -9,6 +9,7 @@ interface FileGroupingProps {
   id:number;
   files: string[];
   reviewers: string [];
+
 }
 
 function FileGrouping({name, id, files, reviewers}: FileGroupingProps) {
@@ -16,7 +17,7 @@ function FileGrouping({name, id, files, reviewers}: FileGroupingProps) {
   const [opened, { toggle }] = useDisclosure(false);
 
   return(
-    <Box m={"md"}>
+    <Box mr={"md"}>
       <Button variant={"outline"} onClick={toggle} leftSection={iconFiles}>{id} . {name}</Button>
       <Collapse in={opened}>
         <Paper p={"md"} w={"300px"} withBorder>
