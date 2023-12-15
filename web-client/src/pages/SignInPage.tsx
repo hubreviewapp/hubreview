@@ -1,14 +1,21 @@
-import {Grid, Box, Text, TextInput, Card, Button, Stack, Group} from "@mantine/core";
+import {Grid, Box, Text, TextInput, Card, Button, Stack, Group,Image} from "@mantine/core";
 import GitHubLogo from "../assets/icons/github-mark-white.png";
+import SignInImage from "../assets/icons/sign_in.png";
 
 function SignInPage() {
 
   return(
-    <Box h={600} p={5} m={0} w="100%" bg ="#1B263B">
-      <Grid m={"30px"} >
-        <Grid.Col span={8}>Review Faster, add some cool stuff</Grid.Col>
+    <Box h={600} p={0} m={0} w="100%" bg ="#1B263B">
+      <Grid>
+        <Grid.Col span={8}>
+          <Box>
+
+            <Image src={SignInImage}/>
+          </Box>
+
+        </Grid.Col>
         <Grid.Col span={4}>
-          <Card  shadow="sm" padding="40px" radius="md"  withBorder h={"400px"}>
+          <Card  shadow="sm" padding="40px" radius="md"  h={"400px"}>
             <Stack justify="space-between">
               <Group>
                 <Text fw={500} size={"xl"} > SIGN IN WITH GITHUB </Text>
