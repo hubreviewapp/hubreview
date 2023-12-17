@@ -18,7 +18,12 @@ export function Comment({ author, text, date }: CommentProps) {
         <div>
           <Text fz="sm"> {author}</Text>
           <Text fz="xs" c="dimmed">
-            {date.toString()}
+            {date.toLocaleString('en-US', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+              hour: 'numeric',
+            })}
           </Text>
         </div>
       </Group>
