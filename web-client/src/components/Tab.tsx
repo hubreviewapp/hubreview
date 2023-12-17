@@ -1,16 +1,16 @@
-import { Tabs } from '@mantine/core';
-import {useState} from "react";
+import { Tabs } from "@mantine/core";
+import { useState } from "react";
 //import { IconPhoto, IconMessageCircle, IconSettings } from '@tabler/icons-react';
 
 interface TabComponentProps {
   tabs: string[];
-  updateTab: (newTab: string|null) => void;
+  updateTab: (newTab: string | null) => void;
 }
 
 function TabComp({ tabs, updateTab }: TabComponentProps) {
   const [activeTab, setActiveTab] = useState<string | null>(tabs[0]);
 
-  const handleChange = (newValue: string|null) => {
+  const handleChange = (newValue: string | null) => {
     setActiveTab(newValue);
     updateTab(newValue);
   };
@@ -24,8 +24,6 @@ function TabComp({ tabs, updateTab }: TabComponentProps) {
           </Tabs.Tab>
         ))}
       </Tabs.List>
-
-
     </Tabs>
   );
 }

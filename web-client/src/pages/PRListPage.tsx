@@ -2,53 +2,58 @@ import prsData from "../pr_data.json";
 import repoDataJson from "../repo_data.json";
 import { Link } from "react-router-dom";
 import PRBox from "../components/PRBox";
-import { IconSparkles, IconSearch } from '@tabler/icons-react';
-import {useState} from "react";
+import { IconSparkles, IconSearch } from "@tabler/icons-react";
+import { useState } from "react";
 import TabComp from "../components/Tab.tsx";
 import {
   Flex,
   Box,
   Button,
   Pagination,
-  NativeSelect, Grid, TextInput, Badge, rem, Modal, Group, Stack, Select
+  NativeSelect,
+  Grid,
+  TextInput,
+  Badge,
+  rem,
+  Modal,
+  Group,
+  Stack,
+  Select,
 } from "@mantine/core";
-import {useDisclosure} from "@mantine/hooks";
+import { useDisclosure } from "@mantine/hooks";
 
 function PRList() {
-
   // TODO const prTabs: string[] = ["created", "assigned", "merged"];
-  const sort : string[] = ["Priority Queue", "Newest", "Oldest"];
-  const repos :string[] = ["All", "ReLink", "Eventium"]
-  const authors :string[] = ["All", "Ece-Kahraman", "Ayse-Kelleci"]
+  const sort: string[] = ["Priority Queue", "Newest", "Oldest"];
+  const repos: string[] = ["All", "ReLink", "Eventium"];
+  const authors: string[] = ["All", "Ece-Kahraman", "Ayse-Kelleci"];
 
-  const [sortValue, setSortValue] = useState('Priority Queue');
+  const [sortValue, setSortValue] = useState("Priority Queue");
   const [filteredRepo, setFilteredRepo] = useState("All");
   const [filteredAuthor, setFilteredAuthor] = useState("All");
 
   const iconSparkles = <IconSparkles style={{ width: rem(22), height: rem(22) }} />;
   const iconSearch = <IconSearch style={{ width: rem(18), height: rem(18) }} />;
 
-
   const prTabs: string[] = ["created", "assigned", "merged", "closed"];
-  const [currentTab, setCurrentTab] = useState<string|null>(prTabs[1]);
+  const [currentTab, setCurrentTab] = useState<string | null>(prTabs[1]);
   const [prList, setPrList] = useState(prsData);
   const [opened, { open, close }] = useDisclosure(false);
-  const [repoValue, setRepoValue] = useState<string | null>('');
-  const [targetBranch, setTargetBranch] = useState('');
-  const [baseBranch, setBaseBranch] = useState('');
+  const [repoValue, setRepoValue] = useState<string | null>("");
+  const [targetBranch, setTargetBranch] = useState("");
+  const [baseBranch, setBaseBranch] = useState("");
   const repoData = repoDataJson;
 
-  const updateTab = (newTab: string|null) => {
+  const updateTab = (newTab: string | null) => {
     setCurrentTab(newTab);
     if (newTab === "created") {
       setPrList(prsData);
-    }
-    else {
+    } else {
       setPrList([]);
     }
   };
   return (
-    <Flex h={"500px"} p={0} m={0} w="100%" justify="space-evenly"  align={"center"} direction="column" >
+    <Flex h={"500px"} p={0} m={0} w="100%" justify="space-evenly" align={"center"} direction="column">
       <Grid w={"70%"}>
         <Grid.Col span={2}>
           <NativeSelect
@@ -75,67 +80,87 @@ function PRList() {
           />
         </Grid.Col>
         <Grid.Col span={6}>
-          <TextInput
-            leftSection={iconSearch}
-            description="Search a PR"
-            placeholder="Search"
-          />
+          <TextInput leftSection={iconSearch} description="Search a PR" placeholder="Search" />
         </Grid.Col>
         <Grid.Col>
-          <TabComp tabs={prTabs} updateTab={updateTab}/>
-          {currentTab === 'modified files' }
+          <TabComp tabs={prTabs} updateTab={updateTab} />
+          {currentTab === "modified files"}
         </Grid.Col>
       </Grid>
       <Box w={"70%"}>
-
-        <Badge leftSection={iconSparkles} mb={3} variant={"gradient"} style={ {visibility: sortValue == "Priority Queue" ? "visible" : "hidden"}}>Priority Queue</Badge>
-        <Flex direction="column" style={sortValue == "Priority Queue" ? {border:"solid 0.5px cyan", borderRadius:"10px"}:{border:"solid 0.5px #415A77", borderRadius:"10px"}}>
+        <Badge
+          leftSection={iconSparkles}
+          mb={3}
+          variant={"gradient"}
+          style={{ visibility: sortValue == "Priority Queue" ? "visible" : "hidden" }}
+        >
+          Priority Queue
+        </Badge>
+        <Flex
+          direction="column"
+          style={
+            sortValue == "Priority Queue"
+              ? { border: "solid 0.5px cyan", borderRadius: "10px" }
+              : { border: "solid 0.5px #415A77", borderRadius: "10px" }
+          }
+        >
           {prList.map((item) => (
-            <PRBox key={item.id} id={item.id} repository={item.repository} prName={item.prName} labels={item.labels} dateCreated={item.dateCreated} priority={item.priority} pQueueActive={sortValue=="Priority Queue"}/>
+            <PRBox
+              key={item.id}
+              id={item.id}
+              repository={item.repository}
+              prName={item.prName}
+              labels={item.labels}
+              dateCreated={item.dateCreated}
+              priority={item.priority}
+              pQueueActive={sortValue == "Priority Queue"}
+            />
           ))}
         </Flex>
       </Box>
 
       <Box m={3}>
-        <Pagination color="primary" total={4}/>
+        <Pagination color="primary" total={4} />
       </Box>
       <Box m={3}>
-
-        <Button onClick={open} variant="contained">Create New PR</Button>
-
+        <Button onClick={open} variant="contained">
+          Create New PR
+        </Button>
       </Box>
 
       <Modal opened={opened} onClose={close} title="Select Repository and Branches">
-          <Stack m={"md"}>
-            <Select
-              label="Select a Repository"
+        <Stack m={"md"}>
+          <Select
+            label="Select a Repository"
+            withAsterisk
+            clearable
+            value={repoValue}
+            onChange={setRepoValue}
+            data={repoData.map((obj) => obj.name)}
+          />
+          <Group>
+            <NativeSelect
+              disabled={repoValue == ""}
+              label="Select the base branch"
               withAsterisk
-              clearable
-              value={repoValue}
-              onChange={setRepoValue}
-              data={repoData.map(obj => obj.name)}
+              value={baseBranch}
+              onChange={(event) => setBaseBranch(event.currentTarget.value)}
+              data={repoValue == "" ? [] : repoData.find((itm) => itm.name == repoValue).branches}
             />
-            <Group>
-              <NativeSelect
-                disabled={repoValue==""}
-                label="Select the base branch"
-                withAsterisk
-                value={baseBranch}
-                onChange={(event) => setBaseBranch(event.currentTarget.value)}
-                data={repoValue=="" ? [] :repoData.find(itm=>itm.name == repoValue).branches}
-              />
-              <NativeSelect
-                disabled={repoValue==""}
-                label="Select the target branch"
-                withAsterisk
-                value={targetBranch}
-                onChange={(event) => setTargetBranch(event.currentTarget.value)}
-                data={repoValue=="" ? [] :repoData.find(itm=>itm.name == repoValue).branches}
-              />
-            </Group>
-          </Stack>
+            <NativeSelect
+              disabled={repoValue == ""}
+              label="Select the target branch"
+              withAsterisk
+              value={targetBranch}
+              onChange={(event) => setTargetBranch(event.currentTarget.value)}
+              data={repoValue == "" ? [] : repoData.find((itm) => itm.name == repoValue).branches}
+            />
+          </Group>
+        </Stack>
         <Group justify={"flex-end"}>
-          <Button color={"gray"} onClick={close}>Close</Button>
+          <Button color={"gray"} onClick={close}>
+            Close
+          </Button>
           <Link to={"/createPR"}>
             <Button variant="contained">Create New PR</Button>
           </Link>
