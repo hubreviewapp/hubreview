@@ -5,13 +5,14 @@
     "owner": "Ayse_Kelleci",
     "created": "01-01-2021",
     "branches": ["main", "add_component", "fix_bug"]
-  },{
-  "id": 2,
-  "name": "ReLink",
-  "owner": "Cagatay_Safak",
-  "created": "01-01-2021",
-  "branches": ["main", "feature/add_button", "fix_bug"]
-},
+  },
+  {
+    "id": 2,
+    "name": "ReLink",
+    "owner": "Cagatay_Safak",
+    "created": "01-01-2021",
+    "branches": ["main", "feature/add_button", "fix_bug"]
+  },
   {
     "id": 3,
     "name": "Eventium",
@@ -25,4 +26,5 @@
     "owner": "Alper_Mumcular",
     "created": "21-21-2023",
     "branches": ["main", "feature/add_search", "fix_bug"]
-  }]
+  }
+]
