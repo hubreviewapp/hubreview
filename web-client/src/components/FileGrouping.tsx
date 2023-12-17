@@ -1,36 +1,63 @@
-import UserLogo from "../assets/icons/user.png";
-import GitHubLogo from "../assets/icons/github-mark-white.png";
-import {Text, Box, Flex, Paper, Group, Button} from '@mantine/core';
-import classes from "../styles/PRList.module.css";
-import LabelButton from "./LabelButton";
-import {Link} from "react-router-dom";
-import PriorityBadge from "./PriorityBadge";
+import { Text, Box, Paper, Group, Button, rem, Collapse, List } from "@mantine/core";
+import { IconFiles } from "@tabler/icons-react";
+import { useDisclosure } from "@mantine/hooks";
 
 interface FileGroupingProps {
   name: string;
-  id:number;
+  id: number;
   files: string[];
-  reviewers: string [];
+  reviewers: string[];
 }
 
-function FileGrouping({files, reviewers}: FileGroupingProps) {
+function FileGrouping({ name, id, files, reviewers }: FileGroupingProps) {
+  const iconFiles = <IconFiles style={{ width: rem(18), height: rem(18) }} />;
+  const [opened, { toggle }] = useDisclosure(false);
 
-  return(
-    <Paper w={"300px"} h={"200px"} withBorder>
-      <Group>
-        <Text>Files</Text>
-        {
-          files.map(itm=>(
-            <Text key={1}>{itm}</Text>
-          ))
-        }
-      </Group>
-      <Group>
-        <Button color={"red"}>Delete</Button>
-        <Button>Edit</Button>
-      </Group>
-  </Paper>)}
+  return (
+    <Box m="md">
+      <Button variant="outline" onClick={toggle} leftSection={iconFiles}>
+        {id} . {name}
+      </Button>
+      <Collapse in={opened}>
+        <Paper p="md" w="300px" withBorder>
+          <Group mb="md">
+            <Box>
+              <Text>Group Files</Text>
+              <List size="sm" withPadding type="ordered">
+                {files.map((itm) => (
+                  <List.Item key={itm}>
+                    <Text size="sm" color="#76aacc">
+                      {itm}
+                    </Text>
+                  </List.Item>
+                ))}
+              </List>
+            </Box>
 
+            <Box>
+              <Text>Group Reviewers</Text>
+              <List size="sm" withPadding type="ordered">
+                {reviewers.map((itm) => (
+                  <List.Item key={itm}>
+                    <Text size="sm" color="#76aacc">
+                      {itm}
+                    </Text>
+                  </List.Item>
+                ))}
+              </List>
+            </Box>
+          </Group>
+
+          <Group justify="flex-end">
+            <Button size="compact-xs" color="red">
+              Delete
+            </Button>
+            <Button size="compact-xs">Edit</Button>
+          </Group>
+        </Paper>
+      </Collapse>
+    </Box>
+  );
+}
 
 export default FileGrouping;
-

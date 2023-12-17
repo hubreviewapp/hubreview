@@ -28,6 +28,9 @@ module.exports = {
       { allowConstantExport: true },
     ],
     "react/function-component-definition": ["error"],
+    "react/jsx-curly-brace-presence": ["warn", {
+      propElementValues: "always",
+    }],
     "@typescript-eslint/naming-convention": ["warn",
       {
         selector: 'default',

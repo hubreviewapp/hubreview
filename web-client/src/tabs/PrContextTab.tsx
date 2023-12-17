@@ -1,7 +1,9 @@
-import {Badge, Box, Flex, rem, Text, Button} from "@mantine/core";
-import { IconSparkles } from '@tabler/icons-react'
+import { Badge, Box, Flex, rem, Text, Button } from "@mantine/core";
+import { IconSparkles } from "@tabler/icons-react";
+
 export default function PrContextTab() {
-  const contextText = "This pull request addresses a critical bug in the user authentication " +
+  const contextText =
+    "This pull request addresses a critical bug in the user authentication " +
     "module. The issue stemmed from improper handling of user sessions, leading to unexpected logouts. The changes in this " +
     "PR include a comprehensive fix to the session management, ensuring a seamless user experience by preventing inadvertent logouts. " +
     "Additionally, the code has been optimized for better performance, and thorough testing, including unit and integration " +
@@ -16,14 +18,23 @@ export default function PrContextTab() {
 
   return (
     <Box>
-      <Box >
-        <Badge size="lg" leftSection={iconSparkles} mb={3} variant={"gradient"} style={ {visibility:  "visible" }}>Context</Badge>
-        <Flex direction="column" style={{border:"solid 0.5px cyan", borderRadius:"10px"}}>
-          <Text size="md" style={{ textAlign: "center", padding: "10px"}}> {contextText}</Text>
+      <Box>
+        <Badge leftSection={iconSparkles} mb={3} variant="gradient" style={{ visibility: "visible" }}>
+          Context
+        </Badge>
+        <Flex direction="column" style={{ border: "solid 0.5px cyan", borderRadius: "10px" }}>
+          <Text size="md" style={{ textAlign: "center", padding: "10px" }}>
+            {" "}
+            {contextText}
+          </Text>
         </Flex>
-        <Text size="sm" style={{marginTop:"3px", color:"gray", marginBottom: "3px"}}>
-          Context seems unclear/problematic?</Text>
-        <Button variant="filled" color="#415A77"> Generate new one </Button>
+        <Text size="sm" style={{ marginTop: "3px", color: "gray", marginBottom: "3px" }}>
+          Context seems unclear/problematic?
+        </Text>
+        <Button variant="filled" color="#415A77">
+          {" "}
+          Generate new one{" "}
+        </Button>
       </Box>
 
       <br></br>
@@ -40,20 +51,14 @@ export default function PrContextTab() {
       </Box>
 
       <br></br>
-      
-      {/*
-      <Badge size={"lg"} color={""} style={{marginTop:25}}>
-        Contributers
-      </Badge>
-      <Box style={{display:"flex", marginBottom:"3px"}}>
-        <Box component="img" src={UserLogo} alt={"logo"} className={classes.logo} />
-        <Text size={"md"} style={{padding: "3px"}}>aysekelleci</Text>
-      </Box>
-      <Box style={{display:"flex", marginBottom:"3px"}}>
-        <Box component="img" src={UserLogo} alt={"logo"} className={classes.logo} />
-        <Text size={"md"} style={{padding: "3px"}}> irem_aydın</Text>
-      </Box>   */}
 
+      <Box style={{ display: "flex", marginBottom: "3px" }}>
+        <Box component="img" src={UserLogo} alt="logo" className={classes.logo} />
+        <Text size="md" style={{ padding: "3px" }}>
+          {" "}
+          irem_aydın
+        </Text>
+      </Box>
     </Box>
-  )
+  );
 }

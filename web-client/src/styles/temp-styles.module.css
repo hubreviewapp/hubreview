@@ -1,0 +1,29 @@
+* {
+  color: #ebebeb;
+}
+
+.light {
+  color: #8b949e;
+  font-weight: lighter;
+  margin-right: 10px;
+  margin-left: 10px;
+}
+
+.bold {
+  font-size: 17px;
+  font-weight: bold;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+.outlinedBox {
+}
+.bold:hover {
+  background-color: #24314b;
+  border-color: rgba(188, 188, 188, 0.69);
+  cursor: pointer;
+}
+
+.logo {
+  width: 30px;
+  border-radius: 15px;
+}
