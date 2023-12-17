@@ -1,7 +1,8 @@
-import { Container, Pagination } from "@mantine/core";
+import { Button, Container, Grid, Pagination } from "@mantine/core";
 import FilterInput from "../components/ReviewQueue/FilterInput";
 import PullRequestCard from "../components/ReviewQueue/PullRequestCard";
 import classes from "../components/ReviewQueue/ReviewQueue.module.scss";
+import { Link } from "react-router-dom";
 
 export interface RequestedReviewer {
   reviewerType: "USER" | "TEAM";
@@ -207,7 +208,16 @@ const data: ReviewQueuePullRequest[] = [
 function ReviewQueuePage() {
   return (
     <Container w="100%" mt="md">
-      <FilterInput />
+      <Grid>
+        <Grid.Col span={8}>
+          <FilterInput />
+        </Grid.Col>
+        <Grid.Col span={4}>
+          <Link to="/createPR">
+            <Button variant="contained">Create New PR</Button>
+          </Link>
+        </Grid.Col>
+      </Grid>
 
       {data.map((item) => (
         <PullRequestCard key={item.id} data={item} />
