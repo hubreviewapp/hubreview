@@ -1,7 +1,7 @@
 import LabelButton from "../components/LabelButton";
 import ModifiedFilesTab from "../tabs/ModifiedFilesTab";
 import CommentsTab from "../tabs/CommentsTab.tsx";
-import { Box, Badge, rem, Grid, Text } from "@mantine/core";
+import {Box,Paper, Badge, rem, Grid, Text, Group, Title} from "@mantine/core";
 import TabComp from "../components/Tab.tsx";
 import * as React from "react";
 import {IconGitPullRequest, IconCircleDot, IconUserPlus, IconCheck, IconUserSearch, IconInfoCircle } from '@tabler/icons-react';
@@ -30,7 +30,7 @@ function PRDetailsPage({ id, name }: PRDetailsPageProps) {
 
   return (
     <div style={{ textAlign: "left", marginLeft: 100 }}>
-      <Box display="flex">
+      <Group>
         <h2>
           {" "}
           {name} chore(deps): update dependency ts-node to v10.9.2
@@ -46,7 +46,7 @@ function PRDetailsPage({ id, name }: PRDetailsPageProps) {
         >
           Open
         </Badge>
-      </Box>
+      </Group>
       <p style={{ marginTop: -20 }}> created at 4 days ago by Irem Aydın </p>
       <Box display="flex" style={{ justifyContent: "flex-start" }}>
         <LabelButton label="enhancement" size="lg" />
@@ -59,22 +59,22 @@ function PRDetailsPage({ id, name }: PRDetailsPageProps) {
 
       <br></br>
       <Grid>
-        <Grid.Col span={7.5}>
+        <Grid.Col span={8}>
           <TabComp tabs={tabs} updateTab={updateTab} />
           <br></br>
-          <Box style={{width:900}}>
+          <Box >
 
             {currentTab === "modified files" && <ModifiedFilesTab />}
             {currentTab === "comments" && <CommentsTab />}
             {currentTab === "details" && <PrContextTab />}
           </Box>
         </Grid.Col>
-        <Grid.Col span={3}>
-          <Box style={{ border: "solid 0.5px cyan", borderRadius: "10px", padding: "8px" }}>
-            <Text size="lg" style={{ style: "bold" }}>
+        <Grid.Col span={4}>
+          <Paper withBorder p="md" w="80%">
+            <Title order={3} align="center" mb="md">
               {" "}
               Reviewers{" "}
-            </Text>
+            </Title>
             <Box style={{ display: "flex", marginBottom: "3px" }}>
               <Box component="img" src={UserLogo} alt="logo" className={classes.logo} />
               <Text size="md" style={{ padding: "3px" }}>
@@ -148,7 +148,7 @@ function PRDetailsPage({ id, name }: PRDetailsPageProps) {
               <Text size={"md"} style={{padding: "3px"}}>ecekahraman</Text>
             </Box>
             <br></br>
-          </Box>
+          </Paper>
         </Grid.Col>
       </Grid>
     </div>
