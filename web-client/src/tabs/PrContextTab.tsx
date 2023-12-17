@@ -52,13 +52,6 @@ export default function PrContextTab() {
 
       <br></br>
 
-      <Box style={{ display: "flex", marginBottom: "3px" }}>
-        <Box component="img" src={UserLogo} alt="logo" className={classes.logo} />
-        <Text size="md" style={{ padding: "3px" }}>
-          {" "}
-          irem_aydın
-        </Text>
-      </Box>
     </Box>
   );
 }
