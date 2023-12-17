@@ -28,23 +28,23 @@ function WorkloadBar() {
   ];
   const iconInfo = <IconInfoCircle style={{ width: rem(18), height: rem(18) }} />;
   return (
-    <Box w={"370px"}>
-      <Paper h={"280px"} shadow="xl" radius="md" p="sm" mt={"lg"} withBorder>
+    <Box w="370px">
+      <Paper h="280px" shadow="xl" radius="md" p="sm" mt="lg" withBorder>
         <Stack>
-          <Text ta="center" fw={500} size={"lg"}>
+          <Text ta="center" fw={500} size="lg">
             Assign Reviewer
           </Text>
           <Grid>
             <Grid.Col span={5}></Grid.Col>
             <Grid.Col span={5}>
-              <Text size={"sm"} c={"dimmed"}>
+              <Text size="sm" c="dimmed">
                 Reviewer Workload
               </Text>
             </Grid.Col>
             <Grid.Col span={2}>
               <Box>
-                <Tooltip label={"waiting reviews / reviewer capacity"}>
-                  <Badge leftSection={iconInfo} variant={"transparent"} />
+                <Tooltip label="waiting reviews / reviewer capacity">
+                  <Badge leftSection={iconInfo} variant="transparent" />
                 </Tooltip>
               </Box>
             </Grid.Col>
@@ -55,13 +55,13 @@ function WorkloadBar() {
               <Grid.Col span={6}>
                 <Group>
                   <Box>
-                    <IconCirclePlus color={"green"} style={{ width: rem(22), height: rem(22), cursor: "pointer" }} />
+                    <IconCirclePlus color="green" style={{ width: rem(22), height: rem(22), cursor: "pointer" }} />
                   </Box>
-                  <Text size={"sm"}>{itm.username}</Text>
+                  <Text size="sm">{itm.username}</Text>
                 </Group>
               </Grid.Col>
               <Grid.Col span={4}>
-                <Progress.Root m={"5px"} size={"lg"}>
+                <Progress.Root m="5px" size="lg">
                   <Progress.Section
                     color={barColor(itm.capacity, itm.waiting)}
                     value={(itm.waiting / itm.capacity) * 100}
@@ -71,14 +71,14 @@ function WorkloadBar() {
                 </Progress.Root>
               </Grid.Col>
               <Grid.Col span={2}>
-                <Text c={"dimmed"} size={"sm"}>
+                <Text c="dimmed" size="sm">
                   {itm.waiting}/{itm.capacity}{" "}
                 </Text>
               </Grid.Col>
             </Grid>
           ))}
-          <Flex justify={"space-evenly"}>
-            <Button size={"xs"} variant={"filled"}>
+          <Flex justify="space-evenly">
+            <Button size="xs" variant="filled">
               Assign
             </Button>
           </Flex>

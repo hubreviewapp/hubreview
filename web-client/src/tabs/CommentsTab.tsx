@@ -9,7 +9,7 @@ function CommentsTab() {
           <Comment
             key={comment}
             id={index}
-            author={"aysekelleci"}
+            author="aysekelleci"
             text={
               "In every project I'm using Zodios in, I'm eventually seeing more and more \"implicit any\" " +
               "warnings which go away when restarting the TS language server in VS Code or sometimes even just saving my current file. " +

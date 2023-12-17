@@ -31,17 +31,17 @@ function App() {
           ],
         },
       }}
-      defaultColorScheme={"dark"}
+      defaultColorScheme="dark"
     >
       <NavBar />
       <Routes>
         <Route path="/" element={<ReviewQueuePage />} />
-        <Route path="/pulls/:pullid" element={<PRDetailsPage id={"1"} name={"pull request"} />} />
-        <Route path={"/repositories"} element={<RepositoriesPage />} />
+        <Route path="/pulls/:pullid" element={<PRDetailsPage id="1" name="pull request" />} />
+        <Route path="/repositories" element={<RepositoriesPage />} />
         <Route path="/analytics" element={<AnalyticsPage />} />
         <Route path="/createPR" element={<PRCreationPage />} />
         <Route path="/signIn" element={<SignInPage />} />
-        <Route path="/pulls/create" element={<PRDetailsPage id={"1"} name={"pull request"} />} />
+        <Route path="/pulls/create" element={<PRDetailsPage id="1" name="pull request" />} />
 
         <Route path="/analytics/author/rates" element={<ApprRejRatesForAuthorPage />} />
 

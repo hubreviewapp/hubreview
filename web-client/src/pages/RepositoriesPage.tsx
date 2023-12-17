@@ -23,32 +23,32 @@ function RepositoriesPage() {
               label={
                 <Text>
                   {itm.name}{" "}
-                  <Text size={"sm"} c={"dimmed"}>
+                  <Text size="sm" c="dimmed">
                     created by {itm.owner}{" "}
                   </Text>
                 </Text>
               }
-              m={"md"}
+              m="md"
             />
           ))}
         </Switch.Group>
         <Box>
-          <Button color={"gray"} onClick={close}>
+          <Button color="gray" onClick={close}>
             Close
           </Button>
         </Box>
       </Modal>
-      <Flex p={5} mt={"20px"} justify={"center"}>
+      <Flex p={5} mt="20px" justify="center">
         {selectedRepos.length == 0 ? (
-          <Text size={"lg"}>You have no repository here.</Text>
+          <Text size="lg">You have no repository here.</Text>
         ) : (
           selectedRepos
             .map((i) => repos.find((r) => r.name === i))
             .filter((i): i is (typeof repos)[0] => i !== undefined)
             .map((repo) => (
-              <Card key={repo.id} w={"300px"} h={"170px"} shadow="sm" padding="lg" radius="md" m={5} bg={"#0D1B2A"}>
+              <Card key={repo.id} w="300px" h="170px" shadow="sm" padding="lg" radius="md" m={5} bg="#0D1B2A">
                 <Flex direction="column" justify="space-between" m={5}>
-                  <Flex justify={"space-between"}>
+                  <Flex justify="space-between">
                     <Text fw={500} size="xl">
                       {repo.name}
                     </Text>
@@ -63,8 +63,8 @@ function RepositoriesPage() {
                     Created: {repo.created}
                   </Text>
                 </Flex>
-                <Group justify={"flex-end"} m={5}>
-                  <Button size={"xs"} variant={"outline"} color="white">
+                <Group justify="flex-end" m={5}>
+                  <Button size="xs" variant="outline" color="white">
                     Edit
                   </Button>
                 </Group>
@@ -72,10 +72,10 @@ function RepositoriesPage() {
             ))
         )}
       </Flex>
-      <Flex justify={"center"} mt={"30px"}>
+      <Flex justify="center" mt="30px">
         <Button onClick={open}>
           Add Repository
-          <Box component="img" src={GitHubLogo} alt={"logo"} ml={"20px"} w={"25px"} />
+          <Box component="img" src={GitHubLogo} alt="logo" ml="20px" w="25px" />
         </Button>
       </Flex>
     </Box>

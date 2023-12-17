@@ -18,7 +18,7 @@ export default function PrContextTab() {
   return (
     <Box>
       <Box>
-        <Badge leftSection={iconSparkles} mb={3} variant={"gradient"} style={{ visibility: "visible" }}>
+        <Badge leftSection={iconSparkles} mb={3} variant="gradient" style={{ visibility: "visible" }}>
           Context
         </Badge>
         <Flex direction="column" style={{ border: "solid 0.5px cyan", borderRadius: "10px" }}>
@@ -36,18 +36,18 @@ export default function PrContextTab() {
         </Button>
       </Box>
 
-      <Badge size={"lg"} color={""} style={{ marginTop: 25 }}>
+      <Badge size="lg" color="" style={{ marginTop: 25 }}>
         Contributers
       </Badge>
       <Box style={{ display: "flex", marginBottom: "3px" }}>
-        <Box component="img" src={UserLogo} alt={"logo"} className={classes.logo} />
-        <Text size={"md"} style={{ padding: "3px" }}>
+        <Box component="img" src={UserLogo} alt="logo" className={classes.logo} />
+        <Text size="md" style={{ padding: "3px" }}>
           aysekelleci
         </Text>
       </Box>
       <Box style={{ display: "flex", marginBottom: "3px" }}>
-        <Box component="img" src={UserLogo} alt={"logo"} className={classes.logo} />
-        <Text size={"md"} style={{ padding: "3px" }}>
+        <Box component="img" src={UserLogo} alt="logo" className={classes.logo} />
+        <Text size="md" style={{ padding: "3px" }}>
           {" "}
           irem_aydın
         </Text>

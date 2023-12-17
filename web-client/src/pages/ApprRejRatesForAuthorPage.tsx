@@ -26,35 +26,35 @@ export default function ApprRejRatesForAuthorPage() {
     <Table.Tr key={element.author}>
       <Table.Td>{element.author}</Table.Td>
       <Table.Td>
-        <Text color={"green"}>
-          <IconCheck color={"green"} style={{ width: rem(18), height: rem(18) }} />
+        <Text color="green">
+          <IconCheck color="green" style={{ width: rem(18), height: rem(18) }} />
           {element.approves}
         </Text>
       </Table.Td>
       <Table.Td>
-        <Text color={"red"}>
-          <IconX color={"red"} style={{ width: rem(18), height: rem(18) }} />
+        <Text color="red">
+          <IconX color="red" style={{ width: rem(18), height: rem(18) }} />
           {element.rejects}
         </Text>
       </Table.Td>
       <Table.Td>
-        <Text color={"#808080"}>
-          <IconClock color={"gray"} style={{ width: rem(18), height: rem(18) }} />
+        <Text color="#808080">
+          <IconClock color="gray" style={{ width: rem(18), height: rem(18) }} />
           {element.waiting}
         </Text>
       </Table.Td>
       <Table.Td>
-        <Text color={"green"}>{Math.round((100 * element.approves) / (element.rejects + element.approves))}%</Text>
+        <Text color="green">{Math.round((100 * element.approves) / (element.rejects + element.approves))}%</Text>
       </Table.Td>
       <Table.Td>
-        <Text color={"red"}>{Math.round((element.rejects / (element.rejects + element.approves)) * 100)}%</Text>
+        <Text color="red">{Math.round((element.rejects / (element.rejects + element.approves)) * 100)}%</Text>
       </Table.Td>
     </Table.Tr>
   ));
 
   return (
     <Box style={{ padding: "40px" }}>
-      <Text size={"xl"}> Approve Rejection Rates for Author </Text>
+      <Text size="xl"> Approve Rejection Rates for Author </Text>
       <br />
       <Box display="flex">
         <NativeSelect

@@ -10,7 +10,7 @@ function NavBar() {
     setIsActive(buttonId);
   };
   return (
-    <Box bg={"#0D1B2A"} p={"20px"}>
+    <Box bg="#0D1B2A" p="20px">
       <Container size="xl">
         <Grid>
           <Grid.Col span={7}>
@@ -47,7 +47,7 @@ function NavBar() {
               rightSection={iconLogout}
               disabled={isActive == 0}
               component={Link}
-              variant={"transparent"}
+              variant="transparent"
               to="/signIn"
               onClick={() => handleClick(0)}
             >

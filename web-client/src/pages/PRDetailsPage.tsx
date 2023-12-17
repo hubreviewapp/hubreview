@@ -34,8 +34,8 @@ function PRDetailsPage({ id, name }: PRDetailsPageProps) {
         </h2>
         &ensp;&ensp;
         <Badge
-          size={"lg"}
-          color={"green"}
+          size="lg"
+          color="green"
           key={1}
           style={{ marginTop: 25 }}
           rightSection={<IconGitPullRequest style={{ width: rem(18), height: rem(18) }} />}
@@ -45,8 +45,8 @@ function PRDetailsPage({ id, name }: PRDetailsPageProps) {
       </Box>
       <p style={{ marginTop: -20 }}> created at 4 days ago by Irem Aydın </p>
       <Box display="flex" style={{ justifyContent: "flex-start" }}>
-        <LabelButton label={"enhancement"} size={"lg"} />
-        <LabelButton label={"bug fix"} size={"lg"} />
+        <LabelButton label="enhancement" size="lg" />
+        <LabelButton label="bug fix" size="lg" />
       </Box>
       <p style={{ marginRight: 20 }}>
         <IconCircleDot size={18} strokeWidth={3} /> &ensp; 1 issue linked
@@ -72,12 +72,12 @@ function PRDetailsPage({ id, name }: PRDetailsPageProps) {
               Reviewers{" "}
             </Text>
             <Box style={{ display: "flex", marginBottom: "3px" }}>
-              <Box component="img" src={UserLogo} alt={"logo"} className={classes.logo} />
-              <Text size={"md"} style={{ padding: "3px" }}>
+              <Box component="img" src={UserLogo} alt="logo" className={classes.logo} />
+              <Text size="md" style={{ padding: "3px" }}>
                 irem_aydın
               </Text>{" "}
               &ensp;
-              <IconCheck size={24} strokeWidth={3} color={"green"} />
+              <IconCheck size={24} strokeWidth={3} color="green" />
             </Box>
             <br></br>
             <Box style={{ display: "flex" }}>
@@ -88,15 +88,15 @@ function PRDetailsPage({ id, name }: PRDetailsPageProps) {
               <IconUserPlus style={{ width: rem(18), height: rem(18), alignItems: "right" }} />
             </Box>
             <Box style={{ display: "flex", marginBottom: "3px" }}>
-              <Box component="img" src={UserLogo} alt={"logo"} className={classes.logo} />
-              <Text size={"md"} style={{ padding: "3px" }}>
+              <Box component="img" src={UserLogo} alt="logo" className={classes.logo} />
+              <Text size="md" style={{ padding: "3px" }}>
                 ecekahraman
               </Text>
             </Box>
 
             <Box style={{ display: "flex", marginBottom: "3px" }}>
-              <Box component="img" src={UserLogo} alt={"logo"} className={classes.logo} />
-              <Text size={"md"} style={{ padding: "3px" }}>
+              <Box component="img" src={UserLogo} alt="logo" className={classes.logo} />
+              <Text size="md" style={{ padding: "3px" }}>
                 irem_aydın
               </Text>
             </Box>
@@ -108,7 +108,7 @@ function PRDetailsPage({ id, name }: PRDetailsPageProps) {
               Number of req. approves{" "}
             </Text>
             <Box style={{ display: "flex", marginBottom: "3px" }}>
-              <Badge size={"lg"} color={""} style={{ marginTop: 10 }}>
+              <Badge size="lg" color="" style={{ marginTop: 10 }}>
                 1/3
               </Badge>
             </Box>

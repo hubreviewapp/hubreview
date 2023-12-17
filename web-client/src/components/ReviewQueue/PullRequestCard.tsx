@@ -48,7 +48,7 @@ function PullRequestCard({ data: pr }: PullRequestCardProps) {
         <Text span c="green">
           {pr.ciChecks.passedCount} passed
         </Text>
-        , {""}
+        ,
         <Text span c="red">
           {pr.ciChecks.failedCount} failed
         </Text>{" "}

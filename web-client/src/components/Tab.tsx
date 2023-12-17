@@ -19,7 +19,7 @@ function TabComp({ tabs, updateTab }: TabComponentProps) {
     <Tabs color="#415A77" variant="pills" radius="md" defaultValue={activeTab} onChange={handleChange}>
       <Tabs.List>
         {tabs.map((tab) => (
-          <Tabs.Tab key={tab} value={tab} leftSection={""}>
+          <Tabs.Tab key={tab} value={tab} leftSection="">
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
           </Tabs.Tab>
         ))}

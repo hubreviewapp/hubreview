@@ -23,31 +23,31 @@ function PRBox({ id, prName, repository, dateCreated, labels, priority, pQueueAc
   return (
     <Grid m={5} p={5}>
       <Grid.Col span={8}>
-        <Flex justify={"flex-start"}>
-          <Box fw={200} mr={"10px"} ml={"10px"}>
+        <Flex justify="flex-start">
+          <Box fw={200} mr="10px" ml="10px">
             {id}
           </Box>
-          <Box component="img" src={UserLogo} alt={"logo"} className={classes.logo} />
+          <Box component="img" src={UserLogo} alt="logo" className={classes.logo} />
           <Link to={"pulls/" + id} style={{ textDecoration: "none" }}>
             <Box className={classes.bold}>{prName}</Box>
           </Link>
           <Box className={classes.light}>at {}</Box>
-          <Link to={"repositories"} style={{ textDecoration: "none" }}>
+          <Link to="repositories" style={{ textDecoration: "none" }}>
             <Box>{repository}</Box>
           </Link>
           <Box className={classes.light}>created :{dateCreated}</Box>
-          {pQueueActive ? <PriorityBadge label={priority} size={"sm"} /> : <Box />}
+          {pQueueActive ? <PriorityBadge label={priority} size="sm" /> : <Box />}
         </Flex>
       </Grid.Col>
       <Grid.Col span={3}>
-        <Flex justify={"end"}>
+        <Flex justify="end">
           {labels.map((label) => (
-            <LabelButton key={label} label={label} size={"md"} />
+            <LabelButton key={label} label={label} size="md" />
           ))}
         </Flex>
       </Grid.Col>
       <Grid.Col span={1}>
-        <Box component="img" src={GitHubLogo} alt={"icon"} className={classes.logo} />
+        <Box component="img" src={GitHubLogo} alt="icon" className={classes.logo} />
       </Grid.Col>
     </Grid>
   );

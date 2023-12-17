@@ -28,17 +28,13 @@ function WorkloadAnalytics() {
   ];
   const iconInfo = <IconInfoCircle style={{ width: rem(18), height: rem(18) }} />;
   return (
-    <Box w={"370px"}>
-      <Paper h={"250px"} shadow="xl" radius="md" p="sm" mt={"lg"} withBorder>
+    <Box w="370px">
+      <Paper h="250px" shadow="xl" radius="md" p="sm" mt="lg" withBorder>
         <Stack>
-          <Text ta="center" fw={500} size={"lg"} mb={"sm"}>
+          <Text ta="center" fw={500} size="lg" mb="sm">
             Reviewer Workload
-            <Tooltip
-              label={
-                "The workload percentage was calculated based on the number of reviews assigned to users in relation to the specified review capacity."
-              }
-            >
-              <Badge leftSection={iconInfo} variant={"transparent"} />
+            <Tooltip label="The workload percentage was calculated based on the number of reviews assigned to users in relation to the specified review capacity.">
+              <Badge leftSection={iconInfo} variant="transparent" />
             </Tooltip>
           </Text>
           {reviewers.map((itm) => (
@@ -46,11 +42,11 @@ function WorkloadAnalytics() {
               <Grid.Col span={6}>
                 <Group>
                   <IconUser style={{ width: rem(22), height: rem(22), cursor: "pointer" }} />
-                  <Text size={"sm"}>{itm.username}</Text>
+                  <Text size="sm">{itm.username}</Text>
                 </Group>
               </Grid.Col>
               <Grid.Col span={4}>
-                <Progress.Root m={"5px"} size={"lg"}>
+                <Progress.Root m="5px" size="lg">
                   <Progress.Section
                     color={barColor(itm.capacity, itm.waiting)}
                     value={(itm.waiting / itm.capacity) * 100}
@@ -60,14 +56,14 @@ function WorkloadAnalytics() {
                 </Progress.Root>
               </Grid.Col>
               <Grid.Col span={2}>
-                <Text c={"dimmed"} size={"sm"}>
+                <Text c="dimmed" size="sm">
                   {itm.waiting}/{itm.capacity}{" "}
                 </Text>
               </Grid.Col>
             </Grid>
           ))}
-          <Flex justify={"space-evenly"}>
-            <Button variant={"filled"}>See More</Button>
+          <Flex justify="space-evenly">
+            <Button variant="filled">See More</Button>
           </Flex>
         </Stack>
       </Paper>

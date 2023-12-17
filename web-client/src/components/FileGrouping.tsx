@@ -14,19 +14,19 @@ function FileGrouping({ name, id, files, reviewers }: FileGroupingProps) {
   const [opened, { toggle }] = useDisclosure(false);
 
   return (
-    <Box m={"md"}>
-      <Button variant={"outline"} onClick={toggle} leftSection={iconFiles}>
+    <Box m="md">
+      <Button variant="outline" onClick={toggle} leftSection={iconFiles}>
         {id} . {name}
       </Button>
       <Collapse in={opened}>
-        <Paper p={"md"} w={"300px"} withBorder>
-          <Group mb={"md"}>
+        <Paper p="md" w="300px" withBorder>
+          <Group mb="md">
             <Box>
               <Text>Group Files</Text>
-              <List size={"sm"} withPadding type={"ordered"}>
+              <List size="sm" withPadding type="ordered">
                 {files.map((itm) => (
                   <List.Item key={itm}>
-                    <Text size={"sm"} color={"#76aacc"}>
+                    <Text size="sm" color="#76aacc">
                       {itm}
                     </Text>
                   </List.Item>
@@ -36,10 +36,10 @@ function FileGrouping({ name, id, files, reviewers }: FileGroupingProps) {
 
             <Box>
               <Text>Group Reviewers</Text>
-              <List size={"sm"} withPadding type={"ordered"}>
+              <List size="sm" withPadding type="ordered">
                 {reviewers.map((itm) => (
                   <List.Item key={itm}>
-                    <Text size={"sm"} color={"#76aacc"}>
+                    <Text size="sm" color="#76aacc">
                       {itm}
                     </Text>
                   </List.Item>
@@ -48,11 +48,11 @@ function FileGrouping({ name, id, files, reviewers }: FileGroupingProps) {
             </Box>
           </Group>
 
-          <Group justify={"flex-end"}>
-            <Button size={"compact-xs"} color={"red"}>
+          <Group justify="flex-end">
+            <Button size="compact-xs" color="red">
               Delete
             </Button>
-            <Button size={"compact-xs"}>Edit</Button>
+            <Button size="compact-xs">Edit</Button>
           </Group>
         </Paper>
       </Collapse>

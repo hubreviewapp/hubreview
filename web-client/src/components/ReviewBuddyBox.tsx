@@ -22,26 +22,22 @@ function ReviewBuddyBox() {
   const iconInfo = <IconInfoCircle style={{ width: rem(18), height: rem(18) }} />;
 
   return (
-    <Box w={"400px"}>
-      <Paper h={"250px"} shadow="xl" radius="md" p="sm" mt={"lg"} withBorder>
-        <Text ta="center" fw={500} size={"lg"} mb={"sm"}>
+    <Box w="400px">
+      <Paper h="250px" shadow="xl" radius="md" p="sm" mt="lg" withBorder>
+        <Text ta="center" fw={500} size="lg" mb="sm">
           Frequent Review Buddies
-          <Tooltip
-            label={
-              "The percentage values indicate the proportion of opened pull requests that were reviewed by the given buddy."
-            }
-          >
-            <Badge leftSection={iconInfo} variant={"transparent"} />
+          <Tooltip label="The percentage values indicate the proportion of opened pull requests that were reviewed by the given buddy.">
+            <Badge leftSection={iconInfo} variant="transparent" />
           </Tooltip>
         </Text>
         <Stack align="center">
           <Box>
             {reviewBuddies.map((itm) => (
-              <Group key={itm.id} mt={"sm"}>
+              <Group key={itm.id} mt="sm">
                 <Text>{itm.usernames[0]}</Text>
-                <Text color={"indigo"}>{itm.rates[0]}</Text>
-                <IconArrowsHorizontal color={"green"} style={{ width: rem(18), height: rem(18) }} />
-                <Text color={"indigo"}>{itm.rates[1]}</Text>
+                <Text color="indigo">{itm.rates[0]}</Text>
+                <IconArrowsHorizontal color="green" style={{ width: rem(18), height: rem(18) }} />
+                <Text color="indigo">{itm.rates[1]}</Text>
                 <Text>{itm.usernames[1]}</Text>
               </Group>
             ))}
