@@ -1,4 +1,4 @@
-import "../styles/PRList.module.css";
+import "../styles/temp-styles.module.css";
 import GitHubLogo from "../assets/icons/github-mark-white.png";
 import { Flex, Box, Card, Group, Text, Button, Badge, rem, Modal, Switch } from "@mantine/core";
 import { IconLock } from "@tabler/icons-react";

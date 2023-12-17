@@ -1,7 +1,7 @@
 import UserLogo from "../assets/icons/user.png";
 import GitHubLogo from "../assets/icons/github-mark-white.png";
 import { Grid, Box, Flex } from "@mantine/core";
-import classes from "../styles/PRList.module.css";
+import classes from "../styles/temp-styles.module.css";
 import LabelButton from "./LabelButton";
 import { Link } from "react-router-dom";
 import PriorityBadge, { PriorityBadgeLabel } from "./PriorityBadge";
@@ -16,6 +16,9 @@ interface PRBoxProps {
   pQueueActive: boolean;
 }
 
+/**
+ * @deprecated You are probably looking for `PullRequestCard`
+ */
 function PRBox({ id, prName, repository, dateCreated, labels, priority, pQueueActive }: PRBoxProps) {
   return (
     <Grid m={5} p={5}>

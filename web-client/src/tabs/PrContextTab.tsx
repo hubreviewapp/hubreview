@@ -1,7 +1,7 @@
 import { Badge, Box, Flex, rem, Text, Button } from "@mantine/core";
 import { IconSparkles } from "@tabler/icons-react";
 import UserLogo from "../assets/icons/user.png";
-import classes from "../styles/PRList.module.css";
+import classes from "../styles/temp-styles.module.css";
 
 export default function PrContextTab() {
   const contextText =

@@ -10,7 +10,7 @@ function LabelButton({ label, size }: LabelButtonProps) {
   const gradient: string[] =
     label === "enhancement"
       ? ["pink", "violet"]
-      : label === "bug fix"
+      : label === "bug"
         ? ["red", "pink"]
         : label == "refactoring"
           ? ["teal", "lime"]

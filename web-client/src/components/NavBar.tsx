@@ -4,7 +4,7 @@ import { useState } from "react";
 import { IconLogout } from "@tabler/icons-react";
 
 function NavBar() {
-  const [isActive, setIsActive] = useState(0);
+  const [isActive, setIsActive] = useState(1);
   const iconLogout = <IconLogout style={{ width: rem(15), height: rem(15) }} />;
   const handleClick = (buttonId: number) => {
     setIsActive(buttonId);
@@ -25,7 +25,7 @@ function NavBar() {
               to="/"
               onClick={() => handleClick(1)}
             >
-              Pull Requests
+              Review Queue
             </Button>
             <Button
               component={Link}

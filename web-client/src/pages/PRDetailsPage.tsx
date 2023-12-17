@@ -7,7 +7,7 @@ import * as React from "react";
 import { IconGitPullRequest, IconCircleDot, IconUserPlus, IconCheck } from "@tabler/icons-react";
 import PrContextTab from "../tabs/PrContextTab.tsx";
 import UserLogo from "../assets/icons/user.png";
-import classes from "../styles/PRList.module.css";
+import classes from "../styles/temp-styles.module.css";
 
 interface PRDetailsPageProps {
   // Define the props you want to pass to PrDetailPage
