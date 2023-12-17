@@ -1,5 +1,6 @@
-import { Button, Flex, Grid, Group, Paper, Box, Progress, rem, Stack, Text, Tooltip, Badge } from "@mantine/core";
+import { Button, Flex, Grid, Group, Paper, Box, Progress, rem, Stack, Text, Tooltip, Badge, Modal, Title} from "@mantine/core";
 import { IconCirclePlus, IconInfoCircle } from "@tabler/icons-react";
+import { useDisclosure } from '@mantine/hooks';
 
 function barColor(capacity: number, waiting: number) {
   const workload = (waiting / capacity) * 100;
@@ -27,8 +28,23 @@ function WorkloadBar() {
     },
   ];
   const iconInfo = <IconInfoCircle style={{ width: rem(18), height: rem(18) }} />;
+  const [opened, { open, close }] = useDisclosure(false);
+
   return (
     <Box w="370px">
+      <Modal size={"50%"} opened={opened} onClose={close}>
+        <Title> Review Buddy Alert </Title>
+        <Text>We've observed that you frequently assign your pull requests to user aysekelleci. To improve code review
+          efficiency and prevent the formation of review buddies, it is recommended that you choose another team member.
+          (8 out of the 12 PRs (pull requests) you submitted this week are assigned to Ayşe Kelleci)
+        </Text>
+        <br/>
+        <Button color="#415A77"> Continue Anyway </Button>
+        &ensp;
+        <Button color="indigo" > Choose another reviewer</Button>
+
+      </Modal>
+
       <Paper h="280px" shadow="xl" radius="md" p="sm" mt="lg" withBorder>
         <Stack>
           <Text ta="center" fw={500} size="lg">
@@ -78,7 +94,7 @@ function WorkloadBar() {
             </Grid>
           ))}
           <Flex justify="space-evenly">
-            <Button size="xs" variant="filled">
+            <Button onClick={open} size="xs" variant="filled">
               Assign
             </Button>
           </Flex>
