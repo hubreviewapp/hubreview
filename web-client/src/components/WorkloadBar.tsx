@@ -31,7 +31,7 @@ function WorkloadBar() {
     <Box w={"370px"}>
       <Paper h={"280px"} shadow="xl" radius="md" p="sm" mt={"lg"} withBorder>
         <Stack>
-          <Text align={"center"} fw={500} size={"lg"}>
+          <Text ta="center" fw={500} size={"lg"}>
             Assign Reviewer
           </Text>
           <Grid>

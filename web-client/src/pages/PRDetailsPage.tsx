@@ -16,8 +16,6 @@ interface PRDetailsPageProps {
 }
 
 function PRDetailsPage({ id, name }: PRDetailsPageProps) {
-  const PRIcon = <IconGitPullRequest style={{ width: rem(18), height: rem(18) }} />;
-
   const tabs = ["comments", "commits", "details", "modified files"];
 
   const [currentTab, setCurrentTab] = React.useState<string | null>(tabs[0]);
@@ -35,7 +33,13 @@ function PRDetailsPage({ id, name }: PRDetailsPageProps) {
           <span style={{ color: "#778DA9" }}> #{id}</span>
         </h2>
         &ensp;&ensp;
-        <Badge size={"lg"} color={"green"} key={1} style={{ marginTop: 25 }} rightSection={PRIcon}>
+        <Badge
+          size={"lg"}
+          color={"green"}
+          key={1}
+          style={{ marginTop: 25 }}
+          rightSection={<IconGitPullRequest style={{ width: rem(18), height: rem(18) }} />}
+        >
           Open
         </Badge>
       </Box>

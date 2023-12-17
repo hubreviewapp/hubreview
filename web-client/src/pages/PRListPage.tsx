@@ -21,6 +21,7 @@ import {
   Select,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import { PriorityBadgeLabel } from "../components/PriorityBadge.tsx";
 
 function PRList() {
   // TODO const prTabs: string[] = ["created", "assigned", "merged"];
@@ -112,7 +113,7 @@ function PRList() {
               prName={item.prName}
               labels={item.labels}
               dateCreated={item.dateCreated}
-              priority={item.priority}
+              priority={item.priority as PriorityBadgeLabel}
               pQueueActive={sortValue == "Priority Queue"}
             />
           ))}
@@ -145,7 +146,7 @@ function PRList() {
               withAsterisk
               value={baseBranch}
               onChange={(event) => setBaseBranch(event.currentTarget.value)}
-              data={repoValue == "" ? [] : repoData.find((itm) => itm.name == repoValue).branches}
+              data={repoValue == "" ? [] : repoData.find((itm) => itm.name == repoValue)?.branches}
             />
             <NativeSelect
               disabled={repoValue == ""}
@@ -153,7 +154,7 @@ function PRList() {
               withAsterisk
               value={targetBranch}
               onChange={(event) => setTargetBranch(event.currentTarget.value)}
-              data={repoValue == "" ? [] : repoData.find((itm) => itm.name == repoValue).branches}
+              data={repoValue == "" ? [] : repoData.find((itm) => itm.name == repoValue)?.branches}
             />
           </Group>
         </Stack>

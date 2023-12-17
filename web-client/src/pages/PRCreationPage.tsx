@@ -23,7 +23,7 @@ import LabelButton from "../components/LabelButton";
 
 import { useState } from "react";
 import WorkloadBar from "../components/WorkloadBar";
-import PriorityBadge from "../components/PriorityBadge";
+import PriorityBadge, { PriorityBadgeLabel } from "../components/PriorityBadge";
 import FileGrouping from "../components/FileGrouping";
 import { useDisclosure } from "@mantine/hooks";
 import { Link } from "react-router-dom";
@@ -47,7 +47,7 @@ function PRCreationPage() {
   const [groupName, setGroupName] = useState("");
   const [fileList, setFileList] = useState<string[]>([]);
   const [reviewerList, setReviewerList] = useState<string[]>([]);
-  const [priority, setPriority] = useState<string | null>("");
+  const [priority, setPriority] = useState<PriorityBadgeLabel>(null);
   const [opened, { open, close }] = useDisclosure(false);
 
   function addGroupToList() {
@@ -64,11 +64,13 @@ function PRCreationPage() {
     setGroupCount(groupCount + 1);
     close();
   }
+  /* TODO
   function removeGroup(id: number) {
     const obj: FileGroup[] = groupList.filter((itm) => itm.id != id);
 
     setGroupList(obj);
   }
+   */
   return (
     <Container size={"lg"}>
       <Grid>
@@ -97,7 +99,7 @@ function PRCreationPage() {
             <Select
               label={"Assign Priority"}
               value={priority}
-              onChange={setPriority}
+              onChange={(val) => setPriority(val as PriorityBadgeLabel)}
               placeholder="Assign Priority"
               data={["High", "Medium", "Low"]}
               clearable

@@ -32,7 +32,7 @@ function RepositoriesPage() {
             />
           ))}
         </Switch.Group>
-        <Box align={"right"}>
+        <Box>
           <Button color={"gray"} onClick={close}>
             Close
           </Button>
@@ -42,9 +42,10 @@ function RepositoriesPage() {
         {selectedRepos.length == 0 ? (
           <Text size={"lg"}>You have no repository here.</Text>
         ) : (
-          selectedRepos.map((itm) => {
-            const repo = repos.find((o) => o.name == itm);
-            return (
+          selectedRepos
+            .map((i) => repos.find((r) => r.name === i))
+            .filter((i): i is (typeof repos)[0] => i !== undefined)
+            .map((repo) => (
               <Card key={repo.id} w={"300px"} h={"170px"} shadow="sm" padding="lg" radius="md" m={5} bg={"#0D1B2A"}>
                 <Flex direction="column" justify="space-between" m={5}>
                   <Flex justify={"space-between"}>
@@ -68,8 +69,7 @@ function RepositoriesPage() {
                   </Button>
                 </Group>
               </Card>
-            );
-          })
+            ))
         )}
       </Flex>
       <Flex justify={"center"} mt={"30px"}>

@@ -24,7 +24,7 @@ function ReviewBuddyBox() {
   return (
     <Box w={"400px"}>
       <Paper h={"250px"} shadow="xl" radius="md" p="sm" mt={"lg"} withBorder>
-        <Text align={"center"} fw={500} size={"lg"} mb={"sm"}>
+        <Text ta="center" fw={500} size={"lg"} mb={"sm"}>
           Frequent Review Buddies
           <Tooltip
             label={

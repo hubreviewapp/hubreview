@@ -4,7 +4,7 @@ import { Grid, Box, Flex } from "@mantine/core";
 import classes from "../styles/PRList.module.css";
 import LabelButton from "./LabelButton";
 import { Link } from "react-router-dom";
-import PriorityBadge from "./PriorityBadge";
+import PriorityBadge, { PriorityBadgeLabel } from "./PriorityBadge";
 
 interface PRBoxProps {
   id: number;
@@ -12,7 +12,7 @@ interface PRBoxProps {
   repository: string;
   dateCreated: string;
   labels: string[];
-  priority: string;
+  priority: PriorityBadgeLabel;
   pQueueActive: boolean;
 }
 
