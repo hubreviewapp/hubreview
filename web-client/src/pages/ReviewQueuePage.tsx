@@ -1,7 +1,8 @@
-import { Container, Pagination } from "@mantine/core";
+import { Container, Pagination, Button, Center } from "@mantine/core";
 import FilterInput from "../components/ReviewQueue/FilterInput";
 import PullRequestCard from "../components/ReviewQueue/PullRequestCard";
 import classes from "../components/ReviewQueue/ReviewQueue.module.scss";
+import {Link} from "react-router-dom";
 
 export interface RequestedReviewer {
   reviewerType: "USER" | "TEAM";
@@ -214,6 +215,11 @@ function ReviewQueuePage() {
       ))}
 
       <Pagination classNames={{ root: classes.pagination }} color="primary" total={4} />
+      <Center>
+        <Link to="/createPR">
+          <Button m="lg">Create New PR</Button>
+        </Link>
+      </Center>
     </Container>
   );
 }

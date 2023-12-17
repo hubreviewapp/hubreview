@@ -28,7 +28,7 @@ function WorkloadAnalytics() {
   ];
   const iconInfo = <IconInfoCircle style={{ width: rem(18), height: rem(18) }} />;
   return (
-    <Box w="370px">
+    <Box w="500px">
       <Paper h="250px" shadow="xl" radius="md" p="sm" mt="lg" withBorder>
         <Stack>
           <Text ta="center" fw={500} size="lg" mb="sm">
@@ -39,7 +39,7 @@ function WorkloadAnalytics() {
           </Text>
           {reviewers.map((itm) => (
             <Grid key={itm.id}>
-              <Grid.Col span={6}>
+              <Grid.Col span={4}>
                 <Group>
                   <IconUser style={{ width: rem(22), height: rem(22), cursor: "pointer" }} />
                   <Text size="sm">{itm.username}</Text>
@@ -56,10 +56,14 @@ function WorkloadAnalytics() {
                 </Progress.Root>
               </Grid.Col>
               <Grid.Col span={2}>
-                <Text c="dimmed" size="sm">
-                  {itm.waiting}/{itm.capacity}{" "}
-                </Text>
+                  <Text c="dimmed" size="sm">
+                    {itm.waiting}/{itm.capacity}{" "}
+                  </Text>
               </Grid.Col>
+              <Grid.Col span={2}>
+                <Text td="underline" color="blue">Details</Text>
+              </Grid.Col>
+
             </Grid>
           ))}
           <Flex justify="space-evenly">
