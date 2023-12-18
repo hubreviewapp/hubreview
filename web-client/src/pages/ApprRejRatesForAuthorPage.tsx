@@ -4,7 +4,7 @@ import { NativeSelect } from "@mantine/core";
 import { IconCheck, IconX, IconClock } from "@tabler/icons-react";
 
 export default function ApprRejRatesForAuthorPage() {
-  const sort: string[] = ["Priority Queue", "Most approved", "Least approved", "Most rejected", "Least rejected"];
+  const sort: string[] = ["Most approved", "Least approved", "Most rejected", "Least rejected"];
   const repos: string[] = ["All", "ReLink", "Eventium"];
   const authors: string[] = ["All", "Ece-Kahraman", "Ayse-Kelleci", "Alper-Mumcular", "Irem-Aydın", "Vedat-Arıcan"];
   const timeline: string[] = ["All", "Last week", "Last 2 weeks", "Last month", "Last 3 months"];

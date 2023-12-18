@@ -2,32 +2,33 @@ import { Button, Paper, Box, rem, Text, Tooltip, Badge, Table, Stack } from "@ma
 import { IconCheck, IconInfoCircle, IconX, IconClock } from "@tabler/icons-react";
 import { Link } from "react-router-dom";
 
+
 function calculatePercentage(n1: number, n2: number) {
   return Math.floor((n1 / (n1 + n2)) * 100);
 }
 
-function ApprovalRejectionRates() {
+function ApprovalRejectionRatesReviewer() {
   const users = [
     {
       id: 1,
-      username: "ayse_kelleci",
-      approval: 30,
-      rejection: 20,
-      waiting: 10,
+      username: "ece_kahraman",
+      approval: 42,
+      rejection: 18,
+      waiting: 8,
     },
     {
       id: 2,
-      username: "irem_Aydin",
-      approval: 20,
-      rejection: 10,
-      waiting: 7,
+      username: "vedat_arican",
+      approval: 30,
+      rejection: 2,
+      waiting: 15,
     },
     {
       id: 3,
-      username: "alper_mum",
-      approval: 25,
-      rejection: 14,
-      waiting: 6,
+      username: "irem_aydın",
+      approval: 20,
+      rejection: 18,
+      waiting: 5,
     },
   ];
   const iconInfo = <IconInfoCircle style={{ width: rem(18), height: rem(18) }} />;
@@ -61,12 +62,12 @@ function ApprovalRejectionRates() {
     </Table.Tr>
   ));
   return (
-    <Box w= "580px">
+    <Box w="580px">
       <Paper shadow="xl" radius="md" p="sm" mt="lg" withBorder>
         <Stack align="center">
           <Text fw={500} size="lg" mb="sm">
-            Approval/Rejection Rates for Author
-            <Tooltip label="Approval/Rejection rates of PRs for authors">
+            Approval/Rejection Rates for Reviewer
+            <Tooltip label="Approval/Rejection rates of PRs for reviewers">
               <Badge leftSection={iconInfo} variant="transparent" />
             </Tooltip>
           </Text>
@@ -92,4 +93,4 @@ function ApprovalRejectionRates() {
   );
 }
 
-export default ApprovalRejectionRates;
+export default ApprovalRejectionRatesReviewer;
