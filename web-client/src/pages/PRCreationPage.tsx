@@ -124,7 +124,7 @@ function PRCreationPage() {
             )}
           </Group>
           <Grid mt="md">
-            <Grid.Col span={4}>
+            <Grid.Col span={3}>
               <Button leftSection={addIcon} size="sm" variant="subtle" onClick={open}>
                 Add File Group
               </Button>
