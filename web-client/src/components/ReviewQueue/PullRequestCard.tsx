@@ -19,7 +19,7 @@ function PullRequestCard({ data: pr }: PullRequestCardProps) {
           <Text>
             #{pr.id} opened by {pr.author}
             <Avatar src={UserLogo} size="sm" display="inline-block" mx={4} />
-            at {pr.creationTimestamp}
+            at {"12.11.2023"}
           </Text>
         </Box>
 
