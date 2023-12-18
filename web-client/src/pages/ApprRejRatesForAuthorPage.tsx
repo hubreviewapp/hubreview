@@ -1,4 +1,4 @@
-import { Table, Box, Text, rem } from "@mantine/core";
+import {Table, Box, Text, rem, Container} from "@mantine/core";
 import { useState } from "react";
 import { NativeSelect } from "@mantine/core";
 import { IconCheck, IconX, IconClock } from "@tabler/icons-react";
@@ -54,6 +54,7 @@ export default function ApprRejRatesForAuthorPage() {
 
   return (
     <Box style={{ padding: "40px" }}>
+      <Container>
       <Text size="xl"> Approve Rejection Rates for Author </Text>
       <br />
       <Box display="flex">
@@ -86,9 +87,7 @@ export default function ApprRejRatesForAuthorPage() {
         />{" "}
         &ensp;
       </Box>
-      <br></br>
-
-      <Table striped highlightOnHover style={{ border: "solid 3px ", width: "80%", justifyContent: "center" }}>
+      <Table mt="md" striped highlightOnHover >
         <Table.Thead>
           <Table.Tr>
             <Table.Th>Author</Table.Th>
@@ -101,6 +100,7 @@ export default function ApprRejRatesForAuthorPage() {
         </Table.Thead>
         <Table.Tbody>{rows}</Table.Tbody>
       </Table>
+      </Container>
     </Box>
   );
 }
