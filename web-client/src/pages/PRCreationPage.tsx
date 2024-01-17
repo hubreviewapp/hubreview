@@ -1,13 +1,14 @@
 import { Container, Grid, Group, Text, Title, Badge, rem, Button, Paper,
   Stack, List, Flex, Textarea, Box, TextInput, MultiSelect, Modal,
 } from "@mantine/core";
-import {IconGitBranch, IconGitCommit, IconUsersGroup, IconFile, IconLayoutGridAdd} from "@tabler/icons-react";
+import {IconGitBranch, IconUsersGroup, IconFile, IconLayoutGridAdd} from "@tabler/icons-react";
 import {useState} from "react";
 import PRDetailsBox from "../components/PRCreate/PRDetailsBox";
 import FileGrouping from "../components/PRCreate/FileGrouping";
 import {useDisclosure} from "@mantine/hooks";
 import {Link} from "react-router-dom";
 import PRSummaryBox from "../components/PRCreate/PRSummaryBox";
+import CommitHistory from "../components/PRCreate/CommitHistory";
 
 type FileGroup = {
   id: number;
@@ -61,9 +62,6 @@ function PRCreationPage() {
             <Badge leftSection={branchIcon} color="gray" size="md" style={{textTransform: "lowercase"}}>
               main
             </Badge>
-            <Text>
-              <IconGitCommit style={{width: rem(12), height: rem(12)}}/> 9 commits
-            </Text>
             <Text c="dimmed" size="xs">
               Last commit 3 days ago
             </Text>
@@ -140,6 +138,8 @@ function PRCreationPage() {
           </List>
         </Paper>
       </Group>
+      <PRSummaryBox numContributors={3} numFiles={5} numCommits={8}/>
+      <CommitHistory/>
 
       <Modal opened={opened} onClose={close} title="Create a Group">
         <Stack m="md">
