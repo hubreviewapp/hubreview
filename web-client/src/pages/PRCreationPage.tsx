@@ -7,6 +7,7 @@ import PRDetailsBox from "../components/PRCreate/PRDetailsBox";
 import FileGrouping from "../components/PRCreate/FileGrouping";
 import {useDisclosure} from "@mantine/hooks";
 import {Link} from "react-router-dom";
+import PRSummaryBox from "../components/PRCreate/PRSummaryBox";
 
 type FileGroup = {
   id: number;
@@ -68,7 +69,7 @@ function PRCreationPage() {
             </Text>
           </Group>
           <Group>
-            HERE
+            <PRSummaryBox numCommits={3} numContributors={4} numFiles={6}/>
           </Group>
 
           <Grid mt="md">

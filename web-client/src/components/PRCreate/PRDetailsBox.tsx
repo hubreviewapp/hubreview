@@ -9,15 +9,13 @@ import {
   Text,
   Tooltip,
   Badge,
-  Avatar, ScrollArea, Select, MultiSelect, TextInput,
+  Avatar, ScrollArea, Select, MultiSelect, TextInput, Divider,
 } from "@mantine/core";
 import {IconInfoCircle } from "@tabler/icons-react";
 import {useState} from "react";
 import UserLogo from "../../assets/icons/user2.png";
 import PriorityBadge, {PriorityBadgeLabel} from "../PriorityBadge";
 import LabelButton from "../LabelButton";
-import classes from "./CreatePR.module.scss";
-
 
 function barColor(capacity: number, waiting: number) {
   const workload = (waiting / capacity) * 100;
@@ -57,7 +55,6 @@ function PRDetailsBox() {
     },
   ];
   const iconInfo = <IconInfoCircle style={{ width: rem(18), height: rem(18) }} />;
-
   const [reviewerList, setReviewerList] = useState<number[]>([]);
   const [priority, setPriority] = useState<PriorityBadgeLabel>(null);
   const [labelValue, setLabelValue] = useState<string[]>([]);
@@ -65,7 +62,6 @@ function PRDetailsBox() {
   const filtered = reviewers.filter((item) => item.username.toLowerCase().includes(query.toLowerCase()));
 
   const removeFromReviewerList = (id:number) => {
-
     setReviewerList(reviewerList.filter(itm=> itm !=id));
   }
 
@@ -102,9 +98,7 @@ function PRDetailsBox() {
               }}
               placeholder="Search Users"
             />
-
           </Box>
-
         <ScrollArea h={130} mt="5px" scrollbars="y">
           {filtered.map((itm) => (
             <Grid key={itm.id}>
@@ -135,7 +129,7 @@ function PRDetailsBox() {
           ))}
         </ScrollArea>
         </Box>
-        <Box className={classes.borderBottom}/>
+        <Divider mt="md"/>
         <Box mt="sm">
           <Select
             label="Assign Priority"
@@ -148,7 +142,7 @@ function PRDetailsBox() {
           />
           <PriorityBadge label={priority} size="md"/>
         </Box>
-        <Box className={classes.borderBottom}/>
+        <Divider my="md"/>
         <MultiSelect
           label="Add Label"
           placeholder="Select Label"
@@ -158,9 +152,7 @@ function PRDetailsBox() {
           hidePickedOptions
           onChange={setLabelValue}
         />
-
         <Group mt="md">
-
           {labelValue.length == 0 ? (
             <Badge variant="light">No Label Added</Badge>
           ) : (

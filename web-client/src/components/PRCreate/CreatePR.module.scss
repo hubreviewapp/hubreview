@@ -1,5 +1,10 @@
-.borderBottom {
-  border-bottom: 1px solid rgb(8, 68, 98) !important; /* You can adjust the color code as needed */
-  margin-top: 15px;
-  margin-bottom: 10px;
+.capsuleBox {
+  width: 100%;
+  border: 1px solid rgb(8, 68, 98);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 14px;
 }
