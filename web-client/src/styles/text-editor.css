@@ -1,0 +1,50 @@
+h1, p {
+  font-family: Lato;
+}
+
+.text-editor {
+  position: relative;
+  padding-top: 60px;
+  border: 1px black !important;
+  background-color: #1B263B !important;
+}
+
+.text-editor .text-editor__toolbar {
+  opacity: 1;
+  transform: none;
+}
+
+.text-editor__toolbar {
+  transition: opacity , transform 150ms ease-out;
+  position: absolute;
+  opacity: 0;
+  top: 0;
+  right: 0;
+  margin: 0;
+  border: 0;
+  transform: translateY(5px);
+}
+
+.text-editor__button, .text-editor__toolbar button {
+  background: white;
+  border-color: blue;
+}
+
+.text-editor__button[disabled], .text-editor__toolbar button[disabled] {
+  background: white;
+  border-color: cornflowerblue;
+}
+
+.text-editor__body {
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  color: #333;
+}
+
+.text-editor__body a {
+  color: #666;
+  text-decoration: none;
+  border-bottom: 1px solid #ccc;
+}

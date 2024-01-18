@@ -71,7 +71,7 @@ function PRDetailsPage({ id, name }: PRDetailsPageProps) {
         </Grid.Col>
         <Grid.Col span={4}>
           <Paper withBorder p="md" w="80%">
-            <Title order={3} align="center" mb="md">
+            <Title order={3}  mb="md">
               {" "}
               Reviewers{" "}
             </Title>
@@ -112,13 +112,13 @@ function PRDetailsPage({ id, name }: PRDetailsPageProps) {
               <IconUserSearch style={{ width: rem(20), height: rem(20), alignItems:"right"}} />
             </Box>
             <Box style={{display:"flex", marginBottom:"3px"}}>
-              <Box component="img" src={UserLogo3} alt={"logo"} className={classes.logo} />
-              <Text size={"md"} style={{padding: "3px"}}>alpermumcular</Text>
+              <Box component="img" src={UserLogo3} alt="logo" className={classes.logo} />
+              <Text size="md" style={{padding: "3px"}}>alpermumcular</Text>
             </Box>
 
             <Box style={{display:"flex", marginBottom:"3px"}}>
-              <Box component="img" src={UserLogo4} alt={"logo"} className={classes.logo} />
-              <Text size={"md"} style={{padding: "3px"}}>vedatarican</Text>
+              <Box component="img" src={UserLogo4} alt="logo" className={classes.logo} />
+              <Text size="md" style={{padding: "3px"}}>vedatarican</Text>
             </Box>
             <br></br>
 
@@ -129,7 +129,7 @@ function PRDetailsPage({ id, name }: PRDetailsPageProps) {
             </Box>
 
             <Box style={{display:"flex", marginBottom:"3px"}}>
-              <Badge size={"lg"} color={""} style={{marginTop:10}}>
+              <Badge size="lg" color="" style={{marginTop:10}}>
                 1/3
               </Badge>
             </Box>
@@ -139,13 +139,13 @@ function PRDetailsPage({ id, name }: PRDetailsPageProps) {
               <Text fw={700} size="lg" style={{style:"bold"}}> Contributers </Text>
             </Box>
             <Box style={{display:"flex", marginBottom:"3px"}}>
-              <Box component="img" src={UserLogo5} alt={"logo"} className={classes.logo} />
-              <Text size={"md"} style={{padding: "3px"}}>aysekelleci</Text>
+              <Box component="img" src={UserLogo5} alt="logo" className={classes.logo} />
+              <Text size="md" style={{padding: "3px"}}>aysekelleci</Text>
             </Box>
 
             <Box style={{display:"flex", marginBottom:"3px"}}>
-              <Box component="img" src={UserLogo2} alt={"logo"} className={classes.logo} />
-              <Text size={"md"} style={{padding: "3px"}}>ecekahraman</Text>
+              <Box component="img" src={UserLogo2} alt="logo" className={classes.logo} />
+              <Text size="md" style={{padding: "3px"}}>ecekahraman</Text>
             </Box>
             <br></br>
           </Paper>
