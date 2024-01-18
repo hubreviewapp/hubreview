@@ -5,7 +5,7 @@ import { Button, Box, Badge } from '@mantine/core';
 import '../styles/text-editor.css';
 
 function TextEditor()  {
-  const id = 'id';
+  const id = 'comment_id';
   const [value, setValue] = useState<EditorValue>(
     RichTextEditor.createValueFromString(localStorage.getItem(id) || '', 'html')
   );

@@ -1,6 +1,7 @@
 import LabelButton from "../components/LabelButton";
 import ModifiedFilesTab from "../tabs/ModifiedFilesTab";
 import CommentsTab from "../tabs/CommentsTab.tsx";
+import CommitsTab from "../tabs/CommitsTab.tsx";
 import {Box,Paper, Badge, rem, Grid, Text, Group, Title} from "@mantine/core";
 import TabComp from "../components/Tab.tsx";
 import * as React from "react";
@@ -49,8 +50,8 @@ function PRDetailsPage({ id, name }: PRDetailsPageProps) {
       </Group>
       <p style={{ marginTop: -20 }}> created at 4 days ago by Irem Aydın </p>
       <Box display="flex" style={{ justifyContent: "flex-start" }}>
-        <LabelButton label="enhancement" size="lg" />
-        <LabelButton label="bug fix" size="lg" />
+        <LabelButton label="Enhancement" size="lg" />
+        <LabelButton label="Bug Fix" size="lg" />
       </Box>
       <p style={{ marginRight: 20 }}>
         <IconCircleDot size={18} strokeWidth={3} /> &ensp; 1 issue linked
@@ -67,6 +68,7 @@ function PRDetailsPage({ id, name }: PRDetailsPageProps) {
             {currentTab === "modified files" && <ModifiedFilesTab />}
             {currentTab === "comments" && <CommentsTab />}
             {currentTab === "details" && <PrContextTab />}
+            {currentTab === "commits" && <CommitsTab />}
           </Box>
         </Grid.Col>
         <Grid.Col span={4}>

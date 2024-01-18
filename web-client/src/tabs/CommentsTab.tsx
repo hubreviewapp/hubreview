@@ -1,6 +1,7 @@
 import Comment from "../components/Comment.tsx";
 import TextEditor from "../components/TextEditor.tsx";
 import {Container, Box} from "@mantine/core";
+import SplitButton from "../components/SplitButton.tsx";
 
 function CommentsTab() {
   const comments = ["x.py", "y.py", "z.py"];
@@ -22,6 +23,10 @@ function CommentsTab() {
           <br></br>
         </Box>
       ))}
+
+      <SplitButton></SplitButton>
+      <br></br>
+
       <Box style={{ border: "2px groove gray", borderRadius: 10, padding:"10px" }}>
         <TextEditor></TextEditor>
       </Box>
