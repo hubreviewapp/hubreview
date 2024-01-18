@@ -1,0 +1,25 @@
+.capsuleBox {
+  width: 100%;
+  border: 1px solid rgb(8, 68, 98);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 14px;
+}
+.branchBox{
+  width: 100%;
+  align-items: center;
+  background: #243252;
+  border-radius: 5px;
+  display: flex;
+  align-content: start;
+  padding: 10px;
+}
+.dimmed{
+  color: #8b949e;
+  font-size: 14px;
+}
+
+
