@@ -1,11 +1,13 @@
 import Comment from "../components/Comment.tsx";
+import TextEditor from "../components/TextEditor.tsx";
+import {Container, Box} from "@mantine/core";
 
 function CommentsTab() {
   const comments = ["x.py", "y.py", "z.py"];
   return (
-    <div>
+    <Container>
       {comments.map((comment, index) => (
-        <div key={index}>
+        <Box key={index} >
           <Comment
             key={comment}
             id={index}
@@ -18,11 +20,16 @@ function CommentsTab() {
             date={new Date(2023, 4, 7)}
           ></Comment>
           <br></br>
-        </div>
+        </Box>
       ))}
+      <Box style={{ border: "2px groove gray", borderRadius: 10, padding:"10px" }}>
+        <TextEditor></TextEditor>
+      </Box>
 
       <br></br>
-    </div>
+      <br></br>
+      <br></br>
+    </Container>
   );
 }
 
