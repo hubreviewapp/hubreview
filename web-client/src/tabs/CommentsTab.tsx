@@ -19,6 +19,7 @@ function CommentsTab() {
               "Looks like TS gets confused as to what typings to pick or something like that (just like you suggested)."
             }
             date={new Date(2023, 4, 7)}
+            isResolved={true}
           ></Comment>
           <br></br>
         </Box>
