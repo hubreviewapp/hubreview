@@ -10,6 +10,8 @@ import {Link} from "react-router-dom";
 import PRSummaryBox from "../components/PRCreate/PRSummaryBox";
 import CommitHistory from "../components/PRCreate/CommitHistory";
 import CompareBranchBox from "../components/PRCreate/CompareBranchBox";
+import SplitButton from "../components/SplitButton";
+import ChangedFilesList from "../components/PRCreate/ChangedFilesList";
 
 type FileGroup = {
   id: number;
@@ -88,6 +90,7 @@ function PRCreationPage() {
                   Save Draft
                 </Button>
                 <Button m="md">Create</Button>
+                <SplitButton/>
               </Flex>
             </Stack>
           </Box>
@@ -100,6 +103,7 @@ function PRCreationPage() {
         <PRSummaryBox numContributors={3} numFiles={5} numCommits={8}/>
       </Box>
       <CommitHistory/>
+      <ChangedFilesList/>
 
       <Modal opened={opened} onClose={close} title="Create a Group">
         <Stack m="md">
