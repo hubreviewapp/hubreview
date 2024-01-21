@@ -6,22 +6,21 @@ import { IconGitMerge, IconX, IconCheck } from '@tabler/icons-react';
 
 function SplitButton() {
   return (
-    <div className="popover-container">
+    <div >
       <Popover
         withArrow arrowOffset={14} arrowSize={15}
         width={200}
         position="right-start"
-        opened
         offset={{ mainAxis: 15, crossAxis: 0 }}
-
       >
         <Popover.Target >
-          <Box style={{position: "relative",backgroundColor: 'dimgray', width: 70, borderRadius: 10}}>
+          <Box style={{position: "relative",backgroundColor: 'dimgray', width: 140, borderRadius: 10, display:"flex"}}>
             <IconGitMerge
               style={{ width: rem(50), height: rem(50), marginTop: 0, marginLeft: 10}} />
+            <Text size="sm" fw={700} c="#A30000"> Not Able to Merge</Text>
           </Box>
         </Popover.Target>
-        <Popover.Dropdown style={{ width: 840}}>
+        <Popover.Dropdown style={{ width: 770}}>
           <Box style={{display: 'flex'}}>
             <Box>
             <IconX
@@ -107,7 +106,6 @@ function SplitButton() {
         </Popover.Dropdown>
       </Popover>
 
-      <Box style={{height: 280}}></Box>
 
     </div>
   );

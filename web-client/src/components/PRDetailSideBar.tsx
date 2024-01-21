@@ -9,7 +9,7 @@ import {
   Text,
   Tooltip,
   Badge,
-  Avatar, ScrollArea, Select, MultiSelect, TextInput, Divider,
+  Avatar, ScrollArea, MultiSelect, TextInput, Divider,
 } from "@mantine/core";
 import {IconInfoCircle } from "@tabler/icons-react";
 import {useState} from "react";
@@ -17,9 +17,9 @@ import UserLogo from "../assets/icons/user.png";
 import UserLogo2 from "../assets/icons/user2.png";
 import UserLogo3 from "../assets/icons/user3.png";
 import UserLogo4 from "../assets/icons/user4.png";
-import PriorityBadge, {PriorityBadgeLabel} from "./PriorityBadge";
+import {PriorityBadgeLabel} from "./PriorityBadge";
 import LabelButton from "./LabelButton";
-import {IconCheck, IconClock, IconUserPlus} from '@tabler/icons-react';
+import {IconCheck, IconClock} from '@tabler/icons-react';
 
 function barColor(capacity: number, waiting: number) {
   const workload = (waiting / capacity) * 100;
@@ -55,7 +55,6 @@ function PRDetailSideBar() {
   ];
   const iconInfo = <IconInfoCircle style={{ width: rem(18), height: rem(18) }} />;
   const [reviewerList, setReviewerList] = useState<number[]>([]);
-  const [priority, setPriority] = useState<PriorityBadgeLabel>(null);
   const [labelValue, setLabelValue] = useState<string[]>([]);
   const [query, setQuery] = useState('');
   const filtered = reviewers.filter((item) => item.username.toLowerCase().includes(query.toLowerCase()));

@@ -5,12 +5,24 @@ import SplitButton from "../components/SplitButton.tsx";
 
 const comments = [
   {
+    author: 'irem_aydın',
+    text: "This pull request addresses a critical bug in the user authentication " +
+      "module. The issue stemmed from improper handling of user sessions, leading to unexpected logouts. The changes in this " +
+      "PR include a comprehensive fix to the session management, ensuring a seamless user experience by preventing inadvertent logouts. " +
+      "Additionally, the code has been optimized for better performance, and thorough testing, including unit and integration " +
+      "tests, has been conducted to validate the solution. Reviewers are encouraged to focus on the modifications in the " +
+      "authentication module, paying attention to code readability, maintainability, and adherence to coding standards. " +
+      "This PR is a crucial step in maintaining the reliability and stability of our application.",
+    date: new Date(2023, 4, 7),
+    isResolved: false,
+    isAIGenerated: true
+  },
+  {
     author: 'aysekelleci',
     text: "In every project I'm using Zodios in, I'm eventually seeing more and more \"implicit any\" " +
       "warnings which go away when restarting the TS language server in VS Code or sometimes even just saving my current file. " +
       "Looks like TS gets confused as to what typings to pick or something like that (just like you suggested).",
     date: new Date(2023, 4, 7),
-    content: "Bender Bending Rodríguez, (born September 4, 2996), designated Bending Unit 22, and commonly known as Bender, is a bending unit created by a division of MomCorp in Tijuana, Mexico, and his serial number is 2716057. His mugshot id number is 01473. He is Fry's best friend.",
     isResolved: true
   },
 
@@ -29,7 +41,6 @@ const comments = [
   },
 ];
 function CommentsTab() {
-
   const resolvedComments = comments.filter(comment => comment.isResolved);
   const unresolvedComments = comments.filter(comment => !comment.isResolved);
 
@@ -62,6 +73,7 @@ function CommentsTab() {
             text={comment.text}
             date={comment.date}
             isResolved={comment.isResolved}
+            isAIGenerated={comment.isAIGenerated}
           ></Comment>
           <br></br>
         </Box>
@@ -80,9 +92,7 @@ function CommentsTab() {
         <TextEditor></TextEditor>
       </Box>
 
-      <br></br>
-      <br></br>
-      <br></br>
+      <Box style={{height:100}}></Box>
     </Container>
   );
 }
