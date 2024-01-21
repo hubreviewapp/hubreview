@@ -21,7 +21,7 @@ function SplitButton() {
               style={{ width: rem(50), height: rem(50), marginTop: 0, marginLeft: 10}} />
           </Box>
         </Popover.Target>
-        <Popover.Dropdown style={{ width: 800}}>
+        <Popover.Dropdown style={{ width: 840}}>
           <Box style={{display: 'flex'}}>
             <Box>
             <IconX
@@ -107,7 +107,7 @@ function SplitButton() {
         </Popover.Dropdown>
       </Popover>
 
-      <Box style={{height: 270}}></Box>
+      <Box style={{height: 280}}></Box>
 
     </div>
   );

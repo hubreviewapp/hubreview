@@ -22,13 +22,13 @@
 }
 
 .text-editor__button, .text-editor__toolbar button {
-  background: white;
-  border-color: blue;
+  background: #315A77;
+  border-color: #1B263B;
 }
 
 .text-editor__button[disabled], .text-editor__toolbar button[disabled] {
-  background: white;
-  border-color: cornflowerblue;
+  background: #415A77;
+  border-color: gray;
 }
 
 .text-editor__body {
