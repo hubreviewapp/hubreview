@@ -31,7 +31,7 @@ function PRDetailsPage({ id, name }: PRDetailsPageProps) {
       <Group>
         <h2>
           {" "}
-          {name} chore(deps): update dependency ts-node to v10.9.2
+          {name} Fix: Resolve Critical User Authentication Bug and Enhance Session Management
           <span style={{ color: "#778DA9" }}> #{id}</span>
         </h2>
         &ensp;&ensp;
