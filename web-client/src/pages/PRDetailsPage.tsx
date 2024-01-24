@@ -1,17 +1,15 @@
 import LabelButton from "../components/LabelButton";
 import ModifiedFilesTab from "../tabs/ModifiedFilesTab";
 import CommentsTab from "../tabs/CommentsTab.tsx";
+import CommitsTab from "../tabs/CommitsTab.tsx";
 import {Box,Paper, Badge, rem, Grid, Text, Group, Title} from "@mantine/core";
 import TabComp from "../components/Tab.tsx";
 import * as React from "react";
 import {IconGitPullRequest, IconCircleDot, IconUserPlus, IconCheck, IconUserSearch, IconInfoCircle } from '@tabler/icons-react';
 import PrContextTab from "../tabs/PrContextTab.tsx";
-import UserLogo from "../assets/icons/user.png";
-import UserLogo2 from "../assets/icons/user2.png";
-import UserLogo3 from "../assets/icons/user3.png";
-import UserLogo4 from "../assets/icons/user4.png";
-import UserLogo5 from "../assets/icons/user4.png";
-import classes from "../styles/temp-styles.module.css";
+
+
+import PRDetailSideBar from "../components/PRDetailSideBar.tsx";
 
 interface PRDetailsPageProps {
   // Define the props you want to pass to PrDetailPage
@@ -33,7 +31,7 @@ function PRDetailsPage({ id, name }: PRDetailsPageProps) {
       <Group>
         <h2>
           {" "}
-          {name} chore(deps): update dependency ts-node to v10.9.2
+          {name} Fix: Resolve Critical User Authentication Bug and Enhance Session Management
           <span style={{ color: "#778DA9" }}> #{id}</span>
         </h2>
         &ensp;&ensp;
@@ -49,8 +47,8 @@ function PRDetailsPage({ id, name }: PRDetailsPageProps) {
       </Group>
       <p style={{ marginTop: -20 }}> created at 4 days ago by Irem Aydın </p>
       <Box display="flex" style={{ justifyContent: "flex-start" }}>
-        <LabelButton label="enhancement" size="lg" />
-        <LabelButton label="bug fix" size="lg" />
+        <LabelButton label="Enhancement" size="lg" />
+        <LabelButton label="Bug Fix" size="lg" />
       </Box>
       <p style={{ marginRight: 20 }}>
         <IconCircleDot size={18} strokeWidth={3} /> &ensp; 1 issue linked
@@ -67,89 +65,15 @@ function PRDetailsPage({ id, name }: PRDetailsPageProps) {
             {currentTab === "modified files" && <ModifiedFilesTab />}
             {currentTab === "comments" && <CommentsTab />}
             {currentTab === "details" && <PrContextTab />}
+            {currentTab === "commits" && <CommitsTab />}
           </Box>
+
         </Grid.Col>
-        <Grid.Col span={4}>
-          <Paper withBorder p="md" w="80%">
-            <Title order={3}  mb="md">
-              {" "}
-              Reviewers{" "}
-            </Title>
-            <Box style={{ display: "flex", marginBottom: "3px" }}>
-              <Box component="img" src={UserLogo} alt="logo" className={classes.logo} />
-              <Text size="md" style={{ padding: "3px" }}>
-                irem_aydın
-              </Text>{" "}
-              &ensp;
-              <IconCheck size={24} strokeWidth={3} color="green" />
-            </Box>
-            <br></br>
-            <Box style={{ display: "flex" }}>
-              <Text size="lg" style={{ style: "bold" }}>
-                {" "}
-                Assignees{" "}
-              </Text>
-              <IconUserPlus style={{ width: rem(18), height: rem(18), alignItems: "right" }} />
-            </Box>
-            <Box style={{ display: "flex", marginBottom: "3px" }}>
-              <Box component="img" src={UserLogo} alt="logo" className={classes.logo} />
-              <Text size="md" style={{ padding: "3px" }}>
-                ecekahraman
-              </Text>
-            </Box>
-            <Box style={{ display: "flex", marginBottom: "3px" }}>
-              <Box component="img" src={UserLogo} alt="logo" className={classes.logo} />
-              <Text size="md" style={{ padding: "3px" }}>
-                irem_aydın
-              </Text>
-            </Box>
+        {currentTab === "comments" && (
+          <Grid.Col span={3}>
+            <PRDetailSideBar></PRDetailSideBar>
+          </Grid.Col>)}
 
-            <br></br>
-
-            <Box style={{display:"flex" }}>
-              <Text fw={700} size="lg" style={{style:"bold"}}> Suggestions </Text>
-              &ensp;
-              <IconUserSearch style={{ width: rem(20), height: rem(20), alignItems:"right"}} />
-            </Box>
-            <Box style={{display:"flex", marginBottom:"3px"}}>
-              <Box component="img" src={UserLogo3} alt="logo" className={classes.logo} />
-              <Text size="md" style={{padding: "3px"}}>alpermumcular</Text>
-            </Box>
-
-            <Box style={{display:"flex", marginBottom:"3px"}}>
-              <Box component="img" src={UserLogo4} alt="logo" className={classes.logo} />
-              <Text size="md" style={{padding: "3px"}}>vedatarican</Text>
-            </Box>
-            <br></br>
-
-            <Box style={{display:"flex" }}>
-              <Text fw={700} size="lg" style={{style:"bold"}}> Number of req. approves </Text>
-              &ensp;
-              <IconInfoCircle style={{ width: rem(20), height: rem(20), alignItems:"right"}} />
-            </Box>
-
-            <Box style={{display:"flex", marginBottom:"3px"}}>
-              <Badge size="lg" color="" style={{marginTop:10}}>
-                1/3
-              </Badge>
-            </Box>
-            <br></br>
-
-            <Box style={{display:"flex" }}>
-              <Text fw={700} size="lg" style={{style:"bold"}}> Contributers </Text>
-            </Box>
-            <Box style={{display:"flex", marginBottom:"3px"}}>
-              <Box component="img" src={UserLogo5} alt="logo" className={classes.logo} />
-              <Text size="md" style={{padding: "3px"}}>aysekelleci</Text>
-            </Box>
-
-            <Box style={{display:"flex", marginBottom:"3px"}}>
-              <Box component="img" src={UserLogo2} alt="logo" className={classes.logo} />
-              <Text size="md" style={{padding: "3px"}}>ecekahraman</Text>
-            </Box>
-            <br></br>
-          </Paper>
-        </Grid.Col>
       </Grid>
     </div>
   );
