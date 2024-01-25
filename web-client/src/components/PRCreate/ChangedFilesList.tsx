@@ -1,12 +1,14 @@
 import {Box, rem, NavLink, Title} from '@mantine/core';
-import {IconFileDiff, IconFolderFilled} from '@tabler/icons-react';
+import {IconFileDiff, IconFolderFilled, IconFile} from '@tabler/icons-react';
+import {useState} from "react";
 
 function ChangedFilesList() {
-  //TODO: set active file
-  //const [activeFile, setActiveFile]  =useState("index.html");
-
+  const [activeFile, setActiveFile] = useState("index.html");
+  const file = (fileName: string) => <NavLink href="#required-for-focus" onClick={() => setActiveFile(fileName)}
+                                              style={activeFile === fileName ? {backgroundColor: "rgba(8,68,98,0.64)"} : null}
+                                              label={fileName} leftSection={<IconFile size="1rem" stroke={1.5}/>}/>;
   return (
-    <Box w="300px" p="md">
+    <Box w="300px" p="md" h="400px">
       <Title order={6}>
         <IconFileDiff style={{width: rem(18), height: rem(18)}}/>
         {" "}
@@ -18,13 +20,13 @@ function ChangedFilesList() {
         childrenOffset={28}
         defaultOpened
       >
-        <NavLink href="#required-for-focus" label="App.tsx"/>
-        <NavLink label="index.html" href="#required-for-focus"/>
+        {file("App.tsx")}
+        {file("index.html")}
         <NavLink label="components" childrenOffset={28} href="#required-for-focus"
                  leftSection={<IconFolderFilled size="1rem" stroke={1.5}/>}>
-          <NavLink label="NavBar.tsx" href="#required-for-focus"/>
-          <NavLink label="Badge.tsx" href="#required-for-focus"/>
-          <NavLink label="Button.tsx" href="#required-for-focus"/>
+          {file("Navbar.tsx")}
+          {file("Badge.tsx")}
+          {file("Button.tsx")}
         </NavLink>
       </NavLink>
 
@@ -34,8 +36,7 @@ function ChangedFilesList() {
         leftSection={<IconFolderFilled size="1rem" stroke={1.5}/>}
         childrenOffset={28}
       >
-        <NavLink label="logo.svg" href="#required-for-focus"/>
-        <NavLink label="prettier.json" href="#required-for-focus"/>
+        {file("logo.svg")}
       </NavLink>
     </Box>
   );
