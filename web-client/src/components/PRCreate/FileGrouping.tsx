@@ -1,6 +1,5 @@
-import { Text, Box, Paper, Group, Button, rem, Collapse, List } from "@mantine/core";
+import { Text, Box, Paper, Group, Button, rem, List } from "@mantine/core";
 import { IconFiles } from "@tabler/icons-react";
-import { useDisclosure } from "@mantine/hooks";
 
 interface FileGroupingProps {
   name: string;
@@ -10,16 +9,13 @@ interface FileGroupingProps {
 }
 
 function FileGrouping({ name, id, files, reviewers }: FileGroupingProps) {
-  const iconFiles = <IconFiles style={{ width: rem(18), height: rem(18) }} />;
-  const [opened, { toggle }] = useDisclosure(false);
-
   return (
-    <Box m="md">
-      <Button variant="outline" onClick={toggle} leftSection={iconFiles}>
-        {id} . {name}
-      </Button>
-      <Collapse in={opened}>
+    <Box maw={400} mx="auto">
         <Paper p="md" w="300px" withBorder>
+          <Group>
+            <IconFiles style={{ width: rem(18), height: rem(18) }} />
+            <Text> {id} . {name}</Text>
+          </Group>
           <Group mb="md">
             <Box>
               <Text>Group Files</Text>
@@ -55,7 +51,7 @@ function FileGrouping({ name, id, files, reviewers }: FileGroupingProps) {
             <Button size="compact-xs">Edit</Button>
           </Group>
         </Paper>
-      </Collapse>
+
     </Box>
   );
 }

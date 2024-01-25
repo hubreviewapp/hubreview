@@ -10,6 +10,7 @@ import {Link} from "react-router-dom";
 import PRSummaryBox from "../components/PRCreate/PRSummaryBox";
 import CommitHistory from "../components/PRCreate/CommitHistory";
 import CompareBranchBox from "../components/PRCreate/CompareBranchBox";
+import ChangedFilesList from "../components/PRCreate/ChangedFilesList";
 
 type FileGroup = {
   id: number;
@@ -46,7 +47,6 @@ function PRCreationPage() {
 
   return (
     <Container size="lg">
-
       <Box>
         <Title mt="md" order={3} c="dimmed">
           Create a New PR
@@ -58,19 +58,6 @@ function PRCreationPage() {
       </Box>
       <Grid>
         <Grid.Col span={8}>
-
-          <Group>
-          </Group>
-
-          <Grid mt="md">
-            <Grid.Col span={8}>
-              <Group>
-                {groupList.map((itm) => (
-                  <FileGrouping key={itm.id} name={itm.name} id={itm.id} files={itm.files} reviewers={itm.reviewers}/>
-                ))}
-              </Group>
-            </Grid.Col>
-          </Grid>
           <Box>
             <Stack>
               <Paper withBorder p="md">
@@ -100,7 +87,16 @@ function PRCreationPage() {
         <PRSummaryBox numContributors={3} numFiles={5} numCommits={8}/>
       </Box>
       <CommitHistory/>
+      <Group>
+        <ChangedFilesList/>
+        <Box display="flex" w="70%" h="300px">
+          {groupList.map(group => (
+            <FileGrouping key={group.id} name={group.name} id={group.id} files={group.files} reviewers={group.reviewers}/>
 
+          ))}
+          <Button m="md" onClick={open}>Add File Group</Button>
+        </Box>
+      </Group>
       <Modal opened={opened} onClose={close} title="Create a Group">
         <Stack m="md">
           <TextInput
