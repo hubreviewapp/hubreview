@@ -23,21 +23,26 @@ const comments = [
       "warnings which go away when restarting the TS language server in VS Code or sometimes even just saving my current file. " +
       "Looks like TS gets confused as to what typings to pick or something like that (just like you suggested).",
     date: new Date(2023, 4, 7),
-    isResolved: true
+    isResolved: true,
+    isAIGenerated: false
   },
 
   {
     author: 'ecekahraman',
     text: 'Consider choosing a more descriptive variable name in the `functionX`.',
     date: new Date(2023, 4, 7),
-    isResolved: true
+    isResolved: false,
+    isAIGenerated: false
+
   },
 
   {
     author: 'aysekelleci',
     text: 'Think about adding unit tests for future improvements.',
     date: new Date(2023, 4, 7),
-    isResolved: false
+    isResolved: false,
+    isAIGenerated: false
+
   },
 ];
 function CommentsTab() {
@@ -54,7 +59,7 @@ function CommentsTab() {
           text={comment.text}
           date={comment.date}
           isResolved={comment.isResolved}
-        ></Comment>
+        />
       </Accordion.Control>
       <Accordion.Panel>
         <Text size="sm"> {comment.text}</Text>
@@ -74,25 +79,21 @@ function CommentsTab() {
             date={comment.date}
             isResolved={comment.isResolved}
             isAIGenerated={comment.isAIGenerated}
-          ></Comment>
-          <br></br>
+          />
+          <br/>
         </Box>
       ))}
       <Accordion chevronPosition="right" variant="separated" >
         {comments2}
       </Accordion>
-
-      <br></br>
-
-
-      <SplitButton></SplitButton>
-      <br></br>
-
+      <br/>
+      <SplitButton/>
+      <br/>
       <Box style={{ border: "2px groove gray", borderRadius: 10, padding:"10px" }}>
-        <TextEditor></TextEditor>
+        <TextEditor/>
       </Box>
 
-      <Box style={{height:100}}></Box>
+      <Box style={{height:100}}/>
     </Container>
   );
 }
