@@ -54,6 +54,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 builder.Services.AddSwaggerGenNewtonsoftSupport();
+builder.Services.AddHttpClient();
 
 /*
  *

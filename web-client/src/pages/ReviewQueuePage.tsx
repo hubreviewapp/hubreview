@@ -3,6 +3,7 @@ import FilterInput from "../components/ReviewQueue/FilterInput";
 import PullRequestCard from "../components/ReviewQueue/PullRequestCard";
 import classes from "../components/ReviewQueue/ReviewQueue.module.scss";
 import {Link} from "react-router-dom";
+import { useEffect } from "react";
 
 export interface RequestedReviewer {
   reviewerType: "USER" | "TEAM";
@@ -206,6 +207,14 @@ const data: ReviewQueuePullRequest[] = [
  * - Estimated review load of a PR (e.g., a reapproval is likely to be low-effort)
  */
 function ReviewQueuePage() {
+
+  useEffect( () => {
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    const codeParam = urlParams.get("code");
+    console.log(codeParam); 
+  }, []);
+
   return (
     <Container w="100%" mt="md">
       <FilterInput />
