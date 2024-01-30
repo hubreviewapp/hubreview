@@ -1,7 +1,7 @@
 import Comment from "../components/Comment.tsx";
 import TextEditor from "../components/TextEditor.tsx";
 import SplitButton from "../components/SplitButton.tsx";
-import { Container, Box, Text, Grid, Accordion } from "@mantine/core";
+import { Container, Box, Text, Grid, Accordion, Select } from "@mantine/core";
 import PRDetailSideBar from "../components/PRDetailSideBar.tsx";
 
 const comments = [
@@ -66,7 +66,15 @@ function CommentsTab() {
   return (
     <Grid>
       <Grid.Col span={8}>
-        <Container>
+        <Container style={{marginTop:-30}}>
+          <Box style={{display:"flex", justifyContent: "flex-end"}}>
+            <Select style={{flex: 0.2, marginBottom:-10}}
+                    placeholder="Filter comments"
+                    data={['Show Everything (10)', 'All Comments (5)', 'My comments (2)', 'Active (3)', 'Resolved (2)']}
+                    checkIconPosition="left"
+                    allowDeselect={false}
+            />
+          </Box>
           {unresolvedComments.map((comment, index) => (
             <Box key={index} >
               <Comment
