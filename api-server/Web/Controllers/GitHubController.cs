@@ -16,7 +16,7 @@ public class GitHubController : ControllerBase
         var clientId = "64318456282bb1488063";
         var clientSecret = "51388c5053ea503fc8141b0184b05b5ae5529b81";
         var redirectUri = "http://localhost:5018/api/github/acquireToken";
-        
+
         using (var httpClient = new HttpClient())
         {
             var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
@@ -37,30 +37,36 @@ public class GitHubController : ControllerBase
             Console.WriteLine(access_token);
 
             HttpContext.Session.SetString("AccessToken", access_token);
-            //var accessToken = HttpContext.Session.GetString("AccessToken");
+            Console.WriteLine($"Access token from session in acquireToken: {HttpContext.Session.GetString("AccessToken")}");
 
             return Redirect($"http://localhost:5173");
         }
     }
 
 
-    [HttpGet("repos")]
+    [HttpGet("getRepository")]
     public async Task<ActionResult> getRepository()
     {
         var access_token = HttpContext.Session.GetString("AccessToken");
-        Console.WriteLine(access_token);
 
-        //Console.WriteLine("session: " + sessionnn);
-        var client1 = new GitHubClient(new ProductHeaderValue("HubReview"));
-        var tokenAuth = new Credentials(access_token);
-        client1.Credentials = tokenAuth;
-        var user = await client1.User.Current();
-        var repos = await client1.Repository.GetAllForUser(user.Login);
-        foreach (var repo in repos)
+        Console.WriteLine($"Access token: {access_token}");
+
+        var client = new GitHubClient(new ProductHeaderValue("HubReview"))
         {
-            Console.WriteLine(repo.Name);
+            Credentials = new Credentials(access_token)
+        };
+
+        var user = await client.User.Current();
+        var repos = await client.Repository.GetAllForUser(user.Login);
+
+        string[] repoNames = [];
+
+        for (var i = 0; i < repos.Count; i++)
+        {
+            Console.WriteLine($"Repository {i + 1}: {repos[i].Name}");
+            _ = repoNames.Append<string>(repos[i].Name);
         }
 
-        return Redirect($"http://localhost:5173");
+        return Ok(new { RepoNames = repoNames });
     }
 }

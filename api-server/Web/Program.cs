@@ -12,8 +12,26 @@ using NodaTime.Serialization.JsonNet;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("_allowedOrigins", policy => 
+    {
+        policy.WithOrigins("http://localhost:5173")
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials(); // Only if you need credentials (cookies, HTTP authentication) to be sent
+    });
+});
+
+
 // Add session services
-builder.Services.AddSession();
+builder.Services.AddSession(options =>
+{
+    options.Cookie.Name = ".HubReview.Session";
+    options.IdleTimeout = TimeSpan.FromMinutes(60); // Set the desired timeout
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 builder.Services.AddControllersWithViews()
     .AddNewtonsoftJson(o => o.SerializerSettings.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb));
@@ -78,6 +96,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseStaticFiles();
 app.UseRouting();
+
+app.UseCors();
 
 app.UseSession();
 app.UseAuthentication();

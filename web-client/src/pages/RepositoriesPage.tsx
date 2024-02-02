@@ -14,11 +14,18 @@ import {
 import {IconCirclePlus} from "@tabler/icons-react";
 import {useState} from "react";
 import repoData from "../repo_data.json";
+import axios from "axios";
 
 function RepositoriesPage() {
   const iconPlus = <IconCirclePlus style={{width: rem(22), height: rem(22)}}/>;
   const [query, setQuery] = useState('');
   const filtered = repoData.filter((item) => item.name.toLowerCase().includes(query.toLowerCase()));
+
+  async function getRepoNames() {
+    console.log("AAAAAAAAAAAAA");
+    const result = await axios.get("http://localhost:5018/api/github/getRepository");
+    if( result && result.data){ console.log(result.data) };
+  }
 
   const rows = filtered.map((element) => (
     <Table.Tr key={element.id}>
@@ -33,7 +40,7 @@ function RepositoriesPage() {
     <Box p="lg">
       <Flex justify="space-between" my="md">
         <Title order={3}>Repositories</Title>
-        <Button size="md" leftSection={iconPlus}>
+        <Button size="md" leftSection={iconPlus} onClick={getRepoNames}>
           Add Repositories
         </Button>
       </Flex>
