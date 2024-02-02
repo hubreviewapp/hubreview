@@ -18,7 +18,7 @@ public class GitHubController : ControllerBase
     {
         _httpContextAccessor = httpContextAccessor;
     }
-
+    
     [HttpGet("acquireToken")]
     public async Task<ActionResult> acquireToken(string code)
     {
@@ -127,7 +127,22 @@ public class GitHubController : ControllerBase
 
         // Example: Get installations for the app
         var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
-        Console.WriteLine( installations );
+        foreach( var installation in installations)
+        {
+            if( installation.Account.Login == "AlperMumcular" )
+            {
+                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
+                var installationClient = new GitHubClient(new ProductHeaderValue("HubReviewApp"))
+                {
+                    Credentials = new Credentials(response.Token)
+                };
+
+                var reps = await installationClient.Repository.GetAllForUser("AlperMumcular");
+
+                return Ok(new { RepoNames = reps.Select(repo => repo.Name).ToArray() });
+
+            }
+        }
 
         // You might want to iterate over installations to find the one you are interested in.
 
@@ -135,6 +150,6 @@ public class GitHubController : ControllerBase
     //    var repositories = await appClient.GitHubApps.Installation.GetAllRepositoriesForCurrentUser(installationId);
     //    string[] repoNames = repositories.Repositories.Select(repo => repo.Name).ToArray();
 
-        return Ok();//Ok(new { RepoNames = repoNames });
+        return Ok(new { RepoNames = "nothing :(" });
     }
 }
