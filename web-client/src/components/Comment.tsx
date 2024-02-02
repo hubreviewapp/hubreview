@@ -65,7 +65,9 @@ export function Comment({ author, text, date, isResolved, isAIGenerated }: Comme
             <Box style={{ position: 'absolute', right: '5px', display:"flex"}}>
               <Select
                 placeholder="Mark as resolved"
-                data={['Resolved', "Won't fix", 'Closed', 'Open']}
+                //active , pending  --> active
+                // closed --> spam, abuse, off topic
+                data={['Active', "Pending", 'Closed', "Outdated", 'Resolved', "Duplicate"]}
                 checkIconPosition="left"
                 defaultValue={isResolved ? 'Resolved' : undefined}
                 //defaultValue="Open"
