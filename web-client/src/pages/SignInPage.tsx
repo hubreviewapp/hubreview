@@ -2,7 +2,18 @@ import { Grid, Box, Text, TextInput, Card, Button, Stack, Group, Image } from "@
 import GitHubLogo from "../assets/icons/github-mark-white.png";
 import SignIn from "../assets/icons/signin.png";
 
+
+const CLIENT_ID = "64318456282bb1488063";
+
 function SignInPage() {
+
+  
+
+  function loginWithGithub() {
+    console.log("Button clicked");
+    window.location.assign( "https://github.com/login/oauth/authorize?client_id=" + CLIENT_ID );
+  }
+  
   return (
     <Box h={600} p={5} m={0} w="100%">
       <Grid m="30px">
@@ -27,7 +38,7 @@ function SignInPage() {
               />
               <TextInput leftSectionPointerEvents="none" label="Password" placeholder="Your password" withAsterisk />
               <Text c="dimmed">Forgot Password?</Text>
-              <Button variant="gradient">Sign In</Button>
+              <Button onClick={loginWithGithub} variant="gradient">Sign In</Button>
             </Stack>
           </Card>
         </Grid.Col>

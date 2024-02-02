@@ -12,6 +12,9 @@ using NodaTime.Serialization.JsonNet;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add session services
+builder.Services.AddSession();
+
 builder.Services.AddControllersWithViews()
     .AddNewtonsoftJson(o => o.SerializerSettings.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb));
 
@@ -54,6 +57,7 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 builder.Services.AddSwaggerGenNewtonsoftSupport();
+builder.Services.AddHttpClient();
 
 /*
  *
@@ -75,6 +79,7 @@ if (app.Environment.IsDevelopment())
 app.UseStaticFiles();
 app.UseRouting();
 
+app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
