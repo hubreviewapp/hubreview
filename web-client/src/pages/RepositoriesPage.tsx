@@ -16,7 +16,6 @@ import {useState, useEffect} from "react";
 import repoData from "../repo_data.json";
 import { Repository } from "../models/Repository";
 import axios from "axios";
-import parseJson from "parse-json";
 
 function RepositoriesPage() {
   const iconPlus = <IconCirclePlus style={{width: rem(22), height: rem(22)}}/>;
@@ -52,9 +51,9 @@ function RepositoriesPage() {
     window.location.assign( "https://github.com/apps/hubreviewapp/installations/new" );
   }
 
-
-  const rows = repository.map((element) => (
-    <Table.Tr key={element.Id}>
+  console.log(repository)
+  const rows = repository.map((element, index) => (
+    <Table.Tr key={index}>
       <Table.Td><Text fw="700">{element.Name}</Text></Table.Td>
       <Table.Td c="dimmed">created by <UnstyledButton c="blue">{element.OwnerLogin}</UnstyledButton> on {element.CreatedAt?.toString()}
       </Table.Td>
