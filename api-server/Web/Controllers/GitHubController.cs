@@ -76,13 +76,7 @@ public class GitHubController : ControllerBase
         var user = await client.User.Current();
         var repos = await client.Repository.GetAllForUser(user.Login);
 
-        string[] repoNames = repos.Select(repo => repo.Name).ToArray();;
-
-        for (var i = 0; i < repos.Count; i++)
-        {
-            Console.WriteLine($"Repository {i + 1}: {repos[i].Name}");
-            //repoNames.Append(repos[i].Name);
-        }
+        string[] repoNames = repos.Select(repo => repo.Name).ToArray();
 
         return Ok(new { RepoNames = repoNames });
     }
