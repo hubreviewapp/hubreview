@@ -24,21 +24,26 @@ const comments = [
       "warnings which go away when restarting the TS language server in VS Code or sometimes even just saving my current file. " +
       "Looks like TS gets confused as to what typings to pick or something like that (just like you suggested).",
     date: new Date(2023, 4, 7),
-    isResolved: true
+    isResolved: true,
+    isAIGenerated: false
   },
 
   {
     author: 'ecekahraman',
     text: 'Consider choosing a more descriptive variable name in the `functionX`.',
     date: new Date(2023, 4, 7),
-    isResolved: true
+    isResolved: false,
+    isAIGenerated: false
+
   },
 
   {
     author: 'aysekelleci',
     text: 'Think about adding unit tests for future improvements.',
     date: new Date(2023, 4, 7),
-    isResolved: false
+    isResolved: false,
+    isAIGenerated: false
+
   },
 ];
 function CommentsTab() {
@@ -55,7 +60,7 @@ function CommentsTab() {
           text={comment.text}
           date={comment.date}
           isResolved={comment.isResolved}
-        ></Comment>
+        />
       </Accordion.Control>
       <Accordion.Panel>
         <Text size="sm"> {comment.text}</Text>
@@ -64,52 +69,35 @@ function CommentsTab() {
   ));
 
   return (
-    <Grid>
-      <Grid.Col span={8}>
-        <Container style={{marginTop:-30}}>
-          <Box style={{display:"flex", justifyContent: "flex-end"}}>
-            <Select style={{flex: 0.2, marginBottom:-10}}
-                    placeholder="Filter comments"
-                    data={['Show Everything (10)', 'All Comments (5)', 'My comments (2)', 'Active (3)', 'Resolved (2)']}
-                    checkIconPosition="left"
-                    allowDeselect={false}
-            />
-          </Box>
-          {unresolvedComments.map((comment, index) => (
-            <Box key={index} >
-              <Comment
-                key={index}
-                id={index}
-                author={comment.author}
-                text={comment.text}
-                date={comment.date}
-                isResolved={comment.isResolved}
-                isAIGenerated={comment.isAIGenerated}
-              ></Comment>
-              <br></br>
-            </Box>
-          ))}
-          <Accordion chevronPosition="right" variant="separated" >
-            {comments2}
-          </Accordion>
 
-          <br></br>
+    <Container>
+      {unresolvedComments.map((comment, index) => (
+        <Box key={index} >
+          <Comment
+            key={index}
+            id={index}
+            author= {comment.author}
+            text={comment.text}
+            date={comment.date}
+            isResolved={comment.isResolved}
+            isAIGenerated={comment.isAIGenerated}
+          />
+          <br/>
+        </Box>
+      ))}
+      <Accordion chevronPosition="right" variant="separated" >
+        {comments2}
+      </Accordion>
+      <br/>
+      <SplitButton/>
+      <br/>
+      <Box style={{ border: "2px groove gray", borderRadius: 10, padding:"10px" }}>
+        <TextEditor/>
+      </Box>
 
-          <SplitButton></SplitButton>
-          <br></br>
+      <Box style={{height:100}}/>
+    </Container>
 
-          <Box style={{ border: "2px groove gray", borderRadius: 10, padding: "10px" }}>
-            <TextEditor></TextEditor>
-          </Box>
-
-          <Box style={{ height: 100 }}></Box>
-        </Container>
-      </Grid.Col>
-
-      <Grid.Col span={3}>
-        <PRDetailSideBar />
-      </Grid.Col>
-    </Grid>
   );
 }
 
