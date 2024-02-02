@@ -54,7 +54,7 @@ public class GitHubController : ControllerBase
         }
     }
 
-
+    /*
     [HttpGet("getRepository")]
     public async Task<ActionResult> getRepository()
     {
@@ -79,5 +79,62 @@ public class GitHubController : ControllerBase
         string[] repoNames = repos.Select(repo => repo.Name).ToArray();
 
         return Ok(new { RepoNames = repoNames });
+    }
+    */
+
+    
+    
+    [HttpGet("getRepository")]
+    public async Task<ActionResult> getRepository()
+    {
+        var generator = new GitHubJwt.GitHubJwtFactory(
+            new GitHubJwt.FilePrivateKeySource("../../api-server/hubreviewapp.2024-02-02.private-key.pem"),
+            new GitHubJwt.GitHubJwtFactoryOptions
+            {
+                AppIntegrationId = 812902, // The GitHub App Id
+                ExpirationSeconds = 600 // 10 minutes is the maximum time allowed
+            }
+        );
+
+        var jwtToken = generator.CreateEncodedJwtToken();
+
+        // Pass the JWT as a Bearer token to Octokit.net
+        var appClient = new GitHubClient(new ProductHeaderValue("MyApp"))
+        {
+            Credentials = new Credentials(jwtToken, AuthenticationType.Bearer)
+        };
+
+        
+        //var installationId = 812902; // You need to implement a method to get the installation ID for the app.
+        
+        /*var access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"); // Method to get the app access token.
+
+        Console.WriteLine($"Session ID in getRepository: {_httpContextAccessor?.HttpContext?.Session.Id}");
+        if (string.IsNullOrEmpty(access_token))
+        {
+            Console.WriteLine("Access token not available.");
+            return BadRequest("Access token not available.");
+        }
+
+        Console.WriteLine($"Access token: {access_token}");
+
+        var appClient = new GitHubClient(new ProductHeaderValue("HubReview"))
+        {
+            Credentials = new Credentials(access_token)
+        };
+        */
+        // Use the appClient to interact with the GitHub Apps API, for example, to get installations and repositories.
+
+        // Example: Get installations for the app
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        Console.WriteLine( installations );
+
+        // You might want to iterate over installations to find the one you are interested in.
+
+        // Example: Get repositories for the installation
+    //    var repositories = await appClient.GitHubApps.Installation.GetAllRepositoriesForCurrentUser(installationId);
+    //    string[] repoNames = repositories.Repositories.Select(repo => repo.Name).ToArray();
+
+        return Ok();//Ok(new { RepoNames = repoNames });
     }
 }
