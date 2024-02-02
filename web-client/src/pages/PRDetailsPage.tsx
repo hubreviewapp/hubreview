@@ -2,14 +2,11 @@ import LabelButton from "../components/LabelButton";
 import ModifiedFilesTab from "../tabs/ModifiedFilesTab";
 import CommentsTab from "../tabs/CommentsTab.tsx";
 import CommitsTab from "../tabs/CommitsTab.tsx";
-import {Box,Paper, Badge, rem, Grid, Text, Group, Title} from "@mantine/core";
+import { Box, Paper, Badge, rem, Grid, Text, Group, Title } from "@mantine/core";
 import TabComp from "../components/Tab.tsx";
 import * as React from "react";
-import {IconGitPullRequest, IconCircleDot, IconUserPlus, IconCheck, IconUserSearch, IconInfoCircle } from '@tabler/icons-react';
+import { IconGitPullRequest, IconCircleDot } from '@tabler/icons-react';
 import PrContextTab from "../tabs/PrContextTab.tsx";
-
-
-import PRDetailSideBar from "../components/PRDetailSideBar.tsx";
 
 interface PRDetailsPageProps {
   // Define the props you want to pass to PrDetailPage
@@ -56,25 +53,14 @@ function PRDetailsPage({ id, name }: PRDetailsPageProps) {
       </p>
 
       <br></br>
-      <Grid>
-        <Grid.Col span={8}>
-          <TabComp tabs={tabs} updateTab={updateTab} />
-          <br></br>
-          <Box >
-
-            {currentTab === "modified files" && <ModifiedFilesTab />}
-            {currentTab === "comments" && <CommentsTab />}
-            {currentTab === "details" && <PrContextTab />}
-            {currentTab === "commits" && <CommitsTab />}
-          </Box>
-
-        </Grid.Col>
-        {currentTab === "comments" && (
-          <Grid.Col span={3}>
-            <PRDetailSideBar></PRDetailSideBar>
-          </Grid.Col>)}
-
-      </Grid>
+      <TabComp tabs={tabs} updateTab={updateTab} />
+      <br></br>
+      <Box >
+        {currentTab === "modified files" && <ModifiedFilesTab />}
+        {currentTab === "comments" && <CommentsTab />}
+        {currentTab === "details" && <PrContextTab />}
+        {currentTab === "commits" && <CommitsTab />}
+      </Box>
     </div>
   );
 }
