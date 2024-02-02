@@ -2,6 +2,7 @@ using System.Web;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Octokit;
+using System.Text.Json;
 
 namespace CS.Web.Controllers;
 
@@ -147,11 +148,15 @@ public class GitHubController : ControllerBase
 
                 var reps = await installationClient.GitHubApps.Installation.GetAllRepositoriesForCurrent();
 
-                return Ok(new { RepoNames = reps });
+                //string jsonString = JsonSerializer.Serialize(weatherForecast);
+
+                //string jsonString = JsonSerializer.Serialize( reps.Repositories.Select(rep => new { Name = rep.Name, OwnerLogin = rep.Owner.Login, CreatedAt = rep.CreatedAt }) );
+
+                return Ok(new { RepoNames = reps.Repositories.Select(rep => new { Id = rep.Id, Name = rep.Name, OwnerLogin = rep.Owner.Login, CreatedAt = rep.CreatedAt }).ToArray() });
 
             }
         }
 
-        return Ok(new { RepoNames = installations });
+        return NotFound("There exists no user in session.");
     }
 }
