@@ -47,8 +47,14 @@ public class GitHubController : ControllerBase
             Console.WriteLine(access_token);
 
             _httpContextAccessor?.HttpContext?.Session.SetString("AccessToken", access_token);
-            Console.WriteLine($"Access token from session in acquireToken: {_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken")}");
-            Console.WriteLine($"Session ID in acquireToken: {_httpContextAccessor?.HttpContext?.Session.Id}");
+
+
+            var client = new GitHubClient(new ProductHeaderValue("HubReview"))
+            {
+                Credentials = new Credentials(access_token)
+            };
+            var user = await client.User.Current();
+            _httpContextAccessor?.HttpContext?.Session.SetString("UserLogin", user.Login);
 
             return Redirect($"http://localhost:5173");
         }
@@ -104,6 +110,8 @@ public class GitHubController : ControllerBase
             Credentials = new Credentials(jwtToken, AuthenticationType.Bearer)
         };
 
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
         
         //var installationId = 812902; // You need to implement a method to get the installation ID for the app.
         
@@ -129,7 +137,7 @@ public class GitHubController : ControllerBase
         var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
         foreach( var installation in installations)
         {
-            if( installation.Account.Login == "Ece-Kahraman" )
+            if( installation.Account.Login == userLogin )
             {
                 var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
                 var installationClient = new GitHubClient(new ProductHeaderValue("HubReviewApp"))
@@ -139,7 +147,7 @@ public class GitHubController : ControllerBase
 
                 var reps = await installationClient.GitHubApps.Installation.GetAllRepositoriesForCurrent();
 
-                return Ok(new { RepoNames = reps.Repositories.Select(repo => repo.Name).ToArray() });
+                return Ok(new { RepoNames = reps });
 
             }
         }
