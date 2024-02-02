@@ -1,5 +1,7 @@
 using CS.Core;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.OpenApi.Models;
 using NodaTime;
 using NodaTime.Serialization.JsonNet;
@@ -23,6 +25,7 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddHttpContextAccessor();
 
 // Add session services
 builder.Services.AddSession(options =>
@@ -32,6 +35,7 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
+
 
 builder.Services.AddControllersWithViews()
     .AddNewtonsoftJson(o => o.SerializerSettings.ConfigureForNodaTime(DateTimeZoneProviders.Tzdb));
@@ -97,9 +101,9 @@ if (app.Environment.IsDevelopment())
 app.UseStaticFiles();
 app.UseRouting();
 
-app.UseCors();
-
+app.UseCors("_allowedOrigins");
 app.UseSession();
+
 app.UseAuthentication();
 app.UseAuthorization();
 

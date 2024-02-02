@@ -1,5 +1,6 @@
 using System.Web;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using Octokit;
 
 namespace CS.Web.Controllers;
@@ -9,6 +10,15 @@ namespace CS.Web.Controllers;
 
 public class GitHubController : ControllerBase
 {
+
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    [ActivatorUtilitiesConstructor]
+    public GitHubController(IHttpContextAccessor httpContextAccessor)
+    {
+        _httpContextAccessor = httpContextAccessor;
+    }
+
     [HttpGet("acquireToken")]
     public async Task<ActionResult> acquireToken(string code)
     {
@@ -36,8 +46,9 @@ public class GitHubController : ControllerBase
             var access_token = parsedResponse["access_token"];
             Console.WriteLine(access_token);
 
-            HttpContext.Session.SetString("AccessToken", access_token);
-            Console.WriteLine($"Access token from session in acquireToken: {HttpContext.Session.GetString("AccessToken")}");
+            _httpContextAccessor?.HttpContext?.Session.SetString("AccessToken", access_token);
+            Console.WriteLine($"Access token from session in acquireToken: {_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken")}");
+            Console.WriteLine($"Session ID in acquireToken: {_httpContextAccessor?.HttpContext?.Session.Id}");
 
             return Redirect($"http://localhost:5173");
         }
@@ -47,7 +58,13 @@ public class GitHubController : ControllerBase
     [HttpGet("getRepository")]
     public async Task<ActionResult> getRepository()
     {
-        var access_token = HttpContext.Session.GetString("AccessToken");
+        var access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
+        Console.WriteLine($"Session ID in getRepository: {_httpContextAccessor?.HttpContext?.Session.Id}");
+        if (string.IsNullOrEmpty(access_token))
+        {
+            Console.WriteLine("Access token not available.");
+            return BadRequest("Access token not available.");
+        }
 
         Console.WriteLine($"Access token: {access_token}");
 
@@ -59,12 +76,12 @@ public class GitHubController : ControllerBase
         var user = await client.User.Current();
         var repos = await client.Repository.GetAllForUser(user.Login);
 
-        string[] repoNames = [];
+        string[] repoNames = repos.Select(repo => repo.Name).ToArray();;
 
         for (var i = 0; i < repos.Count; i++)
         {
             Console.WriteLine($"Repository {i + 1}: {repos[i].Name}");
-            _ = repoNames.Append<string>(repos[i].Name);
+            //repoNames.Append(repos[i].Name);
         }
 
         return Ok(new { RepoNames = repoNames });

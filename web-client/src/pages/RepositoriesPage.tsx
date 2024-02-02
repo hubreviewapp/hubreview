@@ -23,7 +23,10 @@ function RepositoriesPage() {
 
   async function getRepoNames() {
     console.log("AAAAAAAAAAAAA");
-    const result = await axios.get("http://localhost:5018/api/github/getRepository");
+    const result = await axios.create({
+      withCredentials: true,
+      baseURL: "http://localhost:5018/api/github"
+    }).get("/getRepository");
     if( result && result.data){ console.log(result.data) };
   }
 
