@@ -129,7 +129,7 @@ public class GitHubController : ControllerBase
         var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
         foreach( var installation in installations)
         {
-            if( installation.Account.Login == "AlperMumcular" )
+            if( installation.Account.Login == "Ece-Kahraman" )
             {
                 var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
                 var installationClient = new GitHubClient(new ProductHeaderValue("HubReviewApp"))
@@ -137,19 +137,13 @@ public class GitHubController : ControllerBase
                     Credentials = new Credentials(response.Token)
                 };
 
-                var reps = await installationClient.Repository.GetAllForUser("AlperMumcular");
+                var reps = await installationClient.GitHubApps.Installation.GetAllRepositoriesForCurrent();
 
-                return Ok(new { RepoNames = reps.Select(repo => repo.Name).ToArray() });
+                return Ok(new { RepoNames = reps.Repositories.Select(repo => repo.Name).ToArray() });
 
             }
         }
 
-        // You might want to iterate over installations to find the one you are interested in.
-
-        // Example: Get repositories for the installation
-    //    var repositories = await appClient.GitHubApps.Installation.GetAllRepositoriesForCurrentUser(installationId);
-    //    string[] repoNames = repositories.Repositories.Select(repo => repo.Name).ToArray();
-
-        return Ok(new { RepoNames = "nothing :(" });
+        return Ok(new { RepoNames = installations });
     }
 }
