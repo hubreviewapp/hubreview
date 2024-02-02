@@ -35,7 +35,12 @@ public class GitHubController : ControllerBase
             var access_token = parsedResponse["access_token"];
             Console.WriteLine(access_token);
 
-            return Redirect($"http://localhost:5173/?access_token={access_token}");
+            HttpContext.Session.SetString("AccessToken", access_token);
+            //var accessToken = HttpContext.Session.GetString("AccessToken");
+
+            //Console.WriteLine("session: " + sessionnn);
+
+            return Redirect($"http://localhost:5173");
         }
     }
 }
