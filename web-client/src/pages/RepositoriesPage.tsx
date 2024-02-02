@@ -21,13 +21,19 @@ function RepositoriesPage() {
   const [query, setQuery] = useState('');
   const filtered = repoData.filter((item) => item.name.toLowerCase().includes(query.toLowerCase()));
 
+  /*
   async function getRepoNames() {
     console.log("AAAAAAAAAAAAA");
     const result = await axios.create({
       withCredentials: true,
-      baseURL: "http://localhost:5018/api/github"
+      baseURL: "https://github.com/apps/APP-NAME/installations/new http://localhost:5018/api/github"
     }).get("/getRepository");
     if( result && result.data){ console.log(result.data) };
+  } */
+
+  function selectRepositories() {
+    console.log("Button clicked");
+    window.location.assign( "https://github.com/apps/hubreviewapp/installations/new" );
   }
 
   const rows = filtered.map((element) => (
@@ -43,7 +49,7 @@ function RepositoriesPage() {
     <Box p="lg">
       <Flex justify="space-between" my="md">
         <Title order={3}>Repositories</Title>
-        <Button size="md" leftSection={iconPlus} onClick={getRepoNames}>
+        <Button size="md" leftSection={iconPlus} onClick={selectRepositories}>
           Add Repositories
         </Button>
       </Flex>
