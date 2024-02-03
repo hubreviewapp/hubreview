@@ -11,7 +11,7 @@ function SignInPage() {
 
   function loginWithGithub() {
     console.log("Button clicked");
-    window.location.assign( "https://github.com/login/oauth/authorize?client_id=" + CLIENT_ID );
+    window.location.assign( "https://github.com/login/oauth/authorize?client_id=" + CLIENT_ID + "&scope=user:email,read:repo" );
   }
   
   return (
