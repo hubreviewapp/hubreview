@@ -1,6 +1,6 @@
 export interface Repository {
-    Id: number,
-    Name: string, 
-    OwnerLogin: string, 
-    CreatedAt: Date
+    id: number,
+    name: string, 
+    ownerLogin: string, 
+    createdAt: string
 }

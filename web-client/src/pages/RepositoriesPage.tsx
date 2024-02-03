@@ -13,15 +13,13 @@ import {
 } from "@mantine/core";
 import {IconCirclePlus} from "@tabler/icons-react";
 import {useState, useEffect} from "react";
-import repoData from "../repo_data.json";
 import { Repository } from "../models/Repository";
 import axios from "axios";
 
 function RepositoriesPage() {
   const iconPlus = <IconCirclePlus style={{width: rem(22), height: rem(22)}}/>;
-  //const [query, setQuery] = useState('');
+  const [query, setQuery] = useState('');
   const [repository, setRepository] = useState<Repository[]>([]); 
-  //const filtered = repoData.filter((item) => item.name.toLowerCase().includes(query.toLowerCase()));
 
   useEffect(() => {
     const getRepos = async () => {
@@ -37,27 +35,17 @@ function RepositoriesPage() {
     getRepos();
   }, []);
 
-  /*async function getRepoNames() {
-    console.log("AAAAAAAAAAAAA");
-    const result = await axios.create({
-      withCredentials: true,
-      baseURL: "http://localhost:5018/api/github"
-    }).get("/getRepository");
-    if( result && result.data){ console.log(result.data.repoNames) };
-  } */
-
   function selectRepositories() {
     console.log("Button clicked");
     window.location.assign( "https://github.com/apps/hubreviewapp/installations/new" );
   }
 
-  console.log(repository)
-  const rows = repository.map((element, index) => (
-    <Table.Tr key={index}>
-      <Table.Td><Text fw="700">{element.Name}</Text></Table.Td>
-      <Table.Td c="dimmed">created by <UnstyledButton c="blue">{element.OwnerLogin}</UnstyledButton> on {element.CreatedAt?.toString()}
+  const rows = repository.map((element) => (
+    <Table.Tr key={element.id}>
+      <Table.Td><Text fw="700">{element.name.toString()}</Text></Table.Td>
+      <Table.Td c="dimmed">created by <UnstyledButton c="blue">{element.ownerLogin.toString()}</UnstyledButton> on {element.createdAt.toString()}
       </Table.Td>
-      <Table.Td><Button variant="light" /*onClick={getRepoNames}*/>Configure</Button></Table.Td>
+      <Table.Td><Button variant="light">Configure</Button></Table.Td>
     </Table.Tr>
   ));
 
@@ -78,10 +66,10 @@ function RepositoriesPage() {
             my="md"
             label="Search for repository"
             radius="md"
-            /*value={query}
+            value={query}
             onChange={(event) => {
               setQuery(event.currentTarget.value);
-            }}*/
+            }}
             placeholder="Search Repository"
           />
         </Box>
