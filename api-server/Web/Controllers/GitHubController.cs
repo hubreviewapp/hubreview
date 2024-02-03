@@ -106,4 +106,43 @@ public class GitHubController : ControllerBase
         return NotFound("There exists no user in session.");
     }
 
+    [HttpGet("getRepository/{id}")] // Update the route to include repository ID
+    public async Task<ActionResult> getRepositoryById(int id) // Change the method signature to accept ID
+    {
+        var generator = _getGitHubJwtGenerator();
+        var jwtToken = generator.CreateEncodedJwtToken();
+        var appClient = _getGitHubClient(jwtToken);
+
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        foreach (var installation in installations)
+        {
+            if (installation.Account.Login == userLogin)
+            {
+                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
+                var installationClient = _getGitHubClient(response.Token);
+
+                try
+                {
+                    var pulls = await installationClient.PullRequest.GetAllForRepository(id);
+                    foreach (var pull in pulls)
+                    {
+                        foreach (var label in pull.Labels)
+                        {
+                            Console.WriteLine(label.Name);
+                        }
+                    }
+                    return Ok();
+                }
+                catch (NotFoundException)
+                {
+                    return NotFound($"Repository with ID {id} not found.");
+                }
+            }
+        }
+
+        return NotFound("There exists no user in session.");
+    }
+
 }

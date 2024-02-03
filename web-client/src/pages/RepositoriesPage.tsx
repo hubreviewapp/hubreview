@@ -40,12 +40,20 @@ function RepositoriesPage() {
     window.location.assign( "https://github.com/apps/hubreviewapp/installations/new" );
   }
 
+  async function getPulls(id: number) {
+    console.log(id);
+    await axios.create({
+      withCredentials: true,
+      baseURL: "http://localhost:5018/api/github"
+    }).get(`/getRepository/${id}`);
+  }
+
   const rows = repository.map((element) => (
     <Table.Tr key={element.id}>
       <Table.Td><Text fw="700">{element.name.toString()}</Text></Table.Td>
       <Table.Td c="dimmed">created by <UnstyledButton c="blue">{element.ownerLogin.toString()}</UnstyledButton> on {element.createdAt.toString()}
       </Table.Td>
-      <Table.Td><Button variant="light">Configure</Button></Table.Td>
+      <Table.Td><Button variant="light" onClick={() => getPulls(element.id)}>Configure</Button></Table.Td>
     </Table.Tr>
   ));
 
