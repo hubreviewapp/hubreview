@@ -67,7 +67,7 @@ public class GitHubController : ControllerBase
             new GitHubJwt.GitHubJwtFactoryOptions
             {
                 AppIntegrationId = 812902, // The GitHub App Id
-                ExpirationSeconds = 600 // 10 minutes is the maximum time allowed
+                ExpirationSeconds = 300 // 10 minutes is the maximum time allowed
             }
         );
 
