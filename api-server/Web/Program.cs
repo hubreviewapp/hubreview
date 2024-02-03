@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.OpenApi.Models;
 using NodaTime;
 using NodaTime.Serialization.JsonNet;
+using DotEnv.Core;
+
+var envVars = new EnvLoader().AddEnvFile("../api-server/.env").Load();
 
 /*
  *
@@ -80,6 +83,8 @@ builder.Services.AddSwaggerGen(c =>
 });
 builder.Services.AddSwaggerGenNewtonsoftSupport();
 builder.Services.AddHttpClient();
+
+builder.Services.AddSingleton<IEnvReader, EnvReader>();
 
 /*
  *

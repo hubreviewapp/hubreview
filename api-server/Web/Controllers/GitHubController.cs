@@ -2,6 +2,8 @@ using System.Web;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Octokit;
+using DotEnv.Core;
+using GitHubJwt;
 
 namespace CS.Web.Controllers;
 
@@ -12,29 +14,46 @@ public class GitHubController : ControllerBase
 {
 
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IEnvReader _reader;
+
+    private static GitHubClient _getGitHubClient(string token)
+    {
+        return new GitHubClient(new ProductHeaderValue("HubReviewApp"))
+        {
+            Credentials = new Credentials(token, AuthenticationType.Bearer)
+        };
+    }
+
+    private GitHubJwtFactory _getGitHubJwtGenerator()
+    {
+        return new GitHubJwtFactory(
+            new FilePrivateKeySource(_reader["PK_RELATIVE_PATH"]),
+            new GitHubJwtFactoryOptions
+            {
+                AppIntegrationId = _reader.GetIntValue("APP_ID"), // The GitHub App Id
+                ExpirationSeconds = _reader.GetIntValue("EXP_TIME") // 10 minutes is the maximum time allowed
+            }
+        );
+    }
 
     [ActivatorUtilitiesConstructor]
-    public GitHubController(IHttpContextAccessor httpContextAccessor)
+    public GitHubController(IHttpContextAccessor httpContextAccessor, IEnvReader reader)
     {
         _httpContextAccessor = httpContextAccessor;
+        _reader = reader;
     }
     
     [HttpGet("acquireToken")]
     public async Task<ActionResult> acquireToken(string code)
     {
-
-        var clientId = "64318456282bb1488063";
-        var clientSecret = "51388c5053ea503fc8141b0184b05b5ae5529b81";
-        var redirectUri = "http://localhost:5018/api/github/acquireToken";
-
         using (var httpClient = new HttpClient())
         {
             var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
             {
-                {"client_id", clientId},
-                {"client_secret", clientSecret},
+                {"client_id", _reader["CLIENT_ID"]},
+                {"client_secret", _reader["CLIENT_SECRET"]},
                 {"code", code},
-                {"redirect_uri", redirectUri},
+                {"redirect_uri", _reader["ACQUIRE_TOKEN_REDIRECT_URI"]},
             });
 
             var tokenResponse = await httpClient.PostAsync("https://github.com/login/oauth/access_token", tokenRequest);
@@ -48,10 +67,7 @@ public class GitHubController : ControllerBase
 
             _httpContextAccessor?.HttpContext?.Session.SetString("AccessToken", access_token);
 
-            var client = new GitHubClient(new ProductHeaderValue("HubReviewApp"))
-            {
-                Credentials = new Credentials(access_token)
-            };
+            var client = _getGitHubClient(access_token);
             var user = await client.User.Current();
             _httpContextAccessor?.HttpContext?.Session.SetString("UserLogin", user.Login);
 
@@ -62,21 +78,9 @@ public class GitHubController : ControllerBase
     [HttpGet("getRepository")]
     public async Task<ActionResult> getRepository()
     {
-        var generator = new GitHubJwt.GitHubJwtFactory(
-            new GitHubJwt.FilePrivateKeySource("../../api-server/hubreviewapp.2024-02-02.private-key.pem"),
-            new GitHubJwt.GitHubJwtFactoryOptions
-            {
-                AppIntegrationId = 812902, // The GitHub App Id
-                ExpirationSeconds = 300 // 10 minutes is the maximum time allowed
-            }
-        );
-
+        var generator = _getGitHubJwtGenerator();
         var jwtToken = generator.CreateEncodedJwtToken();
-
-        var appClient = new GitHubClient(new ProductHeaderValue("HubReviewApp"))
-        {
-            Credentials = new Credentials(jwtToken, AuthenticationType.Bearer)
-        };
+        var appClient = _getGitHubClient(jwtToken);
 
         var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
@@ -86,11 +90,7 @@ public class GitHubController : ControllerBase
             if( installation.Account.Login == userLogin )
             {
                 var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
-                var installationClient = new GitHubClient(new ProductHeaderValue("HubReviewApp"))
-                {
-                    Credentials = new Credentials(response.Token)
-                };
-
+                var installationClient = _getGitHubClient(response.Token);
                 var reps = await installationClient.GitHubApps.Installation.GetAllRepositoriesForCurrent();
 
                 return Ok(new { RepoNames = reps.Repositories.Select(rep => new { 
@@ -105,4 +105,5 @@ public class GitHubController : ControllerBase
 
         return NotFound("There exists no user in session.");
     }
+
 }
