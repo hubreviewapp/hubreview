@@ -1,5 +1,6 @@
-import { Box, Button, Divider, Group, Paper, Radio, Stack, Text, Textarea, Title } from "@mantine/core";
+import { Box, Button, Divider, Group, Paper, Radio, Stack, Text, Title } from "@mantine/core";
 import SyntaxHighlighter from "../components/SyntaxHighlighter";
+import TextEditor from "../components/TextEditor";
 
 export type ModifiedFile = {
   fileName: string;
@@ -35,10 +36,8 @@ function ModifiedFilesTab() {
     <Box style={{ width: 800, borderRadius: 30 }}>
       <Paper withBorder radius="md" shadow="lg" my="xl" p="sm">
         <Title order={3}>Submit Review</Title>
-        <Textarea my="sm">Looks good to me overall, just left a nit.</Textarea>
-
+        <TextEditor content=""/>
         <Title order={4}>Status</Title>
-
         <Stack mt="sm">
           <Radio checked label="Comment indifferently" styles={{ label: { color: "lightgray" } }} />
           <Radio label="Approve" styles={{ label: { color: "lime" }, radio: { border: "1px solid lime" } }} />

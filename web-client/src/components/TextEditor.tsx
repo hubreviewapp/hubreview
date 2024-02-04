@@ -7,7 +7,11 @@ import TextAlign from '@tiptap/extension-text-align';
 import Superscript from '@tiptap/extension-superscript';
 import SubScript from '@tiptap/extension-subscript';
 
-function TextEditor(content) {
+interface TextEditorProps {
+  content: string
+}
+
+function TextEditor({content}: TextEditorProps) {
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -22,7 +26,7 @@ function TextEditor(content) {
   });
 
   return (
-    <RichTextEditor editor={editor}>
+    <RichTextEditor editor={editor} my="sm">
       <RichTextEditor.Toolbar sticky stickyOffset={60}>
         <RichTextEditor.ControlsGroup>
           <RichTextEditor.Bold />
