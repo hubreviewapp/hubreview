@@ -128,9 +128,29 @@ public class GitHubController : ControllerBase
                     var pulls = await installationClient.PullRequest.GetAllForRepository(id);
                     foreach (var pull in pulls)
                     {
+
+                        var comments = await installationClient.Issue.Comment.GetAllForIssue(id, pull.Number);
+                        var reviews = await installationClient.PullRequest.Review.GetAll(id, pull.Number);
+                        Console.WriteLine($"PR Status: {pull.State}");
+                        Console.WriteLine($"Comments: {comments.Count}");
+                        Console.WriteLine($"Review: {reviews.Count}");
                         foreach (var label in pull.Labels)
                         {
                             Console.WriteLine(label.Name);
+                        }
+
+                        foreach (var comm in comments )
+                        {
+                            Console.WriteLine($"Commenter: {comm.User.Login}");
+                            Console.WriteLine($"Comment body: {comm.Body}");
+                            Console.WriteLine($"Comment reacts: {comm.Reactions.Hooray}");
+                        }
+
+                        foreach (var rev in reviews )
+                        {
+                            Console.WriteLine($"Reviewer: {rev.User.Login}");
+                            Console.WriteLine($"Review State: {rev.State}");
+                            Console.WriteLine($"Review body: {rev.Body}");
                         }
                     }
                     return Ok();
