@@ -4,9 +4,8 @@ import {Container} from "@mantine/core";
 function CommitsTab() {
   return (
     <Container>
-      <CommitHistory></CommitHistory>
+      <CommitHistory/>
     </Container>
-
   );
 }
 export default CommitsTab;
