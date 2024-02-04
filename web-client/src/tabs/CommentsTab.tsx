@@ -1,8 +1,7 @@
 import Comment from "../components/Comment.tsx";
 import TextEditor from "../components/TextEditor.tsx";
 import SplitButton from "../components/SplitButton.tsx";
-import { Container, Box, Text, Grid, Accordion, Select } from "@mantine/core";
-import PRDetailSideBar from "../components/PRDetailSideBar.tsx";
+import {Box, Text, Accordion } from "@mantine/core";
 
 const comments = [
   {
@@ -70,7 +69,7 @@ function CommentsTab() {
 
   return (
 
-    <Container>
+    <Box mx="lg">
       {unresolvedComments.map((comment, index) => (
         <Box key={index} >
           <Comment
@@ -96,7 +95,7 @@ function CommentsTab() {
       </Box>
 
       <Box style={{height:100}}/>
-    </Container>
+    </Box>
 
   );
 }
