@@ -15,18 +15,28 @@ import {IconCirclePlus} from "@tabler/icons-react";
 import {useState, useEffect} from "react";
 import { Repository } from "../models/Repository";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 function RepositoriesPage() {
   const iconPlus = <IconCirclePlus style={{width: rem(22), height: rem(22)}}/>;
   const [query, setQuery] = useState('');
   const [repository, setRepository] = useState<Repository[]>([]); 
+  const navigate = useNavigate();
+
+  useEffect(() => {    
+  if ( localStorage.getItem("userLogin") === null ){
+    navigate("/signIn");
+  }
+  }, [navigate]);
 
   useEffect(() => {
     const getRepos = async () => {
-      const res = await axios.create({
+      const axiosInstance = axios.create({
         withCredentials: true,
         baseURL: "http://localhost:5018/api/github"
-      }).get("/getRepository");
+      })
+      
+      const res = await axiosInstance.get("/getRepository");
       if (res) {
         setRepository(res.data.repoNames);
       }

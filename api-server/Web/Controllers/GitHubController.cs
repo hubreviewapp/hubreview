@@ -79,7 +79,7 @@ public class GitHubController : ControllerBase
 
     [HttpGet("getUserInfo")]
     public async Task<ActionResult> getUserInfo()
-    {
+    {   
         var userInfo = new
         {
             UserName = _httpContextAccessor?.HttpContext?.Session.GetString("UserName"),

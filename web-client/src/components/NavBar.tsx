@@ -10,6 +10,9 @@ function NavBar() {
   const iconLogout = <IconLogout style={{ width: rem(15), height: rem(15) }} />;
   const handleClick = (buttonId: number) => {
     setIsActive(buttonId);
+    if ( buttonId == 0 ){
+      localStorage.clear();
+    }
   };
 
   useEffect(() => {
