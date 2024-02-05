@@ -70,10 +70,25 @@ public class GitHubController : ControllerBase
             var client = _getGitHubClient(access_token);
             var user = await client.User.Current();
             _httpContextAccessor?.HttpContext?.Session.SetString("UserLogin", user.Login);
+            _httpContextAccessor?.HttpContext?.Session.SetString("UserAvatarURL", user.AvatarUrl);
+            _httpContextAccessor?.HttpContext?.Session.SetString("UserName", user.Name);
 
             return Redirect($"http://localhost:5173");
         }
-    }    
+    }
+
+    [HttpGet("getUserInfo")]
+    public async Task<ActionResult> getUserInfo()
+    {
+        var userInfo = new
+        {
+            UserName = _httpContextAccessor?.HttpContext?.Session.GetString("UserName"),
+            UserLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"),
+            UserAvatarUrl = _httpContextAccessor?.HttpContext?.Session.GetString("UserAvatarURL")
+        };
+
+        return Ok(userInfo);
+    }
     
     [HttpGet("getRepository")]
     public async Task<ActionResult> getRepository()
