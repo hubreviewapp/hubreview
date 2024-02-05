@@ -6,7 +6,7 @@ import { useUser } from '../contexts.tsx';
 
 function NavBar() {
   const location = useLocation();
-  const [isActive, setIsActive] = useState(1);
+  const [isActive, setIsActive] = useState(0);
   const iconLogout = <IconLogout style={{ width: rem(15), height: rem(15) }} />;
   const handleClick = (buttonId: number) => {
     setIsActive(buttonId);
