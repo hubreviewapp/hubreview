@@ -3,6 +3,7 @@ import { Container, Button, Title, Grid, Box, rem, Avatar } from "@mantine/core"
 import { useState, useEffect } from "react";
 import { IconLogout } from "@tabler/icons-react";
 import { useUser } from '../contexts.tsx';
+import axios from "axios";
 
 function NavBar() {
   const location = useLocation();
@@ -12,6 +13,7 @@ function NavBar() {
     setIsActive(buttonId);
     if ( buttonId == 0 ){
       localStorage.clear();
+      axios.get("http://localhost:5018/api/github/logoutUser");
     }
   };
 

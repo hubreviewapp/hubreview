@@ -58,12 +58,10 @@ public class GitHubController : ControllerBase
 
             var tokenResponse = await httpClient.PostAsync("https://github.com/login/oauth/access_token", tokenRequest);
             var responseContent = await tokenResponse.Content.ReadAsStringAsync();
-            Console.WriteLine(responseContent);
 
             // Parse the response to get the access token
             var parsedResponse = HttpUtility.ParseQueryString(responseContent);
             var access_token = parsedResponse["access_token"];
-            Console.WriteLine(access_token);
 
             _httpContextAccessor?.HttpContext?.Session.SetString("AccessToken", access_token);
 
@@ -88,6 +86,14 @@ public class GitHubController : ControllerBase
         };
 
         return Ok(userInfo);
+    }
+
+    [HttpGet("logoutUser")]
+    public async Task<ActionResult> logoutUser()
+    {
+        _httpContextAccessor?.HttpContext?.Session.Clear();
+        return Ok();
+        
     }
     
     [HttpGet("getRepository")]
