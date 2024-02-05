@@ -1,14 +1,35 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Container, Button, Title, Grid, Box, rem } from "@mantine/core";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { IconLogout } from "@tabler/icons-react";
 
 function NavBar() {
+  const location = useLocation();
   const [isActive, setIsActive] = useState(1);
   const iconLogout = <IconLogout style={{ width: rem(15), height: rem(15) }} />;
   const handleClick = (buttonId: number) => {
     setIsActive(buttonId);
   };
+
+  useEffect(() => {
+    switch (location.pathname) {
+      case "/":
+        setIsActive(1);
+        break;
+      case "/repositories":
+        setIsActive(2);
+        break;
+      case "/analytics":
+        setIsActive(3);
+        break;
+      case "/signIn":
+        setIsActive(0);
+        break;
+      default:
+        setIsActive(0);
+    }
+  }, [location.pathname]);
+
   return (
     <Box bg="#0D1B2A" p="20px">
       <Container size="xl">
