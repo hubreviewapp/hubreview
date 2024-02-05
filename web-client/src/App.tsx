@@ -10,6 +10,7 @@ import SignInPage from "./pages/SignInPage";
 import PRCreationPage from "./pages/PRCreationPage";
 import ApprRejRatesForAuthorPage from "./pages/ApprRejRatesForAuthorPage.tsx";
 import ReviewQueuePage from "./pages/ReviewQueuePage.tsx";
+import UserProvider from "./UserProvider.tsx";
 
 function App() {
   return (
@@ -33,7 +34,7 @@ function App() {
       }}
       defaultColorScheme="dark"
     >
-      <NavBar />
+      <UserProvider> <NavBar />
       <Routes>
         <Route path="/" element={<ReviewQueuePage />} />
         <Route path="/pulls/:pullid" element={<PRDetailsPage id="1" name="pull request" />} />
@@ -49,6 +50,7 @@ function App() {
         <Route path="*" element={<NotFoundPage />} />
         */}
       </Routes>
+      </UserProvider>
     </MantineProvider>
   );
 }
