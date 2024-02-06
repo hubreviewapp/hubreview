@@ -9,7 +9,8 @@ import {
   Paper,
   rem,
   Title,
-  TextInput
+  TextInput,
+  Loader
 } from "@mantine/core";
 import {IconCirclePlus} from "@tabler/icons-react";
 import {useState, useEffect} from "react";
@@ -21,16 +22,17 @@ function RepositoriesPage() {
   const iconPlus = <IconCirclePlus style={{width: rem(22), height: rem(22)}}/>;
   const [query, setQuery] = useState('');
 
-  const [repository, setRepository] = useState<Repository[]>([]); 
+  const [repository, setRepository] = useState<Repository[]>([]);
   const navigate = useNavigate();
 
-  useEffect(() => {    
+  useEffect(() => {
   if ( localStorage.getItem("userLogin") === null ){
     navigate("/signIn");
   }
   }, [navigate]);
 
   const filtered = repository.filter((item) => item.name.toLowerCase().includes(query.toLowerCase()));
+  const [isLoading, setIsLoading] = useState(true);
 
 
   useEffect(() => {
@@ -39,11 +41,12 @@ function RepositoriesPage() {
         withCredentials: true,
         baseURL: "http://localhost:5018/api/github"
       })
-      
+
       const res = await axiosInstance.get("/getRepository");
       if (res) {
         setRepository(res.data.repoNames);
       }
+      setIsLoading(false)
     };
 
     getRepos();
@@ -96,6 +99,7 @@ function RepositoriesPage() {
           />
         </Box>
 
+        {isLoading && <Loader color="blue" />}
         <Table verticalSpacing="md" striped>
           <Table.Tbody>{rows}</Table.Tbody>
         </Table>
