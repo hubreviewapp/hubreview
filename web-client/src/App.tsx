@@ -10,9 +10,10 @@ import SignInPage from "./pages/SignInPage";
 import PRCreationPage from "./pages/PRCreationPage";
 import ApprRejRatesForAuthorPage from "./pages/ApprRejRatesForAuthorPage.tsx";
 import ReviewQueuePage from "./pages/ReviewQueuePage.tsx";
-import UserProvider from "./UserProvider.tsx";
+import UserProvider from "./providers/UserProvider.tsx";
 import NoRenderOnPath from "./utility/NoRenderOnPath";
 import '@mantine/tiptap/styles.css';
+
 
 function App() {
   return (
@@ -24,7 +25,7 @@ function App() {
             "#E0E1DD",
             "#778DA9",
             "#778DA9",
-            "#2f3d60",
+            "#778DA9",
             "#293757",
             "#222e49",
             "#1B263B",
@@ -36,7 +37,7 @@ function App() {
       }}
       defaultColorScheme="dark"
     >
-      <UserProvider> 
+      <UserProvider>
       <NoRenderOnPath noRenderPaths={['/signIn', '/logout', '/notfound']}>
         <NavBar />
       </NoRenderOnPath>

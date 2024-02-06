@@ -9,3 +9,12 @@
 .content {
   margin-bottom: 0;
 }
+
+.resolved{
+  cursor: pointer;
+   display: flex;
+  justify-content: space-between;
+}
+.resolved:hover{
+
+}
