@@ -15,19 +15,32 @@ import {IconCirclePlus} from "@tabler/icons-react";
 import {useState, useEffect} from "react";
 import { Repository } from "../models/Repository";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 function RepositoriesPage() {
   const iconPlus = <IconCirclePlus style={{width: rem(22), height: rem(22)}}/>;
   const [query, setQuery] = useState('');
-  const [repository, setRepository] = useState<Repository[]>([]);
+
+  const [repository, setRepository] = useState<Repository[]>([]); 
+  const navigate = useNavigate();
+
+  useEffect(() => {    
+  if ( localStorage.getItem("userLogin") === null ){
+    navigate("/signIn");
+  }
+  }, [navigate]);
+
   const filtered = repository.filter((item) => item.name.toLowerCase().includes(query.toLowerCase()));
+
 
   useEffect(() => {
     const getRepos = async () => {
-      const res = await axios.create({
+      const axiosInstance = axios.create({
         withCredentials: true,
         baseURL: "http://localhost:5018/api/github"
-      }).get("/getRepository");
+      })
+      
+      const res = await axiosInstance.get("/getRepository");
       if (res) {
         setRepository(res.data.repoNames);
       }
@@ -41,12 +54,20 @@ function RepositoriesPage() {
     window.location.assign( "https://github.com/apps/hubreviewapp/installations/new" );
   }
 
+  async function getPulls(id: number) {
+    console.log(id);
+    await axios.create({
+      withCredentials: true,
+      baseURL: "http://localhost:5018/api/github"
+    }).get(`/getRepository/${id}`);
+  }
+
   const rows = filtered.map((element) => (
     <Table.Tr key={element.id}>
       <Table.Td><Text fw="700">{element.name.toString()}</Text></Table.Td>
       <Table.Td c="dimmed">created by <UnstyledButton c="blue">{element.ownerLogin.toString()}</UnstyledButton> on {element.createdAt.toString()}
       </Table.Td>
-      <Table.Td><Button variant="light">Configure</Button></Table.Td>
+      <Table.Td><Button variant="light" onClick={() => getPulls(element.id)}>Configure</Button></Table.Td>
     </Table.Tr>
   ));
 

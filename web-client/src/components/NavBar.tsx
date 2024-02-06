@@ -1,24 +1,53 @@
-import { Link } from "react-router-dom";
-import { Container, Button, Title, Grid, Box, rem } from "@mantine/core";
-import { useState } from "react";
+import { Link, useLocation} from "react-router-dom";
+import { Container, Button, Title, Grid, Box, rem, Avatar } from "@mantine/core";
+import { useState, useEffect } from "react";
 import { IconLogout } from "@tabler/icons-react";
+import { useUser } from '../contexts.tsx';
+import axios from "axios";
 
 function NavBar() {
-  const [isActive, setIsActive] = useState(1);
+  const location = useLocation();
+  const [isActive, setIsActive] = useState(0);
   const iconLogout = <IconLogout style={{ width: rem(15), height: rem(15) }} />;
   const handleClick = (buttonId: number) => {
     setIsActive(buttonId);
+    if ( buttonId == 0 ){
+      localStorage.clear();
+      axios.get("http://localhost:5018/api/github/logoutUser");
+    }
   };
+
+  useEffect(() => {
+    switch (location.pathname) {
+      case "/":
+        setIsActive(1);
+        break;
+      case "/repositories":
+        setIsActive(2);
+        break;
+      case "/analytics":
+        setIsActive(3);
+        break;
+      case "/signIn":
+        setIsActive(0);
+        break;
+      default:
+        setIsActive(0);
+    }
+  }, [location.pathname]);
+  const { userLogin, userAvatarUrl } = useUser();
+
   return (
     <Box bg="#0D1B2A" p="20px">
       <Container size="xl">
         <Grid>
-          <Grid.Col span={7}>
+          <Grid.Col span={6}>
             <Link to="/" style={{ color: "white", textDecoration: "none" }}>
-              <Title order={2}>HubReview</Title>
+              <Title order={2}>HubReview </Title>
+
             </Link>
           </Grid.Col>
-          <Grid.Col span={5} style={{ display: "flex", justifyContent: "space-evenly" }}>
+          <Grid.Col span={6} style={{ display: "flex", justifyContent: "space-evenly" }}>
             <Button
               component={Link}
               variant={isActive == 1 ? "outline" : "transparent"}
@@ -43,6 +72,14 @@ function NavBar() {
             >
               Analytics
             </Button>
+            {(location.pathname !== "/signIn" && userLogin) && (<Button
+              variant="transparent"
+            >
+              <Avatar src={userAvatarUrl} radius="xl" size="2rem"/>
+              {userLogin}
+              </Button>
+            )}
+
             <Button
               rightSection={iconLogout}
               disabled={isActive == 0}

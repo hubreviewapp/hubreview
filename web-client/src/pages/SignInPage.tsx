@@ -1,15 +1,29 @@
 import {Grid, Box, Text, Card, Button, Stack, Group, Image, Title} from "@mantine/core";
 import GitHubLogo from "../assets/icons/github-mark-white.png";
 import SignIn from "../assets/icons/signin.png";
+import axios from "axios";
 
 
 const CLIENT_ID = "64318456282bb1488063";
 
 function SignInPage() {
 
-  function loginWithGithub() {
-    console.log("Button clicked");
-    window.location.assign( "https://github.com/login/oauth/authorize?client_id=" + CLIENT_ID + "&scope=user:email,read:repo" );
+  async function loginWithGithub() {
+
+    const axiosInstance = axios.create({
+      withCredentials: true,
+      baseURL: "http://localhost:5018/api/github"
+    });
+
+    try {
+      const res = await axiosInstance.get("/getUserInfo");
+      localStorage.setItem("userLogin", res.data.userLogin)
+      console.log(res.data.userLogin);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+
+    window.location.assign( "https://github.com/login/oauth/authorize?client_id=" + CLIENT_ID + "&scope=user:email,read:repo,read:org" );
   }
 
   return (

@@ -1,11 +1,11 @@
 import { Container, Grid, Group, Title, Button, Stack, Flex, Box, TextInput, MultiSelect, Modal,
 } from "@mantine/core";
 
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import PRDetailsBox from "../components/PRCreate/PRDetailsBox";
 import FileGrouping from "../components/PRCreate/FileGrouping";
 import {useDisclosure} from "@mantine/hooks";
-import {Link} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 import PRSummaryBox from "../components/PRCreate/PRSummaryBox";
 import CommitHistory from "../components/PRCreate/CommitHistory";
 import CompareBranchBox from "../components/PRCreate/CompareBranchBox";
@@ -29,6 +29,14 @@ function PRCreationPage() {
   const [fileList, setFileList] = useState<string[]>([]);
   const [reviewerList, setReviewerList] = useState<string[]>([]);
   const [opened, {open, close}] = useDisclosure(false);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {    
+  if ( localStorage.getItem("userLogin") === null ){
+    navigate("/signIn");
+  }
+  }, [navigate]);
 
   function addGroupToList() {
     const obj: FileGroup = {

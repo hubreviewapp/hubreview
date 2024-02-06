@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Octokit;
 using DotEnv.Core;
 using GitHubJwt;
+using CS.Core.Entities;
 
 namespace CS.Web.Controllers;
 
@@ -58,22 +59,43 @@ public class GitHubController : ControllerBase
 
             var tokenResponse = await httpClient.PostAsync("https://github.com/login/oauth/access_token", tokenRequest);
             var responseContent = await tokenResponse.Content.ReadAsStringAsync();
-            Console.WriteLine(responseContent);
 
             // Parse the response to get the access token
             var parsedResponse = HttpUtility.ParseQueryString(responseContent);
             var access_token = parsedResponse["access_token"];
-            Console.WriteLine(access_token);
 
             _httpContextAccessor?.HttpContext?.Session.SetString("AccessToken", access_token);
 
             var client = _getGitHubClient(access_token);
             var user = await client.User.Current();
             _httpContextAccessor?.HttpContext?.Session.SetString("UserLogin", user.Login);
+            _httpContextAccessor?.HttpContext?.Session.SetString("UserAvatarURL", user.AvatarUrl);
+            _httpContextAccessor?.HttpContext?.Session.SetString("UserName", user.Name);
 
             return Redirect($"http://localhost:5173");
         }
-    }    
+    }
+
+    [HttpGet("getUserInfo")]
+    public async Task<ActionResult> getUserInfo()
+    {   
+        var userInfo = new
+        {
+            UserName = _httpContextAccessor?.HttpContext?.Session.GetString("UserName"),
+            UserLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"),
+            UserAvatarUrl = _httpContextAccessor?.HttpContext?.Session.GetString("UserAvatarURL")
+        };
+
+        return Ok(userInfo);
+    }
+
+    [HttpGet("logoutUser")]
+    public async Task<ActionResult> logoutUser()
+    {
+        _httpContextAccessor?.HttpContext?.Session.Clear();
+        return Ok();
+        
+    }
     
     [HttpGet("getRepository")]
     public async Task<ActionResult> getRepository()
@@ -82,24 +104,99 @@ public class GitHubController : ControllerBase
         var jwtToken = generator.CreateEncodedJwtToken();
         var appClient = _getGitHubClient(jwtToken);
 
+        var client = _getGitHubClient( _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken") );
+
+        // Get organizations for the current user
+        var organizations = await client.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        // Store all repositories
+        var allRepos = new List<RepoInfo>();
+
         var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
         var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
-        foreach( var installation in installations)
+        foreach (var installation in installations)
         {
-            if( installation.Account.Login == userLogin )
+            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
             {
                 var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
                 var installationClient = _getGitHubClient(response.Token);
-                var reps = await installationClient.GitHubApps.Installation.GetAllRepositoriesForCurrent();
+                var repos = await installationClient.GitHubApps.Installation.GetAllRepositoriesForCurrent();
 
-                return Ok(new { RepoNames = reps.Repositories.Select(rep => new { 
-                    Id = rep.Id, 
-                    Name = rep.Name, 
-                    OwnerLogin = rep.Owner.Login, 
-                    CreatedAt = rep.CreatedAt.Date.ToString("dd/MM/yyyy") 
-                    }).ToArray() });
+                // Add repositories to the list
+                allRepos.AddRange(repos.Repositories.Select(rep => new RepoInfo
+                {
+                    Id = rep.Id,
+                    Name = rep.Name,
+                    OwnerLogin = rep.Owner.Login,
+                    CreatedAt = rep.CreatedAt.Date.ToString("dd/MM/yyyy")
+                }));
+            }
+        }
 
+        if (allRepos.Any())
+        {
+            var sortedRepos = allRepos.OrderBy(repo => repo.Name).ToArray();
+            return Ok(new { RepoNames = sortedRepos });
+        }
+
+        return NotFound("There exists no user in session.");
+    }
+
+    [HttpGet("getRepository/{id}")] // Update the route to include repository ID
+    public async Task<ActionResult> getRepositoryById(int id) // Change the method signature to accept ID
+    {
+        var generator = _getGitHubJwtGenerator();
+        var jwtToken = generator.CreateEncodedJwtToken();
+        var appClient = _getGitHubClient(jwtToken);
+
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        foreach (var installation in installations)
+        {
+            if (installation.Account.Login == userLogin)
+            {
+                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
+                var installationClient = _getGitHubClient(response.Token);
+
+                try
+                {
+                    var pulls = await installationClient.PullRequest.GetAllForRepository(id);
+                    foreach (var pull in pulls)
+                    {
+
+                        var comments = await installationClient.Issue.Comment.GetAllForIssue(id, pull.Number);
+                        var reviews = await installationClient.PullRequest.Review.GetAll(id, pull.Number);
+                        Console.WriteLine($"PR Status: {pull.State}");
+                        Console.WriteLine($"Comments: {comments.Count}");
+                        Console.WriteLine($"Review: {reviews.Count}");
+                        foreach (var label in pull.Labels)
+                        {
+                            Console.WriteLine(label.Name);
+                        }
+
+                        foreach (var comm in comments )
+                        {
+                            Console.WriteLine($"Commenter: {comm.User.Login}");
+                            Console.WriteLine($"Comment body: {comm.Body}");
+                            Console.WriteLine($"Comment reacts: {comm.Reactions.Hooray}");
+                        }
+
+                        foreach (var rev in reviews )
+                        {
+                            Console.WriteLine($"Reviewer: {rev.User.Login}");
+                            Console.WriteLine($"Review State: {rev.State}");
+                            Console.WriteLine($"Review body: {rev.Body}");
+                        }
+                    }
+                    return Ok();
+                }
+                catch (NotFoundException)
+                {
+                    return NotFound($"Repository with ID {id} not found.");
+                }
             }
         }
 
