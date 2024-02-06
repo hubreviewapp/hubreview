@@ -223,4 +223,58 @@ public class GitHubController : ControllerBase
         return NotFound("There exists no user in session.");
     }
 
+
+    [HttpGet("prs")]
+    public async Task<ActionResult> getAllPRs()
+    {
+        var generator = _getGitHubJwtGenerator();
+        var jwtToken = generator.CreateEncodedJwtToken();
+        var appClient = _getGitHubClient(jwtToken);
+
+        var client = _getGitHubClient( _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken") );
+
+        // Get organizations for the current user
+        var organizations = await client.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        var pullRequests = new List<PullRequest>();
+
+        foreach (var installation in installations)
+        {
+            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            {
+                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
+                var installationClient = _getGitHubClient(response.Token);
+
+                var repos = await installationClient.GitHubApps.Installation.GetAllRepositoriesForCurrent();
+
+                foreach (var repository in repos.Repositories)
+                {
+                    
+                    var repoPulls = await installationClient.PullRequest.GetAllForRepository(repository.Id);
+
+                    var repoPullsInfos = repoPulls.Select( pr => new PRInfo
+                        {
+                            Id = pr.Id,
+                            Title = pr.Title,
+                            Number = pr.Number,
+                            OpenedBy = pr.User.Login,
+                            OpenedByAvatarURL = pr.User.AvatarUrl,
+                            UpdatedAt = pr.UpdatedAt.Date.ToString("dd/MM/yyyy")
+                        }
+                        ).ToArray();
+                    
+                    pullRequests.AddRange(repoPulls);
+                }
+            }
+        }
+
+        return Ok(pullRequests);
+    }
+
+
+
 }
