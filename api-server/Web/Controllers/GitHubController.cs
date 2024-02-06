@@ -103,25 +103,40 @@ public class GitHubController : ControllerBase
         var jwtToken = generator.CreateEncodedJwtToken();
         var appClient = _getGitHubClient(jwtToken);
 
+        var client = _getGitHubClient( _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken") );
+
+        // Get organizations for the current user
+        var organizations = await client.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        // Store all repositories
+        var allRepos = new List<object>();
+
         var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
         var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
-        foreach( var installation in installations)
+        foreach (var installation in installations)
         {
-            if( installation.Account.Login == userLogin )
+            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
             {
                 var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
                 var installationClient = _getGitHubClient(response.Token);
-                var reps = await installationClient.GitHubApps.Installation.GetAllRepositoriesForCurrent();
+                var repos = await installationClient.GitHubApps.Installation.GetAllRepositoriesForCurrent();
 
-                return Ok(new { RepoNames = reps.Repositories.Select(rep => new { 
-                    Id = rep.Id, 
-                    Name = rep.Name, 
-                    OwnerLogin = rep.Owner.Login, 
-                    CreatedAt = rep.CreatedAt.Date.ToString("dd/MM/yyyy") 
-                    }).ToArray() });
-
+                // Add repositories to the list
+                allRepos.AddRange(repos.Repositories.Select(rep => new
+                {
+                    Id = rep.Id,
+                    Name = rep.Name,
+                    OwnerLogin = rep.Owner.Login,
+                    CreatedAt = rep.CreatedAt.Date.ToString("dd/MM/yyyy")
+                }));
             }
+        }
+
+        if (allRepos.Any())
+        {
+            return Ok(new { RepoNames = allRepos.ToArray() });
         }
 
         return NotFound("There exists no user in session.");
