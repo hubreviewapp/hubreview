@@ -40,7 +40,6 @@ public class GitHubController : ControllerBase
 
     private GitHubClient GetNewClient(string? token = null)
     {
-        Console.WriteLine("GetAppClient");
         GitHubClient res;
 
         if ( token == null )
@@ -50,7 +49,6 @@ public class GitHubController : ControllerBase
             res = _getGitHubClient(jwtToken);
 
         } else {
-            Console.WriteLine("TOKEN NOT NULL");
             res = _getGitHubClient(token);
         }
         return res;
@@ -248,15 +246,19 @@ public class GitHubController : ControllerBase
             {
                 var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
                 var installationClient = _getGitHubClient(response.Token);
-
                 var repos = await installationClient.GitHubApps.Installation.GetAllRepositoriesForCurrent();
 
                 foreach (var repository in repos.Repositories)
                 {
                     
                     var repoPulls = await installationClient.PullRequest.GetAllForRepository(repository.Id);
+                    
+                    foreach( var repoPull in repoPulls ){
+                        var pull = await installationClient.PullRequest.Get(repository.Id, repoPull.Number);
+                        pullRequests.Add(pull);
+                    }
 
-                    var repoPullsInfos = repoPulls.Select( pr => new PRInfo
+                    /*var repoPullsInfos = repoPulls.Select( pr => new PRInfo
                         {
                             Id = pr.Id,
                             Title = pr.Title,
@@ -267,7 +269,7 @@ public class GitHubController : ControllerBase
                         }
                         ).ToArray();
                     
-                    pullRequests.AddRange(repoPulls);
+                    pullRequests.AddRange(repoPulls);*/
                 }
             }
         }
