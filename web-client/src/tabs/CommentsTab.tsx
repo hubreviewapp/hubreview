@@ -1,7 +1,8 @@
 import Comment from "../components/Comment.tsx";
 import TextEditor from "../components/TextEditor.tsx";
 import SplitButton from "../components/SplitButton.tsx";
-import {Box, Text, Accordion } from "@mantine/core";
+import {Box, Text, Accordion, Grid } from "@mantine/core";
+import PRDetailSideBar from "../components/PRDetailSideBar.tsx";
 
 const comments = [
   {
@@ -68,34 +69,38 @@ function CommentsTab() {
   ));
 
   return (
-
-    <Box mx="lg">
-      {unresolvedComments.map((comment, index) => (
-        <Box key={index} >
-          <Comment
-            key={index}
-            id={index}
-            author= {comment.author}
-            text={comment.text}
-            date={comment.date}
-            isResolved={comment.isResolved}
-            isAIGenerated={comment.isAIGenerated}
-          />
-          <br/>
+  <Grid>
+    <Grid.Col span={8}>
+      <Box mx="lg">
+        {unresolvedComments.map((comment, index) => (
+          <Box key={index} >
+            <Comment
+              key={index}
+              id={index}
+              author= {comment.author}
+              text={comment.text}
+              date={comment.date}
+              isResolved={comment.isResolved}
+              isAIGenerated={comment.isAIGenerated}
+            />
+            <br/>
+          </Box>
+        ))}
+        <Accordion chevronPosition="right" variant="separated" >
+          {comments2}
+        </Accordion>
+        <br/>
+        <SplitButton/>
+        <br/>
+        <Box style={{ border: "2px groove gray", borderRadius: 10, padding:"10px" }}>
+          <TextEditor/>
         </Box>
-      ))}
-      <Accordion chevronPosition="right" variant="separated" >
-        {comments2}
-      </Accordion>
-      <br/>
-      <SplitButton/>
-      <br/>
-      <Box style={{ border: "2px groove gray", borderRadius: 10, padding:"10px" }}>
-        <TextEditor/>
       </Box>
-
-      <Box style={{height:100}}/>
-    </Box>
+    </Grid.Col>
+    <Grid.Col span={3}>
+      <PRDetailSideBar />
+    </Grid.Col>
+  </Grid>
 
   );
 }
