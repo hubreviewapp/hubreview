@@ -19,7 +19,8 @@ import axios from "axios";
 function RepositoriesPage() {
   const iconPlus = <IconCirclePlus style={{width: rem(22), height: rem(22)}}/>;
   const [query, setQuery] = useState('');
-  const [repository, setRepository] = useState<Repository[]>([]); 
+  const [repository, setRepository] = useState<Repository[]>([]);
+  const filtered = repository.filter((item) => item.name.toLowerCase().includes(query.toLowerCase()));
 
   useEffect(() => {
     const getRepos = async () => {
@@ -40,7 +41,7 @@ function RepositoriesPage() {
     window.location.assign( "https://github.com/apps/hubreviewapp/installations/new" );
   }
 
-  const rows = repository.map((element) => (
+  const rows = filtered.map((element) => (
     <Table.Tr key={element.id}>
       <Table.Td><Text fw="700">{element.name.toString()}</Text></Table.Td>
       <Table.Td c="dimmed">created by <UnstyledButton c="blue">{element.ownerLogin.toString()}</UnstyledButton> on {element.createdAt.toString()}
