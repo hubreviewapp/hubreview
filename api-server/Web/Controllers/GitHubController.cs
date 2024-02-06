@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Octokit;
 using DotEnv.Core;
 using GitHubJwt;
+using CS.Core.Entities;
 
 namespace CS.Web.Controllers;
 
@@ -110,7 +111,7 @@ public class GitHubController : ControllerBase
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
         // Store all repositories
-        var allRepos = new List<object>();
+        var allRepos = new List<RepoInfo>();
 
         var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
@@ -124,7 +125,7 @@ public class GitHubController : ControllerBase
                 var repos = await installationClient.GitHubApps.Installation.GetAllRepositoriesForCurrent();
 
                 // Add repositories to the list
-                allRepos.AddRange(repos.Repositories.Select(rep => new
+                allRepos.AddRange(repos.Repositories.Select(rep => new RepoInfo
                 {
                     Id = rep.Id,
                     Name = rep.Name,
@@ -136,7 +137,8 @@ public class GitHubController : ControllerBase
 
         if (allRepos.Any())
         {
-            return Ok(new { RepoNames = allRepos.ToArray() });
+            var sortedRepos = allRepos.OrderBy(repo => repo.Name).ToArray();
+            return Ok(new { RepoNames = sortedRepos });
         }
 
         return NotFound("There exists no user in session.");
