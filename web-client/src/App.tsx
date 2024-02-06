@@ -11,6 +11,8 @@ import PRCreationPage from "./pages/PRCreationPage";
 import ApprRejRatesForAuthorPage from "./pages/ApprRejRatesForAuthorPage.tsx";
 import ReviewQueuePage from "./pages/ReviewQueuePage.tsx";
 import UserProvider from "./UserProvider.tsx";
+import NoRenderOnPath from "./utility/NoRenderOnPath";
+import '@mantine/tiptap/styles.css';
 
 function App() {
   return (
@@ -34,7 +36,11 @@ function App() {
       }}
       defaultColorScheme="dark"
     >
-      <UserProvider> <NavBar />
+      <UserProvider> 
+      <NoRenderOnPath noRenderPaths={['/signIn', '/logout', '/notfound']}>
+        <NavBar />
+      </NoRenderOnPath>
+
       <Routes>
         <Route path="/" element={<ReviewQueuePage />} />
         <Route path="/pulls/:pullid" element={<PRDetailsPage id="1" name="pull request" />} />

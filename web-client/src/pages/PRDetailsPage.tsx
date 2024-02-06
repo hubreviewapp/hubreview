@@ -2,7 +2,7 @@ import LabelButton from "../components/LabelButton";
 import ModifiedFilesTab from "../tabs/ModifiedFilesTab";
 import CommentsTab from "../tabs/CommentsTab.tsx";
 import CommitsTab from "../tabs/CommitsTab.tsx";
-import { Box, Paper, Badge, rem, Grid, Text, Group, Title } from "@mantine/core";
+import { Box, Badge, rem, Group, UnstyledButton } from "@mantine/core";
 import TabComp from "../components/Tab.tsx";
 import * as React from "react";
 import { IconGitPullRequest, IconCircleDot } from '@tabler/icons-react';
@@ -10,7 +10,6 @@ import PrContextTab from "../tabs/PrContextTab.tsx";
 import { useNavigate } from "react-router-dom";
 
 interface PRDetailsPageProps {
-  // Define the props you want to pass to PrDetailPage
   id: string;
   name: string;
 }
@@ -36,7 +35,7 @@ function PRDetailsPage({ id, name }: PRDetailsPageProps) {
       <Group>
         <h2>
           {" "}
-          {name} Fix: Resolve Critical User Authentication Bug and Enhance Session Management
+          {name} Fix: Resolve Critical User Authentication Bug
           <span style={{ color: "#778DA9" }}> #{id}</span>
         </h2>
         &ensp;&ensp;
@@ -50,16 +49,17 @@ function PRDetailsPage({ id, name }: PRDetailsPageProps) {
           Open
         </Badge>
       </Group>
-      <p style={{ marginTop: -20 }}> created at 4 days ago by Irem Aydın </p>
+      <Group style={{ marginTop: -20 }}>
+        <p> created at 4 days ago by <UnstyledButton c="blue">Irem Aydın </UnstyledButton></p>
+        <p>
+          <IconCircleDot size={18}/> &ensp; 1 issue linked
+          <span style={{ color: "#778DA9" }}> at project Hubreview</span>
+        </p>
+      </Group>
       <Box display="flex" style={{ justifyContent: "flex-start" }}>
         <LabelButton label="Enhancement" size="lg" />
         <LabelButton label="Bug Fix" size="lg" />
       </Box>
-      <p style={{ marginRight: 20 }}>
-        <IconCircleDot size={18} strokeWidth={3} /> &ensp; 1 issue linked
-        <span style={{ color: "#778DA9" }}> at project Hubreview</span>
-      </p>
-
       <br></br>
       <TabComp tabs={tabs} updateTab={updateTab} />
       <br></br>
