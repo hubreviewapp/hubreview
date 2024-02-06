@@ -1,10 +1,11 @@
-import { Container, Pagination, Button, Center } from "@mantine/core";
+import { Grid, Pagination, Button, Center } from "@mantine/core";
 import FilterInput from "../components/ReviewQueue/FilterInput";
 import PullRequestCard from "../components/ReviewQueue/PullRequestCard";
 import classes from "../components/ReviewQueue/ReviewQueue.module.scss";
 import {Link} from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import {PRNavbar} from "../components/ReviewQueue/PRNavbar.tsx";
 export interface RequestedReviewer {
   reviewerType: "USER" | "TEAM";
   name: string;
@@ -210,28 +211,33 @@ function ReviewQueuePage() {
   //const [name, setName] = useState('');
   const navigate = useNavigate();
 
-  useEffect(() => {    
+  useEffect(() => {
   if ( localStorage.getItem("userLogin") === null ){
     navigate("/signIn");
   }
   }, [navigate]);
-  
+
 
   return (
-    <Container w="100%" mt="md">
-      <FilterInput />
+    <Grid w="100%" mt="md">
+      <Grid.Col span={2.5}>
+        <PRNavbar></PRNavbar>
+      </Grid.Col>
 
-      {data.map((item) => (
-        <PullRequestCard key={item.id} data={item} />
-      ))}
+      <Grid.Col span={7}>
+        <FilterInput />
+        {data.map((item) => (
+          <PullRequestCard key={item.id} data={item} />
+        ))}
 
-      <Pagination classNames={{ root: classes.pagination }} color="primary" total={4} />
-      <Center>
-        <Link to="/createPR">
-          <Button m="lg">Create New PR</Button>
-        </Link>
-      </Center>
-    </Container>
+        <Pagination classNames={{ root: classes.pagination }} color="primary" total={4} />
+        <Center>
+          <Link to="/createPR">
+            <Button m="lg">Create New PR</Button>
+          </Link>
+        </Center>
+      </Grid.Col>
+    </Grid>
   );
 }
 
