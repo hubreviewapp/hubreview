@@ -1,11 +1,12 @@
 import CommitHistory from "../components/PRCreate/CommitHistory";
-import {Container} from "@mantine/core";
+import {Box} from "@mantine/core";
 
 function CommitsTab() {
   return (
-    <Container>
+    <Box w="90%">
       <CommitHistory/>
-    </Container>
+    </Box>
   );
 }
+
 export default CommitsTab;

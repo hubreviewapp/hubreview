@@ -2,7 +2,6 @@ import {useEffect, useState} from 'react';
 import { Group, Text, Accordion, Box} from '@mantine/core';
 import {
   IconBellRinging,
-  IconSwitchHorizontal,
   IconNotebook,
   IconSettings,
   IconActivity
@@ -44,8 +43,8 @@ export function PRNavbar() {
   }, []);
 
   const repos =  (
-    <Accordion.Item key={"repos"} value={"repos"}>
-      <Accordion.Control > <IconNotebook></IconNotebook> {"Selected Repos (4) "}</Accordion.Control>
+    <Accordion.Item key="repos" value="repos">
+      <Accordion.Control > <IconNotebook/>{"Selected Repos (4) "}</Accordion.Control>
       <Accordion.Panel>
         <Box>
           {repository.map((repo, index) => (
@@ -78,7 +77,7 @@ export function PRNavbar() {
     <nav className={classes.navbar}>
       <div className={classes.navbarMain}>
         <Group className={classes.header} >
-          <Accordion style={{width: 300}}chevronPosition="right" variant="contained">
+          <Accordion style={{width: 300}} chevronPosition="right" variant="contained">
             {repos}
           </Accordion>
         </Group>
