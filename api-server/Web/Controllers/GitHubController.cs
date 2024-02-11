@@ -42,13 +42,15 @@ public class GitHubController : ControllerBase
     {
         GitHubClient res;
 
-        if ( token == null )
+        if (token == null)
         {
             GitHubJwtFactory generator = _getGitHubJwtGenerator();
             string jwtToken = generator.CreateEncodedJwtToken();
             res = _getGitHubClient(jwtToken);
 
-        } else {
+        }
+        else
+        {
             res = _getGitHubClient(token);
         }
         return res;
@@ -61,7 +63,7 @@ public class GitHubController : ControllerBase
         _reader = reader;
         _appClient = GetNewClient();
     }
-    
+
     [HttpGet("acquireToken")]
     public async Task<ActionResult> acquireToken(string code)
     {
@@ -96,8 +98,8 @@ public class GitHubController : ControllerBase
 
     [HttpGet("getUserInfo")]
     public async Task<ActionResult> getUserInfo()
-    {   
-        
+    {
+
         var userInfo = new
         {
             UserName = _httpContextAccessor?.HttpContext?.Session.GetString("UserName"),
@@ -113,16 +115,16 @@ public class GitHubController : ControllerBase
     {
         _httpContextAccessor?.HttpContext?.Session.Clear();
         return Ok();
-        
+
     }
-    
+
     [HttpGet("getRepository")]
     public async Task<ActionResult> getRepository()
     {
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         string? userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
-        
-        var userClient = GetNewClient( access_token );
+
+        var userClient = GetNewClient(access_token);
 
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
@@ -136,8 +138,8 @@ public class GitHubController : ControllerBase
         {
             if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
             {
-                var response = await _appClient.GitHubApps.CreateInstallationToken( installation.Id );
-                var installationClient = GetNewClient( response.Token );
+                var response = await _appClient.GitHubApps.CreateInstallationToken(installation.Id);
+                var installationClient = GetNewClient(response.Token);
                 var repos = await installationClient.GitHubApps.Installation.GetAllRepositoriesForCurrent();
 
                 // Add repositories to the list
@@ -159,7 +161,7 @@ public class GitHubController : ControllerBase
 
         return NotFound("There exists no user in session.");
 
-        
+
     }
 
     [HttpGet("getRepository/{id}")] // Update the route to include repository ID
@@ -195,14 +197,14 @@ public class GitHubController : ControllerBase
                             Console.WriteLine(label.Name);
                         }
 
-                        foreach (var comm in comments )
+                        foreach (var comm in comments)
                         {
                             Console.WriteLine($"Commenter: {comm.User.Login}");
                             Console.WriteLine($"Comment body: {comm.Body}");
                             Console.WriteLine($"Comment reacts: {comm.Reactions.Hooray}");
                         }
 
-                        foreach (var rev in reviews )
+                        foreach (var rev in reviews)
                         {
                             Console.WriteLine($"Reviewer: {rev.User.Login}");
                             Console.WriteLine($"Review State: {rev.State}");
@@ -229,7 +231,7 @@ public class GitHubController : ControllerBase
         var jwtToken = generator.CreateEncodedJwtToken();
         var appClient = _getGitHubClient(jwtToken);
 
-        var client = _getGitHubClient( _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken") );
+        var client = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
 
         // Get organizations for the current user
         var organizations = await client.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
@@ -238,7 +240,7 @@ public class GitHubController : ControllerBase
         var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
         var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
-        var pullRequests = new List<PullRequest>();
+        var pullRequests = new List<PRInfo>(); // Change list type to "PullRequest" to examine the PR data
 
         foreach (var installation in installations)
         {
@@ -250,31 +252,46 @@ public class GitHubController : ControllerBase
 
                 foreach (var repository in repos.Repositories)
                 {
-                    
+
                     var repoPulls = await installationClient.PullRequest.GetAllForRepository(repository.Id);
-                    
+
+                    /*
                     foreach( var repoPull in repoPulls ){
                         var pull = await installationClient.PullRequest.Get(repository.Id, repoPull.Number);
                         pullRequests.Add(pull);
                     }
+                    */
 
-                    /*var repoPullsInfos = repoPulls.Select( pr => new PRInfo
+                    foreach (var repoPull in repoPulls)
+                    {
+                        var pull = await installationClient.PullRequest.Get(repository.Id, repoPull.Number);
+                        var repoPullsInfos = new PRInfo
                         {
-                            Id = pr.Id,
-                            Title = pr.Title,
-                            Number = pr.Number,
-                            OpenedBy = pr.User.Login,
-                            OpenedByAvatarURL = pr.User.AvatarUrl,
-                            UpdatedAt = pr.UpdatedAt.Date.ToString("dd/MM/yyyy")
-                        }
-                        ).ToArray();
+                            Id = pull.Id,
+                            Title = pull.Title,
+                            PRNumber = pull.Number,
+                            OpenedBy = pull.User.Login,
+                            OpenedByAvatarURL = pull.User.AvatarUrl,
+                            UpdatedAt = pull.UpdatedAt.Date.ToString("dd/MM/yyyy"),
+                            RepoName = pull.Base.Repository.Name,
+                            Additions = pull.Additions,
+                            Deletions = pull.Deletions,
+                            Files = pull.ChangedFiles,
+                            Comments = pull.Comments
+                        };
+
+                        pullRequests.Add(repoPullsInfos);
+                    }
+
+
+
                     
-                    pullRequests.AddRange(repoPulls);*/
+
                 }
             }
         }
 
-        return Ok(pullRequests);
+        return Ok( new { PRInfos = pullRequests } );
     }
 
 
