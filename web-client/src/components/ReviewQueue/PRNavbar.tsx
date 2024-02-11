@@ -3,22 +3,20 @@ import { Group, Text, Accordion, Box} from '@mantine/core';
 import {
   IconBellRinging,
   IconNotebook,
-  IconSettings,
-  IconActivity
 } from '@tabler/icons-react';
 import classes from '../../styles/NavbarSimple.module.css';
 import {Repository} from "../../models/Repository.tsx";
 import axios from "axios";
+import {Checkbox} from "@mantine/core";
 
 const data = [
   { link: '', label: 'New PRs', icon: IconBellRinging },
   { link: '', label: 'Needs your review' },
-  { link: '', label: 'Approved' },
   { link: '', label: 'Your PRs'},
   { link: '', label: 'Waiting for author'},
-  { link: '', label: 'Merged' },
-  { link: '', label: 'Waiting for merge' },
   { link: '', label: 'All open PRs' },
+  { link: '', label: 'Merged' },
+  { link: '', label: 'Closed' },
 
 ];
 
@@ -48,7 +46,10 @@ export function PRNavbar() {
       <Accordion.Panel>
         <Box>
           {repository.map((repo, index) => (
-            <Text key={index} > {repo.name.toString()}</Text>
+            <Box>
+              <Text style={{display:"flex"}}  key={index} > <Checkbox variant="outline"/> {" "} {repo.name.toString()}</Text>
+              <br/>
+            </Box>
             ))}
         </Box>
       </Accordion.Panel>
@@ -84,6 +85,7 @@ export function PRNavbar() {
         {links}
       </div>
 
+      {/*
       <div className={classes.footer}>
         <a href="#" className={classes.link} onClick={(event) => event.preventDefault()}>
           <IconActivity className={classes.linkIcon} stroke={1.5} />
@@ -95,6 +97,8 @@ export function PRNavbar() {
           <span> Settings </span>
         </a>
       </div>
+
+      */}
     </nav>
   );
 }
