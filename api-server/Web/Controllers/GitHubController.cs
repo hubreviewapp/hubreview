@@ -16,6 +16,7 @@ public class GitHubController : ControllerBase
 
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IEnvReader _reader;
+    private GitHubClient _appClient;
 
     private static GitHubClient _getGitHubClient(string token)
     {
@@ -37,11 +38,28 @@ public class GitHubController : ControllerBase
         );
     }
 
+    private GitHubClient GetNewClient(string? token = null)
+    {
+        GitHubClient res;
+
+        if ( token == null )
+        {
+            GitHubJwtFactory generator = _getGitHubJwtGenerator();
+            string jwtToken = generator.CreateEncodedJwtToken();
+            res = _getGitHubClient(jwtToken);
+
+        } else {
+            res = _getGitHubClient(token);
+        }
+        return res;
+    }
+
     [ActivatorUtilitiesConstructor]
     public GitHubController(IHttpContextAccessor httpContextAccessor, IEnvReader reader)
     {
         _httpContextAccessor = httpContextAccessor;
         _reader = reader;
+        _appClient = GetNewClient();
     }
     
     [HttpGet("acquireToken")]
@@ -66,8 +84,8 @@ public class GitHubController : ControllerBase
 
             _httpContextAccessor?.HttpContext?.Session.SetString("AccessToken", access_token);
 
-            var client = _getGitHubClient(access_token);
-            var user = await client.User.Current();
+            GitHubClient userClient = GetNewClient(access_token);
+            var user = await userClient.User.Current();
             _httpContextAccessor?.HttpContext?.Session.SetString("UserLogin", user.Login);
             _httpContextAccessor?.HttpContext?.Session.SetString("UserAvatarURL", user.AvatarUrl);
             _httpContextAccessor?.HttpContext?.Session.SetString("UserName", user.Name);
@@ -79,6 +97,7 @@ public class GitHubController : ControllerBase
     [HttpGet("getUserInfo")]
     public async Task<ActionResult> getUserInfo()
     {   
+        
         var userInfo = new
         {
             UserName = _httpContextAccessor?.HttpContext?.Session.GetString("UserName"),
@@ -100,28 +119,25 @@ public class GitHubController : ControllerBase
     [HttpGet("getRepository")]
     public async Task<ActionResult> getRepository()
     {
-        var generator = _getGitHubJwtGenerator();
-        var jwtToken = generator.CreateEncodedJwtToken();
-        var appClient = _getGitHubClient(jwtToken);
-
-        var client = _getGitHubClient( _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken") );
+        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
+        string? userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+        
+        GitHubClient userClient = GetNewClient( access_token );
 
         // Get organizations for the current user
-        var organizations = await client.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
         // Store all repositories
         var allRepos = new List<RepoInfo>();
 
-        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
-
-        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        var installations = await _appClient.GitHubApps.GetAllInstallationsForCurrent();
         foreach (var installation in installations)
         {
             if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
             {
-                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
-                var installationClient = _getGitHubClient(response.Token);
+                var response = await _appClient.GitHubApps.CreateInstallationToken( installation.Id );
+                var installationClient = GetNewClient( response.Token );
                 var repos = await installationClient.GitHubApps.Installation.GetAllRepositoriesForCurrent();
 
                 // Add repositories to the list
@@ -142,6 +158,8 @@ public class GitHubController : ControllerBase
         }
 
         return NotFound("There exists no user in session.");
+
+        
     }
 
     [HttpGet("getRepository/{id}")] // Update the route to include repository ID
@@ -202,5 +220,63 @@ public class GitHubController : ControllerBase
 
         return NotFound("There exists no user in session.");
     }
+
+
+    [HttpGet("prs")]
+    public async Task<ActionResult> getAllPRs()
+    {
+        var generator = _getGitHubJwtGenerator();
+        var jwtToken = generator.CreateEncodedJwtToken();
+        var appClient = _getGitHubClient(jwtToken);
+
+        var client = _getGitHubClient( _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken") );
+
+        // Get organizations for the current user
+        var organizations = await client.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        var pullRequests = new List<PullRequest>();
+
+        foreach (var installation in installations)
+        {
+            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            {
+                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
+                var installationClient = _getGitHubClient(response.Token);
+                var repos = await installationClient.GitHubApps.Installation.GetAllRepositoriesForCurrent();
+
+                foreach (var repository in repos.Repositories)
+                {
+                    
+                    var repoPulls = await installationClient.PullRequest.GetAllForRepository(repository.Id);
+                    
+                    foreach( var repoPull in repoPulls ){
+                        var pull = await installationClient.PullRequest.Get(repository.Id, repoPull.Number);
+                        pullRequests.Add(pull);
+                    }
+
+                    /*var repoPullsInfos = repoPulls.Select( pr => new PRInfo
+                        {
+                            Id = pr.Id,
+                            Title = pr.Title,
+                            Number = pr.Number,
+                            OpenedBy = pr.User.Login,
+                            OpenedByAvatarURL = pr.User.AvatarUrl,
+                            UpdatedAt = pr.UpdatedAt.Date.ToString("dd/MM/yyyy")
+                        }
+                        ).ToArray();
+                    
+                    pullRequests.AddRange(repoPulls);*/
+                }
+            }
+        }
+
+        return Ok(pullRequests);
+    }
+
+
 
 }
