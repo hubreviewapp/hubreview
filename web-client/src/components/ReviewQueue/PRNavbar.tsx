@@ -42,9 +42,11 @@ export function PRNavbar() {
     getRepos();
   }, []);
 
+  const reposCount = repository.length; // Count of repositories
+
   const repos =  (
     <Accordion.Item key="repos" value="repos">
-      <Accordion.Control > <IconNotebook/>{"Selected Repos (4) "}</Accordion.Control>
+      <Accordion.Control > <IconNotebook/>{`Selected Repos (${reposCount})`}</Accordion.Control>
       <Accordion.Panel>
         <Box>
           {repository.map((repo, index) => (
