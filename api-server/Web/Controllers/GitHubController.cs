@@ -122,7 +122,7 @@ public class GitHubController : ControllerBase
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         string? userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
         
-        GitHubClient userClient = GetNewClient( access_token );
+        var userClient = GetNewClient( access_token );
 
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
