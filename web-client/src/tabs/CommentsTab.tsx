@@ -1,8 +1,8 @@
 import Comment from "../components/Comment.tsx";
 import TextEditor from "../components/TextEditor.tsx";
 import SplitButton from "../components/SplitButton.tsx";
-import {Box, Text, Accordion, Grid, Select } from "@mantine/core";
-import PRDetailSideBar from "../components/PRDetailSideBar.tsx";
+import {Box, Text, Accordion } from "@mantine/core";
+import CommentList from "../components/DiffComment/CommentList";
 
 const comments = [
   {
@@ -69,46 +69,37 @@ function CommentsTab() {
   ));
 
   return (
-  <Grid>
-    <Grid.Col span={8}>
-      <Box style={{display:"flex", justifyContent: "flex-end", marginTop: -30, padding:10, marginRight:10 }}>
-        <Select style={{flex: 0.2, marginBottom:-10}}
-                placeholder="Filter comments"
-                data={['Show Everything (10)', 'All Comments (5)', 'My comments (2)', 'Active (3)', 'Resolved (2)']}
-                checkIconPosition="left"
-                allowDeselect={false}
-        />
-      </Box>
-      <Box mx="lg">
-        {unresolvedComments.map((comment, index) => (
-          <Box key={index} >
-            <Comment
-              key={index}
-              id={index}
-              author= {comment.author}
-              text={comment.text}
-              date={comment.date}
-              isResolved={comment.isResolved}
-              isAIGenerated={comment.isAIGenerated}
-            />
-            <br/>
-          </Box>
-        ))}
-        <Accordion chevronPosition="right" variant="separated" >
-          {comments2}
-        </Accordion>
-        <br/>
-        <SplitButton/>
-        <br/>
-        <Box style={{ border: "2px groove gray", borderRadius: 10, padding:"10px" }}>
-          <TextEditor/>
+
+    <Box mx="lg">
+      <CommentList/>
+      {unresolvedComments.map((comment, index) => (
+        <Box key={index} >
+          <Comment
+            key={index}
+            id={index}
+            author= {comment.author}
+            text={comment.text}
+            date={comment.date}
+            isResolved={comment.isResolved}
+            isAIGenerated={comment.isAIGenerated}
+          />
+          <br/>
         </Box>
+      ))}
+      <Accordion chevronPosition="right" variant="separated" >
+        {comments2}
+      </Accordion>
+      <br/>
+      <SplitButton/>
+      <br/>
+      <Box style={{ border: "2px groove gray", borderRadius: 10, padding:"10px" }}>
+        <TextEditor/>
       </Box>
-    </Grid.Col>
-    <Grid.Col span={3}>
-      <PRDetailSideBar />
-    </Grid.Col>
-  </Grid>
+
+      <Box style={{height:100}}/>
+
+
+    </Box>
 
   );
 }

@@ -1,11 +1,10 @@
-import { Grid, Pagination, Button, Center } from "@mantine/core";
+import { Grid, Button, Center } from "@mantine/core";
 import FilterInput from "../components/ReviewQueue/FilterInput";
-import PullRequestCard from "../components/ReviewQueue/PullRequestCard";
-import classes from "../components/ReviewQueue/ReviewQueue.module.scss";
 import {Link} from "react-router-dom";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {PRNavbar} from "../components/ReviewQueue/PRNavbar.tsx";
+import PRCardList from "../components/ReviewQueue/PRCardList";
 export interface RequestedReviewer {
   reviewerType: "USER" | "TEAM";
   name: string;
@@ -201,7 +200,7 @@ const data: ReviewQueuePullRequest[] = [
  * - Author-assigned urgency and contextual comment (i.e., more useful metadata)
  * - Type of review requested (Domain, Engineering Excellence, Custom, ...)
  * - File grouping
- * - Comment-specific reviewing
+ * - DiffComment-specific reviewing
  * - Time since last activity (waiting duration)
  * - Overview of existing review comments
  * - Prereview CI checks
@@ -220,17 +219,17 @@ function ReviewQueuePage() {
 
   return (
     <Grid w="100%" mt="md">
-      <Grid.Col span={2.5}>
-        <PRNavbar></PRNavbar>
+      <Grid.Col span={3}>
+        <PRNavbar/>
       </Grid.Col>
 
-      <Grid.Col span={7}>
+      <Grid.Col span={8}>
         <FilterInput />
-        {data.map((item) => (
-          <PullRequestCard key={item.id} data={item} />
-        ))}
 
-        <Pagination classNames={{ root: classes.pagination }} color="primary" total={4} />
+        <PRCardList pr={[]} name="Needs Your Review" />
+        <PRCardList pr={data} name="Approved" />
+        <PRCardList pr={[data[0]]} name="Your PRs" />
+
         <Center>
           <Link to="/createPR">
             <Button m="lg">Create New PR</Button>

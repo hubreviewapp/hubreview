@@ -8,7 +8,7 @@ import Superscript from '@tiptap/extension-superscript';
 import SubScript from '@tiptap/extension-subscript';
 
 interface TextEditorProps {
-  content: string
+  content: string,
 }
 
 function TextEditor({content}: TextEditorProps) {
@@ -24,6 +24,7 @@ function TextEditor({content}: TextEditorProps) {
     ],
     content,
   });
+
 
   return (
     <RichTextEditor editor={editor} my="sm">

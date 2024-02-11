@@ -1,21 +1,19 @@
 import { Badge, Box, rem } from "@mantine/core";
 import { IconTag } from "@tabler/icons-react";
 
-
-export type LabelType = "Bug Fix" | "Enhancement" | "Refactoring" | "Question" | "Suggestion";
-
 interface LabelButtonProps {
-  label: LabelType;
+  label: string;
   size: string;
 }
 
 function LabelButton({ label, size }: LabelButtonProps) {
+  label = label.toUpperCase();
   const gradient: string[] =
-    label === "Enhancement"
+    label === "ENHANCEMENT"
       ? ["pink", "violet"]
-      : label === "Bug Fix"
+      : label === "BUG"
         ? ["red", "pink"]
-        : label == "Refactoring"
+        : label == "SUGGESTION"
           ? ["teal", "lime"]
           : ["gray", "indigo"];
   const iconTag = <IconTag style={{ width: rem(15), height: rem(15) }} />;
