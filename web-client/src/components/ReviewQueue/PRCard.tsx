@@ -1,11 +1,12 @@
 import {Button, Avatar, Blockquote, Box, Card, Flex, Group, Text, Title, Collapse, rem} from "@mantine/core";
-import {ReviewQueuePullRequest} from "../../pages/ReviewQueuePage";
+//import {ReviewQueuePullRequest} from "../../pages/ReviewQueuePage";
 import {Link} from "react-router-dom";
-import UserLogo from "../../assets/icons/user.png";
-import LabelButton from "../LabelButton";
+//import UserLogo from "../../assets/icons/user.png";
+//import LabelButton from "../LabelButton";
 import {useDisclosure} from "@mantine/hooks";
 import {IconCaretDown, IconCaretUp} from "@tabler/icons-react";
 import {PRInfo} from "../../models/PRInfo.tsx";
+import { useState } from "react";
 
 export interface PullRequestCardProps {
   data: PRInfo;
@@ -16,7 +17,6 @@ function PRCard({data: pr}: PullRequestCardProps) {
   const iconDown = <IconCaretDown style={{ width: rem(22), height: rem(22) }} />;
   const iconUp = <IconCaretUp style={{ width: rem(22), height: rem(22) }} />;
 
-
   return (
     <Card withBorder>
       <Link to={"pulls/" + pr.prNumber} style={{textDecoration: "none"}}>
@@ -25,16 +25,16 @@ function PRCard({data: pr}: PullRequestCardProps) {
             <Link to={"pulls/" + pr.prNumber} style={{textDecoration: "none"}}>
               <Group>
                 <Title order={5}>{pr.title}</Title>
-                <Text c="dimmed">waiting for 12345 days</Text>
+                <Text c="dimmed">created at {pr.createdAt}</Text>
               </Group>
               </Link>
             <Text>
               #{pr.prNumber} opened by
-              <Avatar src={pr.openedByAvatarURL} size="xs" display="inline-block" mx={4}/>
-              {pr.openedBy}
+              <Avatar src={pr.authorAvatarURL} size="xs" display="inline-block" mx={4}/>
+              {pr.author}
 
               {" "}
-              last updated at Ekim.
+              last updated at {pr.updatedAt}.
             </Text>
           </Box>
           {/*<Flex justify="end">
@@ -59,7 +59,7 @@ function PRCard({data: pr}: PullRequestCardProps) {
       <Collapse in={opened}>
         <Blockquote p="sm">
           <Text>
-            Checkler burayaa
+            Checkler buraya gelecek.
             {/*Currently{" "}
             <Text span c="green">
               2 passed

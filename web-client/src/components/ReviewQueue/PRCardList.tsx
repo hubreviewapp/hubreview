@@ -1,7 +1,7 @@
 import {Paper, Group, Text} from "@mantine/core";
 import {PRInfo} from "../../models/PRInfo.tsx";
 import PRCard from "./PRCard";
-import {ReviewQueuePullRequest} from "../../pages/ReviewQueuePage";
+//import {ReviewQueuePullRequest} from "../../pages/ReviewQueuePage";
 
 export interface PRCardListProps {
   pr: PRInfo[];
@@ -9,9 +9,6 @@ export interface PRCardListProps {
 }
 
 function PRCardList({pr, name}: PRCardListProps) {
-
-  //console.log(name);
-  //console.log(pr.length == 1 ? pr[0].title : pr);
 
   return (
     <Paper my="sm" withBorder>
@@ -26,9 +23,6 @@ function PRCardList({pr, name}: PRCardListProps) {
 
       {pr.map((info) =>  (<PRCard key={info.id} data={info}/>) )}
       
-      {/*pr.map((info) => (
-        <PRCard key={info.id} data={info}/>
-      ))*/}
     </Paper>
 
   )

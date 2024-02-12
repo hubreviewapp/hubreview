@@ -104,7 +104,6 @@ function ReviewQueuePage() {
     };
 
     fetchPRInfo();
-
   }, []);
 
   return (
@@ -116,10 +115,9 @@ function ReviewQueuePage() {
       <Grid.Col span={8}>
         <FilterInput />
 
-        {/*isLoading && <Loader color="blue" />*/}
-        {/*<PRCardList pr={[]} name="Needs Your Review" />*/}
-        {/*<PRCardList pr={prInfo} name="Approved" />*/}
-        <PRCardList pr={prInfo} name="Your PRs" />
+        <PRCardList pr={prInfo} name="Needs Your Review" />
+        <PRCardList pr={[]} name="Approved" />
+        <PRCardList pr={[]} name="Your PRs" />
 
         <Center>
           <Link to="/createPR">

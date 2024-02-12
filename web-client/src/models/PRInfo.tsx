@@ -2,8 +2,9 @@ export interface PRInfo {
   id: number;
   title: string | null;
   prNumber: number;
-  openedBy: string | null;
-  openedByAvatarURL: string | null;
+  author: string | null;
+  authorAvatarURL: string | null;
+  createdAt: string | null;
   updatedAt: string | null;
   repoName: string | null;
   additions: number;
