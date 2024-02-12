@@ -1,13 +1,14 @@
 import {Button, Avatar, Blockquote, Box, Card, Flex, Group, Text, Title, Collapse, rem} from "@mantine/core";
-import {ReviewQueuePullRequest} from "../../pages/ReviewQueuePage";
+//import {ReviewQueuePullRequest} from "../../pages/ReviewQueuePage";
 import {Link} from "react-router-dom";
-import UserLogo from "../../assets/icons/user.png";
+//import UserLogo from "../../assets/icons/user.png";
 import LabelButton from "../LabelButton";
 import {useDisclosure} from "@mantine/hooks";
 import {IconCaretDown, IconCaretUp} from "@tabler/icons-react";
+import {PRInfo} from "../../models/PRInfo.tsx";
 
 export interface PullRequestCardProps {
-  data: ReviewQueuePullRequest;
+  data: PRInfo;
 }
 
 function PRCard({data: pr}: PullRequestCardProps) {
@@ -15,37 +16,40 @@ function PRCard({data: pr}: PullRequestCardProps) {
   const iconDown = <IconCaretDown style={{ width: rem(22), height: rem(22) }} />;
   const iconUp = <IconCaretUp style={{ width: rem(22), height: rem(22) }} />;
 
-
   return (
     <Card withBorder>
-      <Link to={"pulls/" + pr.id} style={{textDecoration: "none"}}>
+      <Link to={"pulls/" + pr.prNumber} style={{textDecoration: "none"}}>
         <Group grow>
           <Box>
-            <Link to={"pulls/" + pr.id} style={{textDecoration: "none"}}>
+            <Link to={"pulls/" + pr.prNumber} style={{textDecoration: "none"}}>
               <Group>
                 <Title order={5}>{pr.title}</Title>
-                <Text c="dimmed">waiting for {pr.lastActivityTimestamp} days</Text>
+                <Text c="dimmed">created at {pr.createdAt}</Text>
               </Group>
               </Link>
             <Text>
-              #{pr.id} opened by
-              <Avatar src={UserLogo} size="xs" display="inline-block" mx={4}/>
+              #{pr.prNumber} opened by
+              <Avatar src={pr.authorAvatarURL} size="xs" display="inline-block" mx={4}/>
               {pr.author}
 
               {" "}
-              at 12.11.2023
+              last updated at {pr.updatedAt}.
             </Text>
           </Box>
-          <Flex justify="end">
-            {pr.labels.map((label) => (
-              <LabelButton key={label} label={label} size="md"/>
-            ))}
-          </Flex>
+          {<Flex justify="end">
+          {pr.labels.length === 0 ? (
+            <></>
+          ) : (
+            pr.labels.map((label) => (
+              <LabelButton key={label.id} label={label.name} size="md" color={label.color}/>
+            ))
+          )}
+            </Flex>}
         </Group>
       </Link>
       <Flex justify="space-between">
         <Text c="dimmed">
-          Includes {pr.reviewers[0].comments?.length ?? 0} comments and {pr.reviewers[0].fileCount} files
+          Includes {pr.comments} comments and {pr.files} files
         </Text>
         {
           opened ?
@@ -58,13 +62,14 @@ function PRCard({data: pr}: PullRequestCardProps) {
       <Collapse in={opened}>
         <Blockquote p="sm">
           <Text>
-            Currently{" "}
+            Checkler buraya gelecek.
+            {/*Currently{" "}
             <Text span c="green">
-              {pr.ciChecks.passedCount} passed
+              2 passed
             </Text>
             ,
             <Text span c="red">
-              {pr.ciChecks.failedCount} failed
+              0 failed
             </Text>{" "}
             of {pr.ciChecks.totalCount} CI checks (prereview checks:{" "}
             {pr.ciChecks.prereviewChecks.map((c, i) => (
@@ -75,7 +80,7 @@ function PRCard({data: pr}: PullRequestCardProps) {
                 {i !== pr.ciChecks.prereviewChecks.length - 1 && ", "}
               </>
             ))}
-            )
+            )*/}
           </Text>
 
         </Blockquote>
