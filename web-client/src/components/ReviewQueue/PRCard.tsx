@@ -1,7 +1,7 @@
 import {Button, Avatar, Blockquote, Box, Card, Flex, Group, Text, Title, Collapse, rem} from "@mantine/core";
 //import {ReviewQueuePullRequest} from "../../pages/ReviewQueuePage";
 import {Link} from "react-router-dom";
-//import UserLogo from "../../assets/icons/user.png";
+import UserLogo from "../../assets/icons/user.png";
 import LabelButton from "../LabelButton";
 import {useDisclosure} from "@mantine/hooks";
 import {IconCaretDown, IconCaretUp} from "@tabler/icons-react";
@@ -82,6 +82,20 @@ function PRCard({data: pr}: PullRequestCardProps) {
             ))}
             )*/}
           </Text>
+          <Text c="green">+12 lines added
+            , <Text span c="red">-32 lines deleted</Text>
+          </Text>
+          <Group>
+            <Text c="dimmed">Reviewers:</Text>
+            <Text>
+              <Avatar src={UserLogo} size="xs" display="inline-block" mx={4}/>
+              ece_kahraman
+            </Text>
+            <Text>
+              <Avatar src={UserLogo} size="xs" display="inline-block" mx={4}/>
+              ayse_kelleci
+            </Text>
+          </Group>
 
         </Blockquote>
       </Collapse>
