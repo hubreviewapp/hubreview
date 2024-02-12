@@ -10,9 +10,9 @@ import {
   rem,
   Title,
   TextInput,
-  Loader
+  Loader, Container
 } from "@mantine/core";
-import {IconCirclePlus} from "@tabler/icons-react";
+import {IconCirclePlus, IconSearch} from "@tabler/icons-react";
 import {useState, useEffect} from "react";
 import { Repository } from "../models/Repository";
 import axios from "axios";
@@ -21,9 +21,9 @@ import { useNavigate } from "react-router-dom";
 function RepositoriesPage() {
   const iconPlus = <IconCirclePlus style={{width: rem(22), height: rem(22)}}/>;
   const [query, setQuery] = useState('');
-
   const [repository, setRepository] = useState<Repository[]>([]);
   const navigate = useNavigate();
+  const iconSearch = <IconSearch style={{ width: rem(16), height: rem(16) }} />;
 
   useEffect(() => {
   if ( localStorage.getItem("userLogin") === null ){
@@ -75,7 +75,7 @@ function RepositoriesPage() {
   ));
 
   return (
-    <Box p="lg">
+    <Container p="lg">
       <Flex justify="space-between" my="md">
         <Title order={3}>Repositories</Title>
         <Button size="md" leftSection={iconPlus} onClick={selectRepositories}>
@@ -89,8 +89,8 @@ function RepositoriesPage() {
         <Box w="300px">
           <TextInput
             my="md"
-            label="Search for repository"
             radius="md"
+            leftSection={iconSearch}
             value={query}
             onChange={(event) => {
               setQuery(event.currentTarget.value);
@@ -104,7 +104,7 @@ function RepositoriesPage() {
           <Table.Tbody>{rows}</Table.Tbody>
         </Table>
       </Paper>
-    </Box>
+    </Container>
   );
 }
 
