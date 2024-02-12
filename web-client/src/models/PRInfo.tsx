@@ -1,7 +1,7 @@
 export interface PRInfo {
   id: number;
   title: string | null;
-  prnumber: number;
+  prNumber: number;
   openedBy: string | null;
   openedByAvatarURL: string | null;
   updatedAt: string | null;

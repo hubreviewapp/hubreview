@@ -1,12 +1,13 @@
-import { Grid, Button, Center } from "@mantine/core";
+import { Grid, Button, Center, Loader } from "@mantine/core";
 import FilterInput from "../components/ReviewQueue/FilterInput";
 import {Link} from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {PRNavbar} from "../components/ReviewQueue/PRNavbar.tsx";
 import PRCardList from "../components/ReviewQueue/PRCardList";
-import { PRInfo } from "../models/PRInfo.tsx";
+import { PRInfo } from "../models/PRInfo";
 import axios from "axios";
+
 
 export interface RequestedReviewer {
   reviewerType: "USER" | "TEAM";
@@ -212,37 +213,59 @@ const data: ReviewQueuePullRequest[] = [
  * - Estimated review load of a PR (e.g., a reapproval is likely to be low-effort)
  */
 function ReviewQueuePage() {
-  const navigate = useNavigate();
+  
   const [prInfo, setPrInfo] = useState<PRInfo[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+  
+  console.log("BEEEEEEEEEEE");
+  
+  useEffect(() => {
+    console.log("AAAAAAAAAAAAAA");
+
+    if ( localStorage.getItem("userLogin") === null ){
+      navigate("/signIn");
+    }
+
+  }, [navigate]);
+
+  const fetchPRInfo = async () => {
+      const res = await axios.create({
+        withCredentials: true,
+        baseURL: "http://localhost:5018/api/github"
+      }).get("/prs");
+
+      if (res) {
+        setPrInfo(res.data);
+      }
+      setIsLoading(false)
+  };
+
+  if( isLoading ){
+    fetchPRInfo();
+  }
+  
+  /*
+  
 
   useEffect(() => {
-  if ( localStorage.getItem("userLogin") === null ){
-    navigate("/signIn");
-  } else {
-
+    
     const fetchPRInfo = async () => {
-      try {
-        const res = await axios.create({
-          withCredentials: true,
-          baseURL: "http://localhost:5018/api/github"
-        }).get("prs");
-  
-        if (res) {
-          setPrInfo(res.data.PRInfos);
-        }
-      } catch (error) {
-        // Handle error if needed
-        console.error('Error fetching PR info:', error);
+      const res = await axios.create({
+        withCredentials: true,
+        baseURL: "http://localhost:5018/api/github"
+      }).get("/prs");
+
+      if (res) {
+        setPrInfo(res.data);
       }
+      setIsLoading(false)
     };
   
     fetchPRInfo();
-  }
 
-  
-  }, [navigate]);
-
-  console.log(prInfo[0]);
+    console.log("res: ");
+  }, []);*/
 
   return (
     <Grid w="100%" mt="md">
@@ -253,8 +276,9 @@ function ReviewQueuePage() {
       <Grid.Col span={8}>
         <FilterInput />
 
+        {/*isLoading && <Loader color="blue" />*/}
         {/*<PRCardList pr={[]} name="Needs Your Review" />*/}
-        <PRCardList pr={prInfo} name="Approved" />
+        {/*<PRCardList pr={prInfo} name="Approved" />*/}        
         <PRCardList pr={[prInfo[0]]} name="Your PRs" />
 
         <Center>

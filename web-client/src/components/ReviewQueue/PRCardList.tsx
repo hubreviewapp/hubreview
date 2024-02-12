@@ -10,6 +10,9 @@ export interface PRCardListProps {
 
 function PRCardList({pr, name}: PRCardListProps) {
 
+  //console.log(name);
+  //console.log(pr.length == 1 ? pr[0].title : pr);
+
   return (
     <Paper my="sm" withBorder>
       <Group>
@@ -21,9 +24,11 @@ function PRCardList({pr, name}: PRCardListProps) {
         )}
       </Group>
 
-      {pr.map((info) => (
+      {pr.map((info) =>  (<PRCard key={info.id} data={info}/>) )}
+      
+      {/*pr.map((info) => (
         <PRCard key={info.id} data={info}/>
-      ))}
+      ))*/}
     </Paper>
 
   )

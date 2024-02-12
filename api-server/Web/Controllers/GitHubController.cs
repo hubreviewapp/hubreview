@@ -240,7 +240,7 @@ public class GitHubController : ControllerBase
         var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
         var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
-        var pullRequests = new List<PRInfo>(); // Change list type to "PullRequest" to examine the PR data
+        var pullRequests = new List<PRInfo>([]); // Change list type to "PullRequest" to examine the PR data
 
         foreach (var installation in installations)
         {
@@ -291,7 +291,7 @@ public class GitHubController : ControllerBase
             }
         }
 
-        return Ok( new { PRInfos = pullRequests } );
+        return Ok( pullRequests );
     }
 
 

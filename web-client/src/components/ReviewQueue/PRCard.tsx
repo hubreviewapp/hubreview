@@ -19,17 +19,17 @@ function PRCard({data: pr}: PullRequestCardProps) {
 
   return (
     <Card withBorder>
-      <Link to={"pulls/" + pr.prnumber} style={{textDecoration: "none"}}>
+      <Link to={"pulls/" + pr.prNumber} style={{textDecoration: "none"}}>
         <Group grow>
           <Box>
-            <Link to={"pulls/" + pr.prnumber} style={{textDecoration: "none"}}>
+            <Link to={"pulls/" + pr.prNumber} style={{textDecoration: "none"}}>
               <Group>
                 <Title order={5}>{pr.title}</Title>
                 <Text c="dimmed">waiting for 12345 days</Text>
               </Group>
               </Link>
             <Text>
-              #{pr.id} opened by
+              #{pr.prNumber} opened by
               <Avatar src={pr.openedByAvatarURL} size="xs" display="inline-block" mx={4}/>
               {pr.openedBy}
 
