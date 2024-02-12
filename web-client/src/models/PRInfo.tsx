@@ -1,3 +1,13 @@
+export interface Label {
+  id: number;
+  url: string | null;
+  name: string;
+  nodeId: string | null;
+  color: string | null;
+  description: string | null;
+  default: boolean;
+}
+
 export interface PRInfo {
   id: number;
   title: string | null;
@@ -11,4 +21,5 @@ export interface PRInfo {
   deletions: number;
   files: number;
   comments: number;
+  labels: Array<Label>;
 }

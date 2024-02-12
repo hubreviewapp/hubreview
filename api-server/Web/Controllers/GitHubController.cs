@@ -278,7 +278,8 @@ public class GitHubController : ControllerBase
                             Additions = pull.Additions,
                             Deletions = pull.Deletions,
                             Files = pull.ChangedFiles,
-                            Comments = pull.Comments
+                            Comments = pull.Comments,
+                            Labels = pull.Labels.ToArray()
                         };
 
                         pullRequests.Add(repoPullsInfos);

@@ -4,18 +4,20 @@ import { IconTag } from "@tabler/icons-react";
 interface LabelButtonProps {
   label: string;
   size: string;
+  color: string;
 }
 
-function LabelButton({ label, size }: LabelButtonProps) {
+function LabelButton({ label, size, color }: LabelButtonProps) {
   label = label.toUpperCase();
-  const gradient: string[] =
+  /*const gradient: string[] =
     label === "ENHANCEMENT"
       ? ["pink", "violet"]
       : label === "BUG"
         ? ["red", "pink"]
         : label == "SUGGESTION"
           ? ["teal", "lime"]
-          : ["gray", "indigo"];
+          : ["gray", "indigo"];*/
+  var hex = "#".concat(color);
   const iconTag = <IconTag style={{ width: rem(15), height: rem(15) }} />;
 
   return (
@@ -24,7 +26,7 @@ function LabelButton({ label, size }: LabelButtonProps) {
         leftSection={iconTag}
         size={size}
         variant="gradient"
-        gradient={{ from: gradient[0], to: gradient[1], deg: 90 }}
+        gradient={{ from: "gray", to: hex, deg: 90 }}
         key={1}
         m={3}
       >

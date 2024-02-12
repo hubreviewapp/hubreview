@@ -2,11 +2,10 @@ import {Button, Avatar, Blockquote, Box, Card, Flex, Group, Text, Title, Collaps
 //import {ReviewQueuePullRequest} from "../../pages/ReviewQueuePage";
 import {Link} from "react-router-dom";
 //import UserLogo from "../../assets/icons/user.png";
-//import LabelButton from "../LabelButton";
+import LabelButton from "../LabelButton";
 import {useDisclosure} from "@mantine/hooks";
 import {IconCaretDown, IconCaretUp} from "@tabler/icons-react";
 import {PRInfo} from "../../models/PRInfo.tsx";
-import { useState } from "react";
 
 export interface PullRequestCardProps {
   data: PRInfo;
@@ -37,11 +36,15 @@ function PRCard({data: pr}: PullRequestCardProps) {
               last updated at {pr.updatedAt}.
             </Text>
           </Box>
-          {/*<Flex justify="end">
-            {pr.labels.map((label) => (
-              <LabelButton key={label} label={label} size="md"/>
-            ))}
-            </Flex>*/}
+          {<Flex justify="end">
+          {pr.labels.length === 0 ? (
+            <></>
+          ) : (
+            pr.labels.map((label) => (
+              <LabelButton key={label.id} label={label.name} size="md" color={label.color}/>
+            ))
+          )}
+            </Flex>}
         </Group>
       </Link>
       <Flex justify="space-between">
