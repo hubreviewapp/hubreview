@@ -296,6 +296,10 @@ public class GitHubController : ControllerBase
         return Ok( pullRequests );
     }
 
+    [HttpGet("pullrequest/{prnumber}")]
+    public async Task<ActionResult> getPRById(string owner, string repoName, long prnumber){
+        
+    }
 
 
 }
