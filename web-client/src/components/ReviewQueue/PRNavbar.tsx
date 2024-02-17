@@ -5,23 +5,27 @@ import {
   IconNotebook,
 } from '@tabler/icons-react';
 import classes from '../../styles/NavbarSimple.module.css';
-import {Repository} from "../../models/Repository.tsx";
+import { Repository } from "../../models/Repository.tsx";
 import axios from "axios";
-import {Checkbox} from "@mantine/core";
+import { Checkbox } from "@mantine/core";
+import { Link } from 'react-scroll';
 
 const data = [
   { link: '', label: 'New PRs', icon: IconBellRinging },
   { link: '', label: 'Needs your review' },
-  { link: '', label: 'Your PRs'},
-  { link: '', label: 'Waiting for author'},
+  { link: '', label: 'Your PRs' },
+  { link: '', label: 'Waiting for author' },
   { link: '', label: 'All open PRs' },
   { link: '', label: 'Merged' },
   { link: '', label: 'Closed' },
-
 ];
 
-export function PRNavbar() {
-  const [active, setActive] = useState('Billing');
+interface PRNavbarProps {
+  setActiveSection: (section: string) => void;
+  activeSection: string;
+}
+
+export function PRNavbar({ setActiveSection, activeSection }: PRNavbarProps) {
   const [repository, setRepository] = useState<Repository[]>([]);
 
   useEffect(() => {
@@ -29,7 +33,7 @@ export function PRNavbar() {
       const axiosInstance = axios.create({
         withCredentials: true,
         baseURL: "http://localhost:5018/api/github"
-      })
+      });
 
       const res = await axiosInstance.get("/getRepository");
       if (res) {
@@ -42,45 +46,46 @@ export function PRNavbar() {
 
   const reposCount = repository.length; // Count of repositories
 
-  const repos =  (
+  const repos = (
     <Accordion.Item key="repos" value="repos">
-      <Accordion.Control > <IconNotebook/>{`Selected Repos (${reposCount})`}</Accordion.Control>
+      <Accordion.Control > <IconNotebook />{`Selected Repos (${reposCount})`}</Accordion.Control>
       <Accordion.Panel>
         <Box>
           {repository.map((repo, index) => (
             <Box>
-              <Text style={{display:"flex"}}  key={index} > <Checkbox variant="outline"/> {" "} {repo.name.toString()}</Text>
-              <br/>
+              <Text style={{ display: "flex" }} key={index} > <Checkbox variant="outline" /> {" "} {repo.name.toString()}</Text>
+              <br />
             </Box>
-            ))}
+          ))}
         </Box>
       </Accordion.Panel>
     </Accordion.Item>
   );
 
-
   const links = data.map((item) => (
-    <a
+    <Link
       className={classes.link}
-      data-active={item.label === active || undefined}
+      data-active={item.label === activeSection || undefined}
       href={item.link}
+      activeClass="active"
+      to={item.label.replace(/\s+/g, '-').toLowerCase()}
+      spy={true}
+      smooth={true}
+      duration={500}
       key={item.label}
-      onClick={(event) => {
-        event.preventDefault();
-        setActive(item.label);
-      }}
+      onClick={() => setActiveSection(item.label)}
     >
       {item.icon && (
         <item.icon className={classes.linkIcon} stroke={1.5} />)}
       <span>{item.label}</span>
-    </a>
+    </Link>
   ));
 
   return (
     <nav className={classes.navbar}>
       <div className={classes.navbarMain}>
         <Group className={classes.header} >
-          <Accordion style={{width: 300}} chevronPosition="right" variant="contained">
+          <Accordion style={{ width: 300 }} chevronPosition="right" variant="contained">
             {repos}
           </Accordion>
         </Group>
@@ -104,3 +109,4 @@ export function PRNavbar() {
     </nav>
   );
 }
+

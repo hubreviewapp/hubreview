@@ -1,4 +1,4 @@
-import { Grid, Button, Center } from "@mantine/core";
+import { Grid, Button, Center} from "@mantine/core";
 import FilterInput from "../components/ReviewQueue/FilterInput";
 import {Link} from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -77,7 +77,7 @@ function ReviewQueuePage() {
 
   const [prInfo, setPrInfo] = useState<PRInfo[]>([]);
   const navigate = useNavigate();
-
+  const [activeSection, setActiveSection] = useState<string >('');
 
   useEffect(() => {
 
@@ -106,18 +106,35 @@ function ReviewQueuePage() {
     fetchPRInfo();
   }, []);
 
+
   return (
     <Grid w="100%" mt="md">
-      <Grid.Col span={3}>
-        <PRNavbar/>
+      <Grid.Col span={3} >
+        <div style={{ position: 'sticky', top:5 }}>
+          <PRNavbar setActiveSection={setActiveSection} activeSection={activeSection} />
+        </div>
       </Grid.Col>
 
       <Grid.Col span={8}>
         <FilterInput />
-
-        <PRCardList pr={prInfo} name="Needs Your Review" />
-        <PRCardList pr={[]} name="Approved" />
-        <PRCardList pr={[]} name="Your PRs" />
+        <div id={"needs-your-review"} >
+          <PRCardList pr={prInfo} name="Needs Your Review" />
+        </div>
+        <div id={"your-prs"} >
+          <PRCardList pr={[]} name="Your PRs" />
+        </div>
+        <div id={"waiting-for-author"} >
+          <PRCardList pr={[]} name="Waiting for author" />
+        </div>
+        <div id={"all-open-prs"} >
+          <PRCardList pr={prInfo} name="All Open PRs" />
+        </div>
+        <div id={"merged"} >
+          <PRCardList pr={[]} name="merged" />
+        </div>
+        <div id={"closed"}>
+          <PRCardList pr={prInfo} name="closed" />
+        </div>
 
         <Center>
           <Link to="/createPR">
