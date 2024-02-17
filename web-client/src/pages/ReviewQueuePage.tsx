@@ -2,6 +2,7 @@ import { Grid, Button, Center} from "@mantine/core";
 import FilterInput from "../components/ReviewQueue/FilterInput";
 import {Link} from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useListState } from '@mantine/hooks';
 import { useNavigate } from "react-router-dom";
 import {PRNavbar} from "../components/ReviewQueue/PRNavbar.tsx";
 import PRCardList from "../components/ReviewQueue/PRCardList";
@@ -61,6 +62,10 @@ export interface ReviewQueuePullRequest {
   };
 }
 
+export interface SelectedRepos {
+  name: string,
+  selected: boolean
+}
 
 /**
  * Here is a preliminary, non-exhaustive list of things that should be displayed on this page:
@@ -78,6 +83,8 @@ function ReviewQueuePage() {
   const [prInfo, setPrInfo] = useState<PRInfo[]>([]);
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<string >('');
+
+  const [values, handlers] = useListState<SelectedRepos>([]);
 
   useEffect(() => {
 
@@ -106,33 +113,33 @@ function ReviewQueuePage() {
     fetchPRInfo();
   }, []);
 
-
   return (
     <Grid w="100%" mt="md">
       <Grid.Col span={3} >
         <div style={{ position: 'sticky', top:5 }}>
-          <PRNavbar setActiveSection={setActiveSection} activeSection={activeSection} />
+          <PRNavbar setActiveSection={setActiveSection} activeSection={activeSection}  selectedRepos={values}
+                    setSelectedRepos={handlers} />
         </div>
       </Grid.Col>
 
       <Grid.Col span={8}>
         <FilterInput />
-        <div id={"needs-your-review"} >
+        <div id="needs-your-review" >
           <PRCardList pr={prInfo} name="Needs Your Review" />
         </div>
-        <div id={"your-prs"} >
+        <div id="your-prs" >
           <PRCardList pr={[]} name="Your PRs" />
         </div>
-        <div id={"waiting-for-author"} >
+        <div id="waiting-for-author" >
           <PRCardList pr={[]} name="Waiting for author" />
         </div>
-        <div id={"all-open-prs"} >
+        <div id="all-open-prs" >
           <PRCardList pr={prInfo} name="All Open PRs" />
         </div>
-        <div id={"merged"} >
+        <div id="merged" >
           <PRCardList pr={[]} name="merged" />
         </div>
-        <div id={"closed"}>
+        <div id="closed">
           <PRCardList pr={prInfo} name="closed" />
         </div>
 
