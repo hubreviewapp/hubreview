@@ -17,5 +17,6 @@ namespace CS.Core.Entities
         public int Files { get; set; }
         public int Comments { get; set; }
         public Array Labels { get; set; }
+        public string RepoOwner { get; set; }
     }
 }

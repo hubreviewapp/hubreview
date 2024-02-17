@@ -279,7 +279,8 @@ public class GitHubController : ControllerBase
                             Deletions = pull.Deletions,
                             Files = pull.ChangedFiles,
                             Comments = pull.Comments,
-                            Labels = pull.Labels.ToArray()
+                            Labels = pull.Labels.ToArray(),
+                            RepoOwner = pull.Base.Repository.Owner.Login
                         };
 
                         pullRequests.Add(repoPullsInfos);
@@ -294,6 +295,38 @@ public class GitHubController : ControllerBase
         }
 
         return Ok( pullRequests );
+    }
+
+    [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}")]
+    public async Task<ActionResult> getPRById(string owner, string repoName, long prnumber)
+    {
+        var generator = _getGitHubJwtGenerator();
+        var jwtToken = generator.CreateEncodedJwtToken();
+        var appClient = _getGitHubClient(jwtToken);
+
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        foreach (var installation in installations)
+        {
+            if (installation.Account.Login == userLogin)
+            {
+                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
+                var installationClient = _getGitHubClient(response.Token);
+
+                try
+                {
+                    var pull = await installationClient.PullRequest.Get(owner, repoName, (int)prnumber);
+                    return Ok(pull);
+                }
+                catch (NotFoundException)
+                {
+                    return NotFound($"Pull request with number {prnumber} not found in repository {repoName}.");
+                }
+            }
+        }
+
+        return NotFound("There exists no user in session.");
     }
 
 
