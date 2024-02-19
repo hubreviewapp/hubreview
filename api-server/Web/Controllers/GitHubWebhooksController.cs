@@ -36,13 +36,6 @@ namespace CS.Web.Controllers
             };
         }
 
-        // Right now just for testing purposes
-        [HttpGet]
-        public async Task<ActionResult> getUserInfo() {
-            Console.WriteLine("Hellooo");
-            return Ok();
-        }
-
         [HttpPost]
         public async Task<IActionResult> Webhook()
         {
