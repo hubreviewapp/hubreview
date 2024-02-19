@@ -46,6 +46,7 @@ namespace CS.Web.Controllers
             }
 
             var eventType = Request.Headers["X-GitHub-Event"];
+            Console.WriteLine(eventType);
             switch (eventType)
             {
                 case "check_run":
