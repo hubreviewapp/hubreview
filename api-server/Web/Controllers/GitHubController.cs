@@ -223,7 +223,6 @@ public class GitHubController : ControllerBase
         return NotFound("There exists no user in session.");
     }
 
-
     [HttpGet("prs")]
     public async Task<ActionResult> getAllPRs()
     {
@@ -328,7 +327,4 @@ public class GitHubController : ControllerBase
 
         return NotFound("There exists no user in session.");
     }
-
-
-
 }
