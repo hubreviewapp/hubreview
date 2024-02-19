@@ -2,7 +2,7 @@ namespace CS.Core.Entities
 {
   public class LinksInfo
   {
-    public CommentInfo? comments { get; set; }
+    public CommentsInfo? comments { get; set; }
     public CommitsInfo? commits { get; set; }
     public HtmlInfo? html { get; set; }
     public IssueInfo? issue { get; set; }

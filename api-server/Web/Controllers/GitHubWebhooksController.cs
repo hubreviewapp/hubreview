@@ -52,12 +52,14 @@ namespace CS.Web.Controllers
                 case "ping":
                     return Ok("pong");
                 case "pull_request":
-                    var payload = JsonConvert.DeserializeObject<PullRequestPayload>(requestBody);
+                    var pullRequestPayload = JsonConvert.DeserializeObject<PullRequestPayload>(requestBody);
                     //Console.WriteLine(requestBody);
-                    Console.WriteLine($"Received pull request webhook for repository: {payload?.repository?.id} name: {payload?.repository?.full_name} test: {payload?.pull_request?.@base?.label}");
+                    Console.WriteLine($"Received pull request webhook for repository: {pullRequestPayload?.repository?.id} name: {pullRequestPayload?.repository?.full_name} test: {pullRequestPayload?.pull_request?.@base?.label}");
                     break;
                 case "pull_request_review_comment":
+                    var pullRequestReviewCommentPayload = JsonConvert.DeserializeObject<PullRequestReviewCommentPayload>(requestBody);
                     Console.WriteLine(requestBody);
+                    Console.WriteLine($"Action: {pullRequestReviewCommentPayload?.action} Comment: {pullRequestReviewCommentPayload?.comment?.@body}");
                     break;
                 case "pull_request_review":
                     Console.WriteLine(requestBody);
