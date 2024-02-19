@@ -39,7 +39,6 @@ namespace CS.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> Webhook()
         {
-            Console.WriteLine("Hello World");
             string requestBody;
             using (var reader = new StreamReader(Request.Body, Encoding.UTF8))
             {
@@ -49,27 +48,50 @@ namespace CS.Web.Controllers
             var eventType = Request.Headers["X-GitHub-Event"];
             switch (eventType)
             {
-                case "ping":
-                    return Ok("pong");
+                case "check_run":
+                    //CheckRunPayload
+                    //TO DO
+                    break;
+                case "commit_comment":
+                    //CommitCommentPayload
+                    //TO DO
+                    break;
+                case "create":
+                    //CreatePayload
+                    //TO DO
+                    break;  
+                case "delete":
+                    //DeletePayload
+                    //TO DO
+                    break;  
+                case "member":
+                    //MemberPayload
+                    //TO DO
+                    break;
+                case "organization":
+                    //OrganizationPayload
+                    //TO DO
+                    break;
                 case "pull_request":
                     var pullRequestPayload = JsonConvert.DeserializeObject<PullRequestPayload>(requestBody);
-                    //Console.WriteLine(requestBody);
-                    Console.WriteLine($"Received pull request webhook for repository: {pullRequestPayload?.repository?.id} name: {pullRequestPayload?.repository?.full_name} test: {pullRequestPayload?.pull_request?.@base?.label}");
+                    //TO DO
                     break;
                 case "pull_request_review_comment":
                     var pullRequestReviewCommentPayload = JsonConvert.DeserializeObject<PullRequestReviewCommentPayload>(requestBody);
-                    Console.WriteLine(requestBody);
-                    Console.WriteLine($"Action: {pullRequestReviewCommentPayload?.action} Comment: {pullRequestReviewCommentPayload?.comment?.@body}");
+                    //TO DO
                     break;
                 case "pull_request_review":
-                    Console.WriteLine(requestBody);
-                    Console.WriteLine("review");
+                    var pullRequestReviewPayload = JsonConvert.DeserializeObject<PullRequestReviewPayload>(requestBody);
+                    //TO DO
                     break;
                 case "pull_request_review_thread":
-                    Console.WriteLine(requestBody);
-                    Console.WriteLine("thread");
+                    var pullRequestReviewThreadPayload = JsonConvert.DeserializeObject<PullRequestReviewThreadPayload>(requestBody);
+                    //TO DO
                     break;
-                // more cases to be added
+                case "repository":
+                    //RepositoryPayload
+                    //TO DO
+                    break;
             }
 
             return Ok();
