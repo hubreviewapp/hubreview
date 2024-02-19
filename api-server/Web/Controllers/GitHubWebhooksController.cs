@@ -61,7 +61,7 @@ namespace CS.Web.Controllers
                 case "pull_request":
                     var payload = JsonConvert.DeserializeObject<PullRequestPayload>(requestBody);
                     //Console.WriteLine(requestBody);
-                    Console.WriteLine($"Received pull request webhook for repository: {payload.repository.id} name: {payload.repository.full_name} test: {payload.pull_request.@base.label}");
+                    Console.WriteLine($"Received pull request webhook for repository: {payload?.repository?.id} name: {payload?.repository?.full_name} test: {payload?.pull_request?.@base?.label}");
                     break;
                 case "pull_request_review_comment":
                     Console.WriteLine(requestBody);
