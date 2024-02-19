@@ -66,6 +66,14 @@ namespace CS.Web.Controllers
                     //DeletePayload
                     //TO DO
                     break;  
+                case "installation":
+                    //InstallationPayload
+                    //TO DO
+                    break; 
+                case "installation_repositories":
+                    //InstallationRepositoriesPayload
+                    //TO DO
+                    break; 
                 case "member":
                     //MemberPayload
                     //TO DO
