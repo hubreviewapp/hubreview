@@ -5,7 +5,7 @@ namespace CS.Core.Entities
     public string? closed_at { get; set; }
     public long closed_issues { get; set; }
     public string? created_at { get; set; }
-    public CreatorInfo creator { get; set; }
+    public CreatorInfo? creator { get; set; }
     public string? description { get; set; }
     public string? due_on { get; set; }
     public string? html_url { get; set; }
