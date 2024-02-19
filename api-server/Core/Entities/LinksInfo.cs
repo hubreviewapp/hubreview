@@ -10,5 +10,6 @@ namespace CS.Core.Entities
     public ReviewCommentsInfo? review_comments { get; set; }
     public SelfInfo? self { get; set; }
     public StatusesInfo? statuses { get; set; }
+    public CommentsInfo? pull_request { get; set; }
   }
 }
