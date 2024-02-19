@@ -2,28 +2,54 @@ import LabelButton from "../components/LabelButton";
 import ModifiedFilesTab from "../tabs/ModifiedFilesTab";
 import CommentsTab from "../tabs/CommentsTab.tsx";
 import CommitsTab from "../tabs/CommitsTab.tsx";
-import { Box, Badge, rem, Group, UnstyledButton } from "@mantine/core";
+import {Box, Badge, rem, Group, UnstyledButton} from "@mantine/core";
 import TabComp from "../components/Tab.tsx";
 import * as React from "react";
-import { IconGitPullRequest, IconCircleDot } from '@tabler/icons-react';
+import {IconGitPullRequest} from '@tabler/icons-react';
 import PrContextTab from "../tabs/PrContextTab.tsx";
-import { useNavigate } from "react-router-dom";
+import {useNavigate} from "react-router-dom";
+import {useEffect, useState} from "react";
+import axios from "axios";
+import {
+  useParams
+} from "react-router-dom";
+import PRDetailSideBar from "../components/PRDetailSideBar";
 
-interface PRDetailsPageProps {
-  id: string;
-  name: string;
-}
+function PRDetailsPage() {
+  const {owner, repoName, prnumber} = useParams();
+  const [pullRequest, setPullRequest] = useState(null);
+  const fetchPRInfo = async () => {
+    try {
+      const res = await axios.create({
+        withCredentials: true,
+        baseURL: "http://localhost:5018/api/github/pullrequest"
+      }).get(`/${owner}/${repoName}/${prnumber}`);
 
-function PRDetailsPage({ id, name }: PRDetailsPageProps) {
+      if (res) {
+        setPullRequest(res.data);
+        console.log(res.data);
+      }
+    } catch (error) {
+      console.error("Error fetching PR info:", error);
+      setTimeout(fetchPRInfo, 1000); // Retry after 3 seconds
+    }
+  };
+
+  useEffect(() => {
+
+    fetchPRInfo();
+  }, []);
+
+
   const tabs = ["comments", "commits", "details", "modified files"];
 
   const [currentTab, setCurrentTab] = React.useState<string | null>(tabs[0]);
   const navigate = useNavigate();
 
-  React.useEffect(() => {    
-  if ( localStorage.getItem("userLogin") === null ){
-    navigate("/signIn");
-  }
+  React.useEffect(() => {
+    if (localStorage.getItem("userLogin") === null) {
+      navigate("/signIn");
+    }
   }, [navigate]);
 
   const updateTab = (newTab: string | null) => {
@@ -31,44 +57,54 @@ function PRDetailsPage({ id, name }: PRDetailsPageProps) {
   };
 
   return (
-    <div style={{ textAlign: "left", marginLeft: 100 }}>
+    <div style={{textAlign: "left", marginLeft: 100}}>
       <Group>
         <h2>
           {" "}
-          {name} Fix: Resolve Critical User Authentication Bug
-          <span style={{ color: "#778DA9" }}> #{id}</span>
+          {pullRequest?.title ?? "Loading"}
+          <span style={{color: "#778DA9"}}> #{prnumber}</span>
         </h2>
         &ensp;&ensp;
         <Badge
           size="lg"
           color="green"
           key={1}
-          style={{ marginTop: 25 }}
-          rightSection={<IconGitPullRequest style={{ width: rem(18), height: rem(18) }} />}
+          rightSection={<IconGitPullRequest style={{width: rem(18), height: rem(18)}}/>}
         >
           Open
         </Badge>
       </Group>
-      <Group style={{ marginTop: -20 }}>
-        <p> created at 4 days ago by <UnstyledButton c="blue">Irem Aydın </UnstyledButton></p>
-        <p>
-          <IconCircleDot size={18}/> &ensp; 1 issue linked
-          <span style={{ color: "#778DA9" }}> at project Hubreview</span>
-        </p>
+      <Group mb="sm">
+        <span style={{color: "#778DA9"}}>Last updated </span>
+        <Group> {new Date(pullRequest?.updatedAt ?? "Loading").toDateString()}
+          <span style={{color: "#778DA9"}}>by </span>
+          <Group>
+            <UnstyledButton component="a" href={pullRequest?.user.htmlUrl}
+                            c="blue">{pullRequest?.user.login ?? "Loading"}</UnstyledButton>
+          </Group>
+        </Group>
+        <span style={{color: "#778DA9"}}> at project</span>
+        <UnstyledButton component="a" href={pullRequest?.base.repository.htmlUrl} c="blue">{repoName}</UnstyledButton>
       </Group>
-      <Box display="flex" style={{ justifyContent: "flex-start" }}>
-        <LabelButton label="Enhancement" size="lg" />
-        <LabelButton label="Bug Fix" size="lg" />
+      <Box display="flex" style={{justifyContent: "flex-start"}}>
+        {
+          pullRequest?.labels.map(label => (
+              <LabelButton key={label.id} label={label.name} size="lg" color={label.color}/>
+            )
+          )
+        }
       </Box>
-      <br></br>
-      <TabComp tabs={tabs} updateTab={updateTab} />
-      <br></br>
-      <Box >
-        {currentTab === "modified files" && <ModifiedFilesTab />}
-        {currentTab === "comments" && <CommentsTab />}
-        {currentTab === "details" && <PrContextTab />}
-        {currentTab === "commits" && <CommitsTab />}
-      </Box>
+        <Box>
+          <br/>
+          <TabComp tabs={tabs} updateTab={updateTab}/>
+          <br/>
+          <Box>
+            {currentTab === "modified files" && <ModifiedFilesTab/>}
+            {currentTab === "comments" && <CommentsTab/>}
+            {currentTab === "details" && <PrContextTab/>}
+            {currentTab === "commits" && <CommitsTab/>}
+          </Box>
+        </Box>
     </div>
   );
 }

@@ -17,7 +17,7 @@ function LabelButton({ label, size, color }: LabelButtonProps) {
         : label == "SUGGESTION"
           ? ["teal", "lime"]
           : ["gray", "indigo"];*/
-  var hex = "#".concat(color);
+  const hex = "#".concat(color);
   const iconTag = <IconTag style={{ width: rem(15), height: rem(15) }} />;
 
   return (

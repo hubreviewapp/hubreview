@@ -44,7 +44,7 @@ function App() {
 
       <Routes>
         <Route path="/" element={<ReviewQueuePage />} />
-        <Route path="/pulls/:pullid" element={<PRDetailsPage id="1" name="pull request" />} />
+        <Route path="/pulls/pullrequest/:owner/:repoName/:prnumber" element={<PRDetailsPage/>} />
         <Route path="/repositories" element={<RepositoriesPage />} />
         <Route path="/analytics" element={<AnalyticsPage />} />
         <Route path="/createPR" element={<PRCreationPage />} />
