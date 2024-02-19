@@ -2,7 +2,7 @@ namespace CS.Core.Entities
 {
   public class ThreadInfo
   {
-    public CommentsInfo[]? comments;
+    public CommentInfo[]? comments;
     public string? node_id;
   }
 }
