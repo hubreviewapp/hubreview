@@ -62,7 +62,6 @@ namespace CS.Web.Controllers
                     break;  
                 case "delete":
                     //DeletePayload
-                    
                     //TO DO
                     break;  
                 case "member":
