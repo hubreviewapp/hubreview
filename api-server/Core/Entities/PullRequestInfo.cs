@@ -23,7 +23,7 @@ namespace CS.Core.Entities
     public bool draft { get; set; }
     public BaseInfo? head { get; set; }
     public string? html_url { get; set; }
-    public int id { get; set; }
+    public long id { get; set; }
     public LabelInfo[]? labels { get; set; }
     public bool locked { get; set; }
     public bool maintainer_can_modify { get; set; }

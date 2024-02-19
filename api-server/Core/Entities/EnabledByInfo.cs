@@ -11,7 +11,7 @@ namespace CS.Core.Entities
     public string? gists_url { get; set; }
     public string? gravatar_id { get; set; }
     public string? html_url { get; set; }
-    public int id { get; set; }
+    public long id { get; set; }
     public string? login { get; set; }
     public string? name { get; set; }
     public string? node_id { get; set; }

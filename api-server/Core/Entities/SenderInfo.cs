@@ -3,7 +3,7 @@ namespace CS.Core.Entities
   public class SenderInfo
   {
     public string? login { get; set; }
-    public int id { get; set; }
+    public long id { get; set; }
     public string? node_id { get; set; }
     public string? avatar_url { get; set; }
     public string? gravatar_id { get; set; }

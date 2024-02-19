@@ -46,7 +46,7 @@ namespace CS.Core.Entities
     public string? homepage { get; set; }
     public string? hooks_url { get; set; }
     public string? html_url { get; set; }
-    public int id { get; set; }
+    public long id { get; set; }
     public bool is_template { get; set; }
     public string? issue_comment_url { get; set; }
     public string? issue_events_url { get; set; }
