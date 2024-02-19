@@ -1,9 +1,9 @@
 namespace CS.Core.Entities
 {
-  public class PullRequestPayload
+  public class PullRequestReviewCommentPayload
   {
     public string? action { get; set; }
-    public UserInfo? assignee { get; set; }
+    public CommentsInfo? comment { get; set; }
     public InstallationInfo? installation { get; set; }
     public int number { get; set; }
     public OrganizationInfo? organization { get; set; }
