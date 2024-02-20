@@ -466,6 +466,42 @@ public class GitHubController : ControllerBase
         return NotFound("There exists no user in session.");
 
     }
+
+    [HttpDelete("pullrequest/{owner}/{repoName}/{prnumber}/remove_reviewer/{reviewer}")]
+    public async Task<ActionResult> removeReviewer(string owner, string repoName, long prnumber, string reviewer){
+        var appClient = GetNewClient();
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+
+        // Get organizations for the current user
+        var organizations = await client.Organization.GetAllForCurrent();
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        foreach (var installation in installations)
+        {
+            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            {
+                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
+                var installationClient = GetNewClient(response.Token);
+
+                try
+                {
+                    string[] arr = [reviewer];
+                    var reviewRequest = new PullRequestReviewRequest(arr, null);
+                    await installationClient.PullRequest.ReviewRequest.Delete(owner, repoName, (int)prnumber, reviewRequest);
+                    return Ok($"{reviewer} is removed from PR #{prnumber}.");
+                }
+                catch (NotFoundException)
+                {
+                    return NotFound($"Pull request with number {prnumber} not found in repository {repoName}.");
+                }
+            }
+        }
+
+        return NotFound("There exists no user in session.");
+    }
+
 }
 
 
