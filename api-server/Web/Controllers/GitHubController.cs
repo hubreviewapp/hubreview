@@ -5,6 +5,8 @@ using Octokit;
 using DotEnv.Core;
 using GitHubJwt;
 using CS.Core.Entities;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace CS.Web.Controllers;
 
@@ -287,13 +289,13 @@ public class GitHubController : ControllerBase
 
 
 
-                    
+
 
                 }
             }
         }
 
-        return Ok( pullRequests );
+        return Ok(pullRequests);
     }
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}")]
@@ -432,7 +434,8 @@ public class GitHubController : ControllerBase
     }
 
     [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/request_review")]
-    public async Task<ActionResult> requestReview(string owner, string repoName, long prnumber, [FromBody] string[] reviewers){
+    public async Task<ActionResult> requestReview(string owner, string repoName, long prnumber, [FromBody] string[] reviewers)
+    {
 
         var appClient = GetNewClient();
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
@@ -453,7 +456,7 @@ public class GitHubController : ControllerBase
                 try
                 {
                     var reviewRequest = new PullRequestReviewRequest(reviewers, null);
-                    var pull = await installationClient.PullRequest.ReviewRequest.Create(owner, repoName, (int) prnumber, reviewRequest);
+                    var pull = await installationClient.PullRequest.ReviewRequest.Create(owner, repoName, (int)prnumber, reviewRequest);
                     return Ok($"{string.Join(",", reviewers)} is assigned to PR #{prnumber}.");
                 }
                 catch (NotFoundException)
@@ -468,14 +471,15 @@ public class GitHubController : ControllerBase
     }
 
     [HttpDelete("pullrequest/{owner}/{repoName}/{prnumber}/remove_reviewer/{reviewer}")]
-    public async Task<ActionResult> removeReviewer(string owner, string repoName, long prnumber, string reviewer){
+    public async Task<ActionResult> removeReviewer(string owner, string repoName, long prnumber, string reviewer)
+    {
         var appClient = GetNewClient();
-        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
         // Get organizations for the current user
-        var organizations = await client.Organization.GetAllForCurrent();
+        var organizations = await userClient.Organization.GetAllForCurrent();
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
-        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
         var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
         foreach (var installation in installations)
@@ -518,6 +522,59 @@ public class GitHubController : ControllerBase
         return Ok($"Comment updated."); 
     } 
 
+    [HttpGet("pullrequest/{repoid}/{prnumber}/get_comments")]
+    public async Task<ActionResult> getCommentsOnPR(long repoid, int prnumber)
+    {
+        var appClient = GetNewClient();
+        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent();
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        var result = new List<IssueCommentInfo>([]);
+        var processedCommentIds = new HashSet<long>();
+
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        foreach (var installation in installations)
+        {
+            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            {
+                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
+                var installationClient = GetNewClient(response.Token);
+
+                var comments = await installationClient.Issue.Comment.GetAllForIssue(repoid, prnumber);
+
+                foreach (var comm in comments)
+                {
+                    // Check if the comment ID has already been processed
+                    if (!processedCommentIds.Contains(comm.Id))
+                    {
+                        var commentObj = new IssueCommentInfo
+                        {
+                            id = comm.Id,
+                            author = comm.User.Login,
+                            body = comm.Body,
+                            created_at = comm.CreatedAt,
+                            updated_at = comm.UpdatedAt,
+                            association = comm.AuthorAssociation.StringValue
+                        };
+
+                        result.Add(commentObj);
+
+                        // Add the comment ID to the set of processed IDs
+                        processedCommentIds.Add(comm.Id);
+                    }
+
+                }
+
+            }
+        }
+
+        return Ok(result);
+    }
+
+    
+
 }
-
-
