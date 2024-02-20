@@ -583,6 +583,57 @@ public class GitHubController : ControllerBase
         return Ok(result);
     }
 
-    
+    [HttpGet("pullrequest/{repoid}/{prnumber}/get_review_comments")]
+    public async Task<ActionResult> getRevCommentsOnPR(long repoid, int prnumber)
+    {
+        var appClient = GetNewClient();
+        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent();
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        var result = new List<IssueCommentInfo>([]);
+        var processedCommentIds = new HashSet<long>();
+
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        foreach (var installation in installations)
+        {
+            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            {
+                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
+                var installationClient = GetNewClient(response.Token);
+
+                var reviews = await installationClient.PullRequest.ReviewComment.GetAll(repoid, prnumber);
+
+                foreach (var rev in reviews)
+                {
+                    // Check if the comment ID has already been processed
+                    if (!processedCommentIds.Contains(rev.Id))
+                    {
+                        var commentObj = new IssueCommentInfo
+                        {
+                            id = rev.Id,
+                            author = rev.User.Login,
+                            body = rev.Body,
+                            created_at = rev.CreatedAt,
+                            updated_at = rev.UpdatedAt,
+                            association = rev.AuthorAssociation.StringValue
+                        };
+
+                        result.Add(commentObj);
+
+                        // Add the comment ID to the set of processed IDs
+                        processedCommentIds.Add(rev.Id);
+                    }
+
+                }
+
+            }
+        }
+
+        return Ok(result);
+    }
 
 }
