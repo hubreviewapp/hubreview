@@ -5,6 +5,8 @@ using Octokit;
 using DotEnv.Core;
 using GitHubJwt;
 using CS.Core.Entities;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace CS.Web.Controllers;
 
@@ -287,13 +289,13 @@ public class GitHubController : ControllerBase
 
 
 
-                    
+
 
                 }
             }
         }
 
-        return Ok( pullRequests );
+        return Ok(pullRequests);
     }
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}")]
@@ -432,7 +434,8 @@ public class GitHubController : ControllerBase
     }
 
     [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/request_review")]
-    public async Task<ActionResult> requestReview(string owner, string repoName, long prnumber, [FromBody] string[] reviewers){
+    public async Task<ActionResult> requestReview(string owner, string repoName, long prnumber, [FromBody] string[] reviewers)
+    {
 
         var appClient = GetNewClient();
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
@@ -453,7 +456,7 @@ public class GitHubController : ControllerBase
                 try
                 {
                     var reviewRequest = new PullRequestReviewRequest(reviewers, null);
-                    var pull = await installationClient.PullRequest.ReviewRequest.Create(owner, repoName, (int) prnumber, reviewRequest);
+                    var pull = await installationClient.PullRequest.ReviewRequest.Create(owner, repoName, (int)prnumber, reviewRequest);
                     return Ok($"{string.Join(",", reviewers)} is assigned to PR #{prnumber}.");
                 }
                 catch (NotFoundException)
@@ -468,14 +471,15 @@ public class GitHubController : ControllerBase
     }
 
     [HttpDelete("pullrequest/{owner}/{repoName}/{prnumber}/remove_reviewer/{reviewer}")]
-    public async Task<ActionResult> removeReviewer(string owner, string repoName, long prnumber, string reviewer){
+    public async Task<ActionResult> removeReviewer(string owner, string repoName, long prnumber, string reviewer)
+    {
         var appClient = GetNewClient();
-        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
         // Get organizations for the current user
-        var organizations = await client.Organization.GetAllForCurrent();
+        var organizations = await userClient.Organization.GetAllForCurrent();
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
-        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
         var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
         foreach (var installation in installations)
@@ -502,6 +506,190 @@ public class GitHubController : ControllerBase
         return NotFound("There exists no user in session.");
     }
 
+    [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addComment")]
+    public async Task<ActionResult> AddCommentToPR(string owner, string repoName, int prnumber, [FromBody] string commentBody)
+    {
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        await client.Issue.Comment.Create(owner, repoName, prnumber, commentBody);
+        return Ok($"Comment added to pull request #{prnumber} in repository {repoName}.");   
+    }
+    
+    [HttpPatch("pullrequest/{owner}/{repoName}/{comment_id}/updateComment")]
+    public async Task<ActionResult> UpdateComment(string owner, string repoName, int comment_id, [FromBody] string commentBody)
+    {
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        await client.Issue.Comment.Update(owner, repoName, comment_id, commentBody);
+        return Ok($"Comment updated."); 
+    } 
+
+    [HttpDelete("pullrequest/{owner}/{repoName}/{comment_id}/deleteComment")]
+    public async Task<ActionResult> DeleteComment(string owner, string repoName, int comment_id)
+    {
+        var client = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        await client.Issue.Comment.Delete(owner, repoName, comment_id);
+        return Ok($"Comment deleted."); 
+    } 
+
+    [HttpGet("pullrequest/{repoid}/{prnumber}/get_comments")]
+    public async Task<ActionResult> getCommentsOnPR(long repoid, int prnumber)
+    {
+        var appClient = GetNewClient();
+        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent();
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        var result = new List<IssueCommentInfo>([]);
+        var processedCommentIds = new HashSet<long>();
+
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        foreach (var installation in installations)
+        {
+            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            {
+                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
+                var installationClient = GetNewClient(response.Token);
+
+                var comments = await installationClient.Issue.Comment.GetAllForIssue(repoid, prnumber);
+
+                foreach (var comm in comments)
+                {
+                    // Check if the comment ID has already been processed
+                    if (!processedCommentIds.Contains(comm.Id))
+                    {
+                        var commentObj = new IssueCommentInfo
+                        {
+                            id = comm.Id,
+                            author = comm.User.Login,
+                            body = comm.Body,
+                            created_at = comm.CreatedAt,
+                            updated_at = comm.UpdatedAt,
+                            association = comm.AuthorAssociation.StringValue
+                        };
+
+                        result.Add(commentObj);
+
+                        // Add the comment ID to the set of processed IDs
+                        processedCommentIds.Add(comm.Id);
+                    }
+
+                }
+
+            }
+        }
+
+        return Ok(result);
+    }
+
+    [HttpGet("pullrequest/{repoid}/{prnumber}/get_review_comments")]
+    public async Task<ActionResult> getRevCommentsOnPR(long repoid, int prnumber)
+    {
+        var appClient = GetNewClient();
+        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent();
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        var result = new List<IssueCommentInfo>([]);
+        var processedCommentIds = new HashSet<long>();
+
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        foreach (var installation in installations)
+        {
+            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            {
+                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
+                var installationClient = GetNewClient(response.Token);
+
+                var reviews = await installationClient.PullRequest.ReviewComment.GetAll(repoid, prnumber);
+
+                foreach (var rev in reviews)
+                {
+                    // Check if the comment ID has already been processed
+                    if (!processedCommentIds.Contains(rev.Id))
+                    {
+                        var commentObj = new IssueCommentInfo
+                        {
+                            id = rev.Id,
+                            author = rev.User.Login,
+                            body = rev.Body,
+                            created_at = rev.CreatedAt,
+                            updated_at = rev.UpdatedAt,
+                            association = rev.AuthorAssociation.StringValue
+                        };
+
+                        result.Add(commentObj);
+
+                        // Add the comment ID to the set of processed IDs
+                        processedCommentIds.Add(rev.Id);
+                    }
+
+                }
+
+            }
+        }
+
+        return Ok(result);
+    }
+
+    [HttpGet("pullrequest/{repoid}/{prnumber}/get_commits")]
+    public async Task<ActionResult> getCommits(long repoid, int prnumber) {
+        var appClient = GetNewClient();
+        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+        var processedCommitIds = new HashSet<string>();
+        var result = new List<object>([]);
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent();
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        foreach (var installation in installations)
+        {
+            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            {
+                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
+                var installationClient = GetNewClient(response.Token);
+
+                var commits = await installationClient.PullRequest.Commits(repoid, prnumber);
+                foreach (var commit in commits)
+                {
+                    if (!processedCommitIds.Contains(commit.NodeId)){
+
+                        if ( commit.Commit.Message.Contains('\n') ){
+                            string aa = "\n\n";
+                            string[] message = commit.Commit.Message.Split(aa);
+                            result.Add(new {
+                                summary = message[0],
+                                description =  message[1],
+                                author = commit.Author.Login,
+                                date = commit.Commit.Author.Date.Date.ToString("dd/MM/yyyy")
+                            });
+
+                        } else {
+                            result.Add(new {
+                                summary = commit.Commit.Message,
+                                description = "",
+                                author = commit.Author.Login,
+                                date = commit.Commit.Author.Date.Date.ToString("dd/MM/yyyy")
+                            });
+                        }
+                       
+
+                        processedCommitIds.Add(commit.NodeId);
+                    }
+                    
+                }
+                
+
+            }
+        }
+
+        return Ok(result);
+    }
 }
-
-
