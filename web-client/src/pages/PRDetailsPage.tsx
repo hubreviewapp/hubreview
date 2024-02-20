@@ -13,7 +13,6 @@ import axios from "axios";
 import {
   useParams
 } from "react-router-dom";
-import PRDetailSideBar from "../components/PRDetailSideBar";
 
 function PRDetailsPage() {
   const {owner, repoName, prnumber} = useParams();
@@ -100,7 +99,7 @@ function PRDetailsPage() {
           <br/>
           <Box>
             {currentTab === "modified files" && <ModifiedFilesTab/>}
-            {currentTab === "comments" && <CommentsTab/>}
+            {currentTab === "comments" && <CommentsTab pullRequest={pullRequest}/>}
             {currentTab === "details" && <PrContextTab/>}
             {currentTab === "commits" && <CommitsTab/>}
           </Box>

@@ -87,11 +87,10 @@ function ReviewQueuePage() {
   const [values, handlers] = useListState<SelectedRepos>([]);
 
   useEffect(() => {
-
     if (localStorage.getItem("userLogin") === null) {
       navigate("/signIn");
+      return;
     }
-
     const fetchPRInfo = async () => {
       try {
         const res = await axios.create({

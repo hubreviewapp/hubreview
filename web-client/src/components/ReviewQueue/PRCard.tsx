@@ -11,28 +11,26 @@ export interface PullRequestCardProps {
   data: PRInfo;
 }
 
-//"pullrequest/{owner}/{repoName}/{prnumber}"
 function PRCard({data: pr}: PullRequestCardProps) {
   const [opened, { toggle }] = useDisclosure(false);
   const iconDown = <IconCaretDown style={{ width: rem(22), height: rem(22) }} />;
   const iconUp = <IconCaretUp style={{ width: rem(22), height: rem(22) }} />;
-
+  console.log("PR inside", pr);
   return (
     <Card withBorder>
       <Link to={`pulls/pullrequest/${pr.repoOwner}/${pr.repoName}/${pr.prNumber}`} style={{textDecoration: "none"}}>
         <Group grow>
           <Box>
+            <Text c="dimmed">{pr.repoName}</Text>
               <Group>
-                <Title order={5}>{pr.title}</Title>
-                <Text c="dimmed">created at {pr.createdAt}</Text>
+                <Title order={4}>{pr.title}</Title>
+                <Text c="dimmed">Last updated at {pr.updatedAt}</Text>
               </Group>
             <Text>
-              #{pr.prNumber} opened by
+              #{pr.prNumber} opened by {" "}
               <Avatar src={pr.authorAvatarURL} size="xs" display="inline-block" mx={4}/>
-              {pr.author}
-
               {" "}
-              last updated at {pr.updatedAt}.
+              {pr.author}
             </Text>
           </Box>
           {<Flex justify="end">
