@@ -75,7 +75,10 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
     const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addLabel`;
 
 
-    axios.post(apiUrl, labelName)
+    axios.create({
+      withCredentials: true,
+      baseURL: "http://localhost:5018/api/github"
+    }).post(apiUrl, labelName)
       .then(function (response) {
         console.log(response);
       })
