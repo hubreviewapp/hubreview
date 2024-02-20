@@ -17,6 +17,8 @@ import UserLogo4 from "../assets/icons/user4.png";
 import PriorityBadge, {PriorityBadgeLabel} from "./PriorityBadge";
 import LabelButton from "./LabelButton";
 import {IconCheck} from '@tabler/icons-react';
+import {useParams} from "react-router-dom";
+import axios from "axios";
 
 function barColor(capacity: number, waiting: number) {
   const workload = (waiting / capacity) * 100;
@@ -26,10 +28,11 @@ function barColor(capacity: number, waiting: number) {
 export interface PRDetailSideBarProps {
   addedReviewers: object[],
   assignees: string[],
-  labels: object[]
+  labels: object[],
 }
 
 function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
+  const {owner, repoName, prnumber} = useParams();
   const reviewers = [
     {
       id: 0,
@@ -64,10 +67,22 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
   const [priority, setPriority] = useState<PriorityBadgeLabel>(null);
   const [query, setQuery] = useState('');
   const filtered = reviewers.filter((item) => item.username.toLowerCase().includes(query.toLowerCase()));
-
   const removeFromReviewerList = (id: number) => {
     setReviewerList(reviewerList.filter(itm => itm != id));
   }
+
+  const handleAddLabel = (labelName) => {
+    const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addLabel`;
+
+
+    axios.post(apiUrl, labelName)
+      .then(function (response) {
+        console.log(response);
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  };
 
   useEffect(() => {
     if (labels.length != 0) {
@@ -215,9 +230,8 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
           placeholder="Select Label"
           data={["Bug Fix", "Enhancement", "Refactoring", "Question", "Suggestion"]}
           clearable
-          //value={}
           hidePickedOptions
-          //onChange={}
+          onChange={(lbl) =>handleAddLabel(lbl)}
         />
         <Group mt="md">
           {labelList.length == 0 ? (
