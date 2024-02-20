@@ -328,7 +328,6 @@ public class GitHubController : ControllerBase
         return NotFound("There exists no user in session.");
     }
 
-
     [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addLabel")]
     public async Task<ActionResult> addLabelToPR(string owner, string repoName, long prnumber, [FromBody] List<string> labelNames)
     {
@@ -383,7 +382,6 @@ public class GitHubController : ControllerBase
         return NotFound("There exists no user in session.");
     }
 
-
     [HttpDelete("pullrequest/{owner}/{repoName}/{prnumber}/{labelName}")]
     public async Task<ActionResult> RemoveLabelFromPR(string owner, string repoName, long prnumber, string labelName)
     {
@@ -433,7 +431,41 @@ public class GitHubController : ControllerBase
         return NotFound("There exists no user in session.");
     }
 
+    [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/request_review")]
+    public async Task<ActionResult> requestReview(string owner, string repoName, long prnumber, [FromBody] string[] reviewers){
 
+        var appClient = GetNewClient();
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+
+        // Get organizations for the current user
+        var organizations = await client.Organization.GetAllForCurrent();
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        foreach (var installation in installations)
+        {
+            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            {
+                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
+                var installationClient = GetNewClient(response.Token);
+
+                try
+                {
+                    var reviewRequest = new PullRequestReviewRequest(reviewers, null);
+                    var pull = await installationClient.PullRequest.ReviewRequest.Create(owner, repoName, (int) prnumber, reviewRequest);
+                    return Ok($"{string.Join(",", reviewers)} is assigned to PR #{prnumber}.");
+                }
+                catch (NotFoundException)
+                {
+                    return NotFound($"Pull request with number {prnumber} not found in repository {repoName}.");
+                }
+            }
+        }
+
+        return NotFound("There exists no user in session.");
+
+    }
 }
 
 
