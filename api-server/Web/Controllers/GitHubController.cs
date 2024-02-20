@@ -636,4 +636,60 @@ public class GitHubController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("pullrequest/{repoid}/{prnumber}/get_commits")]
+    public async Task<ActionResult> getCommits(long repoid, int prnumber) {
+        var appClient = GetNewClient();
+        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+        var processedCommitIds = new HashSet<string>();
+        var result = new List<object>([]);
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent();
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        foreach (var installation in installations)
+        {
+            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            {
+                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
+                var installationClient = GetNewClient(response.Token);
+
+                var commits = await installationClient.PullRequest.Commits(repoid, prnumber);
+                foreach (var commit in commits)
+                {
+                    if (!processedCommitIds.Contains(commit.NodeId)){
+
+                        if ( commit.Commit.Message.Contains('\n') ){
+                            string aa = "\n\n";
+                            string[] message = commit.Commit.Message.Split(aa);
+                            result.Add(new {
+                                summary = message[0],
+                                description =  message[1],
+                                author = commit.Author.Login,
+                                date = commit.Commit.Author.Date.Date.ToString("dd/MM/yyyy")
+                            });
+
+                        } else {
+                            result.Add(new {
+                                summary = commit.Commit.Message,
+                                description = "",
+                                author = commit.Author.Login,
+                                date = commit.Commit.Author.Date.Date.ToString("dd/MM/yyyy")
+                            });
+                        }
+                       
+
+                        processedCommitIds.Add(commit.NodeId);
+                    }
+                    
+                }
+                
+
+            }
+        }
+
+        return Ok(result);
+    }
 }
