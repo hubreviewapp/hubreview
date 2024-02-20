@@ -330,7 +330,62 @@ public class GitHubController : ControllerBase
 
 
     [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addLabel")]
-    public async Task<ActionResult> addLabelToPR(string owner, string repoName, long prnumber, [FromBody] string labelName)
+    public async Task<ActionResult> addLabelToPR(string owner, string repoName, long prnumber, [FromBody] List<string> labelNames)
+    {
+        var generator = _getGitHubJwtGenerator();
+        var jwtToken = generator.CreateEncodedJwtToken();
+        var appClient = _getGitHubClient(jwtToken);
+
+        var client = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+
+        // Get organizations for the current user
+        var organizations = await client.Organization.GetAllForCurrent();
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        foreach (var installation in installations)
+        {
+            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            {
+                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
+                var installationClient = _getGitHubClient(response.Token);
+
+                try
+                {
+                    // Get the existing labels of the repository
+                    var labels = await installationClient.Issue.Labels.GetAllForRepository(owner, repoName);
+
+                    foreach (var labelName in labelNames)
+                    {
+                        // Find the label by name
+                        var label = labels.FirstOrDefault(l => l.Name.Equals(labelName, StringComparison.OrdinalIgnoreCase));
+                        if (label == null)
+                        {
+                            // If the label does not exist, create it
+                            label = await installationClient.Issue.Labels.Create(owner, repoName, new NewLabel(labelName, "ffffff"));
+                        }
+
+                        // Add the label to the pull request
+                        await installationClient.Issue.Labels.AddToIssue(owner, repoName, (int)prnumber, new[] { label.Name });
+                    }
+
+                    return Ok($"Labels '{string.Join(",", labelNames)}' added to pull request #{prnumber} in repository {repoName}.");
+                }
+                catch (NotFoundException)
+                {
+                    return NotFound($"Pull request with number {prnumber} not found in repository {repoName}.");
+                }
+            }
+        }
+
+        return NotFound("There exists no user in session.");
+    }
+
+
+    [HttpDelete("pullrequest/{owner}/{repoName}/{prnumber}/{labelName}")]
+    public async Task<ActionResult> RemoveLabelFromPR(string owner, string repoName, long prnumber, string labelName)
     {
         var generator = _getGitHubJwtGenerator();
         var jwtToken = generator.CreateEncodedJwtToken();
@@ -361,24 +416,24 @@ public class GitHubController : ControllerBase
                     var label = labels.FirstOrDefault(l => l.Name.Equals(labelName, StringComparison.OrdinalIgnoreCase));
                     if (label == null)
                     {
-                        // If the label does not exist, create it
-                        label = await installationClient.Issue.Labels.Create(owner, repoName, new NewLabel(labelName, "ffffff"));
+                        return NotFound($"Label '{labelName}' not found in repository {repoName}.");
                     }
 
-                    // Add the label to the pull request
-                    await installationClient.Issue.Labels.AddToIssue(owner, repoName, (int)prnumber, new [] { label.Name });
-                    return Ok($"Label '{labelName}' added to pull request #{prnumber} in repository {repoName}.");
+                    // Remove the label from the pull request
+                    await installationClient.Issue.Labels.RemoveFromIssue(owner, repoName, (int)prnumber, labelName);
+                    return Ok($"Label '{labelName}' removed from pull request #{prnumber} in repository {repoName}.");
                 }
                 catch (NotFoundException)
                 {
-                    Console.WriteLine("eklemediiiiiiiiiii");
-                    return NotFound($"Pull request with number {prnumber} not found in repository {repoName}.");
+                    return NotFound($"Pull request with number {prnumber} in repository {repoName} does not have a label named {labelName}.");
                 }
             }
         }
 
         return NotFound("There exists no user in session.");
     }
+
+
 }
 
 
