@@ -23,7 +23,7 @@ function SignInPage() {
       console.error("Error fetching data:", error);
     }
 
-    window.location.assign( "https://github.com/login/oauth/authorize?client_id=" + CLIENT_ID + "&scope=user:email,read:repo,read:org" );
+    window.location.assign( "https://github.com/login/oauth/authorize?client_id=" + CLIENT_ID + "&scope=user,repo,admin:org" );
   }
 
   return (

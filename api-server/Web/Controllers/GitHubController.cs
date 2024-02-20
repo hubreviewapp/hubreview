@@ -502,6 +502,14 @@ public class GitHubController : ControllerBase
         return NotFound("There exists no user in session.");
     }
 
+    [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addComment")]
+    public async Task<ActionResult> AddCommentToPR(string owner, string repoName, long prnumber, [FromBody] string commentBody)
+    {
+        var client = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        await client.Issue.Comment.Create(owner, repoName, (int)prnumber, commentBody);
+        return Ok($"Comment added to pull request #{prnumber} in repository {repoName}.");   
+    }
+
 }
 
 
