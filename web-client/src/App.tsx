@@ -41,7 +41,6 @@ function App() {
       <NoRenderOnPath noRenderPaths={['/signIn', '/logout', '/notfound']}>
         <NavBar />
       </NoRenderOnPath>
-
       <Routes>
         <Route path="/" element={<ReviewQueuePage />} />
         <Route path="/pulls/pullrequest/:owner/:repoName/:prnumber" element={<PRDetailsPage/>} />

@@ -1,8 +1,9 @@
 import Comment from "../components/Comment.tsx";
 import TextEditor from "../components/TextEditor.tsx";
 import SplitButton from "../components/SplitButton.tsx";
-import {Box, Text, Accordion} from "@mantine/core";
+import {Box, Text, Accordion, Flex} from "@mantine/core";
 import CommentList from "../components/DiffComment/CommentList";
+import PRDetailSideBar from "../components/PRDetailSideBar";
 
 const comments = [
   {
@@ -46,7 +47,8 @@ const comments = [
 
   },
 ];
-function CommentsTab() {
+
+function CommentsTab({pullRequest}) {
   const resolvedComments = comments.filter(comment => comment.isResolved);
   const unresolvedComments = comments.filter(comment => !comment.isResolved);
 
@@ -69,37 +71,37 @@ function CommentsTab() {
   ));
 
   return (
-
-    <Box w="90%" mx="lg">
-      <CommentList/>
-      {unresolvedComments.map((comment, index) => (
-        <Box key={index} >
-          <Comment
-            key={index}
-            id={index}
-            author= {comment.author}
-            text={comment.text}
-            date={comment.date}
-            isResolved={comment.isResolved}
-            isAIGenerated={comment.isAIGenerated}
-          />
-          <br/>
+    <Flex mx="lg">
+      <Box>
+        {unresolvedComments.map((comment, index) => (
+          <Box key={index}>
+            <Comment
+              key={index}
+              id={index}
+              author={comment.author}
+              text={comment.text}
+              date={comment.date}
+              isResolved={comment.isResolved}
+              isAIGenerated={comment.isAIGenerated}
+            />
+            <br/>
+          </Box>
+        ))}
+        <Accordion chevronPosition="right" variant="separated">
+          {comments2}
+        </Accordion>
+        <br/>
+        <SplitButton/>
+        <br/>
+        <Box style={{border: "2px groove gray", borderRadius: 10, padding: "10px"}}>
+          <TextEditor content=""/>
         </Box>
-      ))}
-      <Accordion chevronPosition="right" variant="separated" >
-        {comments2}
-      </Accordion>
-      <br/>
-      <SplitButton/>
-      <br/>
-      <Box style={{ border: "2px groove gray", borderRadius: 10, padding:"10px" }}>
-        <TextEditor content=""/>
+        <Box/>
       </Box>
-
-      <Box style={{height:100}}/>
-
-
-    </Box>
+      <Box m="md">
+        <PRDetailSideBar assignees={[]} labels={pullRequest?.labels ??[]} addedReviewers={pullRequest?.requestedReviewers ??[]}/>
+      </Box>
+    </Flex>
 
   );
 }
