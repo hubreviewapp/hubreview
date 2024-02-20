@@ -7,6 +7,7 @@ using Octokit;
 using GitHubJwt;
 using DotEnv.Core;
 using Newtonsoft.Json;
+using CS.Core.Entities;
 
 
 namespace CS.Web.Controllers
@@ -21,31 +22,23 @@ namespace CS.Web.Controllers
         public GitHubWebhooksController()
         {
             GitHubJwtFactory generator = new GitHubJwtFactory(
-                                                                new FilePrivateKeySource("../../api-server/hubreviewapp.2024-02-02.private-key.pem"),
-                                                                new GitHubJwtFactoryOptions
-                                                                {
-                                                                    AppIntegrationId = 812902,
-                                                                    ExpirationSeconds = 300
-                                                                }
-                                                            );
+                    new FilePrivateKeySource("../../api-server/hubreviewapp.2024-02-02.private-key.pem"),
+                    new GitHubJwtFactoryOptions
+                    {
+                        AppIntegrationId = 812902,
+                        ExpirationSeconds = 300
+                    }
+            );
             string jwtToken = generator.CreateEncodedJwtToken();
             _client = new GitHubClient(new ProductHeaderValue("HubReviewApp"))
-                    {
-                        Credentials = new Credentials(jwtToken, AuthenticationType.Bearer)
-                    };
-        }
-
-        // Right now just for testing purposes
-        [HttpGet]
-        public async Task<ActionResult> getUserInfo() {
-            Console.WriteLine("Hellooo");
-            return Ok();
+            {
+                Credentials = new Credentials(jwtToken, AuthenticationType.Bearer)
+            };
         }
 
         [HttpPost]
         public async Task<IActionResult> Webhook()
         {
-            Console.WriteLine("Hello World");
             string requestBody;
             using (var reader = new StreamReader(Request.Body, Encoding.UTF8))
             {
@@ -53,42 +46,66 @@ namespace CS.Web.Controllers
             }
 
             var eventType = Request.Headers["X-GitHub-Event"];
+            Console.WriteLine(eventType);
+            Console.WriteLine(requestBody);
             switch (eventType)
             {
-                case "ping":
-                    return Ok("pong");
-                case "pull_request":
-                    var payload = JsonConvert.DeserializeObject<PullRequestPayload>(requestBody);
-                    Console.WriteLine(requestBody);
-                    Console.WriteLine($"Received pull request webhook for repository: {payload.repository.id} name: {payload.repository.full_name}");
+                case "check_run":
+                    //CheckRunPayload
+                    //TO DO
                     break;
-                // more cases to be added
+                case "commit_comment":
+                    //CommitCommentPayload
+                    //TO DO
+                    break;
+                case "create":
+                    //CreatePayload
+                    //TO DO
+                    break;  
+                case "delete":
+                    //DeletePayload
+                    //TO DO
+                    break;  
+                case "installation":
+                    //InstallationPayload
+                    //TO DO
+                    break; 
+                case "installation_repositories":
+                    //InstallationRepositoriesPayload
+                    //TO DO
+                    break; 
+                case "member":
+                    //MemberPayload
+                    //TO DO
+                    break;
+                case "organization":
+                    //OrganizationPayload
+                    //TO DO
+                    break;
+                case "pull_request":
+                    var pullRequestPayload = JsonConvert.DeserializeObject<PullRequestPayload>(requestBody);
+                    //TO DO
+                    break;
+                case "pull_request_review_comment":
+                    var pullRequestReviewCommentPayload = JsonConvert.DeserializeObject<PullRequestReviewCommentPayload>(requestBody);
+                    //TO DO
+                    break;
+                case "pull_request_review":
+                    var pullRequestReviewPayload = JsonConvert.DeserializeObject<PullRequestReviewPayload>(requestBody);
+                    //TO DO
+                    break;
+                case "pull_request_review_thread":
+                    var pullRequestReviewThreadPayload = JsonConvert.DeserializeObject<PullRequestReviewThreadPayload>(requestBody);
+                    //TO DO
+                    break;
+                case "repository":
+                    //RepositoryPayload
+                    //TO DO
+                    break;
             }
 
             return Ok();
         }
 
-
-        // !!!!! Detaylandırılcak
-
-        // Define classes for deserializing payloads
-        public class PullRequestPayload
-        {
-            public string Action { get; set; }
-            public PullRequest PullRequest { get; set; }
-            public Repository repository { get; set; }
-        }
-
-        public class PullRequest
-        {
-            public int Number { get; set; }
-            public string Title { get; set; }
-        }
-
-        public class Repository
-        {
-            public string full_name { get; set; }
-            public long id { get; set; }
-        }
     }
 }
