@@ -509,6 +509,14 @@ public class GitHubController : ControllerBase
         await client.Issue.Comment.Create(owner, repoName, (int)prnumber, commentBody);
         return Ok($"Comment added to pull request #{prnumber} in repository {repoName}.");   
     }
+    
+    [HttpPatch("pullrequest/{owner}/{repoName}/{comment_id}/addComment")]
+    public async Task<ActionResult> UpdateComment(string owner, string repoName, long comment_id, [FromBody] string commentBody)
+    {
+        var client = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        await client.Issue.Comment.Update(owner, repoName, (int)comment_id, commentBody);
+        return Ok($"Comment updated."); 
+    } 
 
 }
 
