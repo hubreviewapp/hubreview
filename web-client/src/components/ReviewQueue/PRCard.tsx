@@ -15,7 +15,6 @@ function PRCard({data: pr}: PullRequestCardProps) {
   const [opened, { toggle }] = useDisclosure(false);
   const iconDown = <IconCaretDown style={{ width: rem(22), height: rem(22) }} />;
   const iconUp = <IconCaretUp style={{ width: rem(22), height: rem(22) }} />;
-  console.log("PR inside", pr);
   return (
     <Card withBorder>
       <Link to={`pulls/pullrequest/${pr.repoOwner}/${pr.repoName}/${pr.prNumber}`} style={{textDecoration: "none"}}>

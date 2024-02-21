@@ -30,7 +30,13 @@ export interface PRDetailSideBarProps {
   assignees: string[],
   labels: object[],
 }
-
+const hubReviewLabels = [
+  { name: "Bug", color: "d73a4a", key: "bug" },
+  { name: "Enhancement", color: "a2eeef", key: "enhancement" },
+  { name: "Refactoring", color: "6f42c1", key: "refactoring" },
+  { name: "Question", color: "0075ca", key: "question" },
+  { name: "Suggestion", color: "28a745", key: "suggestion" },
+];
 function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
   const {owner, repoName, prnumber} = useParams();
   const reviewers = [
@@ -46,18 +52,6 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
       capacity: 10,
       waiting: 6,
     },
-    {
-      id: 2,
-      username: "ece_kahraman",
-      capacity: 8,
-      waiting: 5,
-    },
-    {
-      id: 3,
-      username: "aysekelleci",
-      capacity: 10,
-      waiting: 3,
-    },
 
   ];
   const iconInfo = <IconInfoCircle style={{width: rem(18), height: rem(18)}}/>;
@@ -72,23 +66,28 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
   }
 
   const handleAddLabel = (labelName) => {
+
+    const stringToObject = hubReviewLabels.filter(l => labelName.includes(l.name));
     const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addLabel`;
+      axios.create({
+        withCredentials: true,
+        baseURL: "http://localhost:5018/api/github"
+      }).post(apiUrl, labelName)
+        .then(function (response) {
+          console.log(response);
+          setLabelList(labelList.concat(stringToObject));
 
-
-    axios.post(apiUrl, labelName)
-      .then(function (response) {
-        console.log(response);
-      })
-      .catch(function (error) {
-        console.log(error);
-      });
-  };
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
+    };
 
   useEffect(() => {
     if (labels.length != 0) {
       setLabelList(labels);
     }
-  }, [labels, labelList]);
+  }, [labels]);
 
   useEffect(() => {
     if (addedReviewers.length != 0) {
@@ -106,10 +105,10 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
                 Reviewers
               </Text>
               {
-                addedReviewers.length == 0 ?
+                addedReviewer.length == 0 ?
                   <Text c="dimmed">No reviewer added</Text>
                   :
-                addedReviewers.map(reviewer => (
+                addedReviewer.map(reviewer => (
                   <Group key={reviewer.id} mb="sm">
                     <Box>
                       <Avatar src={reviewer.avatarUrl} size="sm"/>
@@ -222,13 +221,12 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
           />
           <PriorityBadge label={priority} size="md"/>
         </Box>
-
         <Divider mt="md"/>
         <MultiSelect
           my="sm"
           label="Add Label"
           placeholder="Select Label"
-          data={["Bug Fix", "Enhancement", "Refactoring", "Question", "Suggestion"]}
+          data={hubReviewLabels.map(l => l.name)}
           clearable
           hidePickedOptions
           onChange={(lbl) =>handleAddLabel(lbl)}
