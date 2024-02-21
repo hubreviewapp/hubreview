@@ -29,7 +29,7 @@ const commitList = [
         author: 'Samuel Lee',
       }]
   }];
-
+//[HttpGet("pullrequest/{repoid}/{prnumber}/get_commits")]
 function CommitHistory() {
 
   return (
