@@ -1,12 +1,11 @@
-namespace CS.Core.Entities
+namespace CS.Core.Entities.Payloads
 {
-  public class PullRequestReviewThreadPayload
+  public class OrganizationPayload
   {
     public string? action { get; set; }
-    public ThreadInfo? thread { get; set; }
     public InstallationInfo? installation { get; set; }
+    public MembershipInfo? membership { get; set; }
     public OrganizationInfo? organization { get; set; }
-    public PullRequestInfo? pull_request { get; set; }
     public RepositoryInfo? repository { get; set; }
     public SenderInfo? sender { get; set; }
   }
