@@ -8,6 +8,7 @@ using GitHubJwt;
 using DotEnv.Core;
 using Newtonsoft.Json;
 using CS.Core.Entities;
+using CS.Core.Entities.Payloads;
 
 
 namespace CS.Web.Controllers
@@ -52,34 +53,42 @@ namespace CS.Web.Controllers
             {
                 case "check_run":
                     //CheckRunPayload
+                    var checkRunPayload = JsonConvert.DeserializeObject<CheckRunPayload>(requestBody);
                     //TO DO
                     break;
                 case "commit_comment":
                     //CommitCommentPayload
+                    var commitCommentPayload = JsonConvert.DeserializeObject<CS.Core.Entities.Payloads.CommitCommentPayload>(requestBody);
                     //TO DO
                     break;
                 case "create":
                     //CreatePayload
+                    var createPayload = JsonConvert.DeserializeObject<CreatePayload>(requestBody);
                     //TO DO
                     break;  
                 case "delete":
                     //DeletePayload
+                    var deletePayload = JsonConvert.DeserializeObject<DeletePayload>(requestBody);
                     //TO DO
                     break;  
                 case "installation":
                     //InstallationPayload
+                    var installationPayload = JsonConvert.DeserializeObject<InstallationPayload>(requestBody);
                     //TO DO
                     break; 
                 case "installation_repositories":
                     //InstallationRepositoriesPayload
+                    var installationRepositoriesPayload = JsonConvert.DeserializeObject<InstallationRepositoriesPayload>(requestBody);
                     //TO DO
                     break; 
                 case "member":
                     //MemberPayload
+                    var memberPayload = JsonConvert.DeserializeObject<MemberPayload>(requestBody);
                     //TO DO
                     break;
                 case "organization":
                     //OrganizationPayload
+                    var organizationPayload = JsonConvert.DeserializeObject<OrganizationPayload>(requestBody);
                     //TO DO
                     break;
                 case "pull_request":
@@ -100,6 +109,7 @@ namespace CS.Web.Controllers
                     break;
                 case "repository":
                     //RepositoryPayload
+                    var repositoryPayload = JsonConvert.DeserializeObject<RepositoryPayload>(requestBody);
                     //TO DO
                     break;
             }

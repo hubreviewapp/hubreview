@@ -1,12 +1,11 @@
-namespace CS.Core.Entities
+namespace CS.Core.Entities.Payloads
 {
-  public class PullRequestReviewPayload
+  public class CommitCommentPayload
   {
     public string? action { get; set; }
-    public ReviewCommentInfo? review { get; set; }
+    public CommentInfo? comment { get; set; }
     public InstallationInfo? installation { get; set; }
     public OrganizationInfo? organization { get; set; }
-    public PullRequestInfo? pull_request { get; set; }
     public RepositoryInfo? repository { get; set; }
     public SenderInfo? sender { get; set; }
   }
