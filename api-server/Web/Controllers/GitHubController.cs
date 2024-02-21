@@ -700,4 +700,56 @@ public class GitHubController : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpGet("getRepositoryContributors/{owner}/{repoName}")]
+    public async Task<ActionResult> getRepositoryContributors(string owner, string repoName)
+    {
+        var appClient = GetNewClient();
+        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent();
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        var result = new List<ContributorInfo>();
+
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        foreach (var installation in installations)
+        {
+            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            {
+                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
+                var installationClient = GetNewClient(response.Token);
+
+                try
+                {
+                    var contributors = await installationClient.Repository.GetAllContributors(owner, repoName);
+
+                    foreach (var contributor in contributors)
+                    {
+                        if (contributor.Login == userLogin)
+                            continue; // Skip the logged-in user
+                        
+                        result.Add(new ContributorInfo
+                        {
+                            Id = contributor.Id,
+                            Login = contributor.Login,
+                            AvatarUrl = contributor.AvatarUrl,
+                            Contributions = contributor.Contributions
+                        });
+                    }
+
+                    return Ok(result);
+                }
+                catch (NotFoundException)
+                {
+                    return NotFound($"Repository {repoName} not found under owner {owner}.");
+                }
+            }
+        }
+
+        return NotFound("There exists no user in session.");
+    }
+
 }
