@@ -58,6 +58,13 @@ public class GitHubController : ControllerBase
         return res;
     }
 
+    private string GenerateRandomColor()
+    {
+        var random = new Random();
+        var color = String.Format("#{0:X6}", random.Next(0x1000000)); // Generates a random color code in hexadecimal format
+        return color;
+    }
+
     [ActivatorUtilitiesConstructor]
     public GitHubController(IHttpContextAccessor httpContextAccessor, IEnvReader reader)
     {
@@ -331,7 +338,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addLabel")]
-    public async Task<ActionResult> addLabelToPR(string owner, string repoName, long prnumber, [FromBody] string[] labelNames)
+    public async Task<ActionResult> addLabelToPR(string owner, string repoName, long prnumber, [FromBody] List<string> labelNames)
     {
         var generator = _getGitHubJwtGenerator();
         var jwtToken = generator.CreateEncodedJwtToken();
@@ -365,6 +372,7 @@ public class GitHubController : ControllerBase
                         if (label == null)
                         {
                             // If the label does not exist, create it
+                            var randomColor = GenerateRandomColor();
                             label = await installationClient.Issue.Labels.Create(owner, repoName, new NewLabel(labelName, "ffffff"));
                         }
 
@@ -636,8 +644,8 @@ public class GitHubController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("pullrequest/{repoid}/{prnumber}/get_commits")]
-    public async Task<ActionResult> getCommits(long repoid, int prnumber) {
+    [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_commits")]
+    public async Task<ActionResult> getCommits(string owner, string repoName, int prnumber) {
         var appClient = GetNewClient();
         var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
@@ -656,7 +664,7 @@ public class GitHubController : ControllerBase
                 var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
                 var installationClient = GetNewClient(response.Token);
 
-                var commits = await installationClient.PullRequest.Commits(repoid, prnumber);
+                var commits = await installationClient.PullRequest.Commits(owner, repoName, prnumber);
                 foreach (var commit in commits)
                 {
                     if (!processedCommitIds.Contains(commit.NodeId)){
