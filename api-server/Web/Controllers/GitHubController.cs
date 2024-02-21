@@ -538,8 +538,8 @@ public class GitHubController : ControllerBase
         return Ok($"Comment deleted."); 
     } 
 
-    [HttpGet("pullrequest/{repoid}/{prnumber}/get_comments")]
-    public async Task<ActionResult> getCommentsOnPR(long repoid, int prnumber)
+    [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_comments")]
+    public async Task<ActionResult> getCommentsOnPR(string owner, string repoName, int prnumber)
     {
         var appClient = GetNewClient();
         var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
@@ -560,7 +560,7 @@ public class GitHubController : ControllerBase
                 var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
                 var installationClient = GetNewClient(response.Token);
 
-                var comments = await installationClient.Issue.Comment.GetAllForIssue(repoid, prnumber);
+                var comments = await installationClient.Issue.Comment.GetAllForIssue(owner, repoName, prnumber);
 
                 foreach (var comm in comments)
                 {
@@ -591,8 +591,8 @@ public class GitHubController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("pullrequest/{repoid}/{prnumber}/get_review_comments")]
-    public async Task<ActionResult> getRevCommentsOnPR(long repoid, int prnumber)
+    [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_review_comments")]
+    public async Task<ActionResult> getRevCommentsOnPR(string owner, string repoName, int prnumber)
     {
         var appClient = GetNewClient();
         var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
@@ -613,7 +613,7 @@ public class GitHubController : ControllerBase
                 var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
                 var installationClient = GetNewClient(response.Token);
 
-                var reviews = await installationClient.PullRequest.ReviewComment.GetAll(repoid, prnumber);
+                var reviews = await installationClient.PullRequest.ReviewComment.GetAll(owner, repoName, prnumber);
 
                 foreach (var rev in reviews)
                 {
