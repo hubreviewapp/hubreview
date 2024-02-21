@@ -331,7 +331,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addLabel")]
-    public async Task<ActionResult> addLabelToPR(string owner, string repoName, long prnumber, [FromBody] List<string> labelNames)
+    public async Task<ActionResult> addLabelToPR(string owner, string repoName, long prnumber, [FromBody] string[] labelNames)
     {
         var generator = _getGitHubJwtGenerator();
         var jwtToken = generator.CreateEncodedJwtToken();

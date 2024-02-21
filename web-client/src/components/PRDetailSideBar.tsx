@@ -17,6 +17,8 @@ import UserLogo4 from "../assets/icons/user4.png";
 import PriorityBadge, {PriorityBadgeLabel} from "./PriorityBadge";
 import LabelButton from "./LabelButton";
 import {IconCheck} from '@tabler/icons-react';
+import {useParams} from "react-router-dom";
+import axios from "axios";
 
 function barColor(capacity: number, waiting: number) {
   const workload = (waiting / capacity) * 100;
@@ -26,10 +28,17 @@ function barColor(capacity: number, waiting: number) {
 export interface PRDetailSideBarProps {
   addedReviewers: object[],
   assignees: string[],
-  labels: object[]
+  labels: object[],
 }
-
+const hubReviewLabels = [
+  { name: "Bug", color: "d73a4a", key: "bug" },
+  { name: "Enhancement", color: "a2eeef", key: "enhancement" },
+  { name: "Refactoring", color: "6f42c1", key: "refactoring" },
+  { name: "Question", color: "0075ca", key: "question" },
+  { name: "Suggestion", color: "28a745", key: "suggestion" },
+];
 function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
+  const {owner, repoName, prnumber} = useParams();
   const reviewers = [
     {
       id: 0,
@@ -43,18 +52,6 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
       capacity: 10,
       waiting: 6,
     },
-    {
-      id: 2,
-      username: "ece_kahraman",
-      capacity: 8,
-      waiting: 5,
-    },
-    {
-      id: 3,
-      username: "aysekelleci",
-      capacity: 10,
-      waiting: 3,
-    },
 
   ];
   const iconInfo = <IconInfoCircle style={{width: rem(18), height: rem(18)}}/>;
@@ -64,16 +61,33 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
   const [priority, setPriority] = useState<PriorityBadgeLabel>(null);
   const [query, setQuery] = useState('');
   const filtered = reviewers.filter((item) => item.username.toLowerCase().includes(query.toLowerCase()));
-
   const removeFromReviewerList = (id: number) => {
     setReviewerList(reviewerList.filter(itm => itm != id));
   }
+
+  const handleAddLabel = (labelName) => {
+
+    const stringToObject = hubReviewLabels.filter(l => labelName.includes(l.name));
+    const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addLabel`;
+      axios.create({
+        withCredentials: true,
+        baseURL: "http://localhost:5018/api/github"
+      }).post(apiUrl, labelName)
+        .then(function (response) {
+          console.log(response);
+          setLabelList(labelList.concat(stringToObject));
+
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
+    };
 
   useEffect(() => {
     if (labels.length != 0) {
       setLabelList(labels);
     }
-  }, [labels, labelList]);
+  }, [labels]);
 
   useEffect(() => {
     if (addedReviewers.length != 0) {
@@ -91,10 +105,10 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
                 Reviewers
               </Text>
               {
-                addedReviewers.length == 0 ?
+                addedReviewer.length == 0 ?
                   <Text c="dimmed">No reviewer added</Text>
                   :
-                addedReviewers.map(reviewer => (
+                addedReviewer.map(reviewer => (
                   <Group key={reviewer.id} mb="sm">
                     <Box>
                       <Avatar src={reviewer.avatarUrl} size="sm"/>
@@ -207,17 +221,15 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
           />
           <PriorityBadge label={priority} size="md"/>
         </Box>
-
         <Divider mt="md"/>
         <MultiSelect
           my="sm"
           label="Add Label"
           placeholder="Select Label"
-          data={["Bug Fix", "Enhancement", "Refactoring", "Question", "Suggestion"]}
+          data={hubReviewLabels.map(l => l.name)}
           clearable
-          //value={}
           hidePickedOptions
-          //onChange={}
+          onChange={(lbl) =>handleAddLabel(lbl)}
         />
         <Group mt="md">
           {labelList.length == 0 ? (
