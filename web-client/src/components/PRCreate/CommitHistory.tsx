@@ -2,6 +2,9 @@ import {Avatar, Box, Group, Paper, rem, Title, Text, Divider, Flex, UnstyledButt
 import {IconGitCommit} from "@tabler/icons-react";
 import UserLogo from "../../assets/icons/user5.png";
 import GitHubLogo from "../../assets/icons/github-mark-white.png";
+import {useEffect, useState} from "react";
+import axios from "axios";
+import {useParams} from "react-router-dom";
 
 const commitList = [
   {
@@ -29,12 +32,37 @@ const commitList = [
         author: 'Samuel Lee',
       }]
   }];
-//[HttpGet("pullrequest/{repoid}/{prnumber}/get_commits")]
+//[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_commits")]
 function CommitHistory() {
+  const {owner, repoName, prnumber} = useParams();
+  const [commits, setCommits] = useState([]);
+
+  const fetchCommitInfo = async () => {
+    try {
+      const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/get_commits`;
+      const res = await axios.create({
+        withCredentials: true,
+        baseURL: "http://localhost:5018/api/github/pullrequest"
+      }).get(apiUrl);
+
+      if (res) {
+        setCommits(res.data);
+      }
+    } catch (error) {
+      console.error("Error fetching PR info:", error);
+      setTimeout(fetchCommitInfo, 1000);
+    }
+  };
+
+  useEffect(() => {
+    fetchCommitInfo();
+  }, [fetchCommitInfo]);
+
+
 
   return (
     <Box mt="md">
-      {commitList.map(itm => (
+      {commits.map(itm => (
           <Box key={itm.date}>
             <Text color="#778DA9">
               <IconGitCommit color="#778DA9" style={{width: rem(18), height: rem(18)}}/>
@@ -42,12 +70,12 @@ function CommitHistory() {
             <Box p="sm">
             <Paper withBorder>
               {
-                itm.commits.map(commit =>(
-                  <Box key={commit.name} >
+                itm.commits?.map(commit =>(
+                  <Box key={commit.summary} >
                     <Flex m="xs" justify="space-between">
                       <Box>
                         <Title order={5} mb="xs">
-                          {commit.name}
+                          {commit.summary}
                         </Title>
                         <Group>
                           <Avatar src={UserLogo} size="sm"  />

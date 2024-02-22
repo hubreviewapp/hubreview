@@ -83,7 +83,6 @@ function NavBar() {
 
             <Button
               rightSection={iconLogout}
-              disabled={isActive == 0}
               component={Link}
               variant="transparent"
               to="/signIn"

@@ -9,6 +9,7 @@ export interface Label {
 }
 
 export interface PRInfo {
+  repoOwner: string;
   id: number;
   title: string | null;
   prNumber: number;

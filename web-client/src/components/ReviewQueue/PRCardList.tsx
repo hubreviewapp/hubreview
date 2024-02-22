@@ -1,7 +1,6 @@
 import {Paper, Group, Text} from "@mantine/core";
 import {PRInfo} from "../../models/PRInfo.tsx";
 import PRCard from "./PRCard";
-//import {ReviewQueuePullRequest} from "../../pages/ReviewQueuePage";
 
 export interface PRCardListProps {
   pr: PRInfo[];
@@ -21,8 +20,8 @@ function PRCardList({pr, name}: PRCardListProps) {
         )}
       </Group>
 
-      {pr.map((info) =>  (<PRCard key={info.id} data={info}/>) )}
-      
+      {pr.map((info) => (<PRCard key={info.id} data={info}/>))}
+
     </Paper>
 
   )
