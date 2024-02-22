@@ -1,12 +1,12 @@
 using System.Web;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
-using Octokit;
 using DotEnv.Core;
 using GitHubJwt;
-using CS.Core.Entities;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Octokit;
+using CS.Core.Entities;
 
 namespace CS.Web.Controllers;
 
@@ -287,10 +287,6 @@ public class GitHubController : ControllerBase
                         pullRequests.Add(repoPullsInfos);
                     }
 
-
-
-
-
                 }
             }
         }
@@ -530,8 +526,8 @@ public class GitHubController : ControllerBase
         return Ok($"Comment deleted."); 
     } 
 
-    [HttpGet("pullrequest/{repoid}/{prnumber}/get_comments")]
-    public async Task<ActionResult> getCommentsOnPR(long repoid, int prnumber)
+    [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_comments")]
+    public async Task<ActionResult> getCommentsOnPR(string owner, string repoName, int prnumber)
     {
         var appClient = GetNewClient();
         var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
@@ -552,7 +548,7 @@ public class GitHubController : ControllerBase
                 var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
                 var installationClient = GetNewClient(response.Token);
 
-                var comments = await installationClient.Issue.Comment.GetAllForIssue(repoid, prnumber);
+                var comments = await installationClient.Issue.Comment.GetAllForIssue(owner, repoName, prnumber);
 
                 foreach (var comm in comments)
                 {
@@ -583,8 +579,8 @@ public class GitHubController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("pullrequest/{repoid}/{prnumber}/get_review_comments")]
-    public async Task<ActionResult> getRevCommentsOnPR(long repoid, int prnumber)
+    [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_review_comments")]
+    public async Task<ActionResult> getRevCommentsOnPR( string owner, string repoName, int prnumber)
     {
         var appClient = GetNewClient();
         var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
@@ -605,7 +601,7 @@ public class GitHubController : ControllerBase
                 var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
                 var installationClient = GetNewClient(response.Token);
 
-                var reviews = await installationClient.PullRequest.ReviewComment.GetAll(repoid, prnumber);
+                var reviews = await installationClient.PullRequest.ReviewComment.GetAll(owner, repoName, prnumber);
 
                 foreach (var rev in reviews)
                 {
@@ -636,8 +632,8 @@ public class GitHubController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("pullrequest/{repoid}/{prnumber}/get_commits")]
-    public async Task<ActionResult> getCommits(long repoid, int prnumber) {
+    [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_commits")]
+    public async Task<ActionResult> getCommits(string owner, string repoName, int prnumber) {
         var appClient = GetNewClient();
         var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
@@ -656,7 +652,7 @@ public class GitHubController : ControllerBase
                 var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
                 var installationClient = GetNewClient(response.Token);
 
-                var commits = await installationClient.PullRequest.Commits(repoid, prnumber);
+                var commits = await installationClient.PullRequest.Commits(owner, repoName, prnumber);
                 foreach (var commit in commits)
                 {
                     if (!processedCommitIds.Contains(commit.NodeId)){
