@@ -58,6 +58,13 @@ public class GitHubController : ControllerBase
         return res;
     }
 
+    private string GenerateRandomColor()
+    {
+        var random = new Random();
+        var color = String.Format("#{0:X6}", random.Next(0x1000000)); // Generates a random color code in hexadecimal format
+        return color;
+    }
+
     [ActivatorUtilitiesConstructor]
     public GitHubController(IHttpContextAccessor httpContextAccessor, IEnvReader reader)
     {
@@ -361,6 +368,7 @@ public class GitHubController : ControllerBase
                         if (label == null)
                         {
                             // If the label does not exist, create it
+                            var randomColor = GenerateRandomColor();
                             label = await installationClient.Issue.Labels.Create(owner, repoName, new NewLabel(labelName, "ffffff"));
                         }
 
