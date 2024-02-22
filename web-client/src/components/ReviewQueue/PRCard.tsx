@@ -1,5 +1,4 @@
 import {Button, Avatar, Blockquote, Box, Card, Flex, Group, Text, Title, Collapse, rem} from "@mantine/core";
-//import {ReviewQueuePullRequest} from "../../pages/ReviewQueuePage";
 import {Link} from "react-router-dom";
 import UserLogo from "../../assets/icons/user.png";
 import LabelButton from "../LabelButton";
@@ -12,19 +11,19 @@ export interface PullRequestCardProps {
 }
 
 function PRCard({data: pr}: PullRequestCardProps) {
-  const [opened, { toggle }] = useDisclosure(false);
-  const iconDown = <IconCaretDown style={{ width: rem(22), height: rem(22) }} />;
-  const iconUp = <IconCaretUp style={{ width: rem(22), height: rem(22) }} />;
+  const [opened, {toggle}] = useDisclosure(false);
+  const iconDown = <IconCaretDown style={{width: rem(22), height: rem(22)}}/>;
+  const iconUp = <IconCaretUp style={{width: rem(22), height: rem(22)}}/>;
   return (
     <Card withBorder>
       <Link to={`pulls/pullrequest/${pr.repoOwner}/${pr.repoName}/${pr.prNumber}`} style={{textDecoration: "none"}}>
         <Group grow>
           <Box>
             <Text c="dimmed">{pr.repoName}</Text>
-              <Group>
-                <Title order={4}>{pr.title}</Title>
-                <Text c="dimmed">Last updated at {pr.updatedAt}</Text>
-              </Group>
+            <Group>
+              <Title order={4}>{pr.title}</Title>
+              <Text c="dimmed">Last updated at {pr.updatedAt}</Text>
+            </Group>
             <Text>
               #{pr.prNumber} opened by {" "}
               <Avatar src={pr.authorAvatarURL} size="xs" display="inline-block" mx={4}/>
@@ -32,15 +31,15 @@ function PRCard({data: pr}: PullRequestCardProps) {
               {pr.author}
             </Text>
           </Box>
-          {<Flex justify="end">
-          {pr.labels.length === 0 ? (
-            <></>
-          ) : (
-            pr.labels.map((label) => (
-              <LabelButton key={label.id} label={label.name} size="md" color={label.color}/>
-            ))
-          )}
-            </Flex>}
+          <Group justify="end">
+            {pr.labels.length === 0 ? (
+              <></>
+            ) : (
+              pr.labels.map((label) => (
+                <LabelButton key={label.id} label={label.name} size="md" color={label.color}/>
+              ))
+            )}
+          </Group>
         </Group>
       </Link>
       <Flex justify="space-between">
@@ -50,7 +49,7 @@ function PRCard({data: pr}: PullRequestCardProps) {
         {
           opened ?
             <Button leftSection={iconUp} variant="subtle" size="compact-sm" onClick={toggle}>Show Less</Button>
-              :
+            :
             <Button leftSection={iconDown} variant="subtle" size="compact-sm" onClick={toggle}>Show More</Button>
         }
       </Flex>

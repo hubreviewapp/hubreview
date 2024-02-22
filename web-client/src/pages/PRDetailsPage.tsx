@@ -19,14 +19,11 @@ function PRDetailsPage() {
   const [pullRequest, setPullRequest] = useState(null);
   const fetchPRInfo = async () => {
     try {
-      const res = await axios.create({
-        withCredentials: true,
-        baseURL: "http://localhost:5018/api/github/pullrequest"
-      }).get(`/${owner}/${repoName}/${prnumber}`);
-
+      const res = await axios.get( `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}`,
+        { withCredentials: true}
+    );
       if (res) {
         setPullRequest(res.data);
-        console.log(res.data);
       }
     } catch (error) {
       console.error("Error fetching PR info:", error);
@@ -66,11 +63,13 @@ function PRDetailsPage() {
         &ensp;&ensp;
         <Badge
           size="lg"
-          color="green"
+          color={pullRequest?.draft ? "#778DA9" : "green"}
           key={1}
           rightSection={<IconGitPullRequest style={{width: rem(18), height: rem(18)}}/>}
         >
-          Open
+          {
+            pullRequest?.draft ? "Draft" : "Open"
+          }
         </Badge>
       </Group>
       <Group mb="sm">

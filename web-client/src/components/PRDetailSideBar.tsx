@@ -8,15 +8,14 @@ import {
   UnstyledButton,
   Text,
   Tooltip,
-  Badge,
-  Avatar, ScrollArea, MultiSelect, TextInput, Divider, Select,
+  Badge, Flex,
+  Avatar, ScrollArea, MultiSelect, TextInput, Divider, Select, CloseButton
 } from "@mantine/core";
-import {IconInfoCircle} from "@tabler/icons-react";
+import {IconInfoCircle, IconCirclePlus, IconCheck, IconXboxX} from "@tabler/icons-react";
 import {useEffect, useState} from "react";
 import UserLogo4 from "../assets/icons/user4.png";
 import PriorityBadge, {PriorityBadgeLabel} from "./PriorityBadge";
 import LabelButton from "./LabelButton";
-import {IconCheck} from '@tabler/icons-react';
 import {useParams} from "react-router-dom";
 import axios from "axios";
 
@@ -30,58 +29,63 @@ export interface PRDetailSideBarProps {
   assignees: string[],
   labels: object[],
 }
-const hubReviewLabels = [
-  { name: "Bug", color: "d73a4a", key: "bug" },
-  { name: "Enhancement", color: "a2eeef", key: "enhancement" },
-  { name: "Refactoring", color: "6f42c1", key: "refactoring" },
-  { name: "Question", color: "0075ca", key: "question" },
-  { name: "Suggestion", color: "28a745", key: "suggestion" },
-];
-function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
-  const {owner, repoName, prnumber} = useParams();
-  const reviewers = [
-    {
-      id: 0,
-      username: "cgtysafak",
-      capacity: 10,
-      waiting: 9,
-    },
-    {
-      id: 1,
-      username: "vedat-arican",
-      capacity: 10,
-      waiting: 6,
-    },
 
-  ];
+const hubReviewLabels = [
+  {name: "bug", color: "d73a4a", key: "bug"},
+  {name: "enhancement", color: "a2eeef", key: "enhancement"},
+  {name: "refactoring", color: "6f42c1", key: "refactoring"},
+  {name: "question", color: "0075ca", key: "question"},
+  {name: "suggestion", color: "28a745", key: "suggestion"},
+];
+
+function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
+  console.log("added list", addedReviewers);
+  const {owner, repoName, prnumber} = useParams();
   const iconInfo = <IconInfoCircle style={{width: rem(18), height: rem(18)}}/>;
-  const [reviewerList, setReviewerList] = useState<number[]>([]);
+  const [contributors, setContributors] = useState([]);
   const [labelList, setLabelList] = useState<object[]>([]);
-  const [addedReviewer, setAddedReviewers] = useState<object[]>([]);
+  const [addedReviewer, setAddedReviewer] = useState<object[]>([]);
   const [priority, setPriority] = useState<PriorityBadgeLabel>(null);
   const [query, setQuery] = useState('');
-  const filtered = reviewers.filter((item) => item.username.toLowerCase().includes(query.toLowerCase()));
-  const removeFromReviewerList = (id: number) => {
-    setReviewerList(reviewerList.filter(itm => itm != id));
-  }
+  const filtered = contributors.filter((item) => item.login.toLowerCase().includes(query.toLowerCase()));
+
+  const fetchContributors = async () => {
+    try {
+      const res = await axios.get(`http://localhost:5018/api/github/getRepositoryContributors/${owner}/${repoName}`, {
+        withCredentials: true
+      });
+
+      if (res.data) {
+        setContributors(res.data);
+        console.log(res.data);
+      }
+    } catch (error) {
+      console.error("Error fetching contributors:", error);
+    }
+  };
+  useEffect(() => {
+    fetchContributors();
+  }, []);
 
   const handleAddLabel = (labelName) => {
+    if (labelName.length < labelList.length) {
+      console.log("delete label");
+      return;
+    }
 
     const stringToObject = hubReviewLabels.filter(l => labelName.includes(l.name));
     const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addLabel`;
-      axios.create({
-        withCredentials: true,
-        baseURL: "http://localhost:5018/api/github"
-      }).post(apiUrl, labelName)
-        .then(function (response) {
-          console.log(response);
-          setLabelList(labelList.concat(stringToObject));
-
-        })
-        .catch(function (error) {
-          console.log(error);
-        });
-    };
+    axios.post(apiUrl, labelName, {
+      withCredentials: true,
+      baseURL: "http://localhost:5018/api/github"
+    })
+      .then(function () {
+        setLabelList(labelList.concat(stringToObject.filter((elem2) => !labelList.some((elem1) => elem1.name === elem2.name))));
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  };
 
   useEffect(() => {
     if (labels.length != 0) {
@@ -91,9 +95,39 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
 
   useEffect(() => {
     if (addedReviewers.length != 0) {
-      setAddedReviewers(addedReviewers);
+      setAddedReviewer(addedReviewers);
     }
   }, [addedReviewers]);
+
+  //HttpDelete("pullrequest/{owner}/{repoName}/{prnumber}/remove_reviewer/{reviewer}")]
+  const deleteReviewer = (reviewer) => {
+    const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/remove_reviewer/${reviewer}`;
+    setAddedReviewer(addedReviewer.filter(item => item.login.toString() != reviewer));
+    axios.delete(apiUrl, {
+      withCredentials: true,
+      baseURL: "http://localhost:5018/api/github"
+    })
+      .then(function () {
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  }
+
+  // [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/request_review")]
+  function handleAddReviewer(reviewer) {
+    setAddedReviewer([reviewer, ...addedReviewer]);
+    const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/request_review`;
+    axios.post(apiUrl, [reviewer.login], {
+      withCredentials: true,
+      baseURL: "http://localhost:5018/api/github"
+    })
+      .then(function () {
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  }
 
   return (
     <Box w="300px">
@@ -108,16 +142,16 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
                 addedReviewer.length == 0 ?
                   <Text c="dimmed">No reviewer added</Text>
                   :
-                addedReviewer.map(reviewer => (
-                  <Group key={reviewer.id} mb="sm">
-                    <Box>
-                      <Avatar src={reviewer.avatarUrl} size="sm"/>
-                    </Box>
-                    <Text size="sm"> {reviewer.login} </Text>
-                    <IconCheck
-                      color="green" style={{width: rem(20), height: rem(20), marginLeft: 25}}/>
-                  </Group>
-                ))
+                  addedReviewer.map(reviewer => (
+                    <Flex justify="space-between" key={reviewer.id} mb="sm">
+                      <Group>
+                        <Avatar src={reviewer.avatarUrl} size="sm"/>
+                        <Text size="sm"> {reviewer.login} </Text>
+                      </Group>
+                      <CloseButton onClick={() => deleteReviewer(reviewer.login)}
+                                   icon={<IconXboxX color="red" size={18} stroke={1.5}/>}/>
+                    </Flex>
+                  ))
               }
             </Grid.Col>
             <Grid.Col span={6}>
@@ -157,9 +191,10 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
           <ScrollArea h={100} mt="5px" scrollbars="y">
             {filtered.map((itm) => (
               <Grid key={itm.id}>
-                <Grid.Col span={5}>
+                <Grid.Col span={6}>
                   <Group>
-                    <Text size="xs">{itm.username}</Text>
+                    <Avatar src={itm.avatarUrl} size="xs"/>
+                    <Text size="xs">{itm.login}</Text>
                   </Group>
                 </Grid.Col>
                 <Grid.Col span={4}>
@@ -171,14 +206,17 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
                   </Progress.Root>
                 </Grid.Col>
                 <Grid.Col span={1}>
+
                   {
-                    reviewerList.find(id => id == itm.id) == undefined ?
-                      <UnstyledButton style={{fontSize: "12px"}}
-                                      onClick={() => setReviewerList([...reviewerList, itm.id])}>Request</UnstyledButton>
-                      :
-                      <UnstyledButton style={{color: "darkcyan", fontSize: "12px", alignContent: "end"}}
-                                      onClick={() => removeFromReviewerList(itm.id)}>Requested</UnstyledButton>
+                    addedReviewer.find(itm2 => itm.id == itm2.id) == undefined ?
+                      <UnstyledButton onClick={() => handleAddReviewer(itm)} style={{fontSize: "12px"}}>
+                        <IconCirclePlus size={18} stroke={1.5}/>
+                      </UnstyledButton> :
+                      <IconCheck color="green" size={18} stroke={1.5}/>
+
+
                   }
+
                 </Grid.Col>
               </Grid>
             ))}
@@ -226,10 +264,11 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
           my="sm"
           label="Add Label"
           placeholder="Select Label"
+          value={labelList.map(l => l.name)}
           data={hubReviewLabels.map(l => l.name)}
           clearable
           hidePickedOptions
-          onChange={(lbl) =>handleAddLabel(lbl)}
+          onChange={(lbl) => handleAddLabel(lbl)}
         />
         <Group mt="md">
           {labelList.length == 0 ? (
