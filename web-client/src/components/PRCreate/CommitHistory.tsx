@@ -64,12 +64,20 @@ function CommitHistory() {
                             <Text mt="sm" c="dimmed">Description: {commit.description}</Text>
                         }
                       </Box>
-                      <UnstyledButton>
-                        <Group>
-                          check on GitHub
-                          <Avatar src={GitHubLogo} size="sm"/>
-                        </Group>
-                      </UnstyledButton>
+                      <div style={{  display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        }}>
+
+                        <UnstyledButton component="a" href={commit.githubLink} target="_blank">
+                          <Group>
+                            check on GitHub
+                            <Avatar src={GitHubLogo} size="sm"/>
+                          </Group>
+                        </UnstyledButton>
+
+                      </div>
+
                     </Flex>
                     <Divider/>
                   </Box>
