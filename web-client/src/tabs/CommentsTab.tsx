@@ -1,9 +1,21 @@
 import Comment from "../components/Comment.tsx";
 import TextEditor from "../components/TextEditor.tsx";
 import SplitButton from "../components/SplitButton.tsx";
-import {Box, Text, Accordion, Flex} from "@mantine/core";
-import CommentList from "../components/DiffComment/CommentList";
+import { Box, Text, Accordion, Grid, Select } from "@mantine/core";
+//import CommentList from "../components/DiffComment/CommentList";
 import PRDetailSideBar from "../components/PRDetailSideBar";
+import axios from "axios";
+import { useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+
+interface CommentProps  {
+    id: number;
+    author: string;
+    body: string;
+    created_at: string;
+    updated_at: string;
+    association: string;
+}
 
 const comments = [
   {
@@ -49,6 +61,7 @@ const comments = [
 ];
 
 function CommentsTab({pullRequest}) {
+  const {owner, repoName, prnumber} = useParams();
   const resolvedComments = comments.filter(comment => comment.isResolved);
   const unresolvedComments = comments.filter(comment => !comment.isResolved);
 
@@ -70,9 +83,61 @@ function CommentsTab({pullRequest}) {
     </Accordion.Item>
   ));
 
+  const [apiComments, setApiComments] =  useState<CommentProps[]| []>([]);
+
+  //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_comments")]
+  const fetchPRInfo = async () => {
+    try {
+      const res = await axios.get( `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/get_comments`,
+        { withCredentials: true}
+      );
+      if (res) {
+        setApiComments(res.data);
+      }
+    } catch (error) {
+      console.error("Error fetching PR comments:", error);
+      setTimeout(fetchPRInfo, 1000); // Retry after 3 seconds
+    }
+  };
+
+  useEffect(() => {
+
+    fetchPRInfo();
+  }, []);
+
   return (
-    <Flex mx="lg">
-      <Box>
+    <Grid>
+      <Grid.Col span={8}>
+        <Box style={{display:"flex", justifyContent: "flex-end", marginTop: -40, padding:10, marginRight:10 }}>
+          <Select style={{flex: 0.2}}
+                  placeholder="Filter comments"
+                  data={['Show Everything (' + apiComments.length + ')',
+                    'All Comments (' + apiComments.length + ')',
+                    'My comments (2)',
+                    'Active (3)',
+                    'Resolved (2)'
+                  ]}
+                  checkIconPosition="left"
+                  allowDeselect={false}
+          />
+        </Box>
+
+        {apiComments.map((comment, index) => (
+          <Box>
+            <Comment
+              key={index}
+              id={index}
+              author={comment.author}
+              text={comment.body}
+              date={new Date(comment.updated_at)}
+              isResolved={false}
+              isAIGenerated={false}
+            />
+            <br/>
+          </Box>
+        ))}
+        <br></br>
+
         {unresolvedComments.map((comment, index) => (
           <Box key={index}>
             <Comment
@@ -87,6 +152,7 @@ function CommentsTab({pullRequest}) {
             <br/>
           </Box>
         ))}
+
         <Accordion chevronPosition="right" variant="separated">
           {comments2}
         </Accordion>
@@ -96,12 +162,14 @@ function CommentsTab({pullRequest}) {
         <Box style={{border: "2px groove gray", borderRadius: 10, padding: "10px"}}>
           <TextEditor content=""/>
         </Box>
-        <Box/>
-      </Box>
-      <Box m="md">
-        <PRDetailSideBar assignees={[]} labels={pullRequest?.labels ??[]} addedReviewers={pullRequest?.requestedReviewers ??[]}/>
-      </Box>
-    </Flex>
+
+      </Grid.Col>
+      <Grid.Col span={3}>
+          <Box m="md">
+            <PRDetailSideBar assignees={[]} labels={pullRequest?.labels ??[]} addedReviewers={pullRequest?.requestedReviewers ??[]}/>
+          </Box>
+      </Grid.Col>
+    </Grid>
 
   );
 }

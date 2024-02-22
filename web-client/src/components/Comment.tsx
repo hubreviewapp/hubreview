@@ -55,10 +55,11 @@ export function Comment({ author, text, date, isResolved, isAIGenerated }: Comme
               <Text fz="md"> {author}</Text>
               <Text fz="xs" c="dimmed">
                 {date.toLocaleString('en-US', {
-                  day: 'numeric',
-                  month: 'long',
+                  day: '2-digit',
+                  month: 'short',
                   year: 'numeric',
-                  hour: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
                 })}
               </Text>
             </Box>
@@ -100,7 +101,7 @@ export function Comment({ author, text, date, isResolved, isAIGenerated }: Comme
 
         {!isResolved && (
           <>
-            <Text>  {text} </Text>
+            <Text style={{ maxWidth: "100%", wordWrap: "break-word" }}>  {text} </Text>
             <Box style={{display:"flex"}}>
             <Input radius="xl"
                    style={{marginTop:'5px', marginBottom: '5px', marginRight: '5px', flex: 0.9 }}
