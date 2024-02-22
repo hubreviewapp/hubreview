@@ -638,7 +638,7 @@ public class GitHubController : ControllerBase
         var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
         var processedCommitIds = new HashSet<string>();
-        var result = new List<object>([]);
+        var result = new List<CommitsList>([]);
 
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent();
@@ -653,35 +653,52 @@ public class GitHubController : ControllerBase
                 var installationClient = GetNewClient(response.Token);
 
                 var commits = await installationClient.PullRequest.Commits(owner, repoName, prnumber);
+                CommitInfo obj;
+
                 foreach (var commit in commits)
                 {
-                    if (!processedCommitIds.Contains(commit.NodeId)){
-
-                        if ( commit.Commit.Message.Contains('\n') ){
-                            string aa = "\n\n";
-                            string[] message = commit.Commit.Message.Split(aa);
-                            result.Add(new {
-                                summary = message[0],
-                                description =  message[1],
-                                author = commit.Author.Login,
-                                date = commit.Commit.Author.Date.Date.ToString("dd/MM/yyyy")
-                            });
-
-                        } else {
-                            result.Add(new {
-                                summary = commit.Commit.Message,
-                                description = "",
-                                author = commit.Author.Login,
-                                date = commit.Commit.Author.Date.Date.ToString("dd/MM/yyyy")
-                            });
-                        }
-                       
-
-                        processedCommitIds.Add(commit.NodeId);
+                    if (processedCommitIds.Contains(commit.NodeId))
+                    {
+                        continue;
                     }
+
+                    bool dateExists = result.Any(temp => temp.date == commit.Commit.Author.Date.ToString("yyyy/MM/dd") );
+
+                    if( !dateExists )
+                    {
+                        result.Add(new CommitsList
+                        {
+                            date = commit.Commit.Author.Date.ToString("yyyy/MM/dd"),
+                            commits = []
+                        });
+                    }
+
+                    int indexOfDate = result.FindIndex(temp => temp.date == commit.Commit.Author.Date.ToString("yyyy/MM/dd") );
+
+                    if ( commit.Commit.Message.Contains('\n') ){
+                        string split_here = "\n\n";
+                        string[] message = commit.Commit.Message.Split(split_here);
+                        obj = new CommitInfo
+                        {
+                            title = message[0],
+                            description =  message[1],
+                            author = commit.Author.Login,
+                        };
+
+                    } else {
+                        obj = new CommitInfo
+                        {
+                            title = commit.Commit.Message,
+                            description = null,
+                            author = commit.Author.Login,
+                        };
+                    }
+
+                    result[indexOfDate].commits?.Add(obj);
+
+                    processedCommitIds.Add(commit.NodeId);                    
                     
-                }
-                
+                }                
 
             }
         }
