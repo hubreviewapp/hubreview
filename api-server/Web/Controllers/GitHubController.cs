@@ -753,7 +753,7 @@ public class GitHubController : ControllerBase
                     foreach (var collaborator in collaborators)
                     {
                         if (collaborator.Login == prOwner)
-                            continue; // Skip the logged-in user
+                            continue; // Skip the pr owner
                         
                         result.Add(new CollaboratorInfo
                         {
