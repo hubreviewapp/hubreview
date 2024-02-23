@@ -640,6 +640,15 @@ public class GitHubController : ControllerBase
         return Ok(result);
     }
 
+    /*[HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addRevComment")]
+    public async Task<ActionResult> AddRevCommentToPR(string owner, string repoName, int prnumber, [FromBody] string commentBody)
+    {
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        PullRequestRe
+        await client.PullRequest.ReviewComment.Create()  Issue.Comment.Create(owner, repoName, prnumber, commentBody);
+        return Ok($"Comment added to pull request #{prnumber} in repository {repoName}.");   
+    }*/
+
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_commits")]
     public async Task<ActionResult> getCommits(string owner, string repoName, int prnumber) {
         var appClient = GetNewClient();
@@ -661,7 +670,7 @@ public class GitHubController : ControllerBase
                 var installationClient = GetNewClient(response.Token);
 
                 var commits = await installationClient.PullRequest.Commits(owner, repoName, prnumber);
-
+                /*
                 CommitInfo obj;
 
                 foreach (var commit in commits)
@@ -698,7 +707,7 @@ public class GitHubController : ControllerBase
                         obj = new CommitInfo
                         {
                             title = commit.Commit.Message,
-                            description = null,
+                            description = commit.Commit.Parents[0].Url,
                             author = commit.Author.Login,
                         };
                     }
@@ -707,8 +716,9 @@ public class GitHubController : ControllerBase
 
                     processedCommitIds.Add(commit.NodeId);                    
                     
-                }                
+                }*/                
 
+                return Ok(commits);
             }
         }
 
