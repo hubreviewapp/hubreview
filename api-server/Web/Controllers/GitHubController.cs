@@ -821,6 +821,54 @@ public class GitHubController : ControllerBase
         return NotFound("There exists no user in session.");
     }
 
+    [HttpGet("getRepoAssignees/{owner}/{repoName}")]
+    public async Task<ActionResult> GetRepoAssignees(string owner, string repoName)
+    {
+        var appClient = GetNewClient();
+        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent();
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        var result = new List<AssigneeInfo>();
+
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        foreach (var installation in installations)
+        {
+            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            {
+                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
+                var installationClient = GetNewClient(response.Token);
+
+                try
+                {
+                    var assignees = await installationClient.Issue.Assignee.GetAllForRepository(owner, repoName);
+
+                    foreach (var assignee in assignees)
+                    {
+                        result.Add(new AssigneeInfo
+                        {
+                            id = assignee.Id,
+                            login = assignee.Login,
+                            avatar_url = assignee.AvatarUrl,
+                            url = assignee.Url
+                        });
+                    }
+
+                    return Ok(result);
+                }
+                catch (NotFoundException)
+                {
+                    return NotFound($"Repository {repoName} not found under owner {owner}.");
+                }
+            }
+        }
+        return NotFound("There exists no user in session.");
+    }
+
+
 
 }
 
