@@ -715,8 +715,8 @@ public class GitHubController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("getRepositoryContributors/{owner}/{repoName}")]
-    public async Task<ActionResult> getRepositoryContributors(string owner, string repoName)
+    [HttpGet("getPRReviewerSuggestion/{owner}/{repoName}/{prOwner}")]
+    public async Task<ActionResult> getPRReviewerSuggestion(string owner, string repoName, string prOwner)
     {
         var appClient = GetNewClient();
         var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
@@ -742,7 +742,7 @@ public class GitHubController : ControllerBase
 
                     foreach (var contributor in contributors)
                     {
-                        if (contributor.Login == userLogin)
+                        if (contributor.Login == prOwner)
                             continue; // Skip the logged-in user
                         
                         result.Add(new ContributorInfo
