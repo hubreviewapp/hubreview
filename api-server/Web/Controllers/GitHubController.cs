@@ -726,7 +726,7 @@ public class GitHubController : ControllerBase
         var organizations = await userClient.Organization.GetAllForCurrent();
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
-        var result = new List<ContributorInfo>();
+        var result = new List<CollaboratorInfo>();
 
         var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
         foreach (var installation in installations)
@@ -738,19 +738,18 @@ public class GitHubController : ControllerBase
 
                 try
                 {
-                    var contributors = await installationClient.Repository.GetAllContributors(owner, repoName);
+                    var collaborators = await installationClient.Repository.Collaborator.GetAll(owner, repoName);
 
-                    foreach (var contributor in contributors)
+                    foreach (var collaborator in collaborators)
                     {
-                        if (contributor.Login == prOwner)
+                        if (collaborator.Login == prOwner)
                             continue; // Skip the logged-in user
                         
-                        result.Add(new ContributorInfo
+                        result.Add(new CollaboratorInfo
                         {
-                            Id = contributor.Id,
-                            Login = contributor.Login,
-                            AvatarUrl = contributor.AvatarUrl,
-                            Contributions = contributor.Contributions
+                            Id = collaborator.Id,
+                            Login = collaborator.Login,
+                            AvatarUrl = collaborator.AvatarUrl
                         });
                     }
 
