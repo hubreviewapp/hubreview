@@ -7,6 +7,10 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Octokit;
 using CS.Core.Entities;
+using Octokit.GraphQL;
+using static Octokit.GraphQL.Variable;
+
+
 
 namespace CS.Web.Controllers;
 
@@ -22,7 +26,7 @@ public class GitHubController : ControllerBase
 
     private static GitHubClient _getGitHubClient(string token)
     {
-        return new GitHubClient(new ProductHeaderValue("HubReviewApp"))
+        return new GitHubClient(new Octokit.ProductHeaderValue("HubReviewApp"))
         {
             Credentials = new Credentials(token, AuthenticationType.Bearer)
         };
@@ -867,6 +871,106 @@ public class GitHubController : ControllerBase
         }
         return NotFound("There exists no user in session.");
     }
+
+
+    [HttpGet("GetReviewerSuggestions/{owner}/{repoName}/{prNumber}")]
+    public async Task<ActionResult> GetReviewerSuggestions(string owner, string repoName, int prNumber)
+    {
+        var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
+        var connection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString() );
+
+        var appClient = GetNewClient();
+        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent();
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        foreach (var installation in installations)
+        {
+            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            {
+                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
+                var installationClient = GetNewClient(response.Token);
+                /*
+                var query = new GraphQLRequest
+                {
+                    Query = @"
+                    query ($owner: String!, $repoName: String!, $prNumber: Int!) {
+                        repository(owner: $owner, name: $repoName) {
+                            pullRequest(number: $prNumber) {
+                                title
+                                author {
+                                    login
+                                }
+                            }
+                        }
+                    }",
+                    Variables = new
+                    {
+                        owner,
+                        repoName,
+                        prNumber
+                    }
+                };
+                var query = new Query()
+                    .RepositoryOwner(Var("owner"))
+                    .Repository(Var("name"))
+                    .PullRequest(Var("prnumber"))
+                    .Select(pr => new
+                    {
+                        pr.Id,
+                        pr.Title,
+                        pr.Author,
+                    }).Compile();
+                */
+                var query = new Query()
+                                    .RepositoryOwner(Var("owner"))
+                                    .Repository(Var("name"))
+                                    .PullRequest(Var("prnumber"))
+                                    .Select(pr => new
+                                    {
+                                        pr.Number,
+                                        pr.Title,
+                                        //Author = new ActorModel
+                                        //    {
+                                        //        Login = pr.Author.Login,
+                                        //        AvatarUrl = pr.Author.AvatarUrl(null),
+                                        //    },
+                                        SuggestedReviewers = pr.SuggestedReviewers.Select( reviewer => new {
+                                            Login = reviewer.Reviewer.Login,
+                                            avatarUrl = reviewer.Reviewer.Url + ".png",
+                                        }).ToList(),
+                                    }).Compile();
+
+                var vars = new Dictionary<string, object>
+                {
+                    { "owner", owner },
+                    { "name", repoName },
+                    { "prnumber", prNumber },
+                };
+
+                var result =  await connection.Run(query, vars);
+
+
+                List<string> suggestedReviewersList = new List<string>();
+                foreach (var suggestedReviewer in result.SuggestedReviewers)
+                {
+                    Console.WriteLine(suggestedReviewer.Login + " " + suggestedReviewer.avatarUrl);
+                    suggestedReviewersList.Add(suggestedReviewer.Login);
+                }
+
+                Console.WriteLine(result.Number + " & " + result.Title + " & " + string.Join(",", suggestedReviewersList) + " Rocks!");
+
+            }
+        }
+
+        return NotFound("There exists no user in session.");
+    }
+
+
 
 
 
