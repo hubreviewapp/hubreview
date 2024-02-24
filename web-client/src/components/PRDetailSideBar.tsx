@@ -9,15 +9,15 @@ import {
   Text,
   Tooltip,
   Badge, Flex,
-  Avatar, ScrollArea, MultiSelect, TextInput, Divider, Select, CloseButton
+  Avatar, ScrollArea, TextInput, Divider, Select, CloseButton
 } from "@mantine/core";
 import {IconInfoCircle, IconCirclePlus, IconCheck, IconXboxX} from "@tabler/icons-react";
 import {useEffect, useState} from "react";
 import UserLogo4 from "../assets/icons/user4.png";
 import PriorityBadge, {PriorityBadgeLabel} from "./PriorityBadge";
-import LabelButton from "./LabelButton";
 import {useParams} from "react-router-dom";
 import axios from "axios";
+import SelectLabel from "./SelectLabel";
 
 function barColor(capacity: number, waiting: number) {
   const workload = (waiting / capacity) * 100;
@@ -30,20 +30,11 @@ export interface PRDetailSideBarProps {
   labels: object[],
 }
 
-const hubReviewLabels = [
-  {name: "bug", color: "d73a4a", key: "bug"},
-  {name: "enhancement", color: "a2eeef", key: "enhancement"},
-  {name: "refactoring", color: "6f42c1", key: "refactoring"},
-  {name: "question", color: "0075ca", key: "question"},
-  {name: "suggestion", color: "28a745", key: "suggestion"},
-];
-
 function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
   console.log("added list", addedReviewers);
   const {owner, repoName, prnumber} = useParams();
   const iconInfo = <IconInfoCircle style={{width: rem(18), height: rem(18)}}/>;
   const [contributors, setContributors] = useState([]);
-  const [labelList, setLabelList] = useState<object[]>([]);
   const [addedReviewer, setAddedReviewer] = useState<object[]>([]);
   const [priority, setPriority] = useState<PriorityBadgeLabel>(null);
   const [query, setQuery] = useState('');
@@ -67,31 +58,6 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
     fetchContributors();
   }, []);
 
-  const handleAddLabel = (labelName) => {
-    if (labelName.length < labelList.length) {
-      console.log("delete label");
-      return;
-    }
-
-    const stringToObject = hubReviewLabels.filter(l => labelName.includes(l.name));
-    const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addLabel`;
-    axios.post(apiUrl, labelName, {
-      withCredentials: true,
-      baseURL: "http://localhost:5018/api/github"
-    })
-      .then(function () {
-        setLabelList(labelList.concat(stringToObject.filter((elem2) => !labelList.some((elem1) => elem1.name === elem2.name))));
-      })
-      .catch(function (error) {
-        console.log(error);
-      });
-  };
-
-  useEffect(() => {
-    if (labels.length != 0) {
-      setLabelList(labels);
-    }
-  }, [labels]);
 
   useEffect(() => {
     if (addedReviewers.length != 0) {
@@ -260,24 +226,7 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
           <PriorityBadge label={priority} size="md"/>
         </Box>
         <Divider mt="md"/>
-        <MultiSelect
-          my="sm"
-          label="Add Label"
-          placeholder="Select Label"
-          value={labelList.map(l => l.name)}
-          data={hubReviewLabels.map(l => l.name)}
-          clearable
-          hidePickedOptions
-          onChange={(lbl) => handleAddLabel(lbl)}
-        />
-        <Group mt="md">
-          {labelList.length == 0 ? (
-            <Badge variant="light">No Label Added</Badge>
-          ) : (
-            labelList.map((itm) => <LabelButton key={itm.name} label={itm.name} color={itm.color} size="md"/>)
-          )}
-        </Group>
-
+        <SelectLabel githubAddedLabels={labels}/>
       </Paper>
     </Box>
   );
