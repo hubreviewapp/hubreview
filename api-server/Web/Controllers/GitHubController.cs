@@ -888,44 +888,14 @@ public class GitHubController : ControllerBase
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
         var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        List<string> suggestedReviewersList = new List<string>();
         foreach (var installation in installations)
         {
-            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            if (installation.Account.Login == userLogin)
             {
                 var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
                 var installationClient = GetNewClient(response.Token);
-                /*
-                var query = new GraphQLRequest
-                {
-                    Query = @"
-                    query ($owner: String!, $repoName: String!, $prNumber: Int!) {
-                        repository(owner: $owner, name: $repoName) {
-                            pullRequest(number: $prNumber) {
-                                title
-                                author {
-                                    login
-                                }
-                            }
-                        }
-                    }",
-                    Variables = new
-                    {
-                        owner,
-                        repoName,
-                        prNumber
-                    }
-                };
-                var query = new Query()
-                    .RepositoryOwner(Var("owner"))
-                    .Repository(Var("name"))
-                    .PullRequest(Var("prnumber"))
-                    .Select(pr => new
-                    {
-                        pr.Id,
-                        pr.Title,
-                        pr.Author,
-                    }).Compile();
-                */
+
                 var query = new Query()
                                     .RepositoryOwner(Var("owner"))
                                     .Repository(Var("name"))
@@ -934,11 +904,6 @@ public class GitHubController : ControllerBase
                                     {
                                         pr.Number,
                                         pr.Title,
-                                        //Author = new ActorModel
-                                        //    {
-                                        //        Login = pr.Author.Login,
-                                        //        AvatarUrl = pr.Author.AvatarUrl(null),
-                                        //    },
                                         SuggestedReviewers = pr.SuggestedReviewers.Select( reviewer => new {
                                             Login = reviewer.Reviewer.Login,
                                             avatarUrl = reviewer.Reviewer.Url + ".png",
@@ -955,25 +920,16 @@ public class GitHubController : ControllerBase
                 var result =  await connection.Run(query, vars);
 
 
-                List<string> suggestedReviewersList = new List<string>();
+                
                 foreach (var suggestedReviewer in result.SuggestedReviewers)
                 {
-                    Console.WriteLine(suggestedReviewer.Login + " " + suggestedReviewer.avatarUrl);
                     suggestedReviewersList.Add(suggestedReviewer.Login);
                 }
-
-                Console.WriteLine(result.Number + " & " + result.Title + " & " + string.Join(",", suggestedReviewersList) + " Rocks!");
-
             }
         }
 
-        return NotFound("There exists no user in session.");
+        return Ok(suggestedReviewersList);
     }
-
-
-
-
-
 }
 
 
