@@ -40,7 +40,6 @@ export function Comment({ id, author, text, date, isResolved, isAIGenerated, del
     </Combobox.Option>
   ));
 
-
   return (
     <>
       {isAIGenerated && (

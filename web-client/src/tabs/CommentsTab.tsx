@@ -64,7 +64,7 @@ export interface CommentsTabProps {
 }
 //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_comments")]
 function CommentsTab({ pullRequest }: CommentsTabProps) {
-  const {owner, repoName, prnumber} = useParams();
+  const { owner, repoName, prnumber } = useParams();
   const resolvedComments = comments.filter((comment) => comment.isResolved);
   const unresolvedComments = comments.filter((comment) => !comment.isResolved);
 
@@ -78,7 +78,9 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
           text={comment.text}
           date={comment.date}
           isResolved={comment.isResolved}
-          deletePRComment={() => {return }}
+          deletePRComment={() => {
+            return;
+          }}
         />
       </Accordion.Control>
       <Accordion.Panel>
@@ -189,7 +191,9 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
               date={comment.date}
               isResolved={false}
               isAIGenerated={false}
-              deletePRComment={() => {return }}
+              deletePRComment={() => {
+                return;
+              }}
             />
             <br />
           </Box>
