@@ -96,18 +96,18 @@ namespace CS.Web.Controllers
                             string[] parts = full_name.Split('/');
                             string owner = parts[0];
                             string repoName = parts[1];
-                            string updated_at = repository.updated_at;
-                            string created_at = repository.created_at; 
+                            //string updated_at = repository.updated_at;
+                            //string created_at = repository.created_at; 
 
                             Console.WriteLine( repository.node_id );
-                            Console.WriteLine( repository.updated_at );
+                            //Console.WriteLine( repository.updated_at );
 
-                            Console.WriteLine( repository.created_at );
+                            //Console.WriteLine( repository.created_at );
 
                             connection.Open();
 
-                            string query = "INSERT INTO repositories (id, node_id, name, ownerLogin, created_at, updated_at) VALUES (@id, @node_id, @repoName, @owner, @created_at, @updated_at)";
-                            
+                            string query = "INSERT INTO repositoryinfo (id, node_id, name, ownerLogin, created_at, updated_at) VALUES (@id, @node_id, @repoName, @owner, @created_at, @updated_at)";
+
                             // GetRepository by id lazım...
                             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
                             {
@@ -115,11 +115,13 @@ namespace CS.Web.Controllers
                                 command.Parameters.AddWithValue("@node_id", repository.node_id);
                                 command.Parameters.AddWithValue("@owner", owner);
                                 command.Parameters.AddWithValue("@repoName", repoName);
-                                //command.Parameters.AddWithValue("@updated_at", repository.updated_at);
-                                //command.Parameters.AddWithValue("@created_at", repository.created_at);
+                                command.Parameters.AddWithValue("@updated_at", "haggi");
+                                command.Parameters.AddWithValue("@created_at", "haggi");
                                 
                                 command.ExecuteNonQuery();
                             }
+
+                            connection.Close();
                         }
                     }else {
                         // removed

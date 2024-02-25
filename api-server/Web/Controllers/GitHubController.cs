@@ -174,11 +174,9 @@ public class GitHubController : ControllerBase
     }
 
     [HttpGet("getRepository/{id}")] // Update the route to include repository ID
-    public async Task<ActionResult> getRepositoryById(int id) // Change the method signature to accept ID
+    public async Task<Repository> GetRepositoryById(int id) // Change the method signature to accept ID
     {
-        var generator = _getGitHubJwtGenerator();
-        var jwtToken = generator.CreateEncodedJwtToken();
-        var appClient = _getGitHubClient(jwtToken);
+        var appClient = GetNewClient();
 
         var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
@@ -188,48 +186,21 @@ public class GitHubController : ControllerBase
             if (installation.Account.Login == userLogin)
             {
                 var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
-                var installationClient = _getGitHubClient(response.Token);
+                var installationClient = GetNewClient(response.Token);
 
-                try
-                {
-                    var pulls = await installationClient.PullRequest.GetAllForRepository(id);
-                    foreach (var pull in pulls)
-                    {
 
-                        var comments = await installationClient.Issue.Comment.GetAllForIssue(id, pull.Number);
-                        var reviews = await installationClient.PullRequest.Review.GetAll(id, pull.Number);
-                        Console.WriteLine($"PR Status: {pull.State}");
-                        Console.WriteLine($"Comments: {comments.Count}");
-                        Console.WriteLine($"Review: {reviews.Count}");
-                        foreach (var label in pull.Labels)
-                        {
-                            Console.WriteLine(label.Name);
-                        }
-
-                        foreach (var comm in comments)
-                        {
-                            Console.WriteLine($"Commenter: {comm.User.Login}");
-                            Console.WriteLine($"Comment body: {comm.Body}");
-                            Console.WriteLine($"Comment reacts: {comm.Reactions.Hooray}");
-                        }
-
-                        foreach (var rev in reviews)
-                        {
-                            Console.WriteLine($"Reviewer: {rev.User.Login}");
-                            Console.WriteLine($"Review State: {rev.State}");
-                            Console.WriteLine($"Review body: {rev.Body}");
-                        }
-                    }
-                    return Ok();
-                }
-                catch (NotFoundException)
-                {
-                    return NotFound($"Repository with ID {id} not found.");
-                }
+                // Get the repository by ID
+                var repository = await installationClient.Repository.Get(id);
+                
+                // Now you have the repository object, you can use it or return it as needed
+                Console.WriteLine($"Repository: {repository.FullName}");
+                Console.WriteLine($"Repository URL: {repository.HtmlUrl}");
+                Console.WriteLine($"Repository Description: {repository.Description}");
+                
+                return repository;
             }
         }
-
-        return NotFound("There exists no user in session.");
+        return null;
     }
 
     [HttpGet("prs")]
@@ -296,7 +267,7 @@ public class GitHubController : ControllerBase
 
                 }
             }
-        }
+        } 
 
         return Ok(pullRequests);
     }
