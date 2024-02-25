@@ -59,11 +59,14 @@ const comments = [
     isAIGenerated: false,
   },
 ];
-
-function CommentsTab({ pullRequest }) {
-  const { owner, repoName, prnumber } = useParams();
+export interface CommentsTabProps {
+  pullRequest: object[];
+}
+//    [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_comments")]
+function CommentsTab({ pullRequest }: CommentsTabProps) {
   const resolvedComments = comments.filter((comment) => comment.isResolved);
   const unresolvedComments = comments.filter((comment) => !comment.isResolved);
+  const [commentList, setCommentList] = useState([]);
 
   const comments2 = resolvedComments.map((comment, index) => (
     <Accordion.Item value={index + ""} key={index}>
@@ -162,10 +165,10 @@ function CommentsTab({ pullRequest }) {
               key={index}
               id={index}
               author={comment.author}
-              text={comment.text}
-              date={comment.date}
-              isResolved={comment.isResolved}
-              isAIGenerated={comment.isAIGenerated}
+              text={comment.body}
+              date={comment.created_at}
+              isResolved={false}
+              isAIGenerated={false}
             />
             <br />
           </Box>

@@ -61,7 +61,7 @@ function ApprovalRejectionRates() {
     </Table.Tr>
   ));
   return (
-    <Box w= "580px">
+    <Box w="580px">
       <Paper shadow="xl" radius="md" p="sm" mt="lg" withBorder>
         <Stack align="center">
           <Text fw={500} size="lg" mb="sm">
@@ -70,10 +70,10 @@ function ApprovalRejectionRates() {
               <Badge leftSection={iconInfo} variant="transparent" />
             </Tooltip>
           </Text>
-          <Table style={{fontSize:"13px"}}>
+          <Table style={{ fontSize: "13px" }}>
             <Table.Thead>
               <Table.Tr>
-                <Table.Th >Authors</Table.Th>
+                <Table.Th>Authors</Table.Th>
                 <Table.Th>Approvals</Table.Th>
                 <Table.Th>Rejections</Table.Th>
                 <Table.Th>Waiting</Table.Th>

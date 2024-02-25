@@ -647,6 +647,7 @@ public class GitHubController : ControllerBase
         var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
         var processedCommitIds = new HashSet<string>();
         var result = new List<CommitsList>([]);
+        string link = "https://github.com/"+owner+"/"+repoName+"/pull/"+prnumber+"/commits/";
 
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent();
@@ -661,7 +662,7 @@ public class GitHubController : ControllerBase
                 var installationClient = GetNewClient(response.Token);
 
                 var commits = await installationClient.PullRequest.Commits(owner, repoName, prnumber);
-
+                
                 CommitInfo obj;
 
                 foreach (var commit in commits)
@@ -692,6 +693,7 @@ public class GitHubController : ControllerBase
                             title = message[0],
                             description =  message[1],
                             author = commit.Author.Login,
+                            githubLink = link + commit.Sha
                         };
 
                     } else {
@@ -700,6 +702,7 @@ public class GitHubController : ControllerBase
                             title = commit.Commit.Message,
                             description = null,
                             author = commit.Author.Login,
+                            githubLink = link + commit.Sha
                         };
                     }
 
@@ -707,9 +710,9 @@ public class GitHubController : ControllerBase
 
                     processedCommitIds.Add(commit.NodeId);                    
                     
-                }                
-
+                }
             }
+
         }
 
         return Ok(result);
