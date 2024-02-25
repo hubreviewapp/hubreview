@@ -8,14 +8,20 @@ import {
   UnstyledButton,
   Text,
   Tooltip,
-  Badge, Flex,
-  Avatar, ScrollArea, TextInput, Divider, Select, CloseButton
+  Badge,
+  Flex,
+  Avatar,
+  ScrollArea,
+  TextInput,
+  Divider,
+  Select,
+  CloseButton,
 } from "@mantine/core";
-import {IconInfoCircle, IconCirclePlus, IconCheck, IconXboxX} from "@tabler/icons-react";
-import {useEffect, useState} from "react";
+import { IconInfoCircle, IconCirclePlus, IconCheck, IconXboxX } from "@tabler/icons-react";
+import { useEffect, useState } from "react";
 import UserLogo4 from "../assets/icons/user4.png";
-import PriorityBadge, {PriorityBadgeLabel} from "./PriorityBadge";
-import {useParams} from "react-router-dom";
+import PriorityBadge, { PriorityBadgeLabel } from "./PriorityBadge";
+import { useParams } from "react-router-dom";
 import axios from "axios";
 import SelectLabel from "./SelectLabel";
 
@@ -25,24 +31,24 @@ function barColor(capacity: number, waiting: number) {
 }
 
 export interface PRDetailSideBarProps {
-  addedReviewers: object[],
-  assignees: string[],
-  labels: object[],
+  addedReviewers: object[];
+  assignees: string[];
+  labels: object[];
 }
 
-function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
-  const {owner, repoName, prnumber} = useParams();
-  const iconInfo = <IconInfoCircle style={{width: rem(18), height: rem(18)}}/>;
+function PRDetailSideBar({ addedReviewers, labels }: PRDetailSideBarProps) {
+  const { owner, repoName, prnumber } = useParams();
+  const iconInfo = <IconInfoCircle style={{ width: rem(18), height: rem(18) }} />;
   const [contributors, setContributors] = useState([]);
   const [addedReviewer, setAddedReviewer] = useState<object[]>([]);
   const [priority, setPriority] = useState<PriorityBadgeLabel>(null);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const filtered = contributors.filter((item) => item.login.toLowerCase().includes(query.toLowerCase()));
 
   const fetchContributors = async () => {
     try {
       const res = await axios.get(`http://localhost:5018/api/github/getRepositoryContributors/${owner}/${repoName}`, {
-        withCredentials: true
+        withCredentials: true,
       });
 
       if (res.data) {
@@ -56,7 +62,6 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
     fetchContributors();
   }, []);
 
-
   useEffect(() => {
     if (addedReviewers.length != 0) {
       setAddedReviewer(addedReviewers);
@@ -66,28 +71,28 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
   //HttpDelete("pullrequest/{owner}/{repoName}/{prnumber}/remove_reviewer/{reviewer}")]
   const deleteReviewer = (reviewer) => {
     const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/remove_reviewer/${reviewer}`;
-    setAddedReviewer(addedReviewer.filter(item => item.login.toString() != reviewer));
-    axios.delete(apiUrl, {
-      withCredentials: true,
-      baseURL: "http://localhost:5018/api/github"
-    })
-      .then(function () {
+    setAddedReviewer(addedReviewer.filter((item) => item.login.toString() != reviewer));
+    axios
+      .delete(apiUrl, {
+        withCredentials: true,
+        baseURL: "http://localhost:5018/api/github",
       })
+      .then(function () {})
       .catch(function (error) {
         console.log(error);
       });
-  }
+  };
 
   // [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/request_review")]
   function handleAddReviewer(reviewer) {
     setAddedReviewer([reviewer, ...addedReviewer]);
     const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/request_review`;
-    axios.post(apiUrl, [reviewer.login], {
-      withCredentials: true,
-      baseURL: "http://localhost:5018/api/github"
-    })
-      .then(function () {
+    axios
+      .post(apiUrl, [reviewer.login], {
+        withCredentials: true,
+        baseURL: "http://localhost:5018/api/github",
       })
+      .then(function () {})
       .catch(function (error) {
         console.log(error);
       });
@@ -102,26 +107,26 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
               <Text fw={500} size="md" mb="sm">
                 Reviewers
               </Text>
-              {
-                addedReviewer.length == 0 ?
-                  <Text c="dimmed">No reviewer added</Text>
-                  :
-                  addedReviewer.map(reviewer => (
-                    <Flex justify="space-between" key={reviewer.id} mb="sm">
-                      <Group>
-                        <Avatar src={reviewer.avatarUrl} size="sm"/>
-                        <Text size="sm"> {reviewer.login} </Text>
-                      </Group>
-                      <CloseButton onClick={() => deleteReviewer(reviewer.login)}
-                                   icon={<IconXboxX color="red" size={18} stroke={1.5}/>}/>
-                    </Flex>
-                  ))
-              }
+              {addedReviewer.length == 0 ? (
+                <Text c="dimmed">No reviewer added</Text>
+              ) : (
+                addedReviewer.map((reviewer) => (
+                  <Flex justify="space-between" key={reviewer.id} mb="sm">
+                    <Group>
+                      <Avatar src={reviewer.avatarUrl} size="sm" />
+                      <Text size="sm"> {reviewer.login} </Text>
+                    </Group>
+                    <CloseButton
+                      onClick={() => deleteReviewer(reviewer.login)}
+                      icon={<IconXboxX color="red" size={18} stroke={1.5} />}
+                    />
+                  </Flex>
+                ))
+              )}
             </Grid.Col>
-            <Grid.Col span={6}>
-            </Grid.Col>
+            <Grid.Col span={6}></Grid.Col>
           </Grid>
-          <Divider mb="md"/>
+          <Divider mb="md" />
           <Grid my="sm">
             <Grid.Col span={5}>
               <Text fw={500} size="md">
@@ -136,7 +141,7 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
             <Grid.Col span={1}>
               <Box>
                 <Tooltip label="waiting reviews / reviewer capacity">
-                  <Badge leftSection={iconInfo} variant="transparent"/>
+                  <Badge leftSection={iconInfo} variant="transparent" />
                 </Tooltip>
               </Box>
             </Grid.Col>
@@ -157,36 +162,34 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
               <Grid key={itm.id}>
                 <Grid.Col span={6}>
                   <Group>
-                    <Avatar src={itm.avatarUrl} size="xs"/>
+                    <Avatar src={itm.avatarUrl} size="xs" />
                     <Text size="xs">{itm.login}</Text>
                   </Group>
                 </Grid.Col>
                 <Grid.Col span={4}>
                   <Progress.Root mt="5px" size="lg">
-                    <Progress.Section color={barColor(itm.capacity, itm.waiting)}
-                                      value={(itm.waiting / itm.capacity) * 100}>
+                    <Progress.Section
+                      color={barColor(itm.capacity, itm.waiting)}
+                      value={(itm.waiting / itm.capacity) * 100}
+                    >
                       <Progress.Label>{(itm.waiting / itm.capacity) * 100}%</Progress.Label>
                     </Progress.Section>
                   </Progress.Root>
                 </Grid.Col>
                 <Grid.Col span={1}>
-
-                  {
-                    addedReviewer.find(itm2 => itm.id == itm2.id) == undefined ?
-                      <UnstyledButton onClick={() => handleAddReviewer(itm)} style={{fontSize: "12px"}}>
-                        <IconCirclePlus size={18} stroke={1.5}/>
-                      </UnstyledButton> :
-                      <IconCheck color="green" size={18} stroke={1.5}/>
-
-
-                  }
-
+                  {addedReviewer.find((itm2) => itm.id == itm2.id) == undefined ? (
+                    <UnstyledButton onClick={() => handleAddReviewer(itm)} style={{ fontSize: "12px" }}>
+                      <IconCirclePlus size={18} stroke={1.5} />
+                    </UnstyledButton>
+                  ) : (
+                    <IconCheck color="green" size={18} stroke={1.5} />
+                  )}
                 </Grid.Col>
               </Grid>
             ))}
           </ScrollArea>
         </Box>
-        <Divider mt="md"/>
+        <Divider mt="md" />
         <Grid my="sm">
           <Grid.Col span={6}>
             <Group>
@@ -195,22 +198,21 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
               </Text>
             </Group>
           </Grid.Col>
-          <Grid.Col span={4}>
-          </Grid.Col>
+          <Grid.Col span={4}></Grid.Col>
           <Grid.Col span={2}>
-            <Tooltip label="assign up to 1 person" style={{marginLeft: -50}}>
-              <Badge leftSection={iconInfo} variant="transparent"/>
+            <Tooltip label="assign up to 1 person" style={{ marginLeft: -50 }}>
+              <Badge leftSection={iconInfo} variant="transparent" />
             </Tooltip>
           </Grid.Col>
         </Grid>
-        <Group style={{marginBottom: 5}}>
+        <Group style={{ marginBottom: 5 }}>
           <Box>
-            <Avatar src={UserLogo4} size="sm"/>
+            <Avatar src={UserLogo4} size="sm" />
           </Box>
           <Text size="sm"> irem_aydın </Text>
         </Group>
 
-        <Divider mt="md"/>
+        <Divider mt="md" />
         <Box mt="sm">
           <Select
             label="Assign Priority"
@@ -221,10 +223,10 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
             clearable
             mb="sm"
           />
-          <PriorityBadge label={priority} size="md"/>
+          <PriorityBadge label={priority} size="md" />
         </Box>
-        <Divider mt="md"/>
-        <SelectLabel githubAddedLabels={labels}/>
+        <Divider mt="md" />
+        <SelectLabel githubAddedLabels={labels} />
       </Paper>
     </Box>
   );

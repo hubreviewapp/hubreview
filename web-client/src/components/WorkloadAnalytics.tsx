@@ -56,14 +56,15 @@ function WorkloadAnalytics() {
                 </Progress.Root>
               </Grid.Col>
               <Grid.Col span={2}>
-                  <Text c="dimmed" size="sm">
-                    {itm.waiting}/{itm.capacity}{" "}
-                  </Text>
+                <Text c="dimmed" size="sm">
+                  {itm.waiting}/{itm.capacity}{" "}
+                </Text>
               </Grid.Col>
               <Grid.Col span={2}>
-                <Text td="underline" color="blue">Details</Text>
+                <Text td="underline" color="blue">
+                  Details
+                </Text>
               </Grid.Col>
-
             </Grid>
           ))}
           <Flex justify="space-evenly">

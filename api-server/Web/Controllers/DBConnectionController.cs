@@ -1,14 +1,14 @@
 using System.Web;
+using CS.Core.Entities;
+using CS.Core.Configuration;
 using DotEnv.Core;
 using GitHubJwt;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using Octokit;
-using CS.Core.Entities;
-using CS.Core.Configuration;
 using Npgsql;
+using Octokit;
 
 namespace CS.Web.Controllers;
 
@@ -20,6 +20,7 @@ public class DbConnectionController : ControllerBase
 
     [HttpGet("connect")]
     public async Task<ActionResult> connect(){
+
 
         var config = new CoreConfiguration();
         string connectionString = config.DbConnectionString;

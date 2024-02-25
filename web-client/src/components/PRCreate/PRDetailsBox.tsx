@@ -9,12 +9,17 @@ import {
   Text,
   Tooltip,
   Badge,
-  Avatar, ScrollArea, Select, MultiSelect, TextInput, Divider,
+  Avatar,
+  ScrollArea,
+  Select,
+  MultiSelect,
+  TextInput,
+  Divider,
 } from "@mantine/core";
-import {IconInfoCircle } from "@tabler/icons-react";
-import {useState} from "react";
+import { IconInfoCircle } from "@tabler/icons-react";
+import { useState } from "react";
 import UserLogo from "../../assets/icons/user2.png";
-import PriorityBadge, {PriorityBadgeLabel} from "../PriorityBadge";
+import PriorityBadge, { PriorityBadgeLabel } from "../PriorityBadge";
 import LabelButton from "../LabelButton";
 
 function barColor(capacity: number, waiting: number) {
@@ -58,15 +63,15 @@ function PRDetailsBox() {
   const [reviewerList, setReviewerList] = useState<number[]>([]);
   const [priority, setPriority] = useState<PriorityBadgeLabel>(null);
   const [labelValue, setLabelValue] = useState<string[]>([]);
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState("");
   const filtered = reviewers.filter((item) => item.username.toLowerCase().includes(query.toLowerCase()));
 
-  const removeFromReviewerList = (id:number) => {
-    setReviewerList(reviewerList.filter(itm=> itm !=id));
-  }
+  const removeFromReviewerList = (id: number) => {
+    setReviewerList(reviewerList.filter((itm) => itm != id));
+  };
 
   return (
-    <Box >
+    <Box>
       <Paper p="sm" withBorder>
         <Box>
           <Grid>
@@ -99,37 +104,49 @@ function PRDetailsBox() {
               placeholder="Search Users"
             />
           </Box>
-        <ScrollArea h={130} mt="5px" scrollbars="y">
-          {filtered.map((itm) => (
-            <Grid key={itm.id}>
-              <Grid.Col span={5}>
-                <Group>
-                  <Box>
-                    <Avatar src={UserLogo} size="sm"  />
-                  </Box>
-                  <Text size="xs">{itm.username}</Text>
-                </Group>
-              </Grid.Col>
-              <Grid.Col span={4}>
-                <Progress.Root mt="5px" size="lg">
-                  <Progress.Section color={barColor(itm.capacity, itm.waiting)} value={(itm.waiting / itm.capacity) * 100}>
-                    <Progress.Label>{(itm.waiting / itm.capacity) * 100}%</Progress.Label>
-                  </Progress.Section>
-                </Progress.Root>
-              </Grid.Col>
-              <Grid.Col span={1}>
-                {
-                   reviewerList.find(id => id == itm.id) == undefined ?
-                     <UnstyledButton style={{fontSize:"12px"}} onClick={()=>setReviewerList([...reviewerList, itm.id])}>Request</UnstyledButton>
-                       :
-                     <UnstyledButton style={{color:"darkcyan", fontSize:"12px", alignContent:"end"}} onClick={()=>removeFromReviewerList(itm.id)}>Requested</UnstyledButton>
-                }
-              </Grid.Col>
-            </Grid>
-          ))}
-        </ScrollArea>
+          <ScrollArea h={130} mt="5px" scrollbars="y">
+            {filtered.map((itm) => (
+              <Grid key={itm.id}>
+                <Grid.Col span={5}>
+                  <Group>
+                    <Box>
+                      <Avatar src={UserLogo} size="sm" />
+                    </Box>
+                    <Text size="xs">{itm.username}</Text>
+                  </Group>
+                </Grid.Col>
+                <Grid.Col span={4}>
+                  <Progress.Root mt="5px" size="lg">
+                    <Progress.Section
+                      color={barColor(itm.capacity, itm.waiting)}
+                      value={(itm.waiting / itm.capacity) * 100}
+                    >
+                      <Progress.Label>{(itm.waiting / itm.capacity) * 100}%</Progress.Label>
+                    </Progress.Section>
+                  </Progress.Root>
+                </Grid.Col>
+                <Grid.Col span={1}>
+                  {reviewerList.find((id) => id == itm.id) == undefined ? (
+                    <UnstyledButton
+                      style={{ fontSize: "12px" }}
+                      onClick={() => setReviewerList([...reviewerList, itm.id])}
+                    >
+                      Request
+                    </UnstyledButton>
+                  ) : (
+                    <UnstyledButton
+                      style={{ color: "darkcyan", fontSize: "12px", alignContent: "end" }}
+                      onClick={() => removeFromReviewerList(itm.id)}
+                    >
+                      Requested
+                    </UnstyledButton>
+                  )}
+                </Grid.Col>
+              </Grid>
+            ))}
+          </ScrollArea>
         </Box>
-        <Divider mt="md"/>
+        <Divider mt="md" />
         <Box mt="sm">
           <Select
             label="Assign Priority"
@@ -140,13 +157,13 @@ function PRDetailsBox() {
             clearable
             mb="sm"
           />
-          <PriorityBadge label={priority} size="md"/>
+          <PriorityBadge label={priority} size="md" />
         </Box>
-        <Divider my="md"/>
+        <Divider my="md" />
         <MultiSelect
           label="Add Label"
           placeholder="Select Label"
-          data={["Bug Fix" , "Enhancement" , "Refactoring" , "Question" , "Suggestion"]}
+          data={["Bug Fix", "Enhancement", "Refactoring", "Question", "Suggestion"]}
           clearable
           value={labelValue}
           hidePickedOptions
@@ -156,7 +173,7 @@ function PRDetailsBox() {
           {labelValue.length == 0 ? (
             <Badge variant="light">No Label Added</Badge>
           ) : (
-            labelValue.map((itm) => <LabelButton key={itm} label={itm} size="md"/>)
+            labelValue.map((itm) => <LabelButton key={itm} label={itm} size="md" />)
           )}
         </Group>
       </Paper>

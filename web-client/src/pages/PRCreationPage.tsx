@@ -1,11 +1,10 @@
-import { Container, Grid, Group, Title, Button, Stack, Flex, Box, TextInput, MultiSelect, Modal,
-} from "@mantine/core";
+import { Container, Grid, Group, Title, Button, Stack, Flex, Box, TextInput, MultiSelect, Modal } from "@mantine/core";
 
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import PRDetailsBox from "../components/PRCreate/PRDetailsBox";
 import FileGrouping from "../components/PRCreate/FileGrouping";
-import {useDisclosure} from "@mantine/hooks";
-import {Link, useNavigate} from "react-router-dom";
+import { useDisclosure } from "@mantine/hooks";
+import { Link, useNavigate } from "react-router-dom";
 import PRSummaryBox from "../components/PRCreate/PRSummaryBox";
 import CommitHistory from "../components/PRCreate/CommitHistory";
 import CompareBranchBox from "../components/PRCreate/CompareBranchBox";
@@ -28,14 +27,14 @@ function PRCreationPage() {
   const [groupName, setGroupName] = useState("");
   const [fileList, setFileList] = useState<string[]>([]);
   const [reviewerList, setReviewerList] = useState<string[]>([]);
-  const [opened, {open, close}] = useDisclosure(false);
+  const [opened, { open, close }] = useDisclosure(false);
 
   const navigate = useNavigate();
 
-  useEffect(() => {    
-  if ( localStorage.getItem("userLogin") === null ){
-    navigate("/signIn");
-  }
+  useEffect(() => {
+    if (localStorage.getItem("userLogin") === null) {
+      navigate("/signIn");
+    }
   }, [navigate]);
 
   function addGroupToList() {
@@ -61,7 +60,7 @@ function PRCreationPage() {
         </Title>
         <Group mt="20px" mb="20px">
           <Title order={3}>Eventium</Title>
-          <CompareBranchBox/>
+          <CompareBranchBox />
         </Group>
       </Box>
       <Grid>
@@ -69,7 +68,7 @@ function PRCreationPage() {
           <Box>
             <Stack>
               <PRDescription />
-              <TextInput withAsterisk label="Add a title" placeholder="Enter..."/>
+              <TextInput withAsterisk label="Add a title" placeholder="Enter..." />
               <Flex justify="flex-end">
                 <Button m="md" color="gray" variant="outline">
                   Save Draft
@@ -80,21 +79,28 @@ function PRCreationPage() {
           </Box>
         </Grid.Col>
         <Grid.Col span={4}>
-          <PRDetailsBox/>
+          <PRDetailsBox />
         </Grid.Col>
       </Grid>
       <Box my="md">
-        <PRSummaryBox numContributors={3} numFiles={5} numCommits={8}/>
+        <PRSummaryBox numContributors={3} numFiles={5} numCommits={8} />
       </Box>
-      <CommitHistory/>
+      <CommitHistory />
       <Group>
-        <ChangedFilesList/>
+        <ChangedFilesList />
         <Box display="flex" w="70%" h="300px">
-          {groupList.map(group => (
-            <FileGrouping key={group.id} name={group.name} id={group.id} files={group.files} reviewers={group.reviewers}/>
-
+          {groupList.map((group) => (
+            <FileGrouping
+              key={group.id}
+              name={group.name}
+              id={group.id}
+              files={group.files}
+              reviewers={group.reviewers}
+            />
           ))}
-          <Button m="md" onClick={open}>Add File Group</Button>
+          <Button m="md" onClick={open}>
+            Add File Group
+          </Button>
         </Box>
       </Group>
       <Modal opened={opened} onClose={close} title="Create a Group">
@@ -105,7 +111,7 @@ function PRCreationPage() {
             value={groupName}
             onChange={(event) => setGroupName(event.currentTarget.value)}
           />
-          <MultiSelect withAsterisk label="Select Files" data={prFiles} value={fileList} onChange={setFileList}/>
+          <MultiSelect withAsterisk label="Select Files" data={prFiles} value={fileList} onChange={setFileList} />
           <MultiSelect
             withAsterisk
             label="Select Reviewers"
