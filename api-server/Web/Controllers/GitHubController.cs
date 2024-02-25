@@ -643,14 +643,14 @@ public class GitHubController : ControllerBase
 
         return Ok(result);
     }
-
-    /*[HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addRevComment")]
-    public async Task<ActionResult> AddRevCommentToPR(string owner, string repoName, int prnumber, [FromBody] string commentBody)
+    /*
+    [HttpGet("pullrequest/{owner}/{repoName}/{sha}/addRevComment")]
+    public async Task<ActionResult> AddRevCommentToPR(string owner, string repoName, string sha)
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        PullRequestRe
-        await client.PullRequest.ReviewComment.Create()  Issue.Comment.Create(owner, repoName, prnumber, commentBody);
-        return Ok($"Comment added to pull request #{prnumber} in repository {repoName}.");   
+        var commit = await client.Repository.Commit.Get(owner, repoName, sha);
+        await client.PullRequest.ReviewComment.Create(owner, repoName, prnumber, comment);
+        return Ok(commit.Files[0].Filename);   
     }*/
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_commits")]
@@ -672,17 +672,24 @@ public class GitHubController : ControllerBase
             {
                 var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
                 var installationClient = GetNewClient(response.Token);
-
                 var commits = await installationClient.PullRequest.Commits(owner, repoName, prnumber);
-                /*
+                
                 CommitInfo obj;
 
                 foreach (var commit in commits)
                 {
+
                     if (processedCommitIds.Contains(commit.NodeId))
                     {
                         continue;
                     }
+
+                    /*
+                    var http = new HttpClient();
+                    http.DefaultRequestHeaders.Add("User-Agent", "hubreviewapp");
+                    var r = await http.GetAsync(commit.Url);
+                    var commitFiles = await r.Content.ReadAsStringAsync();
+                    Console.WriteLine(commitFiles.ToString());*/
 
                     bool dateExists = result.Any(temp => temp.date == commit.Commit.Author.Date.ToString("yyyy/MM/dd") );
 
@@ -711,7 +718,7 @@ public class GitHubController : ControllerBase
                         obj = new CommitInfo
                         {
                             title = commit.Commit.Message,
-                            description = commit.Commit.Parents[0].Url,
+                            description = null,
                             author = commit.Author.Login,
                         };
                     }
@@ -720,9 +727,7 @@ public class GitHubController : ControllerBase
 
                     processedCommitIds.Add(commit.NodeId);                    
                     
-                }*/                
-
-                return Ok(commits);
+                }
             }
         }
 
