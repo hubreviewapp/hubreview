@@ -31,7 +31,6 @@ export interface PRDetailSideBarProps {
 }
 
 function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
-  console.log("added list", addedReviewers);
   const {owner, repoName, prnumber} = useParams();
   const iconInfo = <IconInfoCircle style={{width: rem(18), height: rem(18)}}/>;
   const [contributors, setContributors] = useState([]);
@@ -48,7 +47,6 @@ function PRDetailSideBar({addedReviewers, labels}: PRDetailSideBarProps) {
 
       if (res.data) {
         setContributors(res.data);
-        console.log(res.data);
       }
     } catch (error) {
       console.error("Error fetching contributors:", error);
