@@ -1,4 +1,5 @@
 using System.Web;
+using CS.Core.Entities;
 using DotEnv.Core;
 using GitHubJwt;
 using Microsoft.AspNetCore.Http;
@@ -6,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Octokit;
-using CS.Core.Entities;
 
 namespace CS.Web.Controllers;
 
@@ -73,7 +73,7 @@ public class GitHubController : ControllerBase
         _appClient = GetNewClient();
     }
 
-    [HttpGet("acquireToken")]
+    /*[HttpGet("acquireToken")]
     public async Task<ActionResult> acquireToken(string code)
     {
         using (var httpClient = new HttpClient())
@@ -125,9 +125,9 @@ public class GitHubController : ControllerBase
         _httpContextAccessor?.HttpContext?.Session.Clear();
         return Ok();
 
-    }
+    }*/
 
-    [HttpGet("getRepository")]
+    /*[HttpGet("getRepository")]
     public async Task<ActionResult> getRepository()
     {
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
@@ -230,9 +230,9 @@ public class GitHubController : ControllerBase
         }
 
         return NotFound("There exists no user in session.");
-    }
+    }*/
 
-    [HttpGet("prs")]
+    /*[HttpGet("prs")]
     public async Task<ActionResult> getAllPRs()
     {
         var generator = _getGitHubJwtGenerator();
@@ -263,12 +263,12 @@ public class GitHubController : ControllerBase
 
                     var repoPulls = await installationClient.PullRequest.GetAllForRepository(repository.Id);
 
-                    /*
-                    foreach( var repoPull in repoPulls ){
-                        var pull = await installationClient.PullRequest.Get(repository.Id, repoPull.Number);
-                        pullRequests.Add(pull);
-                    }
-                    */
+                    
+                    //foreach( var repoPull in repoPulls ){
+                    //    var pull = await installationClient.PullRequest.Get(repository.Id, repoPull.Number);
+                    //    pullRequests.Add(pull);
+                    //}
+                    
 
                     foreach (var repoPull in repoPulls)
                     {
@@ -716,9 +716,9 @@ public class GitHubController : ControllerBase
         }
 
         return Ok(result);
-    }
+    }*/
 
-    [HttpGet("getRepositoryContributors/{owner}/{repoName}")]
+    [HttpGet("{owner}/{repoName}/contributors")]
     public async Task<ActionResult> getRepositoryContributors(string owner, string repoName)
     {
         var appClient = GetNewClient();
@@ -747,7 +747,7 @@ public class GitHubController : ControllerBase
                     {
                         if (contributor.Login == userLogin)
                             continue; // Skip the logged-in user
-                        
+
                         result.Add(new ContributorInfo
                         {
                             Id = contributor.Id,

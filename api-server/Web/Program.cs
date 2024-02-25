@@ -1,11 +1,11 @@
 using CS.Core;
+using DotEnv.Core;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.OpenApi.Models;
 using NodaTime;
 using NodaTime.Serialization.JsonNet;
-using DotEnv.Core;
 
 var envVars = new EnvLoader().AddEnvFile("../api-server/.env").Load();
 
@@ -19,7 +19,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("_allowedOrigins", policy => 
+    options.AddPolicy("_allowedOrigins", policy =>
     {
         policy.WithOrigins("http://localhost:5173")
             .AllowAnyMethod()
