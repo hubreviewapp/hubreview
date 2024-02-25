@@ -1,7 +1,7 @@
 import Comment from "../components/Comment.tsx";
 import TextEditor from "../components/TextEditor.tsx";
 import SplitButton from "../components/SplitButton.tsx";
-import { Box, Text, Accordion, Grid, Select } from "@mantine/core";
+import {Box, Text, Accordion, Grid, Select, Button} from "@mantine/core";
 //import CommentList from "../components/DiffComment/CommentList";
 import PRDetailSideBar from "../components/PRDetailSideBar";
 import axios from "axios";
@@ -12,8 +12,8 @@ interface CommentProps  {
     id: number;
     author: string;
     body: string;
-    created_at: string;
-    updated_at: string;
+    createdAt: string;
+    updatedAt: string;
     association: string;
 }
 
@@ -86,7 +86,7 @@ function CommentsTab({pullRequest}) {
   const [apiComments, setApiComments] =  useState<CommentProps[]| []>([]);
 
   //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_comments")]
-  const fetchPRInfo = async () => {
+  const fetchPRComments = async () => {
     try {
       const res = await axios.get( `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/get_comments`,
         { withCredentials: true}
@@ -96,14 +96,30 @@ function CommentsTab({pullRequest}) {
       }
     } catch (error) {
       console.error("Error fetching PR comments:", error);
-      setTimeout(fetchPRInfo, 1000); // Retry after 3 seconds
     }
   };
 
   useEffect(() => {
 
-    fetchPRInfo();
+    fetchPRComments();
   }, []);
+
+  //[HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addComment")]
+  function addPRComment(content:string)  {
+    const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addComment`;
+    axios.post(apiUrl,  content, {
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      withCredentials: true,
+      baseURL: "http://localhost:5018/api/github"
+    })
+      .then(function () {
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  }
 
   return (
     <Grid>
@@ -123,13 +139,13 @@ function CommentsTab({pullRequest}) {
         </Box>
 
         {apiComments.map((comment, index) => (
-          <Box>
+          <Box key={index}>
             <Comment
               key={index}
               id={index}
               author={comment.author}
               text={comment.body}
-              date={new Date(comment.updated_at)}
+              date={new Date(comment.updatedAt)}
               isResolved={false}
               isAIGenerated={false}
             />
@@ -160,7 +176,7 @@ function CommentsTab({pullRequest}) {
         <SplitButton/>
         <br/>
         <Box style={{border: "2px groove gray", borderRadius: 10, padding: "10px"}}>
-          <TextEditor content=""/>
+          <TextEditor content="" addComment={addPRComment}/>
         </Box>
 
       </Grid.Col>
