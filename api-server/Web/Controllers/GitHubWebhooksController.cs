@@ -2,13 +2,13 @@ using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Octokit;
-using GitHubJwt;
-using DotEnv.Core;
-using Newtonsoft.Json;
 using CS.Core.Entities;
 using CS.Core.Entities.Payloads;
+using DotEnv.Core;
+using GitHubJwt;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using Octokit;
 
 
 namespace CS.Web.Controllers
@@ -65,22 +65,22 @@ namespace CS.Web.Controllers
                     //CreatePayload
                     var createPayload = JsonConvert.DeserializeObject<CreatePayload>(requestBody);
                     //TO DO
-                    break;  
+                    break;
                 case "delete":
                     //DeletePayload
                     var deletePayload = JsonConvert.DeserializeObject<DeletePayload>(requestBody);
                     //TO DO
-                    break;  
+                    break;
                 case "installation":
                     //InstallationPayload
                     var installationPayload = JsonConvert.DeserializeObject<InstallationPayload>(requestBody);
                     //TO DO
-                    break; 
+                    break;
                 case "installation_repositories":
                     //InstallationRepositoriesPayload
                     var installationRepositoriesPayload = JsonConvert.DeserializeObject<InstallationRepositoriesPayload>(requestBody);
                     //TO DO
-                    break; 
+                    break;
                 case "member":
                     //MemberPayload
                     var memberPayload = JsonConvert.DeserializeObject<MemberPayload>(requestBody);
