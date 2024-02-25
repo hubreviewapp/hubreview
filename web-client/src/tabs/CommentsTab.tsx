@@ -1,7 +1,7 @@
 import Comment from "../components/Comment.tsx";
 import TextEditor from "../components/TextEditor.tsx";
 import SplitButton from "../components/SplitButton.tsx";
-import { Box, Text, Accordion, Grid, Select, Button } from "@mantine/core";
+import { Box, Text, Accordion, Grid, Select } from "@mantine/core";
 //import CommentList from "../components/DiffComment/CommentList";
 import PRDetailSideBar from "../components/PRDetailSideBar";
 import axios from "axios";
@@ -62,11 +62,11 @@ const comments = [
 export interface CommentsTabProps {
   pullRequest: object[];
 }
-//    [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_comments")]
+//[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_comments")]
 function CommentsTab({ pullRequest }: CommentsTabProps) {
+  const {owner, repoName, prnumber} = useParams();
   const resolvedComments = comments.filter((comment) => comment.isResolved);
   const unresolvedComments = comments.filter((comment) => !comment.isResolved);
-  const [commentList, setCommentList] = useState([]);
 
   const comments2 = resolvedComments.map((comment, index) => (
     <Accordion.Item value={index + ""} key={index}>
@@ -78,6 +78,7 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
           text={comment.text}
           date={comment.date}
           isResolved={comment.isResolved}
+          deletePRComment={() => {return }}
         />
       </Accordion.Control>
       <Accordion.Panel>
@@ -118,7 +119,25 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
         withCredentials: true,
         baseURL: "http://localhost:5018/api/github",
       })
-      .then(function () {})
+      .then(function () {
+        fetchPRComments();
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  }
+
+  //[HttpDelete("pullrequest/{owner}/{repoName}/{comment_id}/deleteComment")]
+  function deletePRComment(commentId: number) {
+    const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${commentId}/deleteComment`;
+    axios
+      .delete(apiUrl, {
+        withCredentials: true,
+        baseURL: "http://localhost:5018/api/github",
+      })
+      .then(function () {
+        fetchPRComments();
+      })
       .catch(function (error) {
         console.log(error);
       });
@@ -153,6 +172,7 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
               date={new Date(comment.updated_at)}
               isResolved={false}
               isAIGenerated={false}
+              deletePRComment={() => deletePRComment(comment.id)}
             />
             <br />
           </Box>
@@ -165,10 +185,11 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
               key={index}
               id={index}
               author={comment.author}
-              text={comment.body}
-              date={comment.created_at}
+              text={comment.text}
+              date={comment.date}
               isResolved={false}
               isAIGenerated={false}
+              deletePRComment={() => {return }}
             />
             <br />
           </Box>
