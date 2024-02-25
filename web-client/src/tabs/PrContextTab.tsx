@@ -11,8 +11,9 @@ export default function PrContextTab() {
     "authentication module, paying attention to code readability, maintainability, and adherence to coding standards. " +
     "This PR is a crucial step in maintaining the reliability and stability of our application.";
 
-  const notesText = "This pull request addresses a critical bug in the user authentication " +
-  "module. The issue stemmed from improper handling of user sessions, leading to unexpected logouts. The changes in this ";
+  const notesText =
+    "This pull request addresses a critical bug in the user authentication " +
+    "module. The issue stemmed from improper handling of user sessions, leading to unexpected logouts. The changes in this ";
 
   const iconSparkles = <IconSparkles style={{ width: rem(22), height: rem(22) }} />;
 
@@ -38,20 +39,26 @@ export default function PrContextTab() {
       </Box>
 
       <br></br>
-      <Box >
-        <Badge size={"lg"} color={""} style={{marginTop:25}} mb={4} >
+      <Box>
+        <Badge size={"lg"} color={""} style={{ marginTop: 25 }} mb={4}>
           Notes for reviewers
         </Badge>
-        <Flex direction="column" style={{border:"solid 0.5px", borderRadius:"10px"}}>
-          <Text size="md" style={{ textAlign: "center", padding: "10px"}}> {notesText}</Text>
+        <Flex direction="column" style={{ border: "solid 0.5px", borderRadius: "10px" }}>
+          <Text size="md" style={{ textAlign: "center", padding: "10px" }}>
+            {" "}
+            {notesText}
+          </Text>
         </Flex>
-        <Text size="sm" style={{marginTop:"3px", color:"gray", marginBottom: "3px"}}>
-          For further questions communicate via Slack </Text>
-        <Button variant="filled" color="#415A77">  Communicate via Slack</Button>
+        <Text size="sm" style={{ marginTop: "3px", color: "gray", marginBottom: "3px" }}>
+          For further questions communicate via Slack{" "}
+        </Text>
+        <Button variant="filled" color="#415A77">
+          {" "}
+          Communicate via Slack
+        </Button>
       </Box>
 
       <br></br>
-
     </Box>
   );
 }

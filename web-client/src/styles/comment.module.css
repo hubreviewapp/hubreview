@@ -10,11 +10,10 @@
   margin-bottom: 0;
 }
 
-.resolved{
+.resolved {
   cursor: pointer;
-   display: flex;
+  display: flex;
   justify-content: space-between;
 }
-.resolved:hover{
-
+.resolved:hover {
 }
