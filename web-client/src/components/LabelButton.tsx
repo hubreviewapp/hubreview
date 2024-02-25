@@ -10,7 +10,7 @@ const hubReviewLabels = {
   enhancement: "#a2eeef",
   refactoring: "#6f42c1",
   question: "#0075ca",
-  suggestion: "#28a745"
+  suggestion: "#28a745",
 };
 
 function getColorByKey(key) {
