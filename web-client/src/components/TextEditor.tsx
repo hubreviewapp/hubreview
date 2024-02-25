@@ -1,21 +1,21 @@
-import { RichTextEditor, Link } from '@mantine/tiptap';
-import { Button, Box } from '@mantine/core';
-import { useEditor } from '@tiptap/react';
-import Highlight from '@tiptap/extension-highlight';
-import StarterKit from '@tiptap/starter-kit';
-import Underline from '@tiptap/extension-underline';
-import TextAlign from '@tiptap/extension-text-align';
-import Superscript from '@tiptap/extension-superscript';
-import SubScript from '@tiptap/extension-subscript';
+import { RichTextEditor, Link } from "@mantine/tiptap";
+import { Button, Box } from "@mantine/core";
+import { useEditor } from "@tiptap/react";
+import Highlight from "@tiptap/extension-highlight";
+import StarterKit from "@tiptap/starter-kit";
+import Underline from "@tiptap/extension-underline";
+import TextAlign from "@tiptap/extension-text-align";
+import Superscript from "@tiptap/extension-superscript";
+import SubScript from "@tiptap/extension-subscript";
 
-import { useState } from 'react';
+import { useState } from "react";
 
 interface TextEditorProps {
-  content: string,
-  addComment :(content: string) => void;
+  content: string;
+  addComment: (content: string) => void;
 }
 
-function TextEditor({content, addComment}: TextEditorProps) {
+function TextEditor({ content, addComment }: TextEditorProps) {
   const [editorContent, setEditorContent] = useState(content);
   const editor = useEditor({
     extensions: [
@@ -25,17 +25,17 @@ function TextEditor({content, addComment}: TextEditorProps) {
       Superscript,
       SubScript,
       Highlight,
-      TextAlign.configure({ types: ['heading', 'paragraph'] }),
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
     ],
-    content: '',
+    content: "",
     onUpdate({ editor }) {
       setEditorContent(editor.getHTML());
     },
   });
 
   return (
-    <Box style={{ position: 'relative', width: '100%' }}>
-      <RichTextEditor editor={editor} my="sm" >
+    <Box style={{ position: "relative", width: "100%" }}>
+      <RichTextEditor editor={editor} my="sm">
         <RichTextEditor.Toolbar sticky stickyOffset={60}>
           <RichTextEditor.ControlsGroup>
             <RichTextEditor.Bold />
@@ -84,9 +84,8 @@ function TextEditor({content, addComment}: TextEditorProps) {
         <RichTextEditor.Content />
       </RichTextEditor>
 
-      <Box style={{ position: 'absolute', right: 0, top: '100%'}} >
-        <Button size="md" color="green" top={20}
-          onClick={() => addComment(editorContent)}>
+      <Box style={{ position: "absolute", right: 0, top: "100%" }}>
+        <Button size="md" color="green" top={20} onClick={() => addComment(editorContent)}>
           Comment
         </Button>
       </Box>
