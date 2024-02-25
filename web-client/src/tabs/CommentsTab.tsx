@@ -1,7 +1,7 @@
 import Comment from "../components/Comment.tsx";
 import TextEditor from "../components/TextEditor.tsx";
 import SplitButton from "../components/SplitButton.tsx";
-import {Box, Text, Accordion, Grid, Select, Button} from "@mantine/core";
+import { Box, Text, Accordion, Grid, Select, Button } from "@mantine/core";
 //import CommentList from "../components/DiffComment/CommentList";
 import PRDetailSideBar from "../components/PRDetailSideBar";
 import axios from "axios";
@@ -12,8 +12,8 @@ interface CommentProps  {
     id: number;
     author: string;
     body: string;
-    createdAt: string;
-    updatedAt: string;
+    created_at: string;
+    updated_at: string;
     association: string;
 }
 
@@ -121,6 +121,7 @@ function CommentsTab({pullRequest}) {
       });
   }
 
+
   return (
     <Grid>
       <Grid.Col span={8}>
@@ -142,10 +143,10 @@ function CommentsTab({pullRequest}) {
           <Box key={index}>
             <Comment
               key={index}
-              id={index}
+              id={comment.id}
               author={comment.author}
               text={comment.body}
-              date={new Date(comment.updatedAt)}
+              date={new Date(comment.updated_at)}
               isResolved={false}
               isAIGenerated={false}
             />
