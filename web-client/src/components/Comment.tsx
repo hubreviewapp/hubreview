@@ -3,6 +3,8 @@ import { Combobox, useCombobox, Input, Button } from "@mantine/core";
 import classes from "../styles/comment.module.css";
 import UserLogo from "../assets/icons/user.png";
 import { IconDots, IconSparkles, IconBrandSlack } from "@tabler/icons-react";
+import axios from "axios";
+import { useParams } from "react-router-dom";
 
 import { useState } from "react";
 
@@ -15,7 +17,8 @@ interface CommentProps {
   isAIGenerated?: boolean;
 }
 
-export function Comment({ author, text, date, isResolved, isAIGenerated }: CommentProps) {
+export function Comment({ id, author, text, date, isResolved, isAIGenerated }: CommentProps) {
+  const { owner, repoName } = useParams();
   const settings = ["Copy Link", "Quote Reply", "Edit", "Delete", "Reply", "Reference in new issue"];
 
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
@@ -26,10 +29,32 @@ export function Comment({ author, text, date, isResolved, isAIGenerated }: Comme
   const iconSparkles = <IconSparkles style={{ width: rem(22), height: rem(22) }} />;
 
   const options = settings.map((item) => (
-    <Combobox.Option value={item} key={item}>
+    <Combobox.Option
+      value={item}
+      key={item}
+      onClick={() => {
+        if (item === "Delete") {
+          deletePRComment(id);
+        }
+      }}
+    >
       {item}
     </Combobox.Option>
   ));
+
+  //[HttpDelete("pullrequest/{owner}/{repoName}/{comment_id}/deleteComment")]
+  function deletePRComment(commentId: number) {
+    const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${commentId}/deleteComment`;
+    axios
+      .delete(apiUrl, {
+        withCredentials: true,
+        baseURL: "http://localhost:5018/api/github",
+      })
+      .then(function () {})
+      .catch(function (error) {
+        console.log(error);
+      });
+  }
 
   return (
     <>
@@ -54,10 +79,11 @@ export function Comment({ author, text, date, isResolved, isAIGenerated }: Comme
               <Text fz="md"> {author}</Text>
               <Text fz="xs" c="dimmed">
                 {date.toLocaleString("en-US", {
-                  day: "numeric",
-                  month: "long",
+                  day: "2-digit",
+                  month: "short",
                   year: "numeric",
-                  hour: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
                 })}
               </Text>
             </Box>
@@ -99,7 +125,7 @@ export function Comment({ author, text, date, isResolved, isAIGenerated }: Comme
 
         {!isResolved && (
           <>
-            <Text> {text} </Text>
+            <Text style={{ maxWidth: "100%", wordWrap: "break-word" }}> {text} </Text>
             <Box style={{ display: "flex" }}>
               <Input
                 radius="xl"
