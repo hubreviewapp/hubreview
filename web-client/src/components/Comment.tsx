@@ -3,8 +3,6 @@ import { Combobox, useCombobox, Input, Button } from "@mantine/core";
 import classes from "../styles/comment.module.css";
 import UserLogo from "../assets/icons/user.png";
 import { IconDots, IconSparkles, IconBrandSlack } from "@tabler/icons-react";
-import axios from "axios";
-import { useParams } from "react-router-dom";
 
 import { useState } from "react";
 
@@ -15,10 +13,10 @@ interface CommentProps {
   date: Date;
   isResolved?: boolean;
   isAIGenerated?: boolean;
+  deletePRComment: (id: number) => void;
 }
 
-export function Comment({ id, author, text, date, isResolved, isAIGenerated }: CommentProps) {
-  const { owner, repoName } = useParams();
+export function Comment({ id, author, text, date, isResolved, isAIGenerated, deletePRComment }: CommentProps) {
   const settings = ["Copy Link", "Quote Reply", "Edit", "Delete", "Reply", "Reference in new issue"];
 
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
@@ -41,20 +39,6 @@ export function Comment({ id, author, text, date, isResolved, isAIGenerated }: C
       {item}
     </Combobox.Option>
   ));
-
-  //[HttpDelete("pullrequest/{owner}/{repoName}/{comment_id}/deleteComment")]
-  function deletePRComment(commentId: number) {
-    const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${commentId}/deleteComment`;
-    axios
-      .delete(apiUrl, {
-        withCredentials: true,
-        baseURL: "http://localhost:5018/api/github",
-      })
-      .then(function () {})
-      .catch(function (error) {
-        console.log(error);
-      });
-  }
 
   return (
     <>
