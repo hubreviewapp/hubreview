@@ -1,6 +1,6 @@
 import { Badge, Box } from "@mantine/core";
 
-export type PriorityBadgeLabel = "High" | "Medium" | "Low" | null;
+export type PriorityBadgeLabel = "Critical" | "High" | "Medium" | "Low" | null;
 
 export interface PriorityBadgeProps {
   label?: PriorityBadgeLabel;
@@ -8,7 +8,7 @@ export interface PriorityBadgeProps {
 }
 
 function PriorityBadge({ label, size }: PriorityBadgeProps) {
-  const color = label === "High" ? "red" : label === "Medium" ? "yellow" : "green";
+  const color = label === "Critical" ? "red" : label === "High" ? "orange" : label === "Medium" ? "yellow" : "green";
   return (
     <Box>
       {label === null ? (

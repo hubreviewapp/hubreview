@@ -219,7 +219,7 @@ function PRDetailSideBar({ addedReviewers, labels }: PRDetailSideBarProps) {
             value={priority}
             onChange={(val) => setPriority(val as PriorityBadgeLabel)}
             placeholder="Assign Priority"
-            data={["High", "Medium", "Low"]}
+            data={["Critical","High", "Medium", "Low"]}
             clearable
             mb="sm"
           />
