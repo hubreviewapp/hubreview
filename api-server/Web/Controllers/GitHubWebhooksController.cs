@@ -110,7 +110,7 @@ namespace CS.Web.Controllers
                                 command.Parameters.AddWithValue("@node_id", repository.node_id);
                                 command.Parameters.AddWithValue("@owner", owner);
                                 command.Parameters.AddWithValue("@repoName", repoName);
-                                command.Parameters.AddWithValue("@created_at", repo.CreatedAt);
+                                command.Parameters.AddWithValue("@created_at", repo.CreatedAt.Date.ToString("dd/MM/yyyy"));
 
                                 command.ExecuteNonQuery();
                             }

@@ -7,6 +7,10 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Octokit;
+using Npgsql;
+using CS.Core.Configuration;
+
+
 
 namespace CS.Web.Controllers;
 
@@ -129,7 +133,8 @@ public class GitHubController : ControllerBase
 
     [HttpGet("getRepository")]
     public async Task<ActionResult> getRepository()
-    {
+    {   
+        /*
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         string? userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
@@ -169,7 +174,57 @@ public class GitHubController : ControllerBase
         }
 
         return NotFound("There exists no user in session.");
+        */
 
+        // Get repositories from the database
+        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
+        string? userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        var userClient = GetNewClient(access_token);
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+
+        List<RepoInfo> allRepos = new List<RepoInfo>();
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        {
+            await connection.OpenAsync();
+
+            string query = "SELECT id, name, ownerLogin, created_at FROM repositoryinfo WHERE ownerLogin = @ownerLogin OR ownerLogin = ANY(@organizationLogins) ORDER BY name ASC";
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin") );
+                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        RepoInfo repo = new RepoInfo
+                        {
+                            Id = reader.GetInt64(0),
+                            Name = reader.GetString(1),
+                            OwnerLogin = reader.GetString(2),
+                            CreatedAt = reader.GetString(3)
+                        };
+                        allRepos.Add(repo);
+                    }
+                }
+            }
+
+            await connection.CloseAsync();
+        }
+
+        if (allRepos.Any())
+        {
+            return Ok(new { RepoNames = allRepos });
+        }
+
+        return NotFound("There are no repositories in the database.");
 
     }
 
