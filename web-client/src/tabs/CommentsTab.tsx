@@ -2,7 +2,6 @@ import Comment from "../components/Comment.tsx";
 import TextEditor from "../components/TextEditor.tsx";
 import SplitButton from "../components/SplitButton.tsx";
 import {Box, Text, Accordion, Flex} from "@mantine/core";
-import CommentList from "../components/DiffComment/CommentList";
 import PRDetailSideBar from "../components/PRDetailSideBar";
 
 const comments = [
@@ -99,7 +98,7 @@ function CommentsTab({pullRequest}) {
         <Box/>
       </Box>
       <Box m="md">
-        <PRDetailSideBar assignees={[]} labels={pullRequest?.labels ??[]} addedReviewers={pullRequest?.requestedReviewers ??[]}/>
+        <PRDetailSideBar addedAssignees={pullRequest?.assignees ?? []} labels={pullRequest?.labels ??[]} addedReviewers={pullRequest?.requestedReviewers ??[]}/>
       </Box>
     </Flex>
 
