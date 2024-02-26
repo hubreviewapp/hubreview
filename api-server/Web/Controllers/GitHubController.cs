@@ -933,6 +933,7 @@ public class GitHubController : ControllerBase
                 {
                     suggestedReviewersList.Add(suggestedReviewer.Login);
                 }
+                return Ok(result.SuggestedReviewers);
             }
         }
 
