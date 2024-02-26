@@ -372,11 +372,11 @@ public class GitHubController : ControllerBase
                         {
                             // If the label does not exist, create it
                             var randomColor = GenerateRandomColor();
-                            label = await installationClient.Issue.Labels.Create(owner, repoName, new NewLabel(labelName, "ffffff"));
+                            label = await client.Issue.Labels.Create(owner, repoName, new NewLabel(labelName, "ffffff"));
                         }
 
                         // Add the label to the pull request
-                        await installationClient.Issue.Labels.AddToIssue(owner, repoName, (int)prnumber, new[] { label.Name });
+                        await client.Issue.Labels.AddToIssue(owner, repoName, (int)prnumber, new[] { label.Name });
                     }
 
                     return Ok($"Labels '{string.Join(",", labelNames)}' added to pull request #{prnumber} in repository {repoName}.");
@@ -427,7 +427,7 @@ public class GitHubController : ControllerBase
                     }
 
                     // Remove the label from the pull request
-                    await installationClient.Issue.Labels.RemoveFromIssue(owner, repoName, (int)prnumber, labelName);
+                    await client.Issue.Labels.RemoveFromIssue(owner, repoName, (int)prnumber, labelName);
                     return Ok($"Label '{labelName}' removed from pull request #{prnumber} in repository {repoName}.");
                 }
                 catch (NotFoundException)
@@ -463,7 +463,7 @@ public class GitHubController : ControllerBase
                 try
                 {
                     var reviewRequest = new PullRequestReviewRequest(reviewers, null);
-                    var pull = await installationClient.PullRequest.ReviewRequest.Create(owner, repoName, (int)prnumber, reviewRequest);
+                    var pull = await client.PullRequest.ReviewRequest.Create(owner, repoName, (int)prnumber, reviewRequest);
                     return Ok($"{string.Join(",", reviewers)} is assigned to PR #{prnumber}.");
                 }
                 catch (NotFoundException)
@@ -484,6 +484,8 @@ public class GitHubController : ControllerBase
         var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent();
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
@@ -500,7 +502,7 @@ public class GitHubController : ControllerBase
                 {
                     string[] arr = [reviewer];
                     var reviewRequest = new PullRequestReviewRequest(arr, null);
-                    await installationClient.PullRequest.ReviewRequest.Delete(owner, repoName, (int)prnumber, reviewRequest);
+                    await client.PullRequest.ReviewRequest.Delete(owner, repoName, (int)prnumber, reviewRequest);
                     return Ok($"{reviewer} is removed from PR #{prnumber}.");
                 }
                 catch (NotFoundException)
