@@ -48,14 +48,12 @@ namespace CS.Web.Controllers
             }
 
             var eventType = Request.Headers["X-GitHub-Event"];
-            Console.WriteLine(eventType);
-            Console.WriteLine(requestBody);
 
             var config = new CoreConfiguration();
             string connectionString = config.DbConnectionString;
 
             using var connection = new NpgsqlConnection(connectionString);
-            
+
             switch (eventType)
             {
                 case "check_run":
@@ -86,9 +84,11 @@ namespace CS.Web.Controllers
                 case "installation_repositories":
                     //InstallationRepositoriesPayload
                     var installationRepositoriesPayload = JsonConvert.DeserializeObject<InstallationRepositoriesPayload>(requestBody);
-                    if ( installationRepositoriesPayload.action == "added" ){
+                    if (installationRepositoriesPayload.action == "added")
+                    {
                         // added
-                        foreach (var repository in installationRepositoriesPayload.repositories_added){
+                        foreach (var repository in installationRepositoriesPayload.repositories_added)
+                        {
                             long id = repository.id;
                             string node_id = repository.node_id;
 
@@ -96,17 +96,12 @@ namespace CS.Web.Controllers
                             string[] parts = full_name.Split('/');
                             string owner = parts[0];
                             string repoName = parts[1];
-                            //string updated_at = repository.updated_at;
-                            //string created_at = repository.created_at; 
 
-                            Console.WriteLine( repository.node_id );
-                            //Console.WriteLine( repository.updated_at );
-
-                            //Console.WriteLine( repository.created_at );
+                            Repository repo = await GetRepositoryById(repository.id, installationRepositoriesPayload.sender.login);
 
                             connection.Open();
 
-                            string query = "INSERT INTO repositoryinfo (id, node_id, name, ownerLogin, created_at, updated_at) VALUES (@id, @node_id, @repoName, @owner, @created_at, @updated_at)";
+                            string query = "INSERT INTO repositoryinfo (id, node_id, name, ownerLogin, created_at) VALUES (@id, @node_id, @repoName, @owner, @created_at)";
 
                             // GetRepository by id lazım...
                             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
@@ -115,16 +110,39 @@ namespace CS.Web.Controllers
                                 command.Parameters.AddWithValue("@node_id", repository.node_id);
                                 command.Parameters.AddWithValue("@owner", owner);
                                 command.Parameters.AddWithValue("@repoName", repoName);
-                                command.Parameters.AddWithValue("@updated_at", "haggi");
-                                command.Parameters.AddWithValue("@created_at", "haggi");
-                                
+                                command.Parameters.AddWithValue("@created_at", repo.CreatedAt);
+
                                 command.ExecuteNonQuery();
                             }
 
                             connection.Close();
+
+                            Console.WriteLine($"Repository {repository.full_name} is added to database.");
                         }
-                    }else {
+                    }
+                    else
+                    {
                         // removed
+                        foreach (var repository in installationRepositoriesPayload.repositories_removed)
+                        {
+                            long id = repository.id;
+
+                            connection.Open();
+
+                            string query = "DELETE FROM repositoryinfo WHERE id = @id";
+
+                            // GetRepository by id lazım...
+                            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                            {
+                                command.Parameters.AddWithValue("@id", repository.id);
+
+                                command.ExecuteNonQuery();
+                            }
+
+                            connection.Close();
+
+                            Console.WriteLine($"Repository {repository.full_name} is removed from database.");
+                        }
                     }
 
                     //TO DO
@@ -163,6 +181,61 @@ namespace CS.Web.Controllers
             }
 
             return Ok();
+        }
+
+
+        private static GitHubClient _getGitHubClient(string token)
+        {
+            return new GitHubClient(new ProductHeaderValue("HubReviewApp"))
+            {
+                Credentials = new Credentials(token, AuthenticationType.Bearer)
+            };
+        }
+        /*
+        private GitHubJwtFactory _getGitHubJwtGenerator()
+        {
+            return new GitHubJwtFactory(
+                new FilePrivateKeySource(_reader["PK_RELATIVE_PATH"]),
+                new GitHubJwtFactoryOptions
+                {
+                    AppIntegrationId = _reader.GetIntValue("APP_ID"), // The GitHub App Id
+                    ExpirationSeconds = _reader.GetIntValue("EXP_TIME") // 10 minutes is the maximum time allowed
+                }
+            );
+        } */
+
+
+        private GitHubClient GetNewClient(string? token = null)
+        {
+            GitHubClient res;
+
+            res = _getGitHubClient(token);
+
+            return res;
+        }
+
+        public async Task<Repository> GetRepositoryById(long id, string userlogin) // Change the method signature to accept ID
+        {
+            //var appClient = GetNewClient();
+
+            var userLogin = userlogin;
+
+            var installations = await _client.GitHubApps.GetAllInstallationsForCurrent();
+            foreach (var installation in installations)
+            {
+                if (installation.Account.Login == userLogin)
+                {
+                    var response = await _client.GitHubApps.CreateInstallationToken(installation.Id);
+                    var installationClient = GetNewClient(response.Token);
+
+
+                    // Get the repository by ID
+                    var repository = await installationClient.Repository.Get(id);
+
+                    return repository;
+                }
+            }
+            return null;
         }
 
     }
