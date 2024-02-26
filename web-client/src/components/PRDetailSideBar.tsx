@@ -47,7 +47,7 @@ function PRDetailSideBar({ addedReviewers, labels }: PRDetailSideBarProps) {
 
   const fetchContributors = async () => {
     try {
-      const res = await axios.get(`http://localhost:5018/api/github/getRepositoryContributors/${owner}/${repoName}`, {
+      const res = await axios.get(`http://localhost:5018/api/github/GetReviewerSuggestions/${owner}/${repoName}/${prnumber}`, {
         withCredentials: true,
       });
 
