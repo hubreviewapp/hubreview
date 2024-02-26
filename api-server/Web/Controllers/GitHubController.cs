@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Octokit;
+using Octokit.GraphQL;
+using static Octokit.GraphQL.Variable;
 
 
 namespace CS.Web.Controllers;
