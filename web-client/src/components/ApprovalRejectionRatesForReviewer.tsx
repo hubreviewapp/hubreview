@@ -2,7 +2,6 @@ import { Button, Paper, Box, rem, Text, Tooltip, Badge, Table, Stack } from "@ma
 import { IconCheck, IconInfoCircle, IconX, IconClock } from "@tabler/icons-react";
 import { Link } from "react-router-dom";
 
-
 function calculatePercentage(n1: number, n2: number) {
   return Math.floor((n1 / (n1 + n2)) * 100);
 }
@@ -71,10 +70,10 @@ function ApprovalRejectionRatesReviewer() {
               <Badge leftSection={iconInfo} variant="transparent" />
             </Tooltip>
           </Text>
-          <Table style={{fontSize:"13px"}}>
+          <Table style={{ fontSize: "13px" }}>
             <Table.Thead>
               <Table.Tr>
-                <Table.Th >Authors</Table.Th>
+                <Table.Th>Authors</Table.Th>
                 <Table.Th>Approvals</Table.Th>
                 <Table.Th>Rejections</Table.Th>
                 <Table.Th>Waiting</Table.Th>

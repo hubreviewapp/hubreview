@@ -1,22 +1,22 @@
-import {Button, Avatar, Blockquote, Box, Card, Flex, Group, Text, Title, Collapse, rem} from "@mantine/core";
-import {Link} from "react-router-dom";
+import { Button, Avatar, Blockquote, Box, Card, Flex, Group, Text, Title, Collapse, rem } from "@mantine/core";
+import { Link } from "react-router-dom";
 import UserLogo from "../../assets/icons/user.png";
 import LabelButton from "../LabelButton";
-import {useDisclosure} from "@mantine/hooks";
-import {IconCaretDown, IconCaretUp} from "@tabler/icons-react";
-import {PRInfo} from "../../models/PRInfo.tsx";
+import { useDisclosure } from "@mantine/hooks";
+import { IconCaretDown, IconCaretUp } from "@tabler/icons-react";
+import { PRInfo } from "../../models/PRInfo.tsx";
 
 export interface PullRequestCardProps {
   data: PRInfo;
 }
 
-function PRCard({data: pr}: PullRequestCardProps) {
-  const [opened, {toggle}] = useDisclosure(false);
-  const iconDown = <IconCaretDown style={{width: rem(22), height: rem(22)}}/>;
-  const iconUp = <IconCaretUp style={{width: rem(22), height: rem(22)}}/>;
+function PRCard({ data: pr }: PullRequestCardProps) {
+  const [opened, { toggle }] = useDisclosure(false);
+  const iconDown = <IconCaretDown style={{ width: rem(22), height: rem(22) }} />;
+  const iconUp = <IconCaretUp style={{ width: rem(22), height: rem(22) }} />;
   return (
     <Card withBorder>
-      <Link to={`pulls/pullrequest/${pr.repoOwner}/${pr.repoName}/${pr.prNumber}`} style={{textDecoration: "none"}}>
+      <Link to={`pulls/pullrequest/${pr.repoOwner}/${pr.repoName}/${pr.prNumber}`} style={{ textDecoration: "none" }}>
         <Group grow>
           <Box>
             <Text c="dimmed">{pr.repoName}</Text>
@@ -25,9 +25,7 @@ function PRCard({data: pr}: PullRequestCardProps) {
               <Text c="dimmed">Last updated at {pr.updatedAt}</Text>
             </Group>
             <Text>
-              #{pr.prNumber} opened by {" "}
-              <Avatar src={pr.authorAvatarURL} size="xs" display="inline-block" mx={4}/>
-              {" "}
+              #{pr.prNumber} opened by <Avatar src={pr.authorAvatarURL} size="xs" display="inline-block" mx={4} />{" "}
               {pr.author}
             </Text>
           </Box>
@@ -35,9 +33,7 @@ function PRCard({data: pr}: PullRequestCardProps) {
             {pr.labels.length === 0 ? (
               <></>
             ) : (
-              pr.labels.map((label) => (
-                <LabelButton key={label.id} label={label.name} size="md" color={label.color}/>
-              ))
+              pr.labels.map((label) => <LabelButton key={label.id} label={label.name} size="md" color={label.color} />)
             )}
           </Group>
         </Group>
@@ -46,12 +42,15 @@ function PRCard({data: pr}: PullRequestCardProps) {
         <Text c="dimmed">
           Includes {pr.comments} comments and {pr.files} files
         </Text>
-        {
-          opened ?
-            <Button leftSection={iconUp} variant="subtle" size="compact-sm" onClick={toggle}>Show Less</Button>
-            :
-            <Button leftSection={iconDown} variant="subtle" size="compact-sm" onClick={toggle}>Show More</Button>
-        }
+        {opened ? (
+          <Button leftSection={iconUp} variant="subtle" size="compact-sm" onClick={toggle}>
+            Show Less
+          </Button>
+        ) : (
+          <Button leftSection={iconDown} variant="subtle" size="compact-sm" onClick={toggle}>
+            Show More
+          </Button>
+        )}
       </Flex>
 
       <Collapse in={opened}>
@@ -77,21 +76,23 @@ function PRCard({data: pr}: PullRequestCardProps) {
             ))}
             )*/}
           </Text>
-          <Text c="green">+12 lines added
-            , <Text span c="red">-32 lines deleted</Text>
+          <Text c="green">
+            +12 lines added ,{" "}
+            <Text span c="red">
+              -32 lines deleted
+            </Text>
           </Text>
           <Group>
             <Text c="dimmed">Reviewers:</Text>
             <Text>
-              <Avatar src={UserLogo} size="xs" display="inline-block" mx={4}/>
+              <Avatar src={UserLogo} size="xs" display="inline-block" mx={4} />
               ece_kahraman
             </Text>
             <Text>
-              <Avatar src={UserLogo} size="xs" display="inline-block" mx={4}/>
+              <Avatar src={UserLogo} size="xs" display="inline-block" mx={4} />
               ayse_kelleci
             </Text>
           </Group>
-
         </Blockquote>
       </Collapse>
     </Card>

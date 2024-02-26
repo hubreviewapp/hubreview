@@ -1,8 +1,8 @@
-import {Text, Avatar, Group, Box, Combobox, rem, useCombobox} from "@mantine/core";
+import { Text, Avatar, Group, Box, Combobox, rem, useCombobox } from "@mantine/core";
 import classes from "../../styles/comment.module.css";
 import UserLogo from "../../assets/icons/user.png";
-import {IconDotsVertical} from "@tabler/icons-react";
-import {useState} from "react";
+import { IconDotsVertical } from "@tabler/icons-react";
+import { useState } from "react";
 
 interface CommentProps {
   id: number;
@@ -11,9 +11,8 @@ interface CommentProps {
   date: Date;
 }
 
-
 export function DiffComment({ author, text, date }: CommentProps) {
-  const settings = ['Copy Link', 'Quote Reply', 'Edit', 'Delete', 'Reply', 'Reference in new issue']
+  const settings = ["Copy Link", "Quote Reply", "Edit", "Delete", "Reply", "Reference in new issue"];
   const options = settings.map((item) => (
     <Combobox.Option value={item} key={item}>
       {item}
@@ -25,10 +24,7 @@ export function DiffComment({ author, text, date }: CommentProps) {
   });
   return (
     <>
-      <Box className={classes.comment}
-           style=
-             {{ position: 'relative',
-               width: '100%'}}>
+      <Box className={classes.comment} style={{ position: "relative", width: "100%" }}>
         <Group>
           <Combobox
             store={combobox}
@@ -43,8 +39,8 @@ export function DiffComment({ author, text, date }: CommentProps) {
             <Combobox.Target>
               <IconDotsVertical
                 onClick={() => combobox.toggleDropdown()}
-                style={{ width: rem(18), height: rem(18), marginLeft: 5, marginTop: 10}} />
-
+                style={{ width: rem(18), height: rem(18), marginLeft: 5, marginTop: 10 }}
+              />
             </Combobox.Target>
 
             <Combobox.Dropdown>
@@ -53,21 +49,19 @@ export function DiffComment({ author, text, date }: CommentProps) {
           </Combobox>
           <Avatar src={UserLogo} alt="author" radius="xl" />
           <Box display="flex">
-
             <Box>
               <Text fz="md"> {author}</Text>
               <Text fz="xs" c="dimmed">
-                {date.toLocaleString('en-US', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                  hour: 'numeric',
+                {date.toLocaleString("en-US", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                  hour: "numeric",
                 })}
               </Text>
             </Box>
-
           </Box>
-          <Text ml="20px">  {text} </Text>
+          <Text ml="20px"> {text} </Text>
         </Group>
       </Box>
     </>
@@ -75,4 +69,3 @@ export function DiffComment({ author, text, date }: CommentProps) {
 }
 
 export default DiffComment;
-

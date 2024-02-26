@@ -2,7 +2,7 @@
   position: relative;
   padding-top: 60px;
   border: 1px black !important;
-  background-color: #1B263B !important;
+  background-color: #1b263b !important;
 }
 
 .text-editor .text-editor__toolbar {
@@ -11,7 +11,9 @@
 }
 
 .text-editor__toolbar {
-  transition: opacity , transform 150ms ease-out;
+  transition:
+    opacity,
+    transform 150ms ease-out;
   position: absolute;
   opacity: 0;
   top: 0;
@@ -21,13 +23,15 @@
   transform: translateY(5px);
 }
 
-.text-editor__button, .text-editor__toolbar button {
-  background: #315A77;
-  border-color: #1B263B;
+.text-editor__button,
+.text-editor__toolbar button {
+  background: #315a77;
+  border-color: #1b263b;
 }
 
-.text-editor__button[disabled], .text-editor__toolbar button[disabled] {
-  background: #415A77;
+.text-editor__button[disabled],
+.text-editor__toolbar button[disabled] {
+  background: #415a77;
   border-color: gray;
 }
 

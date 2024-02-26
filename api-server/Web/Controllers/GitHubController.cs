@@ -1,4 +1,5 @@
 using System.Web;
+using CS.Core.Entities;
 using DotEnv.Core;
 using GitHubJwt;
 using Microsoft.AspNetCore.Http;
@@ -6,10 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Octokit;
-using CS.Core.Entities;
-using Octokit.GraphQL;
-using static Octokit.GraphQL.Variable;
-
 
 
 namespace CS.Web.Controllers;
@@ -267,12 +264,12 @@ public class GitHubController : ControllerBase
 
                     var repoPulls = await installationClient.PullRequest.GetAllForRepository(repository.Id);
 
-                    /*
-                    foreach( var repoPull in repoPulls ){
-                        var pull = await installationClient.PullRequest.Get(repository.Id, repoPull.Number);
-                        pullRequests.Add(pull);
-                    }
-                    */
+                    
+                    //foreach( var repoPull in repoPulls ){
+                    //    var pull = await installationClient.PullRequest.Get(repository.Id, repoPull.Number);
+                    //    pullRequests.Add(pull);
+                    //}
+                    
 
                     foreach (var repoPull in repoPulls)
                     {
@@ -660,6 +657,7 @@ public class GitHubController : ControllerBase
         var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
         var processedCommitIds = new HashSet<string>();
         var result = new List<CommitsList>([]);
+        string link = "https://github.com/"+owner+"/"+repoName+"/pull/"+prnumber+"/commits/";
 
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent();
@@ -712,6 +710,7 @@ public class GitHubController : ControllerBase
                             title = message[0],
                             description =  message[1],
                             author = commit.Author.Login,
+                            githubLink = link + commit.Sha
                         };
 
                     } else {
@@ -720,6 +719,7 @@ public class GitHubController : ControllerBase
                             title = commit.Commit.Message,
                             description = null,
                             author = commit.Author.Login,
+                            githubLink = link + commit.Sha
                         };
                     }
 
@@ -729,6 +729,7 @@ public class GitHubController : ControllerBase
                     
                 }
             }
+
         }
 
         return Ok(result);

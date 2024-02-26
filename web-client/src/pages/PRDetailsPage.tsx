@@ -2,26 +2,24 @@ import LabelButton from "../components/LabelButton";
 import ModifiedFilesTab from "../tabs/ModifiedFilesTab";
 import CommentsTab from "../tabs/CommentsTab.tsx";
 import CommitsTab from "../tabs/CommitsTab.tsx";
-import {Box, Badge, rem, Group, UnstyledButton} from "@mantine/core";
+import { Box, Badge, rem, Group, UnstyledButton } from "@mantine/core";
 import TabComp from "../components/Tab.tsx";
 import * as React from "react";
-import {IconGitPullRequest} from '@tabler/icons-react';
+import { IconGitPullRequest } from "@tabler/icons-react";
 import PrContextTab from "../tabs/PrContextTab.tsx";
-import {useNavigate} from "react-router-dom";
-import {useEffect, useState} from "react";
+import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import axios from "axios";
-import {
-  useParams
-} from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 function PRDetailsPage() {
-  const {owner, repoName, prnumber} = useParams();
+  const { owner, repoName, prnumber } = useParams();
   const [pullRequest, setPullRequest] = useState(null);
   const fetchPRInfo = async () => {
     try {
-      const res = await axios.get( `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}`,
-        { withCredentials: true}
-    );
+      const res = await axios.get(`http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}`, {
+        withCredentials: true,
+      });
       if (res) {
         setPullRequest(res.data);
       }
@@ -32,10 +30,8 @@ function PRDetailsPage() {
   };
 
   useEffect(() => {
-
     fetchPRInfo();
   }, []);
-
 
   const tabs = ["comments", "commits", "details", "modified files"];
 
@@ -53,56 +49,56 @@ function PRDetailsPage() {
   };
 
   return (
-    <div style={{textAlign: "left", marginLeft: 100}}>
+    <div style={{ textAlign: "left", marginLeft: 100 }}>
       <Group>
         <h2>
           {" "}
           {pullRequest?.title ?? "Loading"}
-          <span style={{color: "#778DA9"}}> #{prnumber}</span>
+          <span style={{ color: "#778DA9" }}> #{prnumber}</span>
         </h2>
         &ensp;&ensp;
         <Badge
           size="lg"
           color={pullRequest?.draft ? "#778DA9" : "green"}
           key={1}
-          rightSection={<IconGitPullRequest style={{width: rem(18), height: rem(18)}}/>}
+          rightSection={<IconGitPullRequest style={{ width: rem(18), height: rem(18) }} />}
         >
-          {
-            pullRequest?.draft ? "Draft" : "Open"
-          }
+          {pullRequest?.draft ? "Draft" : "Open"}
         </Badge>
       </Group>
       <Group mb="sm">
-        <span style={{color: "#778DA9"}}>Last updated </span>
-        <Group> {new Date(pullRequest?.updatedAt ?? "Loading").toDateString()}
-          <span style={{color: "#778DA9"}}>by </span>
+        <span style={{ color: "#778DA9" }}>Last updated </span>
+        <Group>
+          {" "}
+          {new Date(pullRequest?.updatedAt ?? "Loading").toDateString()}
+          <span style={{ color: "#778DA9" }}>by </span>
           <Group>
-            <UnstyledButton component="a" href={pullRequest?.user.htmlUrl}
-                            c="blue">{pullRequest?.user.login ?? "Loading"}</UnstyledButton>
+            <UnstyledButton component="a" href={pullRequest?.user.htmlUrl} c="blue">
+              {pullRequest?.user.login ?? "Loading"}
+            </UnstyledButton>
           </Group>
         </Group>
-        <span style={{color: "#778DA9"}}> at project</span>
-        <UnstyledButton component="a" href={pullRequest?.base.repository.htmlUrl} c="blue">{repoName}</UnstyledButton>
+        <span style={{ color: "#778DA9" }}> at project</span>
+        <UnstyledButton component="a" href={pullRequest?.base.repository.htmlUrl} c="blue">
+          {repoName}
+        </UnstyledButton>
       </Group>
-      <Box display="flex" style={{justifyContent: "flex-start"}}>
-        {
-          pullRequest?.labels.map(label => (
-              <LabelButton key={label.id} label={label.name} size="lg" color={label.color}/>
-            )
-          )
-        }
+      <Box display="flex" style={{ justifyContent: "flex-start" }}>
+        {pullRequest?.labels.map((label) => (
+          <LabelButton key={label.id} label={label.name} size="lg" color={label.color} />
+        ))}
       </Box>
+      <Box>
+        <br />
+        <TabComp tabs={tabs} updateTab={updateTab} />
+        <br />
         <Box>
-          <br/>
-          <TabComp tabs={tabs} updateTab={updateTab}/>
-          <br/>
-          <Box>
-            {currentTab === "modified files" && <ModifiedFilesTab/>}
-            {currentTab === "comments" && <CommentsTab pullRequest={pullRequest}/>}
-            {currentTab === "details" && <PrContextTab/>}
-            {currentTab === "commits" && <CommitsTab/>}
-          </Box>
+          {currentTab === "modified files" && <ModifiedFilesTab />}
+          {currentTab === "comments" && <CommentsTab pullRequest={pullRequest} />}
+          {currentTab === "details" && <PrContextTab />}
+          {currentTab === "commits" && <CommitsTab />}
         </Box>
+      </Box>
     </div>
   );
 }
