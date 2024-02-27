@@ -255,7 +255,7 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees }: PRDetailSid
         </Grid>
         {
           addedAssigneesList == 0 ?
-            <Text>No assignee added </Text> :
+            <Text c="dimmed">No assignee added </Text> :
             addedAssigneesList.map(itm => (
               <Group key={itm.id} style={{marginBottom: 5}}>
                 <Box>

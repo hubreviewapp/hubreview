@@ -74,13 +74,13 @@ function PRDetailsPage() {
           {new Date(pullRequest?.updatedAt ?? "Loading").toDateString()}
           <span style={{ color: "#778DA9" }}>by </span>
           <Group>
-            <UnstyledButton component="a" href={pullRequest?.user.htmlUrl} c="blue">
+            <UnstyledButton component="a" href={pullRequest?.user.htmlUrl} target="_blank" c="blue">
               {pullRequest?.user.login ?? "Loading"}
             </UnstyledButton>
           </Group>
         </Group>
         <span style={{ color: "#778DA9" }}> at project</span>
-        <UnstyledButton component="a" href={pullRequest?.base.repository.htmlUrl} c="blue">
+        <UnstyledButton component="a" href={pullRequest?.base.repository.htmlUrl} target="_blank" c="blue">
           {repoName}
         </UnstyledButton>
       </Group>
