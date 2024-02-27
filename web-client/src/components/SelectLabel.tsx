@@ -28,7 +28,9 @@ function SelectLabel({ githubAddedLabels }: SelectLabelProps) {
 
   useEffect(() => {
     if (githubAddedLabels.length != 0) {
-      const temp = githubAddedLabels.map((itm) => itm.name);
+      let temp = githubAddedLabels.map((itm) => itm.name);
+      temp = temp.filter(itm => !itm.includes("Priority"));
+
       setValue(temp);
     }
   }, [githubAddedLabels]);
