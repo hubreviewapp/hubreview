@@ -74,6 +74,18 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees }: PRDetailSid
     }
   }, [addedAssignees]);
 
+  useEffect(() => {
+    if (labels.length != 0) {
+
+      const temp = labels.find(itm => itm.name.includes("Priority"));
+      if(temp != undefined){
+        labels.filter(itm => itm !== temp)
+        setPriority(temp.name.slice("Priority: ".length));
+      }
+    }
+  }, [labels]);
+
+
   //HttpDelete("pullrequest/{owner}/{repoName}/{prnumber}/remove_reviewer/{reviewer}")]
   const deleteReviewer = (reviewer) => {
     const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/remove_reviewer/${reviewer}`;

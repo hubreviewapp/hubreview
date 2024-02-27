@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
+import PRSummaryBox from "../components/PRCreate/PRSummaryBox";
 
 function PRDetailsPage() {
   const { owner, repoName, prnumber } = useParams();
@@ -22,6 +23,7 @@ function PRDetailsPage() {
       });
       if (res) {
         setPullRequest(res.data);
+        console.log("fff", res.data);
       }
     } catch (error) {
       console.error("Error fetching PR info:", error);
@@ -83,11 +85,10 @@ function PRDetailsPage() {
           {repoName}
         </UnstyledButton>
       </Group>
-      <Box display="flex" style={{ justifyContent: "flex-start" }}>
-        {pullRequest?.labels.map((label) => (
-          <LabelButton key={label.id} label={label.name} size="lg" color={label.color} />
-        ))}
+      <Box w="50%">
+        <PRSummaryBox numFiles={pullRequest.changedFiles} numCommits={pullRequest.commits} addedLines={pullRequest.additions} deletedLines={pullRequest.deletions}/>
       </Box>
+
       <Box>
         <br />
         <TabComp tabs={tabs} updateTab={updateTab} />
