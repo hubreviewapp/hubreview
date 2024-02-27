@@ -212,10 +212,9 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
       <Grid.Col span={3}>
         <Box m="md">
           <PRDetailSideBar
-            assignees={[]}
             labels={pullRequest?.labels ?? []}
             addedReviewers={pullRequest?.requestedReviewers ?? []}
-          />
+           addedAssignees={pullRequest?.assignees ?? []}/>
         </Box>
       </Grid.Col>
     </Grid>

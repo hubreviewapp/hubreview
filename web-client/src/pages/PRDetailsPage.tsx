@@ -1,4 +1,3 @@
-import LabelButton from "../components/LabelButton";
 import ModifiedFilesTab from "../tabs/ModifiedFilesTab";
 import CommentsTab from "../tabs/CommentsTab.tsx";
 import CommitsTab from "../tabs/CommitsTab.tsx";
@@ -11,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
+import PRSummaryBox from "../components/PRCreate/PRSummaryBox";
 
 function PRDetailsPage() {
   const { owner, repoName, prnumber } = useParams();
@@ -22,6 +22,7 @@ function PRDetailsPage() {
       });
       if (res) {
         setPullRequest(res.data);
+        console.log("fff", res.data);
       }
     } catch (error) {
       console.error("Error fetching PR info:", error);
@@ -73,21 +74,20 @@ function PRDetailsPage() {
           {new Date(pullRequest?.updatedAt ?? "Loading").toDateString()}
           <span style={{ color: "#778DA9" }}>by </span>
           <Group>
-            <UnstyledButton component="a" href={pullRequest?.user.htmlUrl} c="blue">
+            <UnstyledButton component="a" href={pullRequest?.user.htmlUrl} target="_blank" c="blue">
               {pullRequest?.user.login ?? "Loading"}
             </UnstyledButton>
           </Group>
         </Group>
         <span style={{ color: "#778DA9" }}> at project</span>
-        <UnstyledButton component="a" href={pullRequest?.base.repository.htmlUrl} c="blue">
+        <UnstyledButton component="a" href={pullRequest?.base.repository.htmlUrl} target="_blank" c="blue">
           {repoName}
         </UnstyledButton>
       </Group>
-      <Box display="flex" style={{ justifyContent: "flex-start" }}>
-        {pullRequest?.labels.map((label) => (
-          <LabelButton key={label.id} label={label.name} size="lg" color={label.color} />
-        ))}
+      <Box w="50%">
+        <PRSummaryBox numFiles={pullRequest?.changedFiles ?? 0} numCommits={pullRequest?.commits ?? 0} addedLines={pullRequest?.additions ?? 0} deletedLines={pullRequest?.deletions ?? 0}/>
       </Box>
+
       <Box>
         <br />
         <TabComp tabs={tabs} updateTab={updateTab} />

@@ -19,7 +19,6 @@ import {
 } from "@mantine/core";
 import { IconInfoCircle, IconCirclePlus, IconCheck, IconXboxX } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
-import UserLogo4 from "../assets/icons/user4.png";
 import PriorityBadge, { PriorityBadgeLabel } from "./PriorityBadge";
 import { useParams } from "react-router-dom";
 import axios from "axios";
@@ -32,22 +31,23 @@ function barColor(capacity: number, waiting: number) {
 
 export interface PRDetailSideBarProps {
   addedReviewers: object[];
-  assignees: string[];
+  addedAssignees: object[];
   labels: object[];
 }
 
-function PRDetailSideBar({ addedReviewers, labels }: PRDetailSideBarProps) {
+function PRDetailSideBar({ addedReviewers, labels, addedAssignees }: PRDetailSideBarProps) {
   const { owner, repoName, prnumber } = useParams();
   const iconInfo = <IconInfoCircle style={{ width: rem(18), height: rem(18) }} />;
   const [contributors, setContributors] = useState([]);
   const [addedReviewer, setAddedReviewer] = useState<object[]>([]);
+  const [addedAssigneesList, setAddedAssigneesList] = useState<object[]>([]);
   const [priority, setPriority] = useState<PriorityBadgeLabel>(null);
   const [query, setQuery] = useState("");
   const filtered = contributors.filter((item) => item.login.toLowerCase().includes(query.toLowerCase()));
 
   const fetchContributors = async () => {
     try {
-      const res = await axios.get(`http://localhost:5018/api/github/GetReviewerSuggestions/${owner}/${repoName}/${prnumber}`, {
+      const res = await axios.get(`http://localhost:5018/api/github/GetPRReviewerSuggestion/${owner}/${repoName}/${prnumber}`, {
         withCredentials: true,
       });
 
@@ -67,6 +67,24 @@ function PRDetailSideBar({ addedReviewers, labels }: PRDetailSideBarProps) {
       setAddedReviewer(addedReviewers);
     }
   }, [addedReviewers]);
+
+  useEffect(() => {
+    if (addedAssignees.length != 0) {
+      setAddedAssigneesList(addedAssignees);
+    }
+  }, [addedAssignees]);
+
+  useEffect(() => {
+    if (labels.length != 0) {
+
+      const temp = labels.find(itm => itm.name.includes("Priority"));
+      if(temp != undefined){
+        labels.filter(itm => itm !== temp)
+        setPriority(temp.name.slice("Priority: ".length));
+      }
+    }
+  }, [labels]);
+
 
   //HttpDelete("pullrequest/{owner}/{repoName}/{prnumber}/remove_reviewer/{reviewer}")]
   const deleteReviewer = (reviewer) => {
@@ -96,6 +114,36 @@ function PRDetailSideBar({ addedReviewers, labels }: PRDetailSideBarProps) {
       .catch(function (error) {
         console.log(error);
       });
+  }
+
+  function handleChangePriority(value: PriorityBadgeLabel) {
+    // delete the priority label
+    if (value == null){
+      const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/${"Priority: ".concat(priority.toString())}`;
+      setPriority(value);
+      axios
+        .delete(apiUrl, {
+          withCredentials: true,
+          baseURL: "http://localhost:5018/api/github",
+        })
+        .then(function () {})
+        .catch(function (error) {
+          console.log(error);
+        });
+      return;
+    }
+    setPriority(value);
+    const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addLabel`;
+    axios
+      .post(apiUrl, ["Priority: ".concat(value.toString())], {
+        withCredentials: true,
+        baseURL: "http://localhost:5018/api/github",
+      })
+      .then(function () {})
+      .catch(function (error) {
+        console.log(error);
+      });
+
   }
 
   return (
@@ -200,26 +248,32 @@ function PRDetailSideBar({ addedReviewers, labels }: PRDetailSideBarProps) {
           </Grid.Col>
           <Grid.Col span={4}></Grid.Col>
           <Grid.Col span={2}>
-            <Tooltip label="assign up to 1 person" style={{ marginLeft: -50 }}>
+            <Tooltip label="assign up to 10 person" style={{ marginLeft: -50 }}>
               <Badge leftSection={iconInfo} variant="transparent" />
             </Tooltip>
           </Grid.Col>
         </Grid>
-        <Group style={{ marginBottom: 5 }}>
-          <Box>
-            <Avatar src={UserLogo4} size="sm" />
-          </Box>
-          <Text size="sm"> irem_aydın </Text>
-        </Group>
+        {
+          addedAssigneesList == 0 ?
+            <Text c="dimmed">No assignee added </Text> :
+            addedAssigneesList.map(itm => (
+              <Group key={itm.id} style={{marginBottom: 5}}>
+                <Box>
+                  <Avatar src={itm.avatarUrl} size="sm"/>
+                </Box>
+                <Text size="sm"> {itm.login} </Text>
+              </Group>
+            ))
+        }
 
         <Divider mt="md" />
         <Box mt="sm">
           <Select
             label="Assign Priority"
             value={priority}
-            onChange={(val) => setPriority(val as PriorityBadgeLabel)}
+            onChange={(val) => handleChangePriority(val as PriorityBadgeLabel)}
             placeholder="Assign Priority"
-            data={["High", "Medium", "Low"]}
+            data={["Critical", "High", "Medium", "Low"]}
             clearable
             mb="sm"
           />
