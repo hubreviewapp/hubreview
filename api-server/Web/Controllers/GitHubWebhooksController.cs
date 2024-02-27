@@ -117,8 +117,8 @@ namespace CS.Web.Controllers
                                 command.ExecuteNonQuery();
                             }
 
-                            string parameters = "(repoid, pullid, pullnumber, title, author, createdat, updatedat, comments, commits, changedfiles, additions, deletions, draft, state, reviewers, labels, pullurl)";
-                            string at_parameters = "(@repoid, @pullid, @pullnumber, @title, @author, @createdat, @updatedat, @comments, @commits, @changedfiles, @additions, @deletions, @draft, @state, @reviewers, @labels, @pullurl)";
+                            string parameters = "(repoid, pullid, reponame, pullnumber, title, author, createdat, updatedat, comments, commits, changedfiles, additions, deletions, draft, state, reviewers, labels, pullurl, repoowner)";
+                            string at_parameters = "(@repoid, @pullid, @reponame, @pullnumber, @title, @author, @createdat, @updatedat, @comments, @commits, @changedfiles, @additions, @deletions, @draft, @state, @reviewers, @labels, @pullurl, @repoowner)";
 
                             query = "INSERT INTO pullrequestinfo " + parameters + " VALUES " + at_parameters;
 
@@ -127,10 +127,15 @@ namespace CS.Web.Controllers
                             if( repoPulls != null ){
                                 using (var command = new NpgsqlCommand(query, connection))
                                 {
-                                    foreach (var repoPull in repoPulls){
+                                    foreach (var repoPull in repoPulls)
+                                    {
                                         var pull = await GetPullById(repository.id, repoPull.Number, sender);
+                                        if( pull == null ){
+                                            Console.WriteLine($"No pull request #{repoPull.Number} under {repository.full_name} is found.");
+                                        }
                                         command.Parameters.AddWithValue("@repoid", repository.id);
                                         command.Parameters.AddWithValue("@pullid", pull.Id);
+                                        command.Parameters.AddWithValue("@reponame", pull.Base.Repository.Name);
                                         command.Parameters.AddWithValue("@pullnumber", pull.Number);
                                         command.Parameters.AddWithValue("@title", pull.Title);
                                         command.Parameters.AddWithValue("@author", pull.User.Login);
@@ -145,10 +150,8 @@ namespace CS.Web.Controllers
                                         command.Parameters.AddWithValue("@state", pull.State.ToString());
                                         command.Parameters.AddWithValue("@reviewers", pull.RequestedReviewers.Select(r => r.Login).ToArray());
                                         command.Parameters.AddWithValue("@labels", pull.Labels.Select(l => l.Name).ToArray());
-
                                         command.Parameters.AddWithValue("@pullurl", pull.Url);
-
-                                        Console.WriteLine(query);
+                                        command.Parameters.AddWithValue("@repoowner", pull.Base.Repository.Owner.Login);
 
                                         command.ExecuteNonQuery();
                                     }

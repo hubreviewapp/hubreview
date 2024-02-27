@@ -261,6 +261,7 @@ public class GitHubController : ControllerBase
     [HttpGet("prs")]
     public async Task<ActionResult> getAllPRs()
     {
+        /*
         var generator = _getGitHubJwtGenerator();
         var jwtToken = generator.CreateEncodedJwtToken();
         var appClient = _getGitHubClient(jwtToken);
@@ -324,7 +325,65 @@ public class GitHubController : ControllerBase
             }
         }
 
-        return Ok(pullRequests);
+
+        return Ok(pullRequests);*/
+
+        // Get repositories from the database
+        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
+        string? userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        var userClient = GetNewClient(access_token);
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+
+        List<PRInfo> allPRs = new List<PRInfo>();
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        {
+            await connection.OpenAsync();
+
+            string selects = "pullid, title, pullnumber, author, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner";
+
+            string query = "SELECT "+selects+" FROM pullrequestinfo WHERE repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins)";// ORDER BY name ASC";
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        PRInfo pr = new PRInfo
+                        {
+                            Id = reader.GetInt64(0),
+                            Title = reader.GetString(1),
+                            PRNumber = reader.GetInt32(2),
+                            Author = reader.GetString(3),
+                            AuthorAvatarURL = "",
+                            CreatedAt = reader.GetString(4),
+                            UpdatedAt = reader.GetString(5),
+                            RepoName = reader.GetString(6),
+                            Additions = reader.GetInt32(7),
+                            Deletions = reader.GetInt32(8),
+                            Files = reader.GetInt32(9),
+                            Comments = reader.GetInt32(10),
+                            Labels = reader.GetFieldValue<string[]>(11),
+                            RepoOwner = reader.GetString(12)
+                        };
+                        allPRs.Add(pr);
+                    }
+                }
+            }
+
+            await connection.CloseAsync();
+        }
+
+        return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
     }
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}")]
