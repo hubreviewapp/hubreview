@@ -1,4 +1,3 @@
-import LabelButton from "../components/LabelButton";
 import ModifiedFilesTab from "../tabs/ModifiedFilesTab";
 import CommentsTab from "../tabs/CommentsTab.tsx";
 import CommitsTab from "../tabs/CommitsTab.tsx";
@@ -86,7 +85,7 @@ function PRDetailsPage() {
         </UnstyledButton>
       </Group>
       <Box w="50%">
-        <PRSummaryBox numFiles={pullRequest.changedFiles} numCommits={pullRequest.commits} addedLines={pullRequest.additions} deletedLines={pullRequest.deletions}/>
+        <PRSummaryBox numFiles={pullRequest?.changedFiles ?? 0} numCommits={pullRequest?.commits ?? 0} addedLines={pullRequest?.additions ?? 0} deletedLines={pullRequest?.deletions ?? 0}/>
       </Box>
 
       <Box>
