@@ -1,4 +1,5 @@
 using System.Web;
+using CS.Core.Configuration;
 using CS.Core.Entities;
 using DotEnv.Core;
 using GitHubJwt;
@@ -6,9 +7,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using Octokit;
 using Npgsql;
-using CS.Core.Configuration;
+using Octokit;
 
 
 
@@ -133,7 +133,7 @@ public class GitHubController : ControllerBase
 
     [HttpGet("getRepository")]
     public async Task<ActionResult> getRepository()
-    {   
+    {
         /*
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         string? userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
@@ -197,7 +197,7 @@ public class GitHubController : ControllerBase
             string query = "SELECT id, name, ownerLogin, created_at FROM repositoryinfo WHERE ownerLogin = @ownerLogin OR ownerLogin = ANY(@organizationLogins) ORDER BY name ASC";
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
-                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin") );
+                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
                 command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
@@ -246,12 +246,12 @@ public class GitHubController : ControllerBase
 
                 // Get the repository by ID
                 var repository = await installationClient.Repository.Get(id);
-                
+
                 // Now you have the repository object, you can use it or return it as needed
                 Console.WriteLine($"Repository: {repository.FullName}");
                 Console.WriteLine($"Repository URL: {repository.HtmlUrl}");
                 Console.WriteLine($"Repository Description: {repository.Description}");
-                
+
                 return repository;
             }
         }
@@ -289,12 +289,12 @@ public class GitHubController : ControllerBase
 
                     var repoPulls = await installationClient.PullRequest.GetAllForRepository(repository.Id);
 
-                    
+
                     //foreach( var repoPull in repoPulls ){
                     //    var pull = await installationClient.PullRequest.Get(repository.Id, repoPull.Number);
                     //    pullRequests.Add(pull);
                     //}
-                    
+
 
                     foreach (var repoPull in repoPulls)
                     {
@@ -322,7 +322,7 @@ public class GitHubController : ControllerBase
 
                 }
             }
-        } 
+        }
 
         return Ok(pullRequests);
     }
@@ -541,24 +541,24 @@ public class GitHubController : ControllerBase
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         await client.Issue.Comment.Create(owner, repoName, prnumber, commentBody);
-        return Ok($"Comment added to pull request #{prnumber} in repository {repoName}.");   
+        return Ok($"Comment added to pull request #{prnumber} in repository {repoName}.");
     }
-    
+
     [HttpPatch("pullrequest/{owner}/{repoName}/{comment_id}/updateComment")]
     public async Task<ActionResult> UpdateComment(string owner, string repoName, int comment_id, [FromBody] string commentBody)
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         await client.Issue.Comment.Update(owner, repoName, comment_id, commentBody);
-        return Ok($"Comment updated."); 
-    } 
+        return Ok($"Comment updated.");
+    }
 
     [HttpDelete("pullrequest/{owner}/{repoName}/{comment_id}/deleteComment")]
     public async Task<ActionResult> DeleteComment(string owner, string repoName, int comment_id)
     {
         var client = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         await client.Issue.Comment.Delete(owner, repoName, comment_id);
-        return Ok($"Comment deleted."); 
-    } 
+        return Ok($"Comment deleted.");
+    }
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_comments")]
     public async Task<ActionResult> getCommentsOnPR(string owner, string repoName, int prnumber)
@@ -614,7 +614,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_review_comments")]
-    public async Task<ActionResult> getRevCommentsOnPR( string owner, string repoName, int prnumber)
+    public async Task<ActionResult> getRevCommentsOnPR(string owner, string repoName, int prnumber)
     {
         var appClient = GetNewClient();
         var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
@@ -667,13 +667,14 @@ public class GitHubController : ControllerBase
     }
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_commits")]
-    public async Task<ActionResult> getCommits(string owner, string repoName, int prnumber) {
+    public async Task<ActionResult> getCommits(string owner, string repoName, int prnumber)
+    {
         var appClient = GetNewClient();
         var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
         var processedCommitIds = new HashSet<string>();
         var result = new List<CommitsList>([]);
-        string link = "https://github.com/"+owner+"/"+repoName+"/pull/"+prnumber+"/commits/";
+        string link = "https://github.com/" + owner + "/" + repoName + "/pull/" + prnumber + "/commits/";
 
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent();
@@ -688,7 +689,7 @@ public class GitHubController : ControllerBase
                 var installationClient = GetNewClient(response.Token);
 
                 var commits = await installationClient.PullRequest.Commits(owner, repoName, prnumber);
-                
+
                 CommitInfo obj;
 
                 foreach (var commit in commits)
@@ -698,9 +699,9 @@ public class GitHubController : ControllerBase
                         continue;
                     }
 
-                    bool dateExists = result.Any(temp => temp.date == commit.Commit.Author.Date.ToString("yyyy/MM/dd") );
+                    bool dateExists = result.Any(temp => temp.date == commit.Commit.Author.Date.ToString("yyyy/MM/dd"));
 
-                    if( !dateExists )
+                    if (!dateExists)
                     {
                         result.Add(new CommitsList
                         {
@@ -709,20 +710,23 @@ public class GitHubController : ControllerBase
                         });
                     }
 
-                    int indexOfDate = result.FindIndex(temp => temp.date == commit.Commit.Author.Date.ToString("yyyy/MM/dd") );
+                    int indexOfDate = result.FindIndex(temp => temp.date == commit.Commit.Author.Date.ToString("yyyy/MM/dd"));
 
-                    if ( commit.Commit.Message.Contains('\n') ){
+                    if (commit.Commit.Message.Contains('\n'))
+                    {
                         string split_here = "\n\n";
                         string[] message = commit.Commit.Message.Split(split_here);
                         obj = new CommitInfo
                         {
                             title = message[0],
-                            description =  message[1],
+                            description = message[1],
                             author = commit.Author.Login,
                             githubLink = link + commit.Sha
                         };
 
-                    } else {
+                    }
+                    else
+                    {
                         obj = new CommitInfo
                         {
                             title = commit.Commit.Message,
@@ -734,8 +738,8 @@ public class GitHubController : ControllerBase
 
                     result[indexOfDate].commits?.Add(obj);
 
-                    processedCommitIds.Add(commit.NodeId);                    
-                    
+                    processedCommitIds.Add(commit.NodeId);
+
                 }
             }
 
