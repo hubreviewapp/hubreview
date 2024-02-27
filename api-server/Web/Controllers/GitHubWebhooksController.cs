@@ -170,10 +170,18 @@ namespace CS.Web.Controllers
 
                             connection.Open();
 
-                            string query = "DELETE FROM repositoryinfo WHERE id = @id";
+                            string query1 = "DELETE FROM repositoryinfo WHERE id = @id";
+                            string query2 = "DELETE FROM pullrequestinfo WHERE repoid = @id";
 
                             // GetRepository by id lazım...
-                            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                            using (NpgsqlCommand command = new NpgsqlCommand(query1, connection))
+                            {
+                                command.Parameters.AddWithValue("@id", repository.id);
+
+                                command.ExecuteNonQuery();
+                            }
+
+                             using (NpgsqlCommand command = new NpgsqlCommand(query2, connection))
                             {
                                 command.Parameters.AddWithValue("@id", repository.id);
 
