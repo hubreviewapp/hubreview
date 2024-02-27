@@ -17,7 +17,8 @@ interface CommentProps {
   association: string;
 }
 
-const comments = [
+const comments:  {author: string, text: string, date: Date, isResolved: boolean, isAIGenerated: boolean}[] = [
+  /*
   {
     author: "irem_aydın",
     text:
@@ -58,6 +59,8 @@ const comments = [
     isResolved: false,
     isAIGenerated: false,
   },
+    
+   */
 ];
 export interface CommentsTabProps {
   pullRequest: object[];
