@@ -80,6 +80,13 @@ public class GitHubController : ControllerBase
     [HttpGet("acquireToken")]
     public async Task<ActionResult> acquireToken(string code)
     {
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        using var connection = new NpgsqlConnection(connectionString);
+
+        connection.Open();
+
+
         using (var httpClient = new HttpClient())
         {
             var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
@@ -97,13 +104,72 @@ public class GitHubController : ControllerBase
             var parsedResponse = HttpUtility.ParseQueryString(responseContent);
             var access_token = parsedResponse["access_token"];
 
-            _httpContextAccessor?.HttpContext?.Session.SetString("AccessToken", access_token);
-
             GitHubClient userClient = GetNewClient(access_token);
             var user = await userClient.User.Current();
+
+            string exists = "SELECT EXISTS (SELECT 1 FROM userinfo WHERE login = @login )";
+            bool doesExist = false;
+            using (NpgsqlCommand command = new NpgsqlCommand(exists, connection))
+            {
+                command.Parameters.AddWithValue("@login", user.Login);
+                var reader = command.ExecuteReader();
+                while(reader.Read())
+                { 
+                    doesExist = reader.GetBoolean(0);
+                }
+
+            }
+
+            await connection.CloseAsync();
+
+            if ( !doesExist )
+            {
+                var orgs = await userClient.Organization.GetAllForCurrent();
+                var orgList = orgs.Select(o => o.Login).ToArray();
+                
+                string parameters = "(userid, login, fullname, email, avatarurl, profileurl, organizations, workload, token)";
+                string at_parameters = "(@userid, @login, @fullname, @email, @avatarurl, @profileurl, @organizations, @workload, @token)";
+                string query = "INSERT INTO userinfo " + parameters + " VALUES " + at_parameters;
+
+                connection.Open();
+
+                using (NpgsqlCommand command2 = new NpgsqlCommand(query, connection))
+                {
+                    command2.Parameters.AddWithValue("@userid", user.Id);
+                    command2.Parameters.AddWithValue("@login", user.Login);
+                    command2.Parameters.AddWithValue("@fullname", user.Name);
+                    if (user.Email != null)
+                    {
+                        command2.Parameters.AddWithValue("@email", user.Email);
+                    }
+                    else
+                    {
+                        command2.Parameters.AddWithValue("@email", DBNull.Value);
+                    }
+                    command2.Parameters.AddWithValue("@avatarurl", user.AvatarUrl);
+                    command2.Parameters.AddWithValue("@profileurl", user.Url);
+                    command2.Parameters.AddWithValue("@organizations", orgList);
+                    command2.Parameters.AddWithValue("@workload", 0);
+                    if (access_token != null)
+                    {
+                        command2.Parameters.AddWithValue("@token", access_token);
+                    }
+                    else
+                    {
+                        command2.Parameters.AddWithValue("@token", DBNull.Value);
+                    }
+
+
+                    command2.ExecuteNonQuery();
+                }
+
+                await connection.CloseAsync();
+            }
+
             _httpContextAccessor?.HttpContext?.Session.SetString("UserLogin", user.Login);
             _httpContextAccessor?.HttpContext?.Session.SetString("UserAvatarURL", user.AvatarUrl);
             _httpContextAccessor?.HttpContext?.Session.SetString("UserName", user.Name);
+            _httpContextAccessor?.HttpContext?.Session.SetString("AccessToken", access_token);
 
             return Redirect($"http://localhost:5173");
         }

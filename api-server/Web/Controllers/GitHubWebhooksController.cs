@@ -1,7 +1,9 @@
 using System;
 using System.IO;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 using CS.Core.Configuration;
 using CS.Core.Entities;
 using CS.Core.Entities.Payloads;
@@ -32,7 +34,7 @@ namespace CS.Web.Controllers
                     }
             );
             string jwtToken = generator.CreateEncodedJwtToken();
-            _client = new GitHubClient(new ProductHeaderValue("HubReviewApp"))
+            _client = new GitHubClient(new Octokit.ProductHeaderValue("HubReviewApp"))
             {
                 Credentials = new Credentials(jwtToken, AuthenticationType.Bearer)
             };
@@ -79,9 +81,54 @@ namespace CS.Web.Controllers
                 case "installation":
                     //InstallationPayload
                     var installationPayload = JsonConvert.DeserializeObject<InstallationPayload>(requestBody);
+                    if(installationPayload.action == "created"){
+
+                        Console.WriteLine("\ninstall");
+                        Console.WriteLine("a");
+                        var response = await _client.GitHubApps.CreateInstallationToken(installationPayload.installation.id);
+
+                        Console.WriteLine("a");
+                        var installationClient = GetNewClient(response.Token);
+                        Console.WriteLine("a");
+    
+
+                        
+                    
+                        // Get organizations for the current user
+                        var organizations = await installationClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+                        Console.WriteLine("a");
+                        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+                        Console.WriteLine(string.Join(",", organizationLogins));
+                        //var content = await response;
+                        /*
+                        connection.Open();
+
+                        string parameters = "(userid, login, name, email, avatarurl, profileurl, organizations, workload)";
+                        string at_parameters = "(@userid, @login, @name, @email, @avatarurl, @profileurl, @organizations, @workload)";
+                        string query = "INSERT INTO userinfo " + parameters + " VALUES " + at_parameters;
+
+                        using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                        {
+                            command.Parameters.AddWithValue("@userid", installationPayload.requester.id);
+                            command.Parameters.AddWithValue("@login", installationPayload.requester.login);
+                            command.Parameters.AddWithValue("@name", installationPayload.requester.name);
+                            command.Parameters.AddWithValue("@email", installationPayload.requester.email);
+                            command.Parameters.AddWithValue("@avatarurl", installationPayload.requester.avatar_url);
+                            command.Parameters.AddWithValue("@profileurl", installationPayload.requester.url);
+                            command.Parameters.AddWithValue("@organizations", null);
+                            command.Parameters.AddWithValue("@workload", 0);
+
+                            command.ExecuteNonQuery();
+                        }*/
+                        
+                    }
+                    else if (installationPayload.action == "deleted")
+                    {
+                        Console.WriteLine("\nuninstall");
+                    }
                     //TO DO
                     break;
-                case "installation_repositories":
+                case "installation_repositories": // add/remove repo and prs from database on (un)installation of a repo
                     //InstallationRepositoriesPayload
                     var installationRepositoriesPayload = JsonConvert.DeserializeObject<InstallationRepositoriesPayload>(requestBody);
                     if (installationRepositoriesPayload.action == "added")
@@ -211,8 +258,6 @@ namespace CS.Web.Controllers
                     break;
                 case "pull_request":
                     var pullRequestPayload = JsonConvert.DeserializeObject<PullRequestPayload>(requestBody);
-
-                    Console.WriteLine("aa");
                     //TO DO
                     break;
                 case "pull_request_review_comment":
@@ -232,6 +277,18 @@ namespace CS.Web.Controllers
                     var repositoryPayload = JsonConvert.DeserializeObject<RepositoryPayload>(requestBody);
                     //TO DO
                     break;
+                case "github_app_authorization":
+                    Console.WriteLine("auth revoked");
+                    break;
+                case "personal_access_token_request":
+                    Console.WriteLine("\ntoken request\n");
+                    var patRequestPayload = JsonConvert.DeserializeObject<TokenRequestPayload>(requestBody);
+                    if( patRequestPayload.action == "created")
+                    {
+                        Console.WriteLine("\ntoken request\n");
+                        Console.WriteLine(requestBody);
+                    }
+                    break;
             }
 
             return Ok();
@@ -240,7 +297,7 @@ namespace CS.Web.Controllers
 
         private static GitHubClient _getGitHubClient(string token)
         {
-            return new GitHubClient(new ProductHeaderValue("HubReviewApp"))
+            return new GitHubClient(new Octokit.ProductHeaderValue("HubReviewApp"))
             {
                 Credentials = new Credentials(token, AuthenticationType.Bearer)
             };
@@ -331,6 +388,7 @@ namespace CS.Web.Controllers
             }
             return null;
         }
+
 
     }
 }
