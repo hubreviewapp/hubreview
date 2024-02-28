@@ -1,6 +1,6 @@
 using System.Web;
-using CS.Core.Entities;
 using CS.Core.Configuration;
+using CS.Core.Entities;
 using DotEnv.Core;
 using GitHubJwt;
 using Microsoft.AspNetCore.Http;
@@ -19,7 +19,8 @@ public class DbConnectionController : ControllerBase
 {
 
     [HttpGet("connect")]
-    public async Task<ActionResult> connect(){
+    public async Task<ActionResult> connect()
+    {
 
 
         var config = new CoreConfiguration();
