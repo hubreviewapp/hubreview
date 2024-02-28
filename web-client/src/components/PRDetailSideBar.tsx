@@ -29,38 +29,65 @@ function barColor(capacity: number, waiting: number) {
   return workload > 80 ? "red" : workload > 60 ? "orange" : workload > 40 ? "yellow" : "green";
 }
 
+export interface Contributor {
+  id: string;
+  login: string;
+  avatarUrl: string;
+  waiting: number;
+  capacity: number;
+}
+
+export interface Label {
+  name: string;
+}
+
+export interface Reviewer {
+  id: string;
+  login: string;
+  avatarUrl: string;
+}
+
+export interface Assignee {
+  id: string;
+  login: string;
+  avatarUrl: string;
+}
+
 export interface PRDetailSideBarProps {
-  addedReviewers: object[];
-  addedAssignees: object[];
-  labels: object[];
+  addedReviewers: Reviewer[];
+  addedAssignees: Assignee[];
+  labels: Label[];
 }
 
 function PRDetailSideBar({ addedReviewers, labels, addedAssignees }: PRDetailSideBarProps) {
   const { owner, repoName, prnumber } = useParams();
   const iconInfo = <IconInfoCircle style={{ width: rem(18), height: rem(18) }} />;
-  const [contributors, setContributors] = useState([]);
-  const [addedReviewer, setAddedReviewer] = useState<object[]>([]);
-  const [addedAssigneesList, setAddedAssigneesList] = useState<object[]>([]);
+  const [contributors, setContributors] = useState<Contributor[]>([]);
+  const [addedReviewer, setAddedReviewer] = useState<Reviewer[]>([]);
+  const [addedAssigneesList, setAddedAssigneesList] = useState<Assignee[]>([]);
   const [priority, setPriority] = useState<PriorityBadgeLabel>(null);
   const [query, setQuery] = useState("");
   const filtered = contributors.filter((item) => item.login.toLowerCase().includes(query.toLowerCase()));
 
-  const fetchContributors = async () => {
-    try {
-      const res = await axios.get(`http://localhost:5018/api/github/GetPRReviewerSuggestion/${owner}/${repoName}/${prnumber}`, {
-        withCredentials: true,
-      });
-
-      if (res.data) {
-        setContributors(res.data);
-      }
-    } catch (error) {
-      console.error("Error fetching contributors:", error);
-    }
-  };
   useEffect(() => {
+    const fetchContributors = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:5018/api/github/GetPRReviewerSuggestion/${owner}/${repoName}/${prnumber}`,
+          {
+            withCredentials: true,
+          },
+        );
+
+        if (res.data) {
+          setContributors(res.data);
+        }
+      } catch (error) {
+        console.error("Error fetching contributors:", error);
+      }
+    };
     fetchContributors();
-  }, []);
+  }, [owner, prnumber, repoName]);
 
   useEffect(() => {
     if (addedReviewers.length != 0) {
@@ -76,18 +103,16 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees }: PRDetailSid
 
   useEffect(() => {
     if (labels.length != 0) {
-
-      const temp = labels.find(itm => itm.name.includes("Priority"));
-      if(temp != undefined){
-        labels.filter(itm => itm !== temp)
-        setPriority(temp.name.slice("Priority: ".length));
+      const temp = labels.find((itm) => itm.name.includes("Priority"));
+      if (temp != undefined) {
+        labels.filter((itm) => itm !== temp);
+        setPriority(temp.name.slice("Priority: ".length) as PriorityBadgeLabel);
       }
     }
   }, [labels]);
 
-
   //HttpDelete("pullrequest/{owner}/{repoName}/{prnumber}/remove_reviewer/{reviewer}")]
-  const deleteReviewer = (reviewer) => {
+  const deleteReviewer = (reviewer: string) => {
     const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/remove_reviewer/${reviewer}`;
     setAddedReviewer(addedReviewer.filter((item) => item.login.toString() != reviewer));
     axios
@@ -102,7 +127,7 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees }: PRDetailSid
   };
 
   // [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/request_review")]
-  function handleAddReviewer(reviewer) {
+  function handleAddReviewer(reviewer: Reviewer) {
     setAddedReviewer([reviewer, ...addedReviewer]);
     const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/request_review`;
     axios
@@ -118,18 +143,23 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees }: PRDetailSid
 
   function handleChangePriority(value: PriorityBadgeLabel) {
     // delete the priority label
-    if (value == null){
-      const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/${"Priority: ".concat(priority.toString())}`;
+    if (value == null) {
+      if (priority) {
+        const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/${"Priority: ".concat(
+          priority.toString(),
+        )}`;
+        axios
+          .delete(apiUrl, {
+            withCredentials: true,
+            baseURL: "http://localhost:5018/api/github",
+          })
+          .then(function () {})
+          .catch(function (error) {
+            console.log(error);
+          });
+      }
+
       setPriority(value);
-      axios
-        .delete(apiUrl, {
-          withCredentials: true,
-          baseURL: "http://localhost:5018/api/github",
-        })
-        .then(function () {})
-        .catch(function (error) {
-          console.log(error);
-        });
       return;
     }
     setPriority(value);
@@ -143,7 +173,6 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees }: PRDetailSid
       .catch(function (error) {
         console.log(error);
       });
-
   }
 
   return (
@@ -253,18 +282,18 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees }: PRDetailSid
             </Tooltip>
           </Grid.Col>
         </Grid>
-        {
-          addedAssigneesList == 0 ?
-            <Text c="dimmed">No assignee added </Text> :
-            addedAssigneesList.map(itm => (
-              <Group key={itm.id} style={{marginBottom: 5}}>
-                <Box>
-                  <Avatar src={itm.avatarUrl} size="sm"/>
-                </Box>
-                <Text size="sm"> {itm.login} </Text>
-              </Group>
-            ))
-        }
+        {addedAssigneesList.length === 0 ? (
+          <Text c="dimmed">No assignee added </Text>
+        ) : (
+          addedAssigneesList.map((itm) => (
+            <Group key={itm.id} style={{ marginBottom: 5 }}>
+              <Box>
+                <Avatar src={itm.avatarUrl} size="sm" />
+              </Box>
+              <Text size="sm"> {itm.login} </Text>
+            </Group>
+          ))
+        )}
 
         <Divider mt="md" />
         <Box mt="sm">
@@ -280,7 +309,7 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees }: PRDetailSid
           <PriorityBadge label={priority} size="md" />
         </Box>
         <Divider mt="md" />
-        <SelectLabel githubAddedLabels={labels} />
+        <SelectLabel githubAddedLabels={labels.map(({ name }) => ({ name, key: name, color: "ffffff" }))} />
       </Paper>
     </Box>
   );

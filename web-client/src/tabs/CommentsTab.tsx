@@ -6,14 +6,15 @@ import { Box, Text, Accordion, Grid, Select } from "@mantine/core";
 import PRDetailSideBar from "../components/PRDetailSideBar";
 import axios from "axios";
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { PullRequest } from "../pages/PRDetailsPage.tsx";
 
 interface CommentProps {
   id: number;
   author: string;
   body: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
   association: string;
 }
 
@@ -60,7 +61,7 @@ const comments = [
   },
 ];
 export interface CommentsTabProps {
-  pullRequest: object[];
+  pullRequest: PullRequest;
 }
 //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_comments")]
 function CommentsTab({ pullRequest }: CommentsTabProps) {
@@ -92,23 +93,23 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
   const [apiComments, setApiComments] = useState<CommentProps[] | []>([]);
 
   //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_comments")]
-  const fetchPRComments = async () => {
+  const fetchPRComments = useCallback(async () => {
     try {
       const res = await axios.get(
         `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/get_comments`,
         { withCredentials: true },
       );
       if (res) {
-        setApiComments(res.data);
+        setApiComments({ ...res.data, updatedAt: res.data.updated_at, createdAt: res.data.created_at });
       }
     } catch (error) {
       console.error("Error fetching PR comments:", error);
     }
-  };
+  }, [owner, repoName, prnumber, setApiComments]);
 
   useEffect(() => {
     fetchPRComments();
-  }, []);
+  }, [fetchPRComments]);
 
   //[HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addComment")]
   function addPRComment(content: string) {
@@ -171,7 +172,7 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
               id={comment.id}
               author={comment.author}
               text={comment.body}
-              date={new Date(comment.updated_at)}
+              date={new Date(comment.updatedAt)}
               isResolved={false}
               isAIGenerated={false}
               deletePRComment={() => deletePRComment(comment.id)}
@@ -214,7 +215,8 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
           <PRDetailSideBar
             labels={pullRequest?.labels ?? []}
             addedReviewers={pullRequest?.requestedReviewers ?? []}
-           addedAssignees={pullRequest?.assignees ?? []}/>
+            addedAssignees={pullRequest?.assignees ?? []}
+          />
         </Box>
       </Grid.Col>
     </Grid>

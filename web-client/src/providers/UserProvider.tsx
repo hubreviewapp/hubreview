@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ReactNode } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import UserContext, { User } from "./contexts.tsx"; // Assuming you have defined the User interface
 import axios from "axios";
 
@@ -6,7 +6,7 @@ interface UserProviderProps {
   children: ReactNode;
 }
 
-const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
+function UserProvider({ children }: UserProviderProps) {
   const [user, setUser] = useState<User | undefined>(undefined);
 
   const setUserInfo = (userInfo: User) => {
@@ -36,6 +36,6 @@ const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   }
 
   return <UserContext.Provider value={user}>{children}</UserContext.Provider>;
-};
+}
 
 export default UserProvider;

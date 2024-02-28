@@ -1,12 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { PillsInput, Pill, Combobox, CheckIcon, Group, useCombobox, Badge } from "@mantine/core";
-import LabelButton from "./LabelButton";
+import LabelButton, { HubReviewLabelType } from "./LabelButton";
 import axios from "axios";
 import { useParams } from "react-router-dom";
-
-export interface SelectLabelProps {
-  githubAddedLabels: object[];
-}
 
 const hubReviewLabels = [
   { name: "bug", color: "d73a4a", key: "bug" },
@@ -15,6 +11,11 @@ const hubReviewLabels = [
   { name: "question", color: "0075ca", key: "question" },
   { name: "suggestion", color: "28a745", key: "suggestion" },
 ];
+export type HubReviewLabel = (typeof hubReviewLabels)[0];
+
+export interface SelectLabelProps {
+  githubAddedLabels: HubReviewLabel[];
+}
 
 function SelectLabel({ githubAddedLabels }: SelectLabelProps) {
   const combobox = useCombobox({
@@ -23,20 +24,15 @@ function SelectLabel({ githubAddedLabels }: SelectLabelProps) {
   });
 
   const [search, setSearch] = useState("");
-  const [value, setValue] = useState<string[]>([]);
+  const [value, setValue] = useState<HubReviewLabel[]>(githubAddedLabels.filter((l) => !l.name.includes("Priority")));
   const { owner, repoName, prnumber } = useParams();
 
-  useEffect(() => {
-    if (githubAddedLabels.length != 0) {
-      let temp = githubAddedLabels.map((itm) => itm.name);
-      temp = temp.filter(itm => !itm.includes("Priority"));
-
-      setValue(temp);
-    }
-  }, [githubAddedLabels]);
-
   function handleValueSelect(val: string) {
-    setValue((current) => (current.includes(val) ? current.filter((v) => v !== val) : [...current, val]));
+    setValue((current) =>
+      current.find((v) => v.name === val) !== undefined
+        ? current.filter((v) => v.name !== val)
+        : [...current, { name: val, key: val, color: "ffffff" }],
+    );
 
     const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addLabel`;
     axios
@@ -51,7 +47,7 @@ function SelectLabel({ githubAddedLabels }: SelectLabelProps) {
   }
 
   function handleValueRemove(val: string) {
-    setValue((current) => current.filter((v) => v !== val));
+    setValue((current) => current.filter((v) => v.name !== val));
     // [HttpDelete("pullrequest/{owner}/{repoName}/{prnumber}/{labelName}")]
 
     const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/${val}`;
@@ -66,17 +62,17 @@ function SelectLabel({ githubAddedLabels }: SelectLabelProps) {
       });
   }
   const values = value.map((item) => (
-    <Pill key={item} withRemoveButton onRemove={() => handleValueRemove(item)}>
-      {item}
+    <Pill key={item.key} withRemoveButton onRemove={() => handleValueRemove(item.name)}>
+      {item.name}
     </Pill>
   ));
 
   const options = hubReviewLabels
     .filter((item) => item.name.toLowerCase().includes(search.trim().toLowerCase()))
     .map((item) => (
-      <Combobox.Option value={item.name} key={item.name} active={value.includes(item.name)}>
+      <Combobox.Option value={item.name} key={item.name} active={value.find((v) => v.name === item.name) !== undefined}>
         <Group gap="sm">
-          {value.includes(item.name) ? <CheckIcon size={12} /> : null}
+          {value.find((v) => v.name === item.name) !== undefined ? <CheckIcon size={12} /> : null}
           <span>{item.name}</span>
         </Group>
       </Combobox.Option>
@@ -84,7 +80,7 @@ function SelectLabel({ githubAddedLabels }: SelectLabelProps) {
 
   return (
     <div>
-      <Combobox store={combobox} onOptionSubmit={handleValueSelect} label="Add Label">
+      <Combobox store={combobox} onOptionSubmit={handleValueSelect}>
         <Combobox.DropdownTarget>
           <PillsInput onClick={() => combobox.openDropdown()}>
             <Pill.Group>
@@ -103,7 +99,7 @@ function SelectLabel({ githubAddedLabels }: SelectLabelProps) {
                   onKeyDown={(event) => {
                     if (event.key === "Backspace" && search.length === 0) {
                       event.preventDefault();
-                      handleValueRemove(value[value.length - 1]);
+                      handleValueRemove(value[value.length - 1].name);
                     }
                   }}
                 />
@@ -123,7 +119,7 @@ function SelectLabel({ githubAddedLabels }: SelectLabelProps) {
         {value.length == 0 ? (
           <Badge variant="light">No Label Added</Badge>
         ) : (
-          value.map((itm) => <LabelButton key={itm} label={itm} size="md" />)
+          value.map((itm) => <LabelButton key={itm.key} label={itm.name as HubReviewLabelType} size="md" />)
         )}
       </Group>
     </div>

@@ -1,10 +1,11 @@
-import { Box, Button, Divider, Group, Text, ActionIcon, Paper, Select, Checkbox } from "@mantine/core";
+import { Box, Group, Text, ActionIcon } from "@mantine/core";
 import { useHover } from "@mantine/hooks";
 import { IconPlus } from "@tabler/icons-react";
 import { useState } from "react";
-import { DiffLine, DiffLineType, FileDiff, ReviewComment } from "../../tabs/ModifiedFilesTab";
+import { DiffLine, DiffLineType, FileDiff } from "../../utility/diff-types";
 import DiffCommentEditor from "./DiffCommentEditor";
 import DiffComment from "../DiffComment";
+import { ReviewComment } from "../../tabs/ModifiedFilesTab";
 
 export interface DiffLineMarkerViewProps {
   diffLine: DiffLine;
