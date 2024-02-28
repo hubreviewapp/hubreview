@@ -1,4 +1,4 @@
-import { Group, rem, Text} from "@mantine/core";
+import { Group, rem, Text } from "@mantine/core";
 import { IconFile, IconGitCommit, IconPlusMinus } from "@tabler/icons-react";
 
 export interface PRSummaryBoxProps {
@@ -27,16 +27,8 @@ function PRSummaryBox({ numFiles, numCommits, deletedLines, addedLines }: PRSumm
       </Group>
       <Group gap="xs">
         <IconPlusMinus style={{ width: rem(18), height: rem(18) }} />
-        <Text c="green">
-          +{
-          addedLines
-        }
-        </Text>
-        <Text c="red">
-          -{
-          deletedLines
-        }
-        </Text>
+        <Text c="green">+{addedLines}</Text>
+        <Text c="red">-{deletedLines}</Text>
       </Group>
     </Group>
   );

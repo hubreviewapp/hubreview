@@ -11,28 +11,50 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import PRSummaryBox from "../components/PRCreate/PRSummaryBox";
+import { Assignee, Label, Reviewer } from "../components/PRDetailSideBar.tsx";
+
+export interface PullRequest {
+  title: string;
+  draft: boolean;
+  updatedAt: string;
+  user: {
+    htmlUrl: string;
+    login: string;
+  };
+  changedFiles: number;
+  additions: number;
+  deletions: number;
+  commits: number;
+  base: {
+    repository: {
+      htmlUrl: string;
+    };
+  };
+  labels: Label[];
+  requestedReviewers: Reviewer[];
+  assignees: Assignee[];
+}
 
 function PRDetailsPage() {
   const { owner, repoName, prnumber } = useParams();
-  const [pullRequest, setPullRequest] = useState(null);
-  const fetchPRInfo = async () => {
-    try {
-      const res = await axios.get(`http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}`, {
-        withCredentials: true,
-      });
-      if (res) {
-        setPullRequest(res.data);
-        console.log("fff", res.data);
-      }
-    } catch (error) {
-      console.error("Error fetching PR info:", error);
-      setTimeout(fetchPRInfo, 1000); // Retry after 3 seconds
-    }
-  };
+  const [pullRequest, setPullRequest] = useState<PullRequest | null>(null);
 
   useEffect(() => {
+    const fetchPRInfo = async () => {
+      try {
+        const res = await axios.get(`http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}`, {
+          withCredentials: true,
+        });
+        if (res) {
+          setPullRequest(res.data);
+          console.log("fff", res.data);
+        }
+      } catch (error) {
+        console.error("Error fetching PR info:", error);
+      }
+    };
     fetchPRInfo();
-  }, []);
+  }, [owner, prnumber, repoName]);
 
   const tabs = ["comments", "commits", "details", "modified files"];
 
@@ -85,7 +107,12 @@ function PRDetailsPage() {
         </UnstyledButton>
       </Group>
       <Box w="50%">
-        <PRSummaryBox numFiles={pullRequest?.changedFiles ?? 0} numCommits={pullRequest?.commits ?? 0} addedLines={pullRequest?.additions ?? 0} deletedLines={pullRequest?.deletions ?? 0}/>
+        <PRSummaryBox
+          numFiles={pullRequest?.changedFiles ?? 0}
+          numCommits={pullRequest?.commits ?? 0}
+          addedLines={pullRequest?.additions ?? 0}
+          deletedLines={pullRequest?.deletions ?? 0}
+        />
       </Box>
 
       <Box>
@@ -94,7 +121,7 @@ function PRDetailsPage() {
         <br />
         <Box>
           {currentTab === "modified files" && <ModifiedFilesTab />}
-          {currentTab === "comments" && <CommentsTab pullRequest={pullRequest} />}
+          {currentTab === "comments" && pullRequest && <CommentsTab pullRequest={pullRequest} />}
           {currentTab === "details" && <PrContextTab />}
           {currentTab === "commits" && <CommitsTab />}
         </Box>

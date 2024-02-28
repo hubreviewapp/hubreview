@@ -1,7 +1,7 @@
 import { Button, Avatar, Blockquote, Box, Card, Flex, Group, Text, Title, Collapse, rem } from "@mantine/core";
 import { Link } from "react-router-dom";
 import UserLogo from "../../assets/icons/user.png";
-import LabelButton from "../LabelButton";
+import LabelButton, { HubReviewLabelType } from "../LabelButton";
 import { useDisclosure } from "@mantine/hooks";
 import { IconCaretDown, IconCaretUp } from "@tabler/icons-react";
 import { PRInfo } from "../../models/PRInfo.tsx";
@@ -33,7 +33,9 @@ function PRCard({ data: pr }: PullRequestCardProps) {
             {pr.labels.length === 0 ? (
               <></>
             ) : (
-              pr.labels.map((label) => <LabelButton key={label.id} label={label.name} size="md" color={label.color} />)
+              pr.labels.map((label) => (
+                <LabelButton key={label.id} label={label.name as HubReviewLabelType} size="md" />
+              ))
             )}
           </Group>
         </Group>

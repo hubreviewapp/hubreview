@@ -8,7 +8,7 @@ export interface PriorityBadgeProps {
 }
 
 function PriorityBadge({ label, size }: PriorityBadgeProps) {
-  const color = label === "Critical" ? "red" : label == "High" ? "orange" :  label === "Medium" ? "yellow" : "green";
+  const color = label === "Critical" ? "red" : label == "High" ? "orange" : label === "Medium" ? "yellow" : "green";
   return (
     <Box>
       {label === null ? (

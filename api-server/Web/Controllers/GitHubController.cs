@@ -266,12 +266,12 @@ public class GitHubController : ControllerBase
 
                     var repoPulls = await installationClient.PullRequest.GetAllForRepository(repository.Id);
 
-                    
+
                     //foreach( var repoPull in repoPulls ){
                     //    var pull = await installationClient.PullRequest.Get(repository.Id, repoPull.Number);
                     //    pullRequests.Add(pull);
                     //}
-                    
+
 
                     foreach (var repoPull in repoPulls)
                     {
@@ -520,24 +520,24 @@ public class GitHubController : ControllerBase
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         await client.Issue.Comment.Create(owner, repoName, prnumber, commentBody);
-        return Ok($"Comment added to pull request #{prnumber} in repository {repoName}.");   
+        return Ok($"Comment added to pull request #{prnumber} in repository {repoName}.");
     }
-    
+
     [HttpPatch("pullrequest/{owner}/{repoName}/{comment_id}/updateComment")]
     public async Task<ActionResult> UpdateComment(string owner, string repoName, int comment_id, [FromBody] string commentBody)
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         await client.Issue.Comment.Update(owner, repoName, comment_id, commentBody);
-        return Ok($"Comment updated."); 
-    } 
+        return Ok($"Comment updated.");
+    }
 
     [HttpDelete("pullrequest/{owner}/{repoName}/{comment_id}/deleteComment")]
     public async Task<ActionResult> DeleteComment(string owner, string repoName, int comment_id)
     {
         var client = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         await client.Issue.Comment.Delete(owner, repoName, comment_id);
-        return Ok($"Comment deleted."); 
-    } 
+        return Ok($"Comment deleted.");
+    }
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_comments")]
     public async Task<ActionResult> getCommentsOnPR(string owner, string repoName, int prnumber)
@@ -593,7 +593,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_review_comments")]
-    public async Task<ActionResult> getRevCommentsOnPR( string owner, string repoName, int prnumber)
+    public async Task<ActionResult> getRevCommentsOnPR(string owner, string repoName, int prnumber)
     {
         var appClient = GetNewClient();
         var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
@@ -655,13 +655,14 @@ public class GitHubController : ControllerBase
     }*/
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_commits")]
-    public async Task<ActionResult> getCommits(string owner, string repoName, int prnumber) {
+    public async Task<ActionResult> getCommits(string owner, string repoName, int prnumber)
+    {
         var appClient = GetNewClient();
         var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
         var processedCommitIds = new HashSet<string>();
         var result = new List<CommitsList>([]);
-        string link = "https://github.com/"+owner+"/"+repoName+"/pull/"+prnumber+"/commits/";
+        string link = "https://github.com/" + owner + "/" + repoName + "/pull/" + prnumber + "/commits/";
 
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent();
@@ -675,7 +676,7 @@ public class GitHubController : ControllerBase
                 var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
                 var installationClient = GetNewClient(response.Token);
                 var commits = await installationClient.PullRequest.Commits(owner, repoName, prnumber);
-                
+
                 CommitInfo obj;
 
                 foreach (var commit in commits)
@@ -693,9 +694,9 @@ public class GitHubController : ControllerBase
                     var commitFiles = await r.Content.ReadAsStringAsync();
                     Console.WriteLine(commitFiles.ToString());*/
 
-                    bool dateExists = result.Any(temp => temp.date == commit.Commit.Author.Date.ToString("yyyy/MM/dd") );
+                    bool dateExists = result.Any(temp => temp.date == commit.Commit.Author.Date.ToString("yyyy/MM/dd"));
 
-                    if( !dateExists )
+                    if (!dateExists)
                     {
                         result.Add(new CommitsList
                         {
@@ -704,20 +705,23 @@ public class GitHubController : ControllerBase
                         });
                     }
 
-                    int indexOfDate = result.FindIndex(temp => temp.date == commit.Commit.Author.Date.ToString("yyyy/MM/dd") );
+                    int indexOfDate = result.FindIndex(temp => temp.date == commit.Commit.Author.Date.ToString("yyyy/MM/dd"));
 
-                    if ( commit.Commit.Message.Contains('\n') ){
+                    if (commit.Commit.Message.Contains('\n'))
+                    {
                         string split_here = "\n\n";
                         string[] message = commit.Commit.Message.Split(split_here);
                         obj = new CommitInfo
                         {
                             title = message[0],
-                            description =  message[1],
+                            description = message[1],
                             author = commit.Author.Login,
                             githubLink = link + commit.Sha
                         };
 
-                    } else {
+                    }
+                    else
+                    {
                         obj = new CommitInfo
                         {
                             title = commit.Commit.Message,
@@ -729,8 +733,8 @@ public class GitHubController : ControllerBase
 
                     result[indexOfDate].commits?.Add(obj);
 
-                    processedCommitIds.Add(commit.NodeId);                    
-                    
+                    processedCommitIds.Add(commit.NodeId);
+
                 }
             }
 
@@ -768,7 +772,7 @@ public class GitHubController : ControllerBase
                     {
                         if (collaborator.Login == prOwner)
                             continue; // Skip the pr owner
-                        
+
                         result.Add(new CollaboratorInfo
                         {
                             Id = collaborator.Id,
@@ -887,7 +891,7 @@ public class GitHubController : ControllerBase
     public async Task<ActionResult> GetReviewerSuggestions(string owner, string repoName, int prNumber)
     {
         var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
-        var connection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString() );
+        var connection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
 
         var appClient = GetNewClient();
         var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
@@ -914,7 +918,8 @@ public class GitHubController : ControllerBase
                                     {
                                         pr.Number,
                                         pr.Title,
-                                        SuggestedReviewers = pr.SuggestedReviewers.Select( reviewer => new {
+                                        SuggestedReviewers = pr.SuggestedReviewers.Select(reviewer => new
+                                        {
                                             Login = reviewer.Reviewer.Login,
                                             avatarUrl = reviewer.Reviewer.Url + ".png",
                                         }).ToList(),
@@ -927,10 +932,10 @@ public class GitHubController : ControllerBase
                     { "prnumber", prNumber },
                 };
 
-                var result =  await connection.Run(query, vars);
+                var result = await connection.Run(query, vars);
 
 
-                
+
                 foreach (var suggestedReviewer in result.SuggestedReviewers)
                 {
                     suggestedReviewersList.Add(suggestedReviewer.Login);

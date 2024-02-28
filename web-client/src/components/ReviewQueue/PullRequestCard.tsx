@@ -2,7 +2,7 @@ import { Avatar, Blockquote, Box, Card, Divider, Flex, Group, Text, Title } from
 import { ReviewQueuePullRequest } from "../../pages/ReviewQueuePage";
 import { Link } from "react-router-dom";
 import UserLogo from "../../assets/icons/user.png";
-import LabelButton from "../LabelButton";
+import LabelButton, { HubReviewLabelType } from "../LabelButton";
 
 export interface PullRequestCardProps {
   data: ReviewQueuePullRequest;
@@ -19,13 +19,13 @@ function PullRequestCard({ data: pr }: PullRequestCardProps) {
           <Text>
             #{pr.id} opened by {pr.author}
             <Avatar src={UserLogo} size="sm" display="inline-block" mx={4} />
-            at {"12.11.2023"}
+            at 12.11.2023
           </Text>
         </Box>
 
         <Flex justify="end">
           {pr.labels.map((label) => (
-            <LabelButton key={label} label={label} size="md" />
+            <LabelButton key={label} label={label as HubReviewLabelType} size="md" />
           ))}
         </Flex>
       </Group>

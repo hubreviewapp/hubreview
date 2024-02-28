@@ -47,7 +47,7 @@ function App() {
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/createPR" element={<PRCreationPage />} />
           <Route path="/signIn" element={<SignInPage />} />
-          <Route path="/pulls/create" element={<PRDetailsPage id="1" name="pull request" />} />
+          <Route path="/pulls/create" element={<PRDetailsPage />} />
 
           <Route path="/analytics/author/rates" element={<ApprRejRatesForAuthorPage />} />
 

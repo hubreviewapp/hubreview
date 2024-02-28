@@ -110,7 +110,7 @@ function ReviewQueuePage() {
     };
 
     fetchPRInfo();
-  }, []);
+  }, [navigate]);
 
   return (
     <Grid mt="md">

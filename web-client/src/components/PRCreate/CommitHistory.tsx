@@ -6,41 +6,52 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 
+export interface Commit {
+  date: string;
+  commits: Commit2[];
+}
+
+export interface Commit2 {
+  title: string;
+  author: string;
+  description: string;
+  githubLink: string;
+}
+
 //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_commits")]
 function CommitHistory() {
   const { owner, repoName, prnumber } = useParams();
-  const [commits, setCommits] = useState([]);
+  const [commits, setCommits] = useState<Commit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchCommitInfo = async () => {
-    try {
-      const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/get_commits`;
-      const res = await axios.get(apiUrl, {
-        withCredentials: true,
-      });
-
-      if (res) {
-        setCommits(res.data);
-        setIsLoading(false);
-      }
-    } catch (error) {
-      console.error("Error fetching PR info:", error);
-      setTimeout(fetchCommitInfo, 1000);
-    }
-  };
-
   useEffect(() => {
+    const fetchCommitInfo = async () => {
+      try {
+        const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/get_commits`;
+        const res = await axios.get(apiUrl, {
+          withCredentials: true,
+        });
+
+        if (res) {
+          setCommits(res.data);
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Error fetching PR info:", error);
+        setTimeout(fetchCommitInfo, 1000);
+      }
+    };
     fetchCommitInfo();
-  }, []);
+  }, [owner, prnumber, repoName]);
 
   return (
     <Box my="md">
-      <Box align="center">{isLoading && <Loader color="blue" />}</Box>
+      <Box>{isLoading && <Loader color="blue" />}</Box>
       {commits.map((itm) => (
         <Box key={itm.date}>
-          <Text color="#778DA9">
+          <Text c="#778DA9">
             <IconGitCommit color="#778DA9" style={{ width: rem(18), height: rem(18) }} />
-            Commits on {} {itm.date}
+            Commits on {itm.date}
           </Text>
           <Box p="sm">
             <Paper withBorder>

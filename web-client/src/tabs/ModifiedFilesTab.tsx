@@ -18,43 +18,7 @@ import {
 import FileDiffView from "../components/ReviewsTab/FileDiffView";
 import { useRef, useState } from "react";
 import UserLogo from "../assets/icons/user.png";
-
-export enum DiffLineType {
-  Addition,
-  Deletion,
-  Context,
-  Marker,
-}
-
-export type DiffMarker = {
-  deletion: {
-    startLine: number;
-    lineCount: number;
-  };
-  addition: {
-    startLine: number;
-    lineCount: number;
-  };
-  contextContent: string;
-};
-
-export type DiffLine = {
-  type: DiffLineType;
-  content: string;
-  lineNumber: {
-    before?: number;
-    after?: number;
-  };
-};
-
-export type FileDiff = {
-  fileName: string;
-  diffstat: {
-    additions: number;
-    deletions: number;
-  };
-  lines: DiffLine[];
-};
+import { DiffLine, DiffLineType, DiffMarker, FileDiff } from "../utility/diff-types";
 
 const mockFileRawDiff1 = `
 @@ -12,9 +12,10 @@
@@ -211,7 +175,7 @@ const mockFileRawDiff3 =
 `;
 
 const parseDiffMarker = (markerLine: string): DiffMarker => {
-  const match = /^@@ \-(\d*),(\d*) \+(\d*),(\d*) @@(.*)$/.exec(markerLine);
+  const match = /^@@ -(\d*),(\d*) \+(\d*),(\d*) @@(.*)$/.exec(markerLine);
 
   if (match === null) throw Error(`Failed to execute regexp on marker line content: ${markerLine}`);
 
@@ -232,7 +196,7 @@ const parseRawDiff = (fileName: string, rawDiff: string): FileDiff => {
   const trimmedRawDiff = rawDiff.trim();
   const rawDiffLines = trimmedRawDiff.split("\n");
 
-  let nextLineNumbers = {
+  const nextLineNumbers = {
     before: -1,
     after: -1,
   };

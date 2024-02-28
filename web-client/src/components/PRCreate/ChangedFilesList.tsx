@@ -8,7 +8,7 @@ function ChangedFilesList() {
     <NavLink
       href="#required-for-focus"
       onClick={() => setActiveFile(fileName)}
-      style={activeFile === fileName ? { backgroundColor: "rgba(8,68,98,0.64)" } : null}
+      style={activeFile === fileName ? { backgroundColor: "rgba(8,68,98,0.64)" } : {}}
       label={fileName}
       leftSection={<IconFile size="1rem" stroke={1.5} />}
     />
