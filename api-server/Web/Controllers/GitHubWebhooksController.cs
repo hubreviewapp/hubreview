@@ -84,42 +84,7 @@ namespace CS.Web.Controllers
                     if(installationPayload.action == "created"){
 
                         Console.WriteLine("\ninstall");
-                        Console.WriteLine("a");
-                        var response = await _client.GitHubApps.CreateInstallationToken(installationPayload.installation.id);
-
-                        Console.WriteLine("a");
-                        var installationClient = GetNewClient(response.Token);
-                        Console.WriteLine("a");
-    
-
-                        
-                    
-                        // Get organizations for the current user
-                        var organizations = await installationClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-                        Console.WriteLine("a");
-                        var organizationLogins = organizations.Select(org => org.Login).ToArray();
-                        Console.WriteLine(string.Join(",", organizationLogins));
-                        //var content = await response;
-                        /*
-                        connection.Open();
-
-                        string parameters = "(userid, login, name, email, avatarurl, profileurl, organizations, workload)";
-                        string at_parameters = "(@userid, @login, @name, @email, @avatarurl, @profileurl, @organizations, @workload)";
-                        string query = "INSERT INTO userinfo " + parameters + " VALUES " + at_parameters;
-
-                        using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
-                        {
-                            command.Parameters.AddWithValue("@userid", installationPayload.requester.id);
-                            command.Parameters.AddWithValue("@login", installationPayload.requester.login);
-                            command.Parameters.AddWithValue("@name", installationPayload.requester.name);
-                            command.Parameters.AddWithValue("@email", installationPayload.requester.email);
-                            command.Parameters.AddWithValue("@avatarurl", installationPayload.requester.avatar_url);
-                            command.Parameters.AddWithValue("@profileurl", installationPayload.requester.url);
-                            command.Parameters.AddWithValue("@organizations", null);
-                            command.Parameters.AddWithValue("@workload", 0);
-
-                            command.ExecuteNonQuery();
-                        }*/
+                        Console.WriteLine(installationPayload.organization?.login);
                         
                     }
                     else if (installationPayload.action == "deleted")
@@ -164,8 +129,8 @@ namespace CS.Web.Controllers
                                 command.ExecuteNonQuery();
                             }
 
-                            string parameters = "(repoid, pullid, reponame, pullnumber, title, author, createdat, updatedat, comments, commits, changedfiles, additions, deletions, draft, state, reviewers, labels, pullurl, repoowner)";
-                            string at_parameters = "(@repoid, @pullid, @reponame, @pullnumber, @title, @author, @createdat, @updatedat, @comments, @commits, @changedfiles, @additions, @deletions, @draft, @state, @reviewers, @labels, @pullurl, @repoowner)";
+                            string parameters = "(repoid, pullid, reponame, pullnumber, title, author, authoravatarurl, createdat, updatedat, comments, commits, changedfiles, additions, deletions, draft, state, reviewers, labels, pullurl, repoowner)";
+                            string at_parameters = "(@repoid, @pullid, @reponame, @pullnumber, @title, @author, @authoravatarurl, @createdat, @updatedat, @comments, @commits, @changedfiles, @additions, @deletions, @draft, @state, @reviewers, @labels, @pullurl, @repoowner)";
 
                             query = "INSERT INTO pullrequestinfo " + parameters + " VALUES " + at_parameters;
 
@@ -186,6 +151,7 @@ namespace CS.Web.Controllers
                                         command.Parameters.AddWithValue("@pullnumber", pull.Number);
                                         command.Parameters.AddWithValue("@title", pull.Title);
                                         command.Parameters.AddWithValue("@author", pull.User.Login);
+                                        command.Parameters.AddWithValue("@authoravatarurl", pull.User.AvatarUrl);
                                         command.Parameters.AddWithValue("@createdat", pull.CreatedAt.Date.ToString("dd/MM/yyyy"));
                                         command.Parameters.AddWithValue("@updatedat", pull.UpdatedAt.Date.ToString("dd/MM/yyyy"));
                                         command.Parameters.AddWithValue("@comments", pull.Comments);
@@ -231,7 +197,7 @@ namespace CS.Web.Controllers
                                 command.ExecuteNonQuery();
                             }
 
-                             using (NpgsqlCommand command = new NpgsqlCommand(query2, connection))
+                            using (NpgsqlCommand command = new NpgsqlCommand(query2, connection))
                             {
                                 command.Parameters.AddWithValue("@id", repository.id);
 

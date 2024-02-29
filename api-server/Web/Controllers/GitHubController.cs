@@ -126,6 +126,10 @@ public class GitHubController : ControllerBase
             {
                 var orgs = await userClient.Organization.GetAllForCurrent();
                 var orgList = orgs.Select(o => o.Login).ToArray();
+                foreach (var o in orgList)
+                {
+                    Console.WriteLine(o);
+                }
                 
                 string parameters = "(userid, login, fullname, email, avatarurl, profileurl, organizations, workload, token)";
                 string at_parameters = "(@userid, @login, @fullname, @email, @avatarurl, @profileurl, @organizations, @workload, @token)";
@@ -412,8 +416,7 @@ public class GitHubController : ControllerBase
         {
             await connection.OpenAsync();
 
-            string selects = "pullid, title, pullnumber, author, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner";
-
+            string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner";
             string query = "SELECT "+selects+" FROM pullrequestinfo WHERE repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins)";// ORDER BY name ASC";
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
@@ -430,16 +433,16 @@ public class GitHubController : ControllerBase
                             Title = reader.GetString(1),
                             PRNumber = reader.GetInt32(2),
                             Author = reader.GetString(3),
-                            AuthorAvatarURL = "",
-                            CreatedAt = reader.GetString(4),
-                            UpdatedAt = reader.GetString(5),
-                            RepoName = reader.GetString(6),
-                            Additions = reader.GetInt32(7),
-                            Deletions = reader.GetInt32(8),
-                            Files = reader.GetInt32(9),
-                            Comments = reader.GetInt32(10),
-                            Labels = reader.GetFieldValue<string[]>(11),
-                            RepoOwner = reader.GetString(12)
+                            AuthorAvatarURL = reader.GetString(4),
+                            CreatedAt = reader.GetString(5),
+                            UpdatedAt = reader.GetString(6),
+                            RepoName = reader.GetString(7),
+                            Additions = reader.GetInt32(8),
+                            Deletions = reader.GetInt32(9),
+                            Files = reader.GetInt32(10),
+                            Comments = reader.GetInt32(11),
+                            Labels = reader.GetFieldValue<string[]>(12),
+                            RepoOwner = reader.GetString(13)
                         };
                         allPRs.Add(pr);
                     }

@@ -77,9 +77,9 @@ function PRCard({ data: pr }: PullRequestCardProps) {
             )*/}
           </Text>
           <Text c="green">
-            +12 lines added ,{" "}
+            +{pr.additions} lines added ,{" "}
             <Text span c="red">
-              -32 lines deleted
+              -{pr.deletions} lines deleted
             </Text>
           </Text>
           <Group>
