@@ -107,11 +107,11 @@ public class GitHubController : ControllerBase
             GitHubClient userClient = GetNewClient(access_token);
             var user = await userClient.User.Current();
 
-            string exists = "SELECT EXISTS (SELECT 1 FROM userinfo WHERE login = @login )";
+            string exists = "SELECT EXISTS (SELECT 1 FROM userinfo WHERE userid = @userid LIMIT 1)";
             bool doesExist = false;
             using (NpgsqlCommand command = new NpgsqlCommand(exists, connection))
             {
-                command.Parameters.AddWithValue("@login", user.Login);
+                command.Parameters.AddWithValue("@userid", user.Id);
                 var reader = command.ExecuteReader();
                 while(reader.Read())
                 { 
@@ -121,11 +121,13 @@ public class GitHubController : ControllerBase
             }
 
             await connection.CloseAsync();
+            var orgs = await userClient.Organization.GetAllForCurrent();
+            var orgList = orgs.Select(o => o.Login).ToArray();
+
 
             if ( !doesExist )
             {
-                var orgs = await userClient.Organization.GetAllForCurrent();
-                var orgList = orgs.Select(o => o.Login).ToArray();
+                
                 foreach (var o in orgList)
                 {
                     Console.WriteLine(o);
@@ -168,7 +170,41 @@ public class GitHubController : ControllerBase
                 }
 
                 await connection.CloseAsync();
-            }
+            } 
+            else {
+                string query = @"
+                    UPDATE userinfo
+                    SET email = @email,
+                        login = @login,
+                        fullname = @fullname,
+                        profileurl = @profileurl,
+                        organizations = @organizations,
+                        token = @token
+                    WHERE userid = @userid";
+
+                connection.Open();
+
+                using (NpgsqlCommand command2 = new NpgsqlCommand(query, connection))
+                {
+                    command2.Parameters.AddWithValue("@userid", user.Id);
+                    command2.Parameters.AddWithValue("@login", user.Login);
+                    command2.Parameters.AddWithValue("@fullname", user.Name);
+                    if (user.Email != null)
+                    {
+                        command2.Parameters.AddWithValue("@email", user.Email);
+                    }
+                    else
+                    {
+                        command2.Parameters.AddWithValue("@email", DBNull.Value);
+                    }
+                    command2.Parameters.AddWithValue("@profileurl", user.Url);
+                    command2.Parameters.AddWithValue("@organizations", orgList);
+                    command2.Parameters.AddWithValue("@token", access_token);
+
+                    command2.ExecuteNonQuery();
+                }
+                await connection.CloseAsync();
+            } 
 
             _httpContextAccessor?.HttpContext?.Session.SetString("UserLogin", user.Login);
             _httpContextAccessor?.HttpContext?.Session.SetString("UserAvatarURL", user.AvatarUrl);
