@@ -61,24 +61,9 @@ namespace CS.Web.Controllers
 
             switch (eventType)
             {
-                case "check_run":
+                case "check_run": // ana sayfada gösterceksek belki
                     //CheckRunPayload
                     var checkRunPayload = JsonConvert.DeserializeObject<CheckRunPayload>(requestBody);
-                    //TO DO
-                    break;
-                case "commit_comment":
-                    //CommitCommentPayload
-                    var commitCommentPayload = JsonConvert.DeserializeObject<CS.Core.Entities.Payloads.CommitCommentPayload>(requestBody);
-                    //TO DO
-                    break;
-                case "create":
-                    //CreatePayload
-                    var createPayload = JsonConvert.DeserializeObject<CreatePayload>(requestBody);
-                    //TO DO
-                    break;
-                case "delete":
-                    //DeletePayload
-                    var deletePayload = JsonConvert.DeserializeObject<DeletePayload>(requestBody);
                     //TO DO
                     break;
                 case "installation": // DONE
@@ -301,16 +286,6 @@ namespace CS.Web.Controllers
                     }
 
                     break;
-                case "member":
-                    //MemberPayload
-                    var memberPayload = JsonConvert.DeserializeObject<MemberPayload>(requestBody);
-                    //TO DO
-                    break;
-                case "organization":
-                    //OrganizationPayload
-                    var organizationPayload = JsonConvert.DeserializeObject<OrganizationPayload>(requestBody);
-                    //TO DO
-                    break;
                 case "pull_request":
                     var pullRequestPayload = JsonConvert.DeserializeObject<PullRequestPayload>(requestBody);
                     //TO DO
@@ -326,23 +301,6 @@ namespace CS.Web.Controllers
                 case "pull_request_review_thread":
                     var pullRequestReviewThreadPayload = JsonConvert.DeserializeObject<PullRequestReviewThreadPayload>(requestBody);
                     //TO DO
-                    break;
-                case "repository":
-                    //RepositoryPayload
-                    var repositoryPayload = JsonConvert.DeserializeObject<RepositoryPayload>(requestBody);
-                    //TO DO
-                    break;
-                case "github_app_authorization":
-                    Console.WriteLine("auth revoked");
-                    break;
-                case "personal_access_token_request":
-                    Console.WriteLine("\ntoken request\n");
-                    var patRequestPayload = JsonConvert.DeserializeObject<TokenRequestPayload>(requestBody);
-                    if( patRequestPayload.action == "created")
-                    {
-                        Console.WriteLine("\ntoken request\n");
-                        Console.WriteLine(requestBody);
-                    }
                     break;
             }
 
