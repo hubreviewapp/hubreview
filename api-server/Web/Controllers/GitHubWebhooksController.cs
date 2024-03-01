@@ -96,6 +96,10 @@ namespace CS.Web.Controllers
                 case "installation_repositories": // add/remove repo and prs from database on (un)installation of a repo
                     //InstallationRepositoriesPayload
                     var installationRepositoriesPayload = JsonConvert.DeserializeObject<InstallationRepositoriesPayload>(requestBody);
+                    
+                    var response = await _client.GitHubApps.CreateInstallationToken(installationRepositoriesPayload.installation.id);
+                    var installationClient = GetNewClient(response.Token);
+
                     if (installationRepositoriesPayload.action == "added")
                     {
                         foreach (var repository in installationRepositoriesPayload.repositories_added)
@@ -107,11 +111,9 @@ namespace CS.Web.Controllers
                             string[] parts = full_name.Split('/');
                             string owner = parts[0];
                             string repoName = parts[1];
-
-                            string sender = installationRepositoriesPayload.sender.login;
                                                     
 
-                            Repository repo = await GetRepositoryById(repository.id, sender);
+                            Repository repo = await GetRepositoryById(repository.id, installationClient);
 
                             connection.Open();
 
@@ -130,45 +132,32 @@ namespace CS.Web.Controllers
                             }
 
                             string parameters = "(repoid, pullid, reponame, pullnumber, title, author, authoravatarurl, createdat, updatedat, comments, commits, changedfiles, additions, deletions, draft, state, reviewers, labels, pullurl, repoowner)";
-                            string at_parameters = "(@repoid, @pullid, @reponame, @pullnumber, @title, @author, @authoravatarurl, @createdat, @updatedat, @comments, @commits, @changedfiles, @additions, @deletions, @draft, @state, @reviewers, @labels, @pullurl, @repoowner)";
+                            //string at_parameters = "(@repoid, @pullid, @reponame, @pullnumber, @title, @author, @authoravatarurl, @createdat, @updatedat, @comments, @commits, @changedfiles, @additions, @deletions, @draft, @state, @reviewers, @labels, @pullurl, @repoowner)";
 
-                            query = "INSERT INTO pullrequestinfo " + parameters + " VALUES " + at_parameters;
+                            query = "INSERT INTO pullrequestinfo " + parameters + " VALUES "; //+ at_parameters;
 
-                            var repoPulls = await GetRepoPullsById(repository.id, sender);
+                            var repoPulls = await GetRepoPullsById(repository.id, installationClient);
                             
                             if( repoPulls != null ){
-                                    foreach (var repoPull in repoPulls)
-                                    {
-                                        using (var command = new NpgsqlCommand(query, connection))
-                                        {
-                                            var pull = await GetPullById(repository.id, repoPull.Number, sender);
-                                            if( pull == null ){
-                                                Console.WriteLine($"No pull request #{repoPull.Number} under {repository.full_name} is found.");
-                                            }
-                                            command.Parameters.AddWithValue("@repoid", repository.id);
-                                            command.Parameters.AddWithValue("@pullid", pull.Id);
-                                            command.Parameters.AddWithValue("@reponame", pull.Base.Repository.Name);
-                                            command.Parameters.AddWithValue("@pullnumber", pull.Number);
-                                            command.Parameters.AddWithValue("@title", pull.Title);
-                                            command.Parameters.AddWithValue("@author", pull.User.Login);
-                                            command.Parameters.AddWithValue("@authoravatarurl", pull.User.AvatarUrl);
-                                            command.Parameters.AddWithValue("@createdat", pull.CreatedAt.Date.ToString("dd/MM/yyyy"));
-                                            command.Parameters.AddWithValue("@updatedat", pull.UpdatedAt.Date.ToString("dd/MM/yyyy"));
-                                            command.Parameters.AddWithValue("@comments", pull.Comments);
-                                            command.Parameters.AddWithValue("@commits", pull.Commits);
-                                            command.Parameters.AddWithValue("@changedfiles", pull.ChangedFiles);
-                                            command.Parameters.AddWithValue("@additions", pull.Additions);
-                                            command.Parameters.AddWithValue("@deletions", pull.Deletions);
-                                            command.Parameters.AddWithValue("@draft", pull.Draft);
-                                            command.Parameters.AddWithValue("@state", pull.State.ToString());
-                                            command.Parameters.AddWithValue("@reviewers", pull.RequestedReviewers.Select(r => r.Login).ToArray());
-                                            command.Parameters.AddWithValue("@labels", pull.Labels.Select(l => l.Name).ToArray());
-                                            command.Parameters.AddWithValue("@pullurl", pull.Url);
-                                            command.Parameters.AddWithValue("@repoowner", pull.Base.Repository.Owner.Login);
 
-                                            command.ExecuteNonQuery();
-                                        }
-                                    }             
+                                    foreach (var repoPull in repoPulls)
+                                    {   
+                                        var pull = await GetPullById(repository.id, repoPull.Number, installationClient);
+                                        var requestedReviewers = pull.RequestedReviewers.Any()
+                                        ? $"'{{ {string.Join(",", pull.RequestedReviewers.Select(r => $@"""{r.Login}"""))} }}'"
+                                        : "'{}'";
+
+                                        var labels = pull.Labels.Any()
+                                        ? $"'{{ {string.Join(",", pull.Labels.Select(l => $@"""{l.Name}"""))} }}'"
+                                        : "'{}'";
+
+                                        query += $"({repository.id}, {pull.Id}, '{pull.Base.Repository.Name}', {pull.Number}, '{pull.Title}', '{pull.User.Login}', '{pull.User.AvatarUrl}', '{pull.CreatedAt.Date.ToString("dd/MM/yyyy")}', '{pull.UpdatedAt.Date.ToString("dd/MM/yyyy")}', {pull.Comments}, {pull.Commits}, {pull.ChangedFiles}, {pull.Additions}, {pull.Deletions}, {pull.Draft}, '{pull.State.ToString()}', {requestedReviewers}, {labels}, '{pull.Url}', '{pull.Base.Repository.Owner.Login}'), ";
+                                    }
+                                    query = query.Substring(0, query.Length-2);   
+                                    using (var command = new NpgsqlCommand(query, connection))
+                                    {
+                                        command.ExecuteNonQuery();                    
+                                    }           
                             }
 
                             connection.Close();
@@ -290,68 +279,30 @@ namespace CS.Web.Controllers
             return res;
         }
 
-        public async Task<Repository> GetRepositoryById(long id, string userlogin) // Change the method signature to accept ID
+        public async Task<Repository> GetRepositoryById(long id, GitHubClient installationClient) // Change the method signature to accept ID
         {
-            //var appClient = GetNewClient();
-
-            var userLogin = userlogin;
-
-            var installations = await _client.GitHubApps.GetAllInstallationsForCurrent();
-            foreach (var installation in installations)
-            {
-                if (installation.Account.Login == userLogin)
-                {
-                    var response = await _client.GitHubApps.CreateInstallationToken(installation.Id);
-                    var installationClient = GetNewClient(response.Token);
-
-
-                    // Get the repository by ID
-                    var repository = await installationClient.Repository.Get(id);
-
-                    return repository;
-                }
-            }
-            return null;
+            // Get the repository by ID
+            var repository = await installationClient.Repository.Get(id);
+            return repository;
         }
 
-        public async Task<IReadOnlyList<PullRequest>?> GetRepoPullsById(long id, string userlogin) // Change the method signature to accept ID
+        public async Task<IReadOnlyList<PullRequest>?> GetRepoPullsById(long id, GitHubClient installationClient) // Change the method signature to accept ID
         {
-            var installations = await _client.GitHubApps.GetAllInstallationsForCurrent();
-            foreach (var installation in installations)
-            {
-                if (installation.Account.Login == userlogin)
-                {
-                    var response = await _client.GitHubApps.CreateInstallationToken(installation.Id);
-                    var installationClient = GetNewClient(response.Token);
+            var options = new PullRequestRequest{
+                State=ItemStateFilter.All
+            };
+            // Get the repository by ID
+            var pulls = await installationClient.PullRequest.GetAllForRepository(id, options);
 
-
-                    // Get the repository by ID
-                    var pulls = await installationClient.PullRequest.GetAllForRepository(id);
-
-                    return pulls;
-                }
-            }
-            return null;
+            return pulls ?? null;
         }
 
-        public async Task<PullRequest?> GetPullById(long repoid, int prnum, string userlogin) // Change the method signature to accept ID
+        public async Task<PullRequest?> GetPullById(long repoid, int prnum, GitHubClient installationClient) // Change the method signature to accept ID
         {
-            var installations = await _client.GitHubApps.GetAllInstallationsForCurrent();
-            foreach (var installation in installations)
-            {
-                if (installation.Account.Login == userlogin)
-                {
-                    var response = await _client.GitHubApps.CreateInstallationToken(installation.Id);
-                    var installationClient = GetNewClient(response.Token);
+            // Get the repository by ID
+            var pull = await installationClient.PullRequest.Get(repoid, prnum);
 
-
-                    // Get the repository by ID
-                    var pull = await installationClient.PullRequest.Get(repoid, prnum);
-
-                    return pull;
-                }
-            }
-            return null;
+            return pull;
         }
 
 
