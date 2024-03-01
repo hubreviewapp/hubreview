@@ -288,17 +288,47 @@ namespace CS.Web.Controllers
                     break;
                 case "pull_request":
                     var pullRequestPayload = JsonConvert.DeserializeObject<PullRequestPayload>(requestBody);
+                    if(pullRequestPayload.action == "assigned"){
+
+                    }
+                    else if(pullRequestPayload.action == "closed"){
+
+                    }
+                    else if(pullRequestPayload.action == "edited"){
+                        
+                    }
+                    else if(pullRequestPayload.action == "labeled"){
+                        
+                    }
+                    else if(pullRequestPayload.action == "opened"){
+                        
+                    }
+                    else if(pullRequestPayload.action == "reopened"){
+                        
+                    }
+                    else if(pullRequestPayload.action == "review_request_removed"){
+                        
+                    }
+                    else if(pullRequestPayload.action == "review_requested"){
+                        
+                    }
+                    else if(pullRequestPayload.action == "unassigned"){
+                        
+                    }
+                    else if(pullRequestPayload.action == "unlabeled"){
+                        
+                    }
                     //TO DO
                     break;
-                case "pull_request_review_comment":
+                case "pull_request_review_comment": // Ana sayfada review comment sayısı göstercek miyiz? duruma göre
                     var pullRequestReviewCommentPayload = JsonConvert.DeserializeObject<PullRequestReviewCommentPayload>(requestBody);
                     //TO DO
                     break;
-                case "pull_request_review":
+                case "pull_request_review": // kim onayladı vs gösterceksek güzel olur yoksa çıkarabiliriz
                     var pullRequestReviewPayload = JsonConvert.DeserializeObject<PullRequestReviewPayload>(requestBody);
                     //TO DO
                     break;
-                case "pull_request_review_thread":
+                case "pull_request_review_thread": // resolved unresolved olayı. Gösterceksek faydalı yoksa gerek yok
                     var pullRequestReviewThreadPayload = JsonConvert.DeserializeObject<PullRequestReviewThreadPayload>(requestBody);
                     //TO DO
                     break;
