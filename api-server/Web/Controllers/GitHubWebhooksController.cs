@@ -78,25 +78,64 @@ namespace CS.Web.Controllers
                     var deletePayload = JsonConvert.DeserializeObject<DeletePayload>(requestBody);
                     //TO DO
                     break;
-                case "installation":
+                case "installation": // DONE
                     //InstallationPayload
                     var installationPayload = JsonConvert.DeserializeObject<InstallationPayload>(requestBody);
                     if(installationPayload.action == "created"){
 
                         Console.WriteLine("\ninstall");
-                        Console.WriteLine(installationPayload.organization?.login);
+                        
                         
                     }
                     else if (installationPayload.action == "deleted")
                     {
-                        Console.WriteLine("\nuninstall");
+                        foreach (var repository in installationPayload.repositories)
+                        {
+                            long id = repository.id;
+
+                            connection.Open();
+
+                            string query1 = "DELETE FROM repositoryinfo WHERE id = @id";
+                            string query2 = "DELETE FROM pullrequestinfo WHERE repoid = @id";
+                            
+
+                            // GetRepository by id lazım...
+                            using (NpgsqlCommand command = new NpgsqlCommand(query1, connection))
+                            {
+                                command.Parameters.AddWithValue("@id", repository.id);
+
+                                command.ExecuteNonQuery();
+                            }
+
+                            using (NpgsqlCommand command = new NpgsqlCommand(query2, connection))
+                            {
+                                command.Parameters.AddWithValue("@id", repository.id);
+
+                                command.ExecuteNonQuery();
+                            }
+
+                            if(installationPayload.installation.account.type == "User"){
+                                string query3 = "DELETE FROM userinfo WHERE userid = @userid";
+
+                                using (NpgsqlCommand command = new NpgsqlCommand(query3, connection))
+                                {
+                                    command.Parameters.AddWithValue("@userid", installationPayload.installation.account.id);
+
+                                    command.ExecuteNonQuery();
+                                }
+                            }
+
+                            connection.Close();
+
+                            Console.WriteLine($"User {installationPayload.installation.account.login} is removed from database (Uninstall).");
+                        }
                     }
                     //TO DO
                     break;
-                case "installation_repositories": // add/remove repo and prs from database on (un)installation of a repo
+                case "installation_repositories": // add/remove repo and prs from database on (un)installation of a repo -- DONE 
                     //InstallationRepositoriesPayload
                     var installationRepositoriesPayload = JsonConvert.DeserializeObject<InstallationRepositoriesPayload>(requestBody);
-                    
+
                     var response = await _client.GitHubApps.CreateInstallationToken(installationRepositoriesPayload.installation.id);
                     var installationClient = GetNewClient(response.Token);
 
@@ -198,7 +237,6 @@ namespace CS.Web.Controllers
                         }
                     }
 
-                    //TO DO
                     break;
                 case "member":
                     //MemberPayload
