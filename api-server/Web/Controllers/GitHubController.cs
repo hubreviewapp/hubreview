@@ -126,13 +126,7 @@ public class GitHubController : ControllerBase
 
 
             if ( !doesExist )
-            {
-                
-                foreach (var o in orgList)
-                {
-                    Console.WriteLine(o);
-                }
-                
+            {   
                 string parameters = "(userid, login, fullname, email, avatarurl, profileurl, organizations, workload, token)";
                 string at_parameters = "(@userid, @login, @fullname, @email, @avatarurl, @profileurl, @organizations, @workload, @token)";
                 string query = "INSERT INTO userinfo " + parameters + " VALUES " + at_parameters;
