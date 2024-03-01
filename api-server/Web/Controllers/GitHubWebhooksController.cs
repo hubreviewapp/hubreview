@@ -135,41 +135,40 @@ namespace CS.Web.Controllers
                             query = "INSERT INTO pullrequestinfo " + parameters + " VALUES " + at_parameters;
 
                             var repoPulls = await GetRepoPullsById(repository.id, sender);
-
+                            
                             if( repoPulls != null ){
-                                using (var command = new NpgsqlCommand(query, connection))
-                                {
                                     foreach (var repoPull in repoPulls)
                                     {
-                                        var pull = await GetPullById(repository.id, repoPull.Number, sender);
-                                        if( pull == null ){
-                                            Console.WriteLine($"No pull request #{repoPull.Number} under {repository.full_name} is found.");
-                                        }
-                                        command.Parameters.AddWithValue("@repoid", repository.id);
-                                        command.Parameters.AddWithValue("@pullid", pull.Id);
-                                        command.Parameters.AddWithValue("@reponame", pull.Base.Repository.Name);
-                                        command.Parameters.AddWithValue("@pullnumber", pull.Number);
-                                        command.Parameters.AddWithValue("@title", pull.Title);
-                                        command.Parameters.AddWithValue("@author", pull.User.Login);
-                                        command.Parameters.AddWithValue("@authoravatarurl", pull.User.AvatarUrl);
-                                        command.Parameters.AddWithValue("@createdat", pull.CreatedAt.Date.ToString("dd/MM/yyyy"));
-                                        command.Parameters.AddWithValue("@updatedat", pull.UpdatedAt.Date.ToString("dd/MM/yyyy"));
-                                        command.Parameters.AddWithValue("@comments", pull.Comments);
-                                        command.Parameters.AddWithValue("@commits", pull.Commits);
-                                        command.Parameters.AddWithValue("@changedfiles", pull.ChangedFiles);
-                                        command.Parameters.AddWithValue("@additions", pull.Additions);
-                                        command.Parameters.AddWithValue("@deletions", pull.Deletions);
-                                        command.Parameters.AddWithValue("@draft", pull.Draft);
-                                        command.Parameters.AddWithValue("@state", pull.State.ToString());
-                                        command.Parameters.AddWithValue("@reviewers", pull.RequestedReviewers.Select(r => r.Login).ToArray());
-                                        command.Parameters.AddWithValue("@labels", pull.Labels.Select(l => l.Name).ToArray());
-                                        command.Parameters.AddWithValue("@pullurl", pull.Url);
-                                        command.Parameters.AddWithValue("@repoowner", pull.Base.Repository.Owner.Login);
+                                        using (var command = new NpgsqlCommand(query, connection))
+                                        {
+                                            var pull = await GetPullById(repository.id, repoPull.Number, sender);
+                                            if( pull == null ){
+                                                Console.WriteLine($"No pull request #{repoPull.Number} under {repository.full_name} is found.");
+                                            }
+                                            command.Parameters.AddWithValue("@repoid", repository.id);
+                                            command.Parameters.AddWithValue("@pullid", pull.Id);
+                                            command.Parameters.AddWithValue("@reponame", pull.Base.Repository.Name);
+                                            command.Parameters.AddWithValue("@pullnumber", pull.Number);
+                                            command.Parameters.AddWithValue("@title", pull.Title);
+                                            command.Parameters.AddWithValue("@author", pull.User.Login);
+                                            command.Parameters.AddWithValue("@authoravatarurl", pull.User.AvatarUrl);
+                                            command.Parameters.AddWithValue("@createdat", pull.CreatedAt.Date.ToString("dd/MM/yyyy"));
+                                            command.Parameters.AddWithValue("@updatedat", pull.UpdatedAt.Date.ToString("dd/MM/yyyy"));
+                                            command.Parameters.AddWithValue("@comments", pull.Comments);
+                                            command.Parameters.AddWithValue("@commits", pull.Commits);
+                                            command.Parameters.AddWithValue("@changedfiles", pull.ChangedFiles);
+                                            command.Parameters.AddWithValue("@additions", pull.Additions);
+                                            command.Parameters.AddWithValue("@deletions", pull.Deletions);
+                                            command.Parameters.AddWithValue("@draft", pull.Draft);
+                                            command.Parameters.AddWithValue("@state", pull.State.ToString());
+                                            command.Parameters.AddWithValue("@reviewers", pull.RequestedReviewers.Select(r => r.Login).ToArray());
+                                            command.Parameters.AddWithValue("@labels", pull.Labels.Select(l => l.Name).ToArray());
+                                            command.Parameters.AddWithValue("@pullurl", pull.Url);
+                                            command.Parameters.AddWithValue("@repoowner", pull.Base.Repository.Owner.Login);
 
-                                        command.ExecuteNonQuery();
-                                    }
-                                    
-                                }
+                                            command.ExecuteNonQuery();
+                                        }
+                                    }             
                             }
 
                             connection.Close();
