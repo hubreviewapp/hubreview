@@ -30,11 +30,11 @@ function PRCard({ data: pr }: PullRequestCardProps) {
             </Text>
           </Box>
           <Group justify="end">
-            {/*pr.labels.length === 0 ? (
+            {pr.labels.length === 0 ? (
               <></>
             ) : (
               pr.labels.map((label) => <LabelButton key={label.id} label={label.name} size="md" color={label.color} />)
-            )*/}
+            )}
           </Group>
         </Group>
       </Link>

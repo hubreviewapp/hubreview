@@ -109,24 +109,33 @@ namespace CS.Web.Controllers
 
                             var repoPulls = await GetRepoPullsById(repository.id, installationClient);
                             if( repoPulls.Count != 0 ){
-                                    foreach (var repoPull in repoPulls)
-                                    {   
-                                        var pull = await GetPullById(repository.id, repoPull.Number, installationClient);
-                                        var requestedReviewers = pull.RequestedReviewers.Any()
-                                        ? $"'{{ {string.Join(",", pull.RequestedReviewers.Select(r => $@"""{r.Login}"""))} }}'"
-                                        : "'{}'";
+                                foreach (var repoPull in repoPulls)
+                                {   
+                                    var pull = await GetPullById(repository.id, repoPull.Number, installationClient);
+                                    var requestedReviewers = pull.RequestedReviewers.Any()
+                                    ? $"'{{ {string.Join(",", pull.RequestedReviewers.Select(r => $@"""{r.Login}"""))} }}'"
+                                    : "'{}'";
 
-                                        var labels = pull.Labels.Any()
-                                        ? $"'{{ {string.Join(",", pull.Labels.Select(l => $@"""{l.Name}"""))} }}'"
-                                        : "'{}'";
-
-                                        query += $"({repository.id}, {pull.Id}, '{pull.Base.Repository.Name}', {pull.Number}, '{pull.Title}', '{pull.User.Login}', '{pull.User.AvatarUrl}', '{pull.CreatedAt.Date.ToString("dd/MM/yyyy")}', '{pull.UpdatedAt.Date.ToString("dd/MM/yyyy")}', {pull.Comments}, {pull.Commits}, {pull.ChangedFiles}, {pull.Additions}, {pull.Deletions}, {pull.Draft}, '{pull.State.ToString()}', {requestedReviewers}, {labels}, '{pull.Url}', '{pull.Base.Repository.Owner.Login}'), ";
-                                    }
-                                    query = query.Substring(0, query.Length-2);   
-                                    using (var command = new NpgsqlCommand(query, connection))
+                                    var labels = new List<object>();
+                                    foreach (var label in pull.Labels)
                                     {
-                                        command.ExecuteNonQuery();                    
-                                    }           
+                                        labels.Add( new 
+                                        {
+                                            id = label.Id,
+                                            name = label.Name,
+                                            color = label.Color
+                                        });
+                                    }
+
+                                    var labeljson = JsonConvert.SerializeObject(labels);
+                                    
+                                    query += $"({repository.id}, {pull.Id}, '{pull.Base.Repository.Name}', {pull.Number}, '{pull.Title}', '{pull.User.Login}', '{pull.User.AvatarUrl}', '{pull.CreatedAt.Date.ToString("dd/MM/yyyy")}', '{pull.UpdatedAt.Date.ToString("dd/MM/yyyy")}', {pull.Comments}, {pull.Commits}, {pull.ChangedFiles}, {pull.Additions}, {pull.Deletions}, {pull.Draft}, '{pull.State.ToString()}', {requestedReviewers}, '{labeljson}', '{pull.Url}', '{pull.Base.Repository.Owner.Login}'), ";
+                                }
+                                query = query.Substring(0, query.Length-2);   
+                                using (var command = new NpgsqlCommand(query, connection))
+                                {
+                                    command.ExecuteNonQuery();                    
+                                }           
                             }
 
                             connection.Close();
@@ -176,8 +185,9 @@ namespace CS.Web.Controllers
 
                             connection.Close();
 
-                            Console.WriteLine($"User {installationPayload.installation.account.login} is removed from database (Uninstall).");
+                            
                         }
+                        Console.WriteLine($"User {installationPayload.installation.account.login} is removed from database (Uninstall).");
                     }
                     
                     break;
@@ -227,24 +237,33 @@ namespace CS.Web.Controllers
                             
                             if( repoPulls.Count != 0 ){
 
-                                    foreach (var repoPull in repoPulls)
-                                    {   
-                                        var pull = await GetPullById(repository.id, repoPull.Number, installationClient);
-                                        var requestedReviewers = pull.RequestedReviewers.Any()
-                                        ? $"'{{ {string.Join(",", pull.RequestedReviewers.Select(r => $@"""{r.Login}"""))} }}'"
-                                        : "'{}'";
+                                foreach (var repoPull in repoPulls)
+                                {   
+                                    var pull = await GetPullById(repository.id, repoPull.Number, installationClient);
+                                    var requestedReviewers = pull.RequestedReviewers.Any()
+                                    ? $"'{{ {string.Join(",", pull.RequestedReviewers.Select(r => $@"""{r.Login}"""))} }}'"
+                                    : "'{}'";
 
-                                        var labels = pull.Labels.Any()
-                                        ? $"'{{ {string.Join(",", pull.Labels.Select(l => $@"""{l.Name}"""))} }}'"
-                                        : "'{}'";
-
-                                        query += $"({repository.id}, {pull.Id}, '{pull.Base.Repository.Name}', {pull.Number}, '{pull.Title}', '{pull.User.Login}', '{pull.User.AvatarUrl}', '{pull.CreatedAt.Date.ToString("dd/MM/yyyy")}', '{pull.UpdatedAt.Date.ToString("dd/MM/yyyy")}', {pull.Comments}, {pull.Commits}, {pull.ChangedFiles}, {pull.Additions}, {pull.Deletions}, {pull.Draft}, '{pull.State.ToString()}', {requestedReviewers}, {labels}, '{pull.Url}', '{pull.Base.Repository.Owner.Login}'), ";
-                                    }
-                                    query = query.Substring(0, query.Length-2);   
-                                    using (var command = new NpgsqlCommand(query, connection))
+                                        var labels = new List<object>();
+                                    foreach (var label in pull.Labels)
                                     {
-                                        command.ExecuteNonQuery();                    
-                                    }           
+                                        labels.Add( new 
+                                        {
+                                            id = label.Id,
+                                            name = label.Name,
+                                            color = label.Color
+                                        });
+                                    }
+
+                                    var labeljson = JsonConvert.SerializeObject(labels);
+                                    
+                                    query += $"({repository.id}, {pull.Id}, '{pull.Base.Repository.Name}', {pull.Number}, '{pull.Title}', '{pull.User.Login}', '{pull.User.AvatarUrl}', '{pull.CreatedAt.Date.ToString("dd/MM/yyyy")}', '{pull.UpdatedAt.Date.ToString("dd/MM/yyyy")}', {pull.Comments}, {pull.Commits}, {pull.ChangedFiles}, {pull.Additions}, {pull.Deletions}, {pull.Draft}, '{pull.State.ToString()}', {requestedReviewers}, '{labeljson}', '{pull.Url}', '{pull.Base.Repository.Owner.Login}'), ";
+                                }
+                                query = query.Substring(0, query.Length-2);   
+                                using (var command = new NpgsqlCommand(query, connection))
+                                {
+                                    command.ExecuteNonQuery();                    
+                                }           
                             }
 
                             connection.Close();

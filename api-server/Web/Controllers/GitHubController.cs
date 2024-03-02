@@ -471,7 +471,7 @@ public class GitHubController : ControllerBase
                             Deletions = reader.GetInt32(9),
                             Files = reader.GetInt32(10),
                             Comments = reader.GetInt32(11),
-                            Labels = reader.GetFieldValue<string[]>(12),
+                            Labels = JsonConvert.DeserializeObject<object[]>(reader.GetString(12)),
                             RepoOwner = reader.GetString(13)
                         };
                         allPRs.Add(pr);
