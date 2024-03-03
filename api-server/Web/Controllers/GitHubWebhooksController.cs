@@ -373,7 +373,10 @@ namespace CS.Web.Controllers
                     break;
                 case "pull_request_review": // kim onayladı vs gösterceksek güzel olur yoksa çıkarabiliriz
                     var pullRequestReviewPayload = JsonConvert.DeserializeObject<PullRequestReviewPayload>(requestBody);
+                    Console.WriteLine(requestBody);
                     //TO DO
+                    Console.WriteLine(pullRequestReviewPayload.review.state);
+                    // GETALL fonksiyonuyla tüm review edilenleri al
                     break;
                 case "pull_request_review_thread": // resolved unresolved olayı. Gösterceksek faydalı yoksa gerek yok
                     var pullRequestReviewThreadPayload = JsonConvert.DeserializeObject<PullRequestReviewThreadPayload>(requestBody);
