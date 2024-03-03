@@ -354,9 +354,6 @@ namespace CS.Web.Controllers
                     else if(pullRequestPayload.action == "unassigned"){
                         
                     }
-                    else if(pullRequestPayload.action == "unlabeled"){
-                        Console.WriteLine("label çıkarıldı");
-                    }
                     //TO DO
                     break;
                 case "pull_request_review": // kim onayladı vs gösterceksek güzel olur yoksa çıkarabiliriz
