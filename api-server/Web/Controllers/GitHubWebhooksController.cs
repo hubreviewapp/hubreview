@@ -350,9 +350,6 @@ namespace CS.Web.Controllers
                     else if(pullRequestPayload.action == "review_request_removed" || pullRequestPayload.action == "review_requested"){
                         
                     }
-                    else if(pullRequestPayload.action == "review_requested"){
-                        
-                    }
                     else if(pullRequestPayload.action == "unassigned"){
                         
                     }
