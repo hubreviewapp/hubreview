@@ -370,7 +370,6 @@ namespace CS.Web.Controllers
                         connection.Close();
                         Console.WriteLine("Review Request Update");
                     }
-                    //TO DO
                     break;
                 case "pull_request_review": // kim onayladı vs gösterceksek güzel olur yoksa çıkarabiliriz
                     var pullRequestReviewPayload = JsonConvert.DeserializeObject<PullRequestReviewPayload>(requestBody);
