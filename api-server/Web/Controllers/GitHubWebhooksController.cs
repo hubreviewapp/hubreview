@@ -322,7 +322,15 @@ namespace CS.Web.Controllers
                         Console.WriteLine("pull closed");
                     }
                     else if(pullRequestPayload.action == "edited"){
-                        
+                        var query = $"UPDATE pullrequestinfo SET title = '{pullRequestPayload.pull_request.title}' WHERE pullid = {pullRequestPayload.pull_request.id}";
+                        connection.Open();
+
+                        using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+                        connection.Close();
+                        Console.WriteLine("Edited");
                     }
                     else if(pullRequestPayload.action == "labeled" || pullRequestPayload.action == "unlabeled"){
                         var labels = new List<object>();
