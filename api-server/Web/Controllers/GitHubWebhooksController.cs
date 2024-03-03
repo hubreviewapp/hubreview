@@ -61,9 +61,107 @@ namespace CS.Web.Controllers
 
             switch (eventType)
             {
-                case "check_run": // ana sayfada gösterceksek belki
+                case "check_run": // DONE :D
                     //CheckRunPayload
                     var checkRunPayload = JsonConvert.DeserializeObject<CheckRunPayload>(requestBody);
+                    Console.WriteLine("action: " + checkRunPayload.action);
+                    response = await _client.GitHubApps.CreateInstallationToken(checkRunPayload.installation.id);
+                    installationClient = GetNewClient(response.Token);                
+                    
+                    if (checkRunPayload.action == "created")
+                    {
+                        // Get all checks for the pull request
+                        var checks = await installationClient.Check.Run.GetAllForCheckSuite(
+                            checkRunPayload.repository.owner.login,
+                            checkRunPayload.repository.name,
+                            checkRunPayload.check_run.check_suite.id        
+                        );
+
+                        var checksList = new List<object>();
+
+                        foreach (var check in checks.CheckRuns)
+                        {
+                            Console.WriteLine($"Check Name: {check.Name}, Conclusion: {check.Conclusion}, Status: {check.Status}");
+                            checksList.Add( new 
+                            {
+                                id = check.Id,
+                                name = check.Name,
+                                status = check.Status,
+                                conclusion = check.Conclusion
+                            });
+                            
+                        }
+
+                        string query = $"UPDATE pullrequestinfo SET checks = '{JsonConvert.SerializeObject(checksList)}' WHERE repoid = {checkRunPayload.repository.id} AND pullid = {checkRunPayload.check_run.pull_requests[0].id}";
+                        Console.WriteLine(query);
+                        connection.Open();
+                        using (var command = new NpgsqlCommand(query, connection))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+                        connection.Close();
+
+                        string query2 = $"UPDATE pullrequestinfo SET checks_incomplete = checks_incomplete + 1 WHERE repoid = {checkRunPayload.repository.id} AND pullid = {checkRunPayload.check_run.pull_requests[0].id}";
+                        Console.WriteLine(query2);
+                        connection.Open();
+                        using (var command = new NpgsqlCommand(query2, connection))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+                        connection.Close();
+                        
+                    }
+                    else if (checkRunPayload.action == "completed")
+                    {
+                        // Get all checks for the pull request
+                        var checks = await installationClient.Check.Run.GetAllForCheckSuite(
+                            checkRunPayload.repository.owner.login,
+                            checkRunPayload.repository.name,
+                            checkRunPayload.check_run.check_suite.id        
+                        );
+
+                        var checksList = new List<object>();
+
+                        foreach (var check in checks.CheckRuns)
+                        {
+                            Console.WriteLine($"Check Name: {check.Name}, Conclusion: {check.Conclusion}, Status: {check.Status}");
+                            checksList.Add( new 
+                            {
+                                id = check.Id,
+                                name = check.Name,
+                                status = check.Status,
+                                conclusion = check.Conclusion
+                            });
+                            
+                        }
+
+                        string set_checks = $"checks = '{JsonConvert.SerializeObject(checksList)}'";
+                        string set_checks_incomplete = "checks_incomplete = checks_incomplete - 1";
+                        string set_checks_complete = "checks_complete = checks_complete + 1";
+                        string set_checks_conclusion = "";
+
+                        if( checkRunPayload.check_run.conclusion == "success" )
+                        {
+                            set_checks_conclusion = "checks_success = checks_success + 1";
+                        }
+                        else 
+                        {
+                            set_checks_conclusion = "checks_fail = checks_fail + 1";
+                        }
+
+                        string where = $"repoid = {checkRunPayload.repository.id} AND pullid = {checkRunPayload.check_run.pull_requests[0].id}";
+
+                        string query = $"UPDATE pullrequestinfo SET {set_checks}, {set_checks_incomplete}, {set_checks_complete}, {set_checks_conclusion} WHERE {where}";
+                        
+                        connection.Open();
+                        using (var command = new NpgsqlCommand(query, connection))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+                        connection.Close();
+
+                    }
+
                     //TO DO
                     break;
                 case "installation": // DONE
@@ -244,7 +342,7 @@ namespace CS.Web.Controllers
                                     ? $"'{{ {string.Join(",", pull.RequestedReviewers.Select(r => $@"""{r.Login}"""))} }}'"
                                     : "'{}'";
 
-                                        var labels = new List<object>();
+                                    var labels = new List<object>();
                                     foreach (var label in pull.Labels)
                                     {
                                         labels.Add( new 
@@ -310,7 +408,43 @@ namespace CS.Web.Controllers
                     if(pullRequestPayload.action == "assigned" || pullRequestPayload.action == "unassigned"){ // Ana sayfada olacaksa ?
 
                     }
-                    else if(pullRequestPayload.action == "closed" || pullRequestPayload.action == "reopened" || pullRequestPayload.action == "opened"){
+                    else if (pullRequestPayload.action == "opened")
+                    {
+                        connection.Open();
+
+                        string parameters = "(repoid, pullid, reponame, pullnumber, title, author, authoravatarurl, createdat, updatedat, comments, commits, changedfiles, additions, deletions, draft, state, reviewers, labels, pullurl, repoowner)";
+
+                        string query = "INSERT INTO pullrequestinfo " + parameters + " VALUES ";
+
+                        var requestedReviewers = pullRequestPayload.pull_request.requested_reviewers.Any()
+                        ? $"'{{ {string.Join(",", pullRequestPayload.pull_request.requested_reviewers.Select(r => $@"""{r.login}"""))} }}'"
+                        : "'{}'";
+
+                        var labels = new List<object>();
+                        foreach (var label in pullRequestPayload.pull_request.labels)
+                        {
+                            labels.Add( new 
+                            {
+                                id = label.id,
+                                name = label.name,
+                                color = label.color
+                            });
+                        }
+
+                        var labeljson = JsonConvert.SerializeObject(labels);
+                        var pull = pullRequestPayload.pull_request;
+                        string createdAtFormatted = FormatDateString(pullRequestPayload.pull_request.created_at);
+                        string updatedAtFormatted = FormatDateString(pullRequestPayload.pull_request.updated_at);
+                        query += $"({pullRequestPayload.repository.id}, {pullRequestPayload.pull_request.id}, '{pullRequestPayload.pull_request.@base.repo.name}', {pull.number}, '{pull.title}', '{pull.user.login}', '{pull.user.avatar_url}', '{createdAtFormatted}', '{updatedAtFormatted}', {pull.comments}, {pull.commits}, {pull.changed_files}, {pull.additions}, {pull.deletions}, {pull.draft}, '{pull.state}', {requestedReviewers}, '{labeljson}', '{pull.url}', '{pull.@base.repo.owner.login}')";
+
+                        using (var command = new NpgsqlCommand(query, connection))
+                        {
+                            command.ExecuteNonQuery();                    
+                        }
+                        connection.Close();
+                        Console.WriteLine("pr eklendi");
+                    }
+                    else if(pullRequestPayload.action == "closed" || pullRequestPayload.action == "reopened"){
                         var query = $"UPDATE pullrequestinfo SET state = '{pullRequestPayload.pull_request.state.ToString()}' WHERE pullid = {pullRequestPayload.pull_request.id}";
                         connection.Open();
 
@@ -319,7 +453,7 @@ namespace CS.Web.Controllers
                             command.ExecuteNonQuery();
                         }
                         connection.Close();
-                        Console.WriteLine("pull closed");
+                        Console.WriteLine("pull " + pullRequestPayload.action);
                     }
                     else if(pullRequestPayload.action == "edited"){
                         var query = $"UPDATE pullrequestinfo SET title = '{pullRequestPayload.pull_request.title}' WHERE pullid = {pullRequestPayload.pull_request.id}";
@@ -443,6 +577,17 @@ namespace CS.Web.Controllers
             return pull;
         }
 
-
+        static string FormatDateString(string dateString)
+        {
+            if (DateTime.TryParse(dateString, out DateTime date))
+            {
+                return date.ToString("dd/MM/yyyy");
+            }
+            else
+            {
+                // Handle invalid date string
+                return string.Empty; // or throw an exception, log an error, etc.
+            }
+        }
     }
 }

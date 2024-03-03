@@ -11,7 +11,7 @@ namespace CS.Core.Entities
     public string? external_id { get; set; }
     public string? head_sha { get; set; }
     public string? html_url { get; set; }
-    public int id { get; set; }
+    public long id { get; set; }
     public string? name { get; set; }
     public string? node_id { get; set; }
     public OutputInfo? output { get; set; }
