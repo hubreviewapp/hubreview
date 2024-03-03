@@ -316,8 +316,28 @@ namespace CS.Web.Controllers
                     else if(pullRequestPayload.action == "edited"){
                         
                     }
-                    else if(pullRequestPayload.action == "labeled"){
-                        
+                    else if(pullRequestPayload.action == "labeled" || pullRequestPayload.action == "unlabeled"){
+                        var labels = new List<object>();
+                            foreach (var label in pullRequestPayload.pull_request.labels)
+                            {
+                                labels.Add(new
+                                {
+                                    id = label.id,
+                                    name = label.name,
+                                    color = label.color
+                                });
+                            }
+                            var labeljson = JsonConvert.SerializeObject(labels);
+
+                        var query = $"UPDATE pullrequestinfo SET labels = '{labeljson}' WHERE pullid = {pullRequestPayload.pull_request.id}";
+                        connection.Open();
+
+                        using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+                        connection.Close();
+                        Console.WriteLine("labels updated");
                     }
                     else if(pullRequestPayload.action == "opened"){
                         
@@ -335,12 +355,8 @@ namespace CS.Web.Controllers
                         
                     }
                     else if(pullRequestPayload.action == "unlabeled"){
-                        
+                        Console.WriteLine("label çıkarıldı");
                     }
-                    //TO DO
-                    break;
-                case "pull_request_review_comment": // Ana sayfada review comment sayısı göstercek miyiz? duruma göre
-                    var pullRequestReviewCommentPayload = JsonConvert.DeserializeObject<PullRequestReviewCommentPayload>(requestBody);
                     //TO DO
                     break;
                 case "pull_request_review": // kim onayladı vs gösterceksek güzel olur yoksa çıkarabiliriz
