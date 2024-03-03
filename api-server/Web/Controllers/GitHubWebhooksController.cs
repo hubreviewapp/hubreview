@@ -310,7 +310,7 @@ namespace CS.Web.Controllers
                     if(pullRequestPayload.action == "assigned"){
 
                     }
-                    else if(pullRequestPayload.action == "closed"){
+                    else if(pullRequestPayload.action == "closed" || pullRequestPayload.action == "reopened" || pullRequestPayload.action == "opened"){
                         var query = $"UPDATE pullrequestinfo SET state = '{pullRequestPayload.pull_request.state.ToString()}' WHERE pullid = {pullRequestPayload.pull_request.id}";
                         connection.Open();
 
@@ -347,21 +347,7 @@ namespace CS.Web.Controllers
                         connection.Close();
                         Console.WriteLine("labels updated");
                     }
-                    else if(pullRequestPayload.action == "opened"){
-                        
-                    }
-                    else if(pullRequestPayload.action == "reopened"){
-                        var query = $"UPDATE pullrequestinfo SET state = '{pullRequestPayload.pull_request.state.ToString()}' WHERE pullid = {pullRequestPayload.pull_request.id}";
-                        connection.Open();
-
-                        using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
-                        {
-                            command.ExecuteNonQuery();
-                        }
-                        connection.Close();
-                        Console.WriteLine("pull reopened");
-                    }
-                    else if(pullRequestPayload.action == "review_request_removed"){
+                    else if(pullRequestPayload.action == "review_request_removed" || pullRequestPayload.action == "review_requested"){
                         
                     }
                     else if(pullRequestPayload.action == "review_requested"){
