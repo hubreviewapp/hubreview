@@ -311,7 +311,15 @@ namespace CS.Web.Controllers
 
                     }
                     else if(pullRequestPayload.action == "closed"){
+                        var query = $"UPDATE pullrequestinfo SET state = '{pullRequestPayload.pull_request.state.ToString()}' WHERE pullid = {pullRequestPayload.pull_request.id}";
+                        connection.Open();
 
+                        using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+                        connection.Close();
+                        Console.WriteLine("pull closed");
                     }
                     else if(pullRequestPayload.action == "edited"){
                         
@@ -343,7 +351,15 @@ namespace CS.Web.Controllers
                         
                     }
                     else if(pullRequestPayload.action == "reopened"){
-                        
+                        var query = $"UPDATE pullrequestinfo SET state = '{pullRequestPayload.pull_request.state.ToString()}' WHERE pullid = {pullRequestPayload.pull_request.id}";
+                        connection.Open();
+
+                        using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+                        connection.Close();
+                        Console.WriteLine("pull reopened");
                     }
                     else if(pullRequestPayload.action == "review_request_removed"){
                         
