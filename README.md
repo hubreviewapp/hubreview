@@ -7,3 +7,4 @@ BBBBBBBBBBBBB
 cececececec
 yeter artık daha editlemek istemiyorum
 bu son mu yoksa
+ulan rate limiti aştık
