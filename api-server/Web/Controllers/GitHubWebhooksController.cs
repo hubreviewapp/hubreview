@@ -305,9 +305,9 @@ namespace CS.Web.Controllers
                     }
 
                     break;
-                case "pull_request":
+                case "pull_request": // Assigned unassigned harici bitti
                     var pullRequestPayload = JsonConvert.DeserializeObject<PullRequestPayload>(requestBody);
-                    if(pullRequestPayload.action == "assigned"){
+                    if(pullRequestPayload.action == "assigned" || pullRequestPayload.action == "unassigned"){ // Ana sayfada olacaksa ?
 
                     }
                     else if(pullRequestPayload.action == "closed" || pullRequestPayload.action == "reopened" || pullRequestPayload.action == "opened"){
@@ -356,10 +356,19 @@ namespace CS.Web.Controllers
                         Console.WriteLine("labels updated");
                     }
                     else if(pullRequestPayload.action == "review_request_removed" || pullRequestPayload.action == "review_requested"){
-                        
-                    }
-                    else if(pullRequestPayload.action == "unassigned"){
-                        
+                        var requestedReviewers = pullRequestPayload.pull_request.requested_reviewers.Any()
+                            ? $"'{{ {string.Join(",", pullRequestPayload.pull_request.requested_reviewers.Select(r => $@"""{r.login}"""))} }}'"
+                            : "'{}'";
+
+                        var query = $"UPDATE pullrequestinfo SET reviewers = {requestedReviewers} WHERE pullid = {pullRequestPayload.pull_request.id}";
+                        connection.Open();
+
+                        using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+                        connection.Close();
+                        Console.WriteLine("Review Request Update");
                     }
                     //TO DO
                     break;
