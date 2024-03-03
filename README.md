@@ -6,3 +6,4 @@ hello
 BBBBBBBBBBBBB
 cececececec
 yeter artık daha editlemek istemiyorum
+bu son mu yoksa
