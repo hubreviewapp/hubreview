@@ -235,42 +235,49 @@ namespace CS.Web.Controllers
                                         pull.Head.Sha
                                     );
 
-                                    var checkSuiteId = checkSuites.CheckSuites.Last().Id;
-
-                                    var checks = await installationClient.Check.Run.GetAllForCheckSuite(
-                                        installationPayload.installation.account.login,
-                                        repository.name,
-                                        checkSuiteId        
-                                    );
-                                    
                                     var checksList = new List<object>();
 
-                                    foreach (var check in checks.CheckRuns)
-                                    {
-                                        if (check.Status == "completed")
+                                    //var checkSuiteId = checkSuites.CheckSuites.Last().Id;
+                                    var checkSuiteId = checkSuites.CheckSuites.Any() 
+                                        ? checkSuites.CheckSuites.Last().Id 
+                                        : -1;
+
+                                    if(checkSuiteId != -1) {
+                                        var checks = await installationClient.Check.Run.GetAllForCheckSuite(
+                                            installationPayload.installation.account.login,
+                                            repository.name,
+                                            checkSuiteId        
+                                        );
+                                    
+                                    
+
+                                        foreach (var check in checks.CheckRuns)
                                         {
-                                            checks_complete_count++;
-                                            if (check.Conclusion == "success")
+                                            if (check.Status == "completed")
                                             {
-                                                checks_success_count++;
+                                                checks_complete_count++;
+                                                if (check.Conclusion == "success")
+                                                {
+                                                    checks_success_count++;
+                                                }
+                                                else if (check.Conclusion == "failure")
+                                                {
+                                                    checks_fail_count++;
+                                                }
                                             }
-                                            else if (check.Conclusion == "failure")
+                                            else
                                             {
-                                                checks_fail_count++;
+                                                checks_incomplete_count++;
                                             }
+                                            checksList.Add( new 
+                                            {
+                                                id = check.Id,
+                                                name = check.Name,
+                                                status = check.Status,
+                                                conclusion = check.Conclusion
+                                            });
+                                            
                                         }
-                                        else
-                                        {
-                                            checks_incomplete_count++;
-                                        }
-                                        checksList.Add( new 
-                                        {
-                                            id = check.Id,
-                                            name = check.Name,
-                                            status = check.Status,
-                                            conclusion = check.Conclusion
-                                        });
-                                        
                                     }
 
                                     var labeljson = JsonConvert.SerializeObject(labels);
