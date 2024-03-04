@@ -58,7 +58,7 @@ namespace CS.Web.Controllers
 
             AccessToken response;
             GitHubClient installationClient;
-            
+
             switch (eventType)
             {
                 case "check_run": // DONE :D
