@@ -377,7 +377,7 @@ namespace CS.Web.Controllers
                     }
                     
                     break;
-                case "installation_repositories": // Geçmiş Checks, Assignees ve Reviewleri çekmek lazım
+                case "installation_repositories": // DONE
                     //InstallationRepositoriesPayload
                     var installationRepositoriesPayload = JsonConvert.DeserializeObject<InstallationRepositoriesPayload>(requestBody);
 
@@ -583,7 +583,7 @@ namespace CS.Web.Controllers
                     }
 
                     break;
-                case "pull_request": // Geçmiş Checks, Assignees ve Reviewleri çekmek lazım (OPENED ACTION KISMINA)
+                case "pull_request": // DONE
                     var pullRequestPayload = JsonConvert.DeserializeObject<PullRequestPayload>(requestBody);
                     if(pullRequestPayload.action == "assigned" || pullRequestPayload.action == "unassigned"){
                         var requestedReviewers = pullRequestPayload.pull_request.assignees.Any()
@@ -604,7 +604,7 @@ namespace CS.Web.Controllers
                     {
                         connection.Open();
 
-                        string parameters = "(repoid, pullid, reponame, pullnumber, title, author, authoravatarurl, createdat, updatedat, comments, commits, changedfiles, additions, deletions, draft, state, reviewers, labels, pullurl, repoowner)";
+                        string parameters = "(repoid, pullid, reponame, pullnumber, title, author, authoravatarurl, createdat, updatedat, comments, commits, changedfiles, additions, deletions, draft, state, reviewers, labels, pullurl, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews)";
 
                         string query = "INSERT INTO pullrequestinfo " + parameters + " VALUES ";
 
@@ -627,7 +627,22 @@ namespace CS.Web.Controllers
                         var pull = pullRequestPayload.pull_request;
                         string createdAtFormatted = FormatDateString(pullRequestPayload.pull_request.created_at);
                         string updatedAtFormatted = FormatDateString(pullRequestPayload.pull_request.updated_at);
-                        query += $"({pullRequestPayload.repository.id}, {pullRequestPayload.pull_request.id}, '{pullRequestPayload.pull_request.@base.repo.name}', {pull.number}, '{pull.title}', '{pull.user.login}', '{pull.user.avatar_url}', '{createdAtFormatted}', '{updatedAtFormatted}', {pull.comments}, {pull.commits}, {pull.changed_files}, {pull.additions}, {pull.deletions}, {pull.draft}, '{pull.state}', {requestedReviewers}, '{labeljson}', '{pull.url}', '{pull.@base.repo.owner.login}')";
+
+                        var checksList = new List<object>();
+                        int checks_complete_count = 0;
+                        int checks_incomplete_count = 0;
+                        int checks_success_count = 0;
+                        int checks_fail_count = 0;
+
+                        var assignedReviewers = pullRequestPayload.pull_request.assignees.Any()
+                            ? $"'{{ {string.Join(",", pullRequestPayload.pull_request.assignees.Select(r => $@"""{r.login}"""))} }}'"
+                            : "'{}'";
+
+                        var installationLatestReviews = new List<object>();
+                        var installationReviewsJson = JsonConvert.SerializeObject(installationLatestReviews);
+
+
+                        query += $"({pullRequestPayload.repository.id}, {pullRequestPayload.pull_request.id}, '{pullRequestPayload.pull_request.@base.repo.name}', {pull.number}, '{pull.title}', '{pull.user.login}', '{pull.user.avatar_url}', '{createdAtFormatted}', '{updatedAtFormatted}', {pull.comments}, {pull.commits}, {pull.changed_files}, {pull.additions}, {pull.deletions}, {pull.draft}, '{pull.state}', {requestedReviewers}, '{labeljson}', '{pull.url}', '{pull.@base.repo.owner.login}', '{JsonConvert.SerializeObject(checksList)}', {checks_complete_count}, {checks_incomplete_count}, {checks_success_count}, {checks_fail_count}, {assignedReviewers}, '{installationReviewsJson}')";
 
                         using (var command = new NpgsqlCommand(query, connection))
                         {
