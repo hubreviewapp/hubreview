@@ -66,15 +66,15 @@ namespace CS.Web.Controllers
                     var checkRunPayload = JsonConvert.DeserializeObject<CheckRunPayload>(requestBody);
                     Console.WriteLine("action: " + checkRunPayload.action);
                     response = await _client.GitHubApps.CreateInstallationToken(checkRunPayload.installation.id);
-                    installationClient = GetNewClient(response.Token);                
-                    
+                    installationClient = GetNewClient(response.Token);
+
                     if (checkRunPayload.action == "created")
                     {
                         // Get all checks for the pull request
                         var checks = await installationClient.Check.Run.GetAllForCheckSuite(
                             checkRunPayload.repository.owner.login,
                             checkRunPayload.repository.name,
-                            checkRunPayload.check_run.check_suite.id        
+                            checkRunPayload.check_run.check_suite.id
                         );
 
                         var checksList = new List<object>();
@@ -82,14 +82,14 @@ namespace CS.Web.Controllers
                         foreach (var check in checks.CheckRuns)
                         {
                             Console.WriteLine($"Check Name: {check.Name}, Conclusion: {check.Conclusion}, Status: {check.Status}");
-                            checksList.Add( new 
+                            checksList.Add(new
                             {
                                 id = check.Id,
                                 name = check.Name,
                                 status = check.Status,
                                 conclusion = check.Conclusion
                             });
-                            
+
                         }
 
                         string query = $"UPDATE pullrequestinfo SET checks = '{JsonConvert.SerializeObject(checksList)}' WHERE repoid = {checkRunPayload.repository.id} AND pullid = {checkRunPayload.check_run.pull_requests[0].id}";
@@ -109,7 +109,7 @@ namespace CS.Web.Controllers
                             command.ExecuteNonQuery();
                         }
                         connection.Close();
-                        
+
                     }
                     else if (checkRunPayload.action == "completed")
                     {
@@ -117,7 +117,7 @@ namespace CS.Web.Controllers
                         var checks = await installationClient.Check.Run.GetAllForCheckSuite(
                             checkRunPayload.repository.owner.login,
                             checkRunPayload.repository.name,
-                            checkRunPayload.check_run.check_suite.id        
+                            checkRunPayload.check_run.check_suite.id
                         );
 
                         var checksList = new List<object>();
@@ -125,14 +125,14 @@ namespace CS.Web.Controllers
                         foreach (var check in checks.CheckRuns)
                         {
                             Console.WriteLine($"Check Name: {check.Name}, Conclusion: {check.Conclusion}, Status: {check.Status}");
-                            checksList.Add( new 
+                            checksList.Add(new
                             {
                                 id = check.Id,
                                 name = check.Name,
                                 status = check.Status,
                                 conclusion = check.Conclusion
                             });
-                            
+
                         }
 
                         string set_checks = $"checks = '{JsonConvert.SerializeObject(checksList)}'";
@@ -140,11 +140,11 @@ namespace CS.Web.Controllers
                         string set_checks_complete = "checks_complete = checks_complete + 1";
                         string set_checks_conclusion = "";
 
-                        if( checkRunPayload.check_run.conclusion == "success" )
+                        if (checkRunPayload.check_run.conclusion == "success")
                         {
                             set_checks_conclusion = "checks_success = checks_success + 1";
                         }
-                        else 
+                        else
                         {
                             set_checks_conclusion = "checks_fail = checks_fail + 1";
                         }
@@ -152,7 +152,7 @@ namespace CS.Web.Controllers
                         string where = $"repoid = {checkRunPayload.repository.id} AND pullid = {checkRunPayload.check_run.pull_requests[0].id}";
 
                         string query = $"UPDATE pullrequestinfo SET {set_checks}, {set_checks_incomplete}, {set_checks_complete}, {set_checks_conclusion} WHERE {where}";
-                        
+
                         connection.Open();
                         using (var command = new NpgsqlCommand(query, connection))
                         {
@@ -167,11 +167,13 @@ namespace CS.Web.Controllers
                 case "installation": // DONE
                     //InstallationPayload
                     var installationPayload = JsonConvert.DeserializeObject<InstallationPayload>(requestBody);
-                    if(installationPayload.action == "created"){
+                    if (installationPayload.action == "created")
+                    {
                         response = await _client.GitHubApps.CreateInstallationToken(installationPayload.installation.id);
                         installationClient = GetNewClient(response.Token);
-                        
-                        foreach(var repository in installationPayload.repositories){
+
+                        foreach (var repository in installationPayload.repositories)
+                        {
                             long id = repository.id;
                             string node_id = repository.node_id;
 
@@ -179,7 +181,7 @@ namespace CS.Web.Controllers
                             string[] parts = full_name.Split('/');
                             string owner = parts[0];
                             string repoName = parts[1];
-                                                    
+
 
                             Repository repo = await GetRepositoryById(repository.id, installationClient);
 
@@ -204,9 +206,10 @@ namespace CS.Web.Controllers
                             query = "INSERT INTO pullrequestinfo " + parameters + " VALUES "; //+ at_parameters;
 
                             var repoPulls = await GetRepoPullsById(repository.id, installationClient);
-                            if( repoPulls.Count != 0 ){
+                            if (repoPulls.Count != 0)
+                            {
                                 foreach (var repoPull in repoPulls)
-                                {   
+                                {
                                     var pull = await GetPullById(repository.id, repoPull.Number, installationClient);
                                     var requestedReviewers = pull.RequestedReviewers.Any()
                                     ? $"'{{ {string.Join(",", pull.RequestedReviewers.Select(r => $@"""{r.Login}"""))} }}'"
@@ -215,7 +218,7 @@ namespace CS.Web.Controllers
                                     var labels = new List<object>();
                                     foreach (var label in pull.Labels)
                                     {
-                                        labels.Add( new 
+                                        labels.Add(new
                                         {
                                             id = label.Id,
                                             name = label.Name,
@@ -238,18 +241,19 @@ namespace CS.Web.Controllers
                                     var checksList = new List<object>();
 
                                     //var checkSuiteId = checkSuites.CheckSuites.Last().Id;
-                                    var checkSuiteId = checkSuites.CheckSuites.Any() 
-                                        ? checkSuites.CheckSuites.Last().Id 
+                                    var checkSuiteId = checkSuites.CheckSuites.Any()
+                                        ? checkSuites.CheckSuites.Last().Id
                                         : -1;
 
-                                    if(checkSuiteId != -1) {
+                                    if (checkSuiteId != -1)
+                                    {
                                         var checks = await installationClient.Check.Run.GetAllForCheckSuite(
                                             installationPayload.installation.account.login,
                                             repository.name,
-                                            checkSuiteId        
+                                            checkSuiteId
                                         );
-                                    
-                                    
+
+
 
                                         foreach (var check in checks.CheckRuns)
                                         {
@@ -269,26 +273,26 @@ namespace CS.Web.Controllers
                                             {
                                                 checks_incomplete_count++;
                                             }
-                                            checksList.Add( new 
+                                            checksList.Add(new
                                             {
                                                 id = check.Id,
                                                 name = check.Name,
                                                 status = check.Status,
                                                 conclusion = check.Conclusion
                                             });
-                                            
+
                                         }
                                     }
 
                                     var labeljson = JsonConvert.SerializeObject(labels);
-                                    
+
                                     var assignedReviewers = pull.Assignees.Any()
                                         ? $"'{{ {string.Join(",", pull.Assignees.Select(r => $@"""{r.Login}"""))} }}'"
                                         : "'{}'";
 
 
-                                    
-                                        // Get all reviews for the pull request
+
+                                    // Get all reviews for the pull request
                                     var installationReviews = await installationClient.PullRequest.Review.GetAll(
                                         installationPayload.installation.account.login,
                                         repository.name,
@@ -305,23 +309,24 @@ namespace CS.Web.Controllers
                                         //Console.WriteLine($"Latest Review State: {review.State}, User: {review.User.Login}");
 
                                         installationLatestReviews.Add(
-                                            new {
+                                            new
+                                            {
                                                 login = review.User.Login,
-                                                state = review.State.ToString() 
+                                                state = review.State.ToString()
                                             }
                                         );
                                     }
 
                                     var installationReviewsJson = JsonConvert.SerializeObject(installationLatestReviews);
 
-                                    
+
                                     query += $"({repository.id}, {pull.Id}, '{pull.Base.Repository.Name}', {pull.Number}, '{pull.Title}', '{pull.User.Login}', '{pull.User.AvatarUrl}', '{pull.CreatedAt.Date.ToString("dd/MM/yyyy")}', '{pull.UpdatedAt.Date.ToString("dd/MM/yyyy")}', {pull.Comments}, {pull.Commits}, {pull.ChangedFiles}, {pull.Additions}, {pull.Deletions}, {pull.Draft}, '{pull.State.ToString()}', {requestedReviewers}, '{labeljson}', '{pull.Url}', '{pull.Base.Repository.Owner.Login}', '{JsonConvert.SerializeObject(checksList)}', {checks_complete_count}, {checks_incomplete_count}, {checks_success_count}, {checks_fail_count}, {assignedReviewers}, '{installationReviewsJson}'), ";
                                 }
-                                query = query.Substring(0, query.Length-2);   
+                                query = query.Substring(0, query.Length - 2);
                                 using (var command = new NpgsqlCommand(query, connection))
                                 {
-                                    command.ExecuteNonQuery();                    
-                                }           
+                                    command.ExecuteNonQuery();
+                                }
                             }
 
                             connection.Close();
@@ -329,7 +334,7 @@ namespace CS.Web.Controllers
                         }
 
                         Console.WriteLine($"Selected Repositories {string.Join(", ", installationPayload.repositories.Select(r => r.name))} is added to database.");
-                        
+
                     }
                     else if (installationPayload.action == "deleted")
                     {
@@ -341,7 +346,7 @@ namespace CS.Web.Controllers
 
                             string query1 = "DELETE FROM repositoryinfo WHERE id = @id";
                             string query2 = "DELETE FROM pullrequestinfo WHERE repoid = @id";
-                            
+
 
                             // GetRepository by id lazım...
                             using (NpgsqlCommand command = new NpgsqlCommand(query1, connection))
@@ -358,7 +363,8 @@ namespace CS.Web.Controllers
                                 command.ExecuteNonQuery();
                             }
 
-                            if(installationPayload.installation.account.type == "User"){
+                            if (installationPayload.installation.account.type == "User")
+                            {
                                 string query3 = "DELETE FROM userinfo WHERE userid = @userid";
 
                                 using (NpgsqlCommand command = new NpgsqlCommand(query3, connection))
@@ -371,11 +377,11 @@ namespace CS.Web.Controllers
 
                             connection.Close();
 
-                            
+
                         }
                         Console.WriteLine($"User {installationPayload.installation.account.login} is removed from database (Uninstall).");
                     }
-                    
+
                     break;
                 case "installation_repositories": // DONE
                     //InstallationRepositoriesPayload
@@ -395,7 +401,7 @@ namespace CS.Web.Controllers
                             string[] parts = full_name.Split('/');
                             string owner = parts[0];
                             string repoName = parts[1];
-                                                    
+
 
                             Repository repo = await GetRepositoryById(repository.id, installationClient);
 
@@ -419,11 +425,12 @@ namespace CS.Web.Controllers
                             query = "INSERT INTO pullrequestinfo " + parameters + " VALUES "; //+ at_parameters;
 
                             var repoPulls = await GetRepoPullsById(repository.id, installationClient);
-                            
-                            if( repoPulls.Count != 0 ){
+
+                            if (repoPulls.Count != 0)
+                            {
 
                                 foreach (var repoPull in repoPulls)
-                                {   
+                                {
                                     var pull = await GetPullById(repository.id, repoPull.Number, installationClient);
                                     var requestedReviewers = pull.RequestedReviewers.Any()
                                     ? $"'{{ {string.Join(",", pull.RequestedReviewers.Select(r => $@"""{r.Login}"""))} }}'"
@@ -432,7 +439,7 @@ namespace CS.Web.Controllers
                                     var labels = new List<object>();
                                     foreach (var label in pull.Labels)
                                     {
-                                        labels.Add( new 
+                                        labels.Add(new
                                         {
                                             id = label.Id,
                                             name = label.Name,
@@ -440,7 +447,7 @@ namespace CS.Web.Controllers
                                         });
                                     }
 
-                                    
+
                                     int checks_complete_count = 0;
                                     int checks_incomplete_count = 0;
                                     int checks_success_count = 0;
@@ -456,18 +463,19 @@ namespace CS.Web.Controllers
                                     var checksList = new List<object>();
 
                                     //var checkSuiteId = checkSuites.CheckSuites.Last().Id;
-                                    var checkSuiteId = checkSuites.CheckSuites.Any() 
-                                        ? checkSuites.CheckSuites.Last().Id 
+                                    var checkSuiteId = checkSuites.CheckSuites.Any()
+                                        ? checkSuites.CheckSuites.Last().Id
                                         : -1;
 
-                                    if(checkSuiteId != -1) {
+                                    if (checkSuiteId != -1)
+                                    {
                                         var checks = await installationClient.Check.Run.GetAllForCheckSuite(
                                             installationRepositoriesPayload.installation.account.login,
                                             repository.name,
-                                            checkSuiteId        
+                                            checkSuiteId
                                         );
-                                    
-                                    
+
+
 
                                         foreach (var check in checks.CheckRuns)
                                         {
@@ -487,14 +495,14 @@ namespace CS.Web.Controllers
                                             {
                                                 checks_incomplete_count++;
                                             }
-                                            checksList.Add( new 
+                                            checksList.Add(new
                                             {
                                                 id = check.Id,
                                                 name = check.Name,
                                                 status = check.Status,
                                                 conclusion = check.Conclusion
                                             });
-                                            
+
                                         }
                                     }
 
@@ -505,8 +513,8 @@ namespace CS.Web.Controllers
                                         : "'{}'";
 
 
-                                    
-                                        // Get all reviews for the pull request
+
+                                    // Get all reviews for the pull request
                                     var installationReviews = await installationClient.PullRequest.Review.GetAll(
                                         installationRepositoriesPayload.installation.account.login,
                                         repository.name,
@@ -523,9 +531,10 @@ namespace CS.Web.Controllers
                                         //Console.WriteLine($"Latest Review State: {review.State}, User: {review.User.Login}");
 
                                         installationLatestReviews.Add(
-                                            new {
+                                            new
+                                            {
                                                 login = review.User.Login,
-                                                state = review.State.ToString() 
+                                                state = review.State.ToString()
                                             }
                                         );
                                     }
@@ -534,14 +543,14 @@ namespace CS.Web.Controllers
 
 
 
-                                    
+
                                     query += $"({repository.id}, {pull.Id}, '{pull.Base.Repository.Name}', {pull.Number}, '{pull.Title}', '{pull.User.Login}', '{pull.User.AvatarUrl}', '{pull.CreatedAt.Date.ToString("dd/MM/yyyy")}', '{pull.UpdatedAt.Date.ToString("dd/MM/yyyy")}', {pull.Comments}, {pull.Commits}, {pull.ChangedFiles}, {pull.Additions}, {pull.Deletions}, {pull.Draft}, '{pull.State.ToString()}', {requestedReviewers}, '{labeljson}', '{pull.Url}', '{pull.Base.Repository.Owner.Login}', '{JsonConvert.SerializeObject(checksList)}', {checks_complete_count}, {checks_incomplete_count}, {checks_success_count}, {checks_fail_count}, {assignedReviewers}, '{installationReviewsJson}'), ";
                                 }
-                                query = query.Substring(0, query.Length-2);   
+                                query = query.Substring(0, query.Length - 2);
                                 using (var command = new NpgsqlCommand(query, connection))
                                 {
-                                    command.ExecuteNonQuery();                    
-                                }           
+                                    command.ExecuteNonQuery();
+                                }
                             }
 
                             connection.Close();
@@ -585,7 +594,8 @@ namespace CS.Web.Controllers
                     break;
                 case "pull_request": // DONE
                     var pullRequestPayload = JsonConvert.DeserializeObject<PullRequestPayload>(requestBody);
-                    if(pullRequestPayload.action == "assigned" || pullRequestPayload.action == "unassigned"){
+                    if (pullRequestPayload.action == "assigned" || pullRequestPayload.action == "unassigned")
+                    {
                         var requestedReviewers = pullRequestPayload.pull_request.assignees.Any()
                             ? $"'{{ {string.Join(",", pullRequestPayload.pull_request.assignees.Select(r => $@"""{r.login}"""))} }}'"
                             : "'{}'";
@@ -615,7 +625,7 @@ namespace CS.Web.Controllers
                         var labels = new List<object>();
                         foreach (var label in pullRequestPayload.pull_request.labels)
                         {
-                            labels.Add( new 
+                            labels.Add(new
                             {
                                 id = label.id,
                                 name = label.name,
@@ -646,12 +656,13 @@ namespace CS.Web.Controllers
 
                         using (var command = new NpgsqlCommand(query, connection))
                         {
-                            command.ExecuteNonQuery();                    
+                            command.ExecuteNonQuery();
                         }
                         connection.Close();
                         Console.WriteLine("pr eklendi");
                     }
-                    else if(pullRequestPayload.action == "closed" || pullRequestPayload.action == "reopened"){
+                    else if (pullRequestPayload.action == "closed" || pullRequestPayload.action == "reopened")
+                    {
                         var query = $"UPDATE pullrequestinfo SET state = '{pullRequestPayload.pull_request.state.ToString()}' WHERE pullid = {pullRequestPayload.pull_request.id}";
                         connection.Open();
 
@@ -662,7 +673,8 @@ namespace CS.Web.Controllers
                         connection.Close();
                         Console.WriteLine("pull " + pullRequestPayload.action);
                     }
-                    else if(pullRequestPayload.action == "edited"){
+                    else if (pullRequestPayload.action == "edited")
+                    {
                         var query = $"UPDATE pullrequestinfo SET title = '{pullRequestPayload.pull_request.title}' WHERE pullid = {pullRequestPayload.pull_request.id}";
                         connection.Open();
 
@@ -673,18 +685,19 @@ namespace CS.Web.Controllers
                         connection.Close();
                         Console.WriteLine("Edited");
                     }
-                    else if(pullRequestPayload.action == "labeled" || pullRequestPayload.action == "unlabeled"){
+                    else if (pullRequestPayload.action == "labeled" || pullRequestPayload.action == "unlabeled")
+                    {
                         var labels = new List<object>();
-                            foreach (var label in pullRequestPayload.pull_request.labels)
+                        foreach (var label in pullRequestPayload.pull_request.labels)
+                        {
+                            labels.Add(new
                             {
-                                labels.Add(new
-                                {
-                                    id = label.id,
-                                    name = label.name,
-                                    color = label.color
-                                });
-                            }
-                            var labeljson = JsonConvert.SerializeObject(labels);
+                                id = label.id,
+                                name = label.name,
+                                color = label.color
+                            });
+                        }
+                        var labeljson = JsonConvert.SerializeObject(labels);
 
                         var query = $"UPDATE pullrequestinfo SET labels = '{labeljson}' WHERE pullid = {pullRequestPayload.pull_request.id}";
                         connection.Open();
@@ -696,7 +709,8 @@ namespace CS.Web.Controllers
                         connection.Close();
                         Console.WriteLine("labels updated");
                     }
-                    else if(pullRequestPayload.action == "review_request_removed" || pullRequestPayload.action == "review_requested"){
+                    else if (pullRequestPayload.action == "review_request_removed" || pullRequestPayload.action == "review_requested")
+                    {
                         var requestedReviewers = pullRequestPayload.pull_request.requested_reviewers.Any()
                             ? $"'{{ {string.Join(",", pullRequestPayload.pull_request.requested_reviewers.Select(r => $@"""{r.login}"""))} }}'"
                             : "'{}'";
@@ -737,9 +751,10 @@ namespace CS.Web.Controllers
                         //Console.WriteLine($"Latest Review State: {review.State}, User: {review.User.Login}");
 
                         latestReviews.Add(
-                            new {
+                            new
+                            {
                                 login = review.User.Login,
-                                state = review.State.ToString() 
+                                state = review.State.ToString()
                             }
                         );
                     }
@@ -749,7 +764,7 @@ namespace CS.Web.Controllers
                     connection.Open();
                     using (var command = new NpgsqlCommand(reviewsQuery, connection))
                     {
-                        command.ExecuteNonQuery();                    
+                        command.ExecuteNonQuery();
                     }
                     connection.Close();
                     Console.WriteLine("PR Reviews Updated");
@@ -791,8 +806,9 @@ namespace CS.Web.Controllers
 
         public async Task<IReadOnlyList<PullRequest>?> GetRepoPullsById(long id, GitHubClient installationClient) // Change the method signature to accept ID
         {
-            var options = new PullRequestRequest{
-                State=ItemStateFilter.All
+            var options = new PullRequestRequest
+            {
+                State = ItemStateFilter.All
             };
             // Get the repository by ID
             var pulls = await installationClient.PullRequest.GetAllForRepository(id, options);

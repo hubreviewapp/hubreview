@@ -113,8 +113,8 @@ public class GitHubController : ControllerBase
             {
                 command.Parameters.AddWithValue("@userid", user.Id);
                 var reader = command.ExecuteReader();
-                while(reader.Read())
-                { 
+                while (reader.Read())
+                {
                     doesExist = reader.GetBoolean(0);
                 }
 
@@ -125,8 +125,8 @@ public class GitHubController : ControllerBase
             var orgList = orgs.Select(o => o.Login).ToArray();
 
 
-            if ( !doesExist )
-            {   
+            if (!doesExist)
+            {
                 string parameters = "(userid, login, fullname, email, avatarurl, profileurl, organizations, workload, token)";
                 string at_parameters = "(@userid, @login, @fullname, @email, @avatarurl, @profileurl, @organizations, @workload, @token)";
                 string query = "INSERT INTO userinfo " + parameters + " VALUES " + at_parameters;
@@ -164,8 +164,9 @@ public class GitHubController : ControllerBase
                 }
 
                 await connection.CloseAsync();
-            } 
-            else {
+            }
+            else
+            {
                 string query = @"
                     UPDATE userinfo
                     SET email = @email,
@@ -198,7 +199,7 @@ public class GitHubController : ControllerBase
                     command2.ExecuteNonQuery();
                 }
                 await connection.CloseAsync();
-            } 
+            }
 
             _httpContextAccessor?.HttpContext?.Session.SetString("UserLogin", user.Login);
             _httpContextAccessor?.HttpContext?.Session.SetString("UserAvatarURL", user.AvatarUrl);
@@ -447,7 +448,7 @@ public class GitHubController : ControllerBase
             await connection.OpenAsync();
 
             string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner";
-            string query = "SELECT "+selects+" FROM pullrequestinfo WHERE repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins)";// ORDER BY name ASC";
+            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins)";// ORDER BY name ASC";
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
                 command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
