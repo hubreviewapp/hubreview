@@ -164,12 +164,10 @@ namespace CS.Web.Controllers
 
                     //TO DO
                     break;
-                case "installation": // Geçmiş Checks, Assignees ve Reviewleri çekmek lazım
+                case "installation": // DONE
                     //InstallationPayload
                     var installationPayload = JsonConvert.DeserializeObject<InstallationPayload>(requestBody);
                     if(installationPayload.action == "created"){
-                        Console.WriteLine(requestBody);
-                        Console.WriteLine("\ninstall");
                         response = await _client.GitHubApps.CreateInstallationToken(installationPayload.installation.id);
                         installationClient = GetNewClient(response.Token);
                         
@@ -201,7 +199,7 @@ namespace CS.Web.Controllers
                                 command.ExecuteNonQuery();
                             }
 
-                            string parameters = "(repoid, pullid, reponame, pullnumber, title, author, authoravatarurl, createdat, updatedat, comments, commits, changedfiles, additions, deletions, draft, state, reviewers, labels, pullurl, repoowner)";
+                            string parameters = "(repoid, pullid, reponame, pullnumber, title, author, authoravatarurl, createdat, updatedat, comments, commits, changedfiles, additions, deletions, draft, state, reviewers, labels, pullurl, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews)";
 
                             query = "INSERT INTO pullrequestinfo " + parameters + " VALUES "; //+ at_parameters;
 
@@ -225,9 +223,92 @@ namespace CS.Web.Controllers
                                         });
                                     }
 
+                                    int checks_complete_count = 0;
+                                    int checks_incomplete_count = 0;
+                                    int checks_success_count = 0;
+                                    int checks_fail_count = 0;
+
+                                    // Get the check suite ID for the pull request
+                                    var checkSuites = await installationClient.Check.Suite.GetAllForReference(
+                                        installationPayload.installation.account.login,
+                                        repository.name,
+                                        pull.Head.Sha
+                                    );
+
+                                    var checkSuiteId = checkSuites.CheckSuites.Last().Id;
+
+                                    var checks = await installationClient.Check.Run.GetAllForCheckSuite(
+                                        installationPayload.installation.account.login,
+                                        repository.name,
+                                        checkSuiteId        
+                                    );
+                                    
+                                    var checksList = new List<object>();
+
+                                    foreach (var check in checks.CheckRuns)
+                                    {
+                                        if (check.Status == "completed")
+                                        {
+                                            checks_complete_count++;
+                                            if (check.Conclusion == "success")
+                                            {
+                                                checks_success_count++;
+                                            }
+                                            else if (check.Conclusion == "failure")
+                                            {
+                                                checks_fail_count++;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            checks_incomplete_count++;
+                                        }
+                                        checksList.Add( new 
+                                        {
+                                            id = check.Id,
+                                            name = check.Name,
+                                            status = check.Status,
+                                            conclusion = check.Conclusion
+                                        });
+                                        
+                                    }
+
                                     var labeljson = JsonConvert.SerializeObject(labels);
                                     
-                                    query += $"({repository.id}, {pull.Id}, '{pull.Base.Repository.Name}', {pull.Number}, '{pull.Title}', '{pull.User.Login}', '{pull.User.AvatarUrl}', '{pull.CreatedAt.Date.ToString("dd/MM/yyyy")}', '{pull.UpdatedAt.Date.ToString("dd/MM/yyyy")}', {pull.Comments}, {pull.Commits}, {pull.ChangedFiles}, {pull.Additions}, {pull.Deletions}, {pull.Draft}, '{pull.State.ToString()}', {requestedReviewers}, '{labeljson}', '{pull.Url}', '{pull.Base.Repository.Owner.Login}'), ";
+                                    var assignedReviewers = pull.Assignees.Any()
+                                        ? $"'{{ {string.Join(",", pull.Assignees.Select(r => $@"""{r.Login}"""))} }}'"
+                                        : "'{}'";
+
+
+                                    
+                                        // Get all reviews for the pull request
+                                    var installationReviews = await installationClient.PullRequest.Review.GetAll(
+                                        installationPayload.installation.account.login,
+                                        repository.name,
+                                        pull.Number);
+
+                                    var installationLatestReviewsByUser = installationReviews
+                                        .GroupBy(r => r.User.Login)
+                                        .Select(g => g.OrderByDescending(r => r.SubmittedAt).First())
+                                        .ToList();
+
+                                    var installationLatestReviews = new List<object>();
+                                    foreach (var review in installationLatestReviewsByUser)
+                                    {
+                                        //Console.WriteLine($"Latest Review State: {review.State}, User: {review.User.Login}");
+
+                                        installationLatestReviews.Add(
+                                            new {
+                                                login = review.User.Login,
+                                                state = review.State.ToString() 
+                                            }
+                                        );
+                                    }
+
+                                    var installationReviewsJson = JsonConvert.SerializeObject(installationLatestReviews);
+
+                                    
+                                    query += $"({repository.id}, {pull.Id}, '{pull.Base.Repository.Name}', {pull.Number}, '{pull.Title}', '{pull.User.Login}', '{pull.User.AvatarUrl}', '{pull.CreatedAt.Date.ToString("dd/MM/yyyy")}', '{pull.UpdatedAt.Date.ToString("dd/MM/yyyy")}', {pull.Comments}, {pull.Commits}, {pull.ChangedFiles}, {pull.Additions}, {pull.Deletions}, {pull.Draft}, '{pull.State.ToString()}', {requestedReviewers}, '{labeljson}', '{pull.Url}', '{pull.Base.Repository.Owner.Login}', '{JsonConvert.SerializeObject(checksList)}', {checks_complete_count}, {checks_incomplete_count}, {checks_success_count}, {checks_fail_count}, {assignedReviewers}, '{installationReviewsJson}'), ";
                                 }
                                 query = query.Substring(0, query.Length-2);   
                                 using (var command = new NpgsqlCommand(query, connection))
