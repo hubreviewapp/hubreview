@@ -9,6 +9,9 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Npgsql;
 using Octokit;
+using Octokit.GraphQL;
+using static Octokit.GraphQL.Variable;
+
 
 
 
@@ -26,7 +29,7 @@ public class GitHubController : ControllerBase
 
     private static GitHubClient _getGitHubClient(string token)
     {
-        return new GitHubClient(new ProductHeaderValue("HubReviewApp"))
+        return new GitHubClient(new Octokit.ProductHeaderValue("HubReviewApp"))
         {
             Credentials = new Credentials(token, AuthenticationType.Bearer)
         };
@@ -553,11 +556,11 @@ public class GitHubController : ControllerBase
                         {
                             // If the label does not exist, create it
                             var randomColor = GenerateRandomColor();
-                            label = await installationClient.Issue.Labels.Create(owner, repoName, new NewLabel(labelName, "ffffff"));
+                            label = await client.Issue.Labels.Create(owner, repoName, new NewLabel(labelName, "ffffff"));
                         }
 
                         // Add the label to the pull request
-                        await installationClient.Issue.Labels.AddToIssue(owner, repoName, (int)prnumber, new[] { label.Name });
+                        await client.Issue.Labels.AddToIssue(owner, repoName, (int)prnumber, new[] { label.Name });
                     }
 
                     return Ok($"Labels '{string.Join(",", labelNames)}' added to pull request #{prnumber} in repository {repoName}.");
@@ -608,7 +611,7 @@ public class GitHubController : ControllerBase
                     }
 
                     // Remove the label from the pull request
-                    await installationClient.Issue.Labels.RemoveFromIssue(owner, repoName, (int)prnumber, labelName);
+                    await client.Issue.Labels.RemoveFromIssue(owner, repoName, (int)prnumber, labelName);
                     return Ok($"Label '{labelName}' removed from pull request #{prnumber} in repository {repoName}.");
                 }
                 catch (NotFoundException)
@@ -644,7 +647,7 @@ public class GitHubController : ControllerBase
                 try
                 {
                     var reviewRequest = new PullRequestReviewRequest(reviewers, null);
-                    var pull = await installationClient.PullRequest.ReviewRequest.Create(owner, repoName, (int)prnumber, reviewRequest);
+                    var pull = await client.PullRequest.ReviewRequest.Create(owner, repoName, (int)prnumber, reviewRequest);
                     return Ok($"{string.Join(",", reviewers)} is assigned to PR #{prnumber}.");
                 }
                 catch (NotFoundException)
@@ -665,6 +668,8 @@ public class GitHubController : ControllerBase
         var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent();
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
@@ -681,7 +686,7 @@ public class GitHubController : ControllerBase
                 {
                     string[] arr = [reviewer];
                     var reviewRequest = new PullRequestReviewRequest(arr, null);
-                    await installationClient.PullRequest.ReviewRequest.Delete(owner, repoName, (int)prnumber, reviewRequest);
+                    await client.PullRequest.ReviewRequest.Delete(owner, repoName, (int)prnumber, reviewRequest);
                     return Ok($"{reviewer} is removed from PR #{prnumber}.");
                 }
                 catch (NotFoundException)
@@ -823,6 +828,15 @@ public class GitHubController : ControllerBase
 
         return Ok(result);
     }
+    /*
+    [HttpGet("pullrequest/{owner}/{repoName}/{sha}/addRevComment")]
+    public async Task<ActionResult> AddRevCommentToPR(string owner, string repoName, string sha)
+    {
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var commit = await client.Repository.Commit.Get(owner, repoName, sha);
+        await client.PullRequest.ReviewComment.Create(owner, repoName, prnumber, comment);
+        return Ok(commit.Files[0].Filename);   
+    }*/
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_commits")]
     public async Task<ActionResult> getCommits(string owner, string repoName, int prnumber)
@@ -845,13 +859,13 @@ public class GitHubController : ControllerBase
             {
                 var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
                 var installationClient = GetNewClient(response.Token);
-
                 var commits = await installationClient.PullRequest.Commits(owner, repoName, prnumber);
 
                 CommitInfo obj;
 
                 foreach (var commit in commits)
                 {
+
                     if (processedCommitIds.Contains(commit.NodeId))
                     {
                         continue;
@@ -906,8 +920,8 @@ public class GitHubController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("{owner}/{repoName}/contributors")]
-    public async Task<ActionResult> getRepositoryContributors(string owner, string repoName)
+    [HttpGet("getPRReviewerSuggestion/{owner}/{repoName}/{prOwner}")]
+    public async Task<ActionResult> getPRReviewerSuggestion(string owner, string repoName, string prOwner)
     {
         var appClient = GetNewClient();
         var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
@@ -917,7 +931,7 @@ public class GitHubController : ControllerBase
         var organizations = await userClient.Organization.GetAllForCurrent();
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
-        var result = new List<ContributorInfo>();
+        var result = new List<CollaboratorInfo>();
 
         var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
         foreach (var installation in installations)
@@ -929,19 +943,18 @@ public class GitHubController : ControllerBase
 
                 try
                 {
-                    var contributors = await installationClient.Repository.GetAllContributors(owner, repoName);
+                    var collaborators = await installationClient.Repository.Collaborator.GetAll(owner, repoName);
 
-                    foreach (var contributor in contributors)
+                    foreach (var collaborator in collaborators)
                     {
-                        if (contributor.Login == userLogin)
-                            continue; // Skip the logged-in user
+                        if (collaborator.Login == prOwner)
+                            continue; // Skip the pr owner
 
-                        result.Add(new ContributorInfo
+                        result.Add(new CollaboratorInfo
                         {
-                            Id = contributor.Id,
-                            Login = contributor.Login,
-                            AvatarUrl = contributor.AvatarUrl,
-                            Contributions = contributor.Contributions
+                            Id = collaborator.Id,
+                            Login = collaborator.Login,
+                            AvatarUrl = collaborator.AvatarUrl
                         });
                     }
 
@@ -957,4 +970,159 @@ public class GitHubController : ControllerBase
         return NotFound("There exists no user in session.");
     }
 
+    [HttpGet("getRepoLabels/{owner}/{repoName}")]
+    public async Task<ActionResult> GetRepoLabels(string owner, string repoName)
+    {
+        var appClient = GetNewClient();
+        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent();
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        var result = new List<LabelInfo>();
+
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        foreach (var installation in installations)
+        {
+            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            {
+                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
+                var installationClient = GetNewClient(response.Token);
+
+                try
+                {
+                    var labels = await installationClient.Issue.Labels.GetAllForRepository(owner, repoName);
+
+                    foreach (var label in labels)
+                    {
+                        result.Add(new LabelInfo
+                        {
+                            id = label.Id,
+                            name = label.Name,
+                            color = label.Color
+                        });
+                    }
+
+                    return Ok(result);
+                }
+                catch (NotFoundException)
+                {
+                    return NotFound($"Repository {repoName} not found under owner {owner}.");
+                }
+            }
+        }
+        return NotFound("There exists no user in session.");
+    }
+
+    [HttpGet("getRepoAssignees/{owner}/{repoName}")]
+    public async Task<ActionResult> GetRepoAssignees(string owner, string repoName)
+    {
+        var appClient = GetNewClient();
+        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent();
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        var result = new List<AssigneeInfo>();
+
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        foreach (var installation in installations)
+        {
+            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            {
+                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
+                var installationClient = GetNewClient(response.Token);
+
+                try
+                {
+                    var assignees = await installationClient.Issue.Assignee.GetAllForRepository(owner, repoName);
+
+                    foreach (var assignee in assignees)
+                    {
+                        result.Add(new AssigneeInfo
+                        {
+                            id = assignee.Id,
+                            login = assignee.Login,
+                            avatar_url = assignee.AvatarUrl,
+                            url = assignee.Url
+                        });
+                    }
+
+                    return Ok(result);
+                }
+                catch (NotFoundException)
+                {
+                    return NotFound($"Repository {repoName} not found under owner {owner}.");
+                }
+            }
+        }
+        return NotFound("There exists no user in session.");
+    }
+
+
+    [HttpGet("GetReviewerSuggestions/{owner}/{repoName}/{prNumber}")]
+    public async Task<ActionResult> GetReviewerSuggestions(string owner, string repoName, int prNumber)
+    {
+        var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
+        var connection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
+
+        var appClient = GetNewClient();
+        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent();
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        List<string> suggestedReviewersList = new List<string>();
+        foreach (var installation in installations)
+        {
+            if (installation.Account.Login == userLogin)
+            {
+                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
+                var installationClient = GetNewClient(response.Token);
+
+                var query = new Query()
+                                    .RepositoryOwner(Var("owner"))
+                                    .Repository(Var("name"))
+                                    .PullRequest(Var("prnumber"))
+                                    .Select(pr => new
+                                    {
+                                        pr.Number,
+                                        pr.Title,
+                                        SuggestedReviewers = pr.SuggestedReviewers.Select(reviewer => new
+                                        {
+                                            Login = reviewer.Reviewer.Login,
+                                            avatarUrl = reviewer.Reviewer.Url + ".png",
+                                        }).ToList(),
+                                    }).Compile();
+
+                var vars = new Dictionary<string, object>
+                {
+                    { "owner", owner },
+                    { "name", repoName },
+                    { "prnumber", prNumber },
+                };
+
+                var result = await connection.Run(query, vars);
+
+
+
+                foreach (var suggestedReviewer in result.SuggestedReviewers)
+                {
+                    suggestedReviewersList.Add(suggestedReviewer.Login);
+                }
+                return Ok(result.SuggestedReviewers);
+            }
+        }
+
+        return Ok(suggestedReviewersList);
+    }
 }
+
+

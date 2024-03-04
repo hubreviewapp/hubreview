@@ -5,7 +5,7 @@ import { IconDotsVertical } from "@tabler/icons-react";
 import { useState } from "react";
 
 interface CommentProps {
-  id: number;
+  id: string;
   author: string;
   text: string;
   date: Date;
@@ -18,7 +18,7 @@ export function DiffComment({ author, text, date }: CommentProps) {
       {item}
     </Combobox.Option>
   ));
-  const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  const [, setSelectedItem] = useState<string | null>(null);
   const combobox = useCombobox({
     onDropdownClose: () => combobox.resetSelectedOption(),
   });

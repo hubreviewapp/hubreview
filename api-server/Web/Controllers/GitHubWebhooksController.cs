@@ -58,7 +58,7 @@ namespace CS.Web.Controllers
 
             AccessToken response;
             GitHubClient installationClient;
-
+            
             switch (eventType)
             {
                 case "check_run": // DONE :D
@@ -394,8 +394,7 @@ namespace CS.Web.Controllers
                             string full_name = repository.full_name;
                             string[] parts = full_name.Split('/');
                             string owner = parts[0];
-                            string repoName = parts[1];
-                                                    
+                            string repoName = parts[1];                                         
 
                             Repository repo = await GetRepositoryById(repository.id, installationClient);
 

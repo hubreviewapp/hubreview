@@ -31,11 +31,11 @@ function CommentList() {
               </Group>
             </Text>
             {isCommentsVisible ? (
-              <DiffComment id={randomId} visible={"false"} author={"ayse"} text={"kbhjkjjhbjbbh"} date={"010101"} />
+              <DiffComment id={randomId()} author="ayse" text="kbhjkjjhbjbbh" date={new Date()} />
             ) : (
               <Text c="dimmed" />
             )}
-            <Box align="right">
+            <Box>
               <Divider my="xs" />
               <Button variant="light" onClick={() => setResolved(false)}>
                 Unresolve Conversation
@@ -44,13 +44,13 @@ function CommentList() {
           </Box>
         ) : (
           <div>
-            <DiffComment id={randomId} visible={"false"} author={"ayse"} text={"kbhjkjjhbjbbh"} date={"010101"} />
+            <DiffComment id={randomId()} author="ayse" text="kbhjkjjhbjbbh" date={new Date()} />
 
             <Box p="md">
               {replyActive ? (
                 <div>
-                  <TextEditor content="" />
-                  <Box align="right">
+                  <TextEditor content="" addComment={() => {}} />
+                  <Box>
                     <Button color="gray" mx="md" onClick={() => setReplyActive(false)}>
                       {" "}
                       Cancel{" "}
@@ -61,7 +61,7 @@ function CommentList() {
               ) : (
                 <TextInput onClick={() => setReplyActive(true)} placeholder="Enter a reply" />
               )}
-              <Box align="right">
+              <Box>
                 <Divider my="xs" />
                 <Button variant="light" onClick={() => setResolved(true)}>
                   Resolve Conversation

@@ -1,10 +1,6 @@
 import { Badge, Box, rem } from "@mantine/core";
 import { IconTag } from "@tabler/icons-react";
 
-interface LabelButtonProps {
-  label: string;
-  size: string;
-}
 const hubReviewLabels = {
   bug: "#d73a4a",
   enhancement: "#a2eeef",
@@ -12,13 +8,18 @@ const hubReviewLabels = {
   question: "#0075ca",
   suggestion: "#28a745",
 };
+export type HubReviewLabelType = keyof typeof hubReviewLabels;
 
-function getColorByKey(key) {
+interface LabelButtonProps {
+  label: HubReviewLabelType;
+  size: string;
+}
+
+function getColorByKey(key: keyof typeof hubReviewLabels) {
   return hubReviewLabels[key] || "#808080"; // Default color is gray (#808080)
 }
 
 function LabelButton({ label, size }: LabelButtonProps) {
-  label = label.toLowerCase();
   const color = getColorByKey(label);
 
   const iconTag = <IconTag style={{ width: rem(15), height: rem(15) }} />;

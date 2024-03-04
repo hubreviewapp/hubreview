@@ -83,7 +83,7 @@ function PRCreationPage() {
         </Grid.Col>
       </Grid>
       <Box my="md">
-        <PRSummaryBox numContributors={3} numFiles={5} numCommits={8} />
+        <PRSummaryBox numFiles={5} numCommits={8} addedLines={0} deletedLines={0} />
       </Box>
       <CommitHistory />
       <Group>

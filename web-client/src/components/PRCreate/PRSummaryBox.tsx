@@ -1,38 +1,36 @@
-import { Box, Group, rem, Text } from "@mantine/core";
-import { IconFile, IconGitCommit, IconUsersGroup } from "@tabler/icons-react";
-import classes from "./CreatePR.module.scss";
+import { Group, rem, Text } from "@mantine/core";
+import { IconFile, IconGitCommit, IconPlusMinus } from "@tabler/icons-react";
 
 export interface PRSummaryBoxProps {
-  numContributors: number;
   numFiles: number;
   numCommits: number;
+  addedLines: number;
+  deletedLines: number;
 }
 
-function PRSummaryBox({ numContributors, numFiles, numCommits }: PRSummaryBoxProps) {
+function PRSummaryBox({ numFiles, numCommits, deletedLines, addedLines }: PRSummaryBoxProps) {
   return (
-    <Box className={classes.capsuleBox}>
-      <Group ml="xl">
+    <Group>
+      <Group gap="xs">
         <IconFile style={{ width: rem(18), height: rem(18) }} />
         {numFiles}
         <Text fz="sm" c="dimmed">
           File Changed
         </Text>
       </Group>
-      <Group>
-        <IconUsersGroup style={{ width: rem(18), height: rem(18) }} />
-        {numContributors}
-        <Text fz="sm" c="dimmed">
-          Contributors
-        </Text>
-      </Group>
-      <Group mr="xl">
+      <Group gap="xs">
         <IconGitCommit style={{ width: rem(18), height: rem(18) }} />
         {numCommits}
         <Text fz="sm" c="dimmed">
           Commits
         </Text>
       </Group>
-    </Box>
+      <Group gap="xs">
+        <IconPlusMinus style={{ width: rem(18), height: rem(18) }} />
+        <Text c="green">+{addedLines}</Text>
+        <Text c="red">-{deletedLines}</Text>
+      </Group>
+    </Group>
   );
 }
 

@@ -19,7 +19,7 @@ interface CommentProps {
 export function Comment({ id, author, text, date, isResolved, isAIGenerated, deletePRComment }: CommentProps) {
   const settings = ["Copy Link", "Quote Reply", "Edit", "Delete", "Reply", "Reference in new issue"];
 
-  const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  const [, setSelectedItem] = useState<string | null>(null);
   const combobox = useCombobox({
     onDropdownClose: () => combobox.resetSelectedOption(),
   });
@@ -58,7 +58,7 @@ export function Comment({ id, author, text, date, isResolved, isAIGenerated, del
       >
         <Group>
           <Avatar src={UserLogo} alt="author" radius="xl" />
-          <Box display={"flex"}>
+          <Box display="flex">
             <Box>
               <Text fz="md"> {author}</Text>
               <Text fz="xs" c="dimmed">

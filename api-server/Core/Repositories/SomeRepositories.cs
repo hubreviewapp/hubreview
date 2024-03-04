@@ -1,5 +1,5 @@
-using Microsoft.Extensions.DependencyInjection;
 using CS.Core.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CS.Core.Repositories
 {

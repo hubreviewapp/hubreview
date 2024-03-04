@@ -6,13 +6,13 @@ interface NoRenderOnPathProps {
   children: React.ReactNode;
 }
 
-const NoRenderOnPath: React.FC<NoRenderOnPathProps> = (props: NoRenderOnPathProps) => {
+function NoRenderOnPath(props: NoRenderOnPathProps) {
   const location = useLocation();
   return props.noRenderPaths && props.noRenderPaths.includes(location.pathname) ? (
     <React.Fragment></React.Fragment>
   ) : (
     <>{props.children}</>
   );
-};
+}
 
 export default NoRenderOnPath;
