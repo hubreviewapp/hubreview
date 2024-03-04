@@ -576,18 +576,6 @@ namespace CS.Web.Controllers
                 Credentials = new Credentials(token, AuthenticationType.Bearer)
             };
         }
-        /*
-        private GitHubJwtFactory _getGitHubJwtGenerator()
-        {
-            return new GitHubJwtFactory(
-                new FilePrivateKeySource(_reader["PK_RELATIVE_PATH"]),
-                new GitHubJwtFactoryOptions
-                {
-                    AppIntegrationId = _reader.GetIntValue("APP_ID"), // The GitHub App Id
-                    ExpirationSeconds = _reader.GetIntValue("EXP_TIME") // 10 minutes is the maximum time allowed
-                }
-            );
-        } */
 
 
         private GitHubClient GetNewClient(string? token = null)
