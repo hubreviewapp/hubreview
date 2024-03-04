@@ -403,7 +403,7 @@ namespace CS.Web.Controllers
                     }
 
                     break;
-                case "pull_request": // Geçmiş Checks, Assignees ve Reviewleri çekmek lazım (OPENED KISMINA)
+                case "pull_request": // Geçmiş Checks, Assignees ve Reviewleri çekmek lazım (OPENED ACTION KISMINA)
                     var pullRequestPayload = JsonConvert.DeserializeObject<PullRequestPayload>(requestBody);
                     if(pullRequestPayload.action == "assigned" || pullRequestPayload.action == "unassigned"){
                         var requestedReviewers = pullRequestPayload.pull_request.assignees.Any()
