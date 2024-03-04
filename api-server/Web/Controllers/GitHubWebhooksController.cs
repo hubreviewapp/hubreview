@@ -164,7 +164,7 @@ namespace CS.Web.Controllers
 
                     //TO DO
                     break;
-                case "installation": // DONE
+                case "installation": // Geçmiş Checks, Assignees ve Reviewleri çekmek lazım
                     //InstallationPayload
                     var installationPayload = JsonConvert.DeserializeObject<InstallationPayload>(requestBody);
                     if(installationPayload.action == "created"){
@@ -289,7 +289,7 @@ namespace CS.Web.Controllers
                     }
                     
                     break;
-                case "installation_repositories": // add/remove repo and prs from database on (un)installation of a repo -- DONE 
+                case "installation_repositories": // Geçmiş Checks, Assignees ve Reviewleri çekmek lazım
                     //InstallationRepositoriesPayload
                     var installationRepositoriesPayload = JsonConvert.DeserializeObject<InstallationRepositoriesPayload>(requestBody);
 
@@ -403,7 +403,7 @@ namespace CS.Web.Controllers
                     }
 
                     break;
-                case "pull_request": // DONE
+                case "pull_request": // Geçmiş Checks, Assignees ve Reviewleri çekmek lazım (OPENED KISMINA)
                     var pullRequestPayload = JsonConvert.DeserializeObject<PullRequestPayload>(requestBody);
                     if(pullRequestPayload.action == "assigned" || pullRequestPayload.action == "unassigned"){
                         var requestedReviewers = pullRequestPayload.pull_request.assignees.Any()
@@ -418,7 +418,7 @@ namespace CS.Web.Controllers
                             command.ExecuteNonQuery();
                         }
                         connection.Close();
-                        Console.WriteLine("Review Request Update");
+                        Console.WriteLine("Assignee " + pullRequestPayload.action);
                     }
                     else if (pullRequestPayload.action == "opened")
                     {
@@ -517,12 +517,47 @@ namespace CS.Web.Controllers
                         Console.WriteLine("Review Request Update");
                     }
                     break;
-                case "pull_request_review": // kim onayladı vs gösterceksek güzel olur yoksa çıkarabiliriz
+                case "pull_request_review": // DONE
                     var pullRequestReviewPayload = JsonConvert.DeserializeObject<PullRequestReviewPayload>(requestBody);
-                    Console.WriteLine(requestBody);
-                    //TO DO
-                    Console.WriteLine(pullRequestReviewPayload.review.state);
-                    // GETALL fonksiyonuyla tüm review edilenleri al
+                    //Console.WriteLine(pullRequestReviewPayload.review.state);
+                    //Console.WriteLine(pullRequestReviewPayload.review.user.login);
+
+                    response = await _client.GitHubApps.CreateInstallationToken(pullRequestReviewPayload.installation.id);
+                    installationClient = GetNewClient(response.Token);
+
+                    // Get all reviews for the pull request
+                    var reviews = await installationClient.PullRequest.Review.GetAll(
+                        pullRequestReviewPayload.repository.owner.login,
+                        pullRequestReviewPayload.repository.name,
+                        pullRequestReviewPayload.pull_request.number);
+
+                    var latestReviewsByUser = reviews
+                        .GroupBy(r => r.User.Login)
+                        .Select(g => g.OrderByDescending(r => r.SubmittedAt).First())
+                        .ToList();
+
+                    var latestReviews = new List<object>();
+                    foreach (var review in latestReviewsByUser)
+                    {
+                        //Console.WriteLine($"Latest Review State: {review.State}, User: {review.User.Login}");
+
+                        latestReviews.Add(
+                            new {
+                                login = review.User.Login,
+                                state = review.State.ToString() 
+                            }
+                        );
+                    }
+
+                    var reviewsJson = JsonConvert.SerializeObject(latestReviews);
+                    string reviewsQuery = $"UPDATE pullrequestinfo SET reviews = '{reviewsJson}' WHERE pullid = {pullRequestReviewPayload.pull_request.id}";
+                    connection.Open();
+                    using (var command = new NpgsqlCommand(reviewsQuery, connection))
+                    {
+                        command.ExecuteNonQuery();                    
+                    }
+                    connection.Close();
+                    Console.WriteLine("PR Reviews Updated");
                     break;
                 case "pull_request_review_thread": // resolved unresolved olayı. Gösterceksek faydalı yoksa gerek yok
                     var pullRequestReviewThreadPayload = JsonConvert.DeserializeObject<PullRequestReviewThreadPayload>(requestBody);
