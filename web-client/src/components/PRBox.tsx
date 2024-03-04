@@ -2,7 +2,7 @@ import UserLogo from "../assets/icons/user.png";
 import GitHubLogo from "../assets/icons/github-mark-white.png";
 import { Grid, Box, Flex } from "@mantine/core";
 import classes from "../styles/temp-styles.module.css";
-import LabelButton from "./LabelButton";
+import LabelButton, { HubReviewLabelType } from "./LabelButton";
 import { Link } from "react-router-dom";
 import PriorityBadge, { PriorityBadgeLabel } from "./PriorityBadge";
 
@@ -11,7 +11,7 @@ interface PRBoxProps {
   prName: string;
   repository: string;
   dateCreated: string;
-  labels: string[];
+  labels: HubReviewLabelType[];
   priority: PriorityBadgeLabel;
   pQueueActive: boolean;
 }

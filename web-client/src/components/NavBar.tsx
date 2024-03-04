@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Container, Button, Title, Grid, Box, rem, Avatar, Space } from "@mantine/core";
 import { useState, useEffect } from "react";
 import { IconLogout } from "@tabler/icons-react";
-import { useUser } from "../providers/contexts.tsx";
+import { useUser } from "../providers/context-utilities";
 import axios from "axios";
 
 function NavBar() {

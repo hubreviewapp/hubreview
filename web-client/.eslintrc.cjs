@@ -33,28 +33,32 @@ module.exports = {
     }],
     "@typescript-eslint/naming-convention": ["warn",
       {
-        selector: 'default',
-        format: ['camelCase'],
-        leadingUnderscore: 'allow',
-        trailingUnderscore: 'allow',
+        selector: "default",
+        format: ["camelCase"],
+        leadingUnderscore: "allow",
+        trailingUnderscore: "allow",
       },
       {
         selector: "function",
         format: ["camelCase", "PascalCase"],
       },
       {
-        selector: 'import',
-        format: ['camelCase', 'PascalCase'],
+        selector: "import",
+        format: ["camelCase", "PascalCase"],
       },
       {
-        selector: 'variable',
-        format: ['camelCase', 'UPPER_CASE'],
-        leadingUnderscore: 'allow',
-        trailingUnderscore: 'allow',
+        selector: "variable",
+        format: ["camelCase", "UPPER_CASE"],
+        leadingUnderscore: "allow",
+        trailingUnderscore: "allow",
       },
       {
-        selector: 'typeLike',
-        format: ['PascalCase'],
+        selector: "typeLike",
+        format: ["PascalCase"],
+      },
+      {
+        selector: "enumMember",
+        format: ["PascalCase"],
       },
       {
         selector: [
@@ -65,7 +69,6 @@ module.exports = {
           "objectLiteralMethod",
           "typeMethod",
           "accessor",
-          "enumMember"
         ],
         format: null,
         modifiers: ["requiresQuotes"]

@@ -40,7 +40,7 @@ export default function PrContextTab() {
 
       <br></br>
       <Box>
-        <Badge size={"lg"} color={""} style={{ marginTop: 25 }} mb={4}>
+        <Badge size="lg" color="" style={{ marginTop: 25 }} mb={4}>
           Notes for reviewers
         </Badge>
         <Flex direction="column" style={{ border: "solid 0.5px", borderRadius: "10px" }}>

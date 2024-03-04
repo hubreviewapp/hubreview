@@ -20,7 +20,7 @@ import { IconInfoCircle } from "@tabler/icons-react";
 import { useState } from "react";
 import UserLogo from "../../assets/icons/user2.png";
 import PriorityBadge, { PriorityBadgeLabel } from "../PriorityBadge";
-import LabelButton from "../LabelButton";
+import LabelButton, { HubReviewLabelType } from "../LabelButton";
 
 function barColor(capacity: number, waiting: number) {
   const workload = (waiting / capacity) * 100;
@@ -173,7 +173,7 @@ function PRDetailsBox() {
           {labelValue.length == 0 ? (
             <Badge variant="light">No Label Added</Badge>
           ) : (
-            labelValue.map((itm) => <LabelButton key={itm} label={itm} size="md" />)
+            labelValue.map((itm) => <LabelButton key={itm} label={itm as HubReviewLabelType} size="md" />)
           )}
         </Group>
       </Paper>
