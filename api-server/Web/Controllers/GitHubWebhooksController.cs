@@ -403,10 +403,22 @@ namespace CS.Web.Controllers
                     }
 
                     break;
-                case "pull_request": // Assigned unassigned harici bitti
+                case "pull_request": // DONE
                     var pullRequestPayload = JsonConvert.DeserializeObject<PullRequestPayload>(requestBody);
-                    if(pullRequestPayload.action == "assigned" || pullRequestPayload.action == "unassigned"){ // Ana sayfada olacaksa ?
+                    if(pullRequestPayload.action == "assigned" || pullRequestPayload.action == "unassigned"){
+                        var requestedReviewers = pullRequestPayload.pull_request.assignees.Any()
+                            ? $"'{{ {string.Join(",", pullRequestPayload.pull_request.assignees.Select(r => $@"""{r.login}"""))} }}'"
+                            : "'{}'";
 
+                        var query = $"UPDATE pullrequestinfo SET assignees = {requestedReviewers} WHERE pullid = {pullRequestPayload.pull_request.id}";
+                        connection.Open();
+
+                        using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+                        connection.Close();
+                        Console.WriteLine("Review Request Update");
                     }
                     else if (pullRequestPayload.action == "opened")
                     {
