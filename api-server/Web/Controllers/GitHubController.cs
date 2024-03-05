@@ -1125,10 +1125,45 @@ public class GitHubController : ControllerBase
         return Ok(suggestedReviewersList);
     }
 
-    [HttpGet("prs/{owner}/{repoName}/{prNumber}")]
-    public async Task<ActionResult> PRFilter(string owner, string repoName, int prNumber)
+    [HttpGet("prs/needsreview/{userLogin}")]
+    public async Task<ActionResult> GetNeedsYourReview(string userLogin)
     {
 
+        return Ok();
+    }
+
+    [HttpGet("prs/userprs/{userLogin}")]
+    public async Task<ActionResult> GetUserPRs(string userLogin)
+    {
+        
+        return Ok();
+    }
+
+    [HttpGet("prs/waitingauthor/{userLogin}")]
+    public async Task<ActionResult> GetWaitingAuthorS(string userLogin)
+    {
+        
+        return Ok();
+    }
+
+    [HttpGet("prs/open/{userLogin}")]
+    public async Task<ActionResult> GetOpenPRs(string userLogin)
+    {
+        
+        return Ok();
+    }
+
+    [HttpGet("prs/merged/{userLogin}")]
+    public async Task<ActionResult> GetMergedPRs(string userLogin)
+    {
+        
+        return Ok();
+    }
+
+    [HttpGet("prs/closed/{userLogin}")]
+    public async Task<ActionResult> GetClosedPRs(string userLogin)
+    {
+        
         return Ok();
     }
 }
