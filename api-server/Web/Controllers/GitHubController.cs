@@ -937,7 +937,7 @@ public class GitHubController : ControllerBase
         var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
         foreach (var installation in installations)
         {
-            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            if (installation.Account.Login == owner)
             {
                 var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
                 var installationClient = GetNewClient(response.Token);
@@ -1123,6 +1123,13 @@ public class GitHubController : ControllerBase
         }
 
         return Ok(suggestedReviewersList);
+    }
+
+    [HttpGet("prs/{owner}/{repoName}/{prNumber}")]
+    public async Task<ActionResult> PRFilter(string owner, string repoName, int prNumber)
+    {
+
+        return Ok();
     }
 }
 
