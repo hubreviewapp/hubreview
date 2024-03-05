@@ -1126,8 +1126,9 @@ public class GitHubController : ControllerBase
     }
 
     [HttpGet("prs/{owner}/{repoName}/{prNumber}")]
-    public async Task<ActionResult> PRFilter(string owner, string repoName, int prNumber){
-        
+    public async Task<ActionResult> PRFilter(string owner, string repoName, int prNumber)
+    {
+
         return Ok();
     }
 }
