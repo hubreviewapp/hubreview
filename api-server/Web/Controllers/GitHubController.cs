@@ -1,4 +1,5 @@
 using System.Web;
+using CS.Core.Configuration;
 using CS.Core.Entities;
 using DotEnv.Core;
 using GitHubJwt;
@@ -6,9 +7,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Npgsql;
 using Octokit;
 using Octokit.GraphQL;
 using static Octokit.GraphQL.Variable;
+
+
 
 
 namespace CS.Web.Controllers;
@@ -79,6 +83,13 @@ public class GitHubController : ControllerBase
     [HttpGet("acquireToken")]
     public async Task<ActionResult> acquireToken(string code)
     {
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        using var connection = new NpgsqlConnection(connectionString);
+
+        connection.Open();
+
+
         using (var httpClient = new HttpClient())
         {
             var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
@@ -96,13 +107,107 @@ public class GitHubController : ControllerBase
             var parsedResponse = HttpUtility.ParseQueryString(responseContent);
             var access_token = parsedResponse["access_token"];
 
-            _httpContextAccessor?.HttpContext?.Session.SetString("AccessToken", access_token);
-
             GitHubClient userClient = GetNewClient(access_token);
             var user = await userClient.User.Current();
+
+            string exists = "SELECT EXISTS (SELECT 1 FROM userinfo WHERE userid = @userid LIMIT 1)";
+            bool doesExist = false;
+            using (NpgsqlCommand command = new NpgsqlCommand(exists, connection))
+            {
+                command.Parameters.AddWithValue("@userid", user.Id);
+                var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    doesExist = reader.GetBoolean(0);
+                }
+
+            }
+
+            await connection.CloseAsync();
+            var orgs = await userClient.Organization.GetAllForCurrent();
+            var orgList = orgs.Select(o => o.Login).ToArray();
+
+
+            if (!doesExist)
+            {
+                string parameters = "(userid, login, fullname, email, avatarurl, profileurl, organizations, workload, token)";
+                string at_parameters = "(@userid, @login, @fullname, @email, @avatarurl, @profileurl, @organizations, @workload, @token)";
+                string query = "INSERT INTO userinfo " + parameters + " VALUES " + at_parameters;
+
+                connection.Open();
+
+                using (NpgsqlCommand command2 = new NpgsqlCommand(query, connection))
+                {
+                    command2.Parameters.AddWithValue("@userid", user.Id);
+                    command2.Parameters.AddWithValue("@login", user.Login);
+                    command2.Parameters.AddWithValue("@fullname", user.Name);
+                    if (user.Email != null)
+                    {
+                        command2.Parameters.AddWithValue("@email", user.Email);
+                    }
+                    else
+                    {
+                        command2.Parameters.AddWithValue("@email", DBNull.Value);
+                    }
+                    command2.Parameters.AddWithValue("@avatarurl", user.AvatarUrl);
+                    command2.Parameters.AddWithValue("@profileurl", user.Url);
+                    command2.Parameters.AddWithValue("@organizations", orgList);
+                    command2.Parameters.AddWithValue("@workload", 0);
+                    if (access_token != null)
+                    {
+                        command2.Parameters.AddWithValue("@token", access_token);
+                    }
+                    else
+                    {
+                        command2.Parameters.AddWithValue("@token", DBNull.Value);
+                    }
+
+
+                    command2.ExecuteNonQuery();
+                }
+
+                await connection.CloseAsync();
+            }
+            else
+            {
+                string query = @"
+                    UPDATE userinfo
+                    SET email = @email,
+                        login = @login,
+                        fullname = @fullname,
+                        profileurl = @profileurl,
+                        organizations = @organizations,
+                        token = @token
+                    WHERE userid = @userid";
+
+                connection.Open();
+
+                using (NpgsqlCommand command2 = new NpgsqlCommand(query, connection))
+                {
+                    command2.Parameters.AddWithValue("@userid", user.Id);
+                    command2.Parameters.AddWithValue("@login", user.Login);
+                    command2.Parameters.AddWithValue("@fullname", user.Name);
+                    if (user.Email != null)
+                    {
+                        command2.Parameters.AddWithValue("@email", user.Email);
+                    }
+                    else
+                    {
+                        command2.Parameters.AddWithValue("@email", DBNull.Value);
+                    }
+                    command2.Parameters.AddWithValue("@profileurl", user.Url);
+                    command2.Parameters.AddWithValue("@organizations", orgList);
+                    command2.Parameters.AddWithValue("@token", access_token);
+
+                    command2.ExecuteNonQuery();
+                }
+                await connection.CloseAsync();
+            }
+
             _httpContextAccessor?.HttpContext?.Session.SetString("UserLogin", user.Login);
             _httpContextAccessor?.HttpContext?.Session.SetString("UserAvatarURL", user.AvatarUrl);
             _httpContextAccessor?.HttpContext?.Session.SetString("UserName", user.Name);
+            _httpContextAccessor?.HttpContext?.Session.SetString("AccessToken", access_token);
 
             return Redirect($"http://localhost:5173");
         }
@@ -133,6 +238,7 @@ public class GitHubController : ControllerBase
     [HttpGet("getRepository")]
     public async Task<ActionResult> getRepository()
     {
+        /*
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         string? userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
@@ -172,16 +278,64 @@ public class GitHubController : ControllerBase
         }
 
         return NotFound("There exists no user in session.");
+        */
 
+        // Get repositories from the database
+        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
+        string? userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        var userClient = GetNewClient(access_token);
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+
+        List<RepoInfo> allRepos = new List<RepoInfo>();
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        {
+            await connection.OpenAsync();
+
+            string query = "SELECT id, name, ownerLogin, created_at FROM repositoryinfo WHERE ownerLogin = @ownerLogin OR ownerLogin = ANY(@organizationLogins) ORDER BY name ASC";
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        RepoInfo repo = new RepoInfo
+                        {
+                            Id = reader.GetInt64(0),
+                            Name = reader.GetString(1),
+                            OwnerLogin = reader.GetString(2),
+                            CreatedAt = reader.GetString(3)
+                        };
+                        allRepos.Add(repo);
+                    }
+                }
+            }
+
+            await connection.CloseAsync();
+        }
+
+        if (allRepos.Any())
+        {
+            return Ok(new { RepoNames = allRepos });
+        }
+
+        return NotFound("There are no repositories in the database.");
 
     }
 
     [HttpGet("getRepository/{id}")] // Update the route to include repository ID
-    public async Task<ActionResult> getRepositoryById(int id) // Change the method signature to accept ID
+    public async Task<Repository> GetRepositoryById(int id) // Change the method signature to accept ID
     {
-        var generator = _getGitHubJwtGenerator();
-        var jwtToken = generator.CreateEncodedJwtToken();
-        var appClient = _getGitHubClient(jwtToken);
+        var appClient = GetNewClient();
 
         var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
@@ -191,53 +345,27 @@ public class GitHubController : ControllerBase
             if (installation.Account.Login == userLogin)
             {
                 var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
-                var installationClient = _getGitHubClient(response.Token);
+                var installationClient = GetNewClient(response.Token);
 
-                try
-                {
-                    var pulls = await installationClient.PullRequest.GetAllForRepository(id);
-                    foreach (var pull in pulls)
-                    {
 
-                        var comments = await installationClient.Issue.Comment.GetAllForIssue(id, pull.Number);
-                        var reviews = await installationClient.PullRequest.Review.GetAll(id, pull.Number);
-                        Console.WriteLine($"PR Status: {pull.State}");
-                        Console.WriteLine($"Comments: {comments.Count}");
-                        Console.WriteLine($"Review: {reviews.Count}");
-                        foreach (var label in pull.Labels)
-                        {
-                            Console.WriteLine(label.Name);
-                        }
+                // Get the repository by ID
+                var repository = await installationClient.Repository.Get(id);
 
-                        foreach (var comm in comments)
-                        {
-                            Console.WriteLine($"Commenter: {comm.User.Login}");
-                            Console.WriteLine($"Comment body: {comm.Body}");
-                            Console.WriteLine($"Comment reacts: {comm.Reactions.Hooray}");
-                        }
+                // Now you have the repository object, you can use it or return it as needed
+                Console.WriteLine($"Repository: {repository.FullName}");
+                Console.WriteLine($"Repository URL: {repository.HtmlUrl}");
+                Console.WriteLine($"Repository Description: {repository.Description}");
 
-                        foreach (var rev in reviews)
-                        {
-                            Console.WriteLine($"Reviewer: {rev.User.Login}");
-                            Console.WriteLine($"Review State: {rev.State}");
-                            Console.WriteLine($"Review body: {rev.Body}");
-                        }
-                    }
-                    return Ok();
-                }
-                catch (NotFoundException)
-                {
-                    return NotFound($"Repository with ID {id} not found.");
-                }
+                return repository;
             }
         }
-
-        return NotFound("There exists no user in session.");
+        return null;
     }
 
     [HttpGet("prs")]
     public async Task<ActionResult> getAllPRs()
     {
+        /*
         var generator = _getGitHubJwtGenerator();
         var jwtToken = generator.CreateEncodedJwtToken();
         var appClient = _getGitHubClient(jwtToken);
@@ -301,7 +429,64 @@ public class GitHubController : ControllerBase
             }
         }
 
-        return Ok(pullRequests);
+
+        return Ok(pullRequests);*/
+
+        // Get repositories from the database
+        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
+        string? userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        var userClient = GetNewClient(access_token);
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+
+        List<PRInfo> allPRs = new List<PRInfo>();
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        {
+            await connection.OpenAsync();
+
+            string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner";
+            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins)";// ORDER BY name ASC";
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        PRInfo pr = new PRInfo
+                        {
+                            Id = reader.GetInt64(0),
+                            Title = reader.GetString(1),
+                            PRNumber = reader.GetInt32(2),
+                            Author = reader.GetString(3),
+                            AuthorAvatarURL = reader.GetString(4),
+                            CreatedAt = reader.GetString(5),
+                            UpdatedAt = reader.GetString(6),
+                            RepoName = reader.GetString(7),
+                            Additions = reader.GetInt32(8),
+                            Deletions = reader.GetInt32(9),
+                            Files = reader.GetInt32(10),
+                            Comments = reader.GetInt32(11),
+                            Labels = JsonConvert.DeserializeObject<object[]>(reader.GetString(12)),
+                            RepoOwner = reader.GetString(13)
+                        };
+                        allPRs.Add(pr);
+                    }
+                }
+            }
+
+            await connection.CloseAsync();
+        }
+
+        return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
     }
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}")]
@@ -686,13 +871,6 @@ public class GitHubController : ControllerBase
                     {
                         continue;
                     }
-
-                    /*
-                    var http = new HttpClient();
-                    http.DefaultRequestHeaders.Add("User-Agent", "hubreviewapp");
-                    var r = await http.GetAsync(commit.Url);
-                    var commitFiles = await r.Content.ReadAsStringAsync();
-                    Console.WriteLine(commitFiles.ToString());*/
 
                     bool dateExists = result.Any(temp => temp.date == commit.Commit.Author.Date.ToString("yyyy/MM/dd"));
 
