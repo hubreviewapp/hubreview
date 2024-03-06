@@ -758,8 +758,8 @@ public class GitHubController : ControllerBase
                             id = comm.Id,
                             author = comm.User.Login,
                             body = comm.Body,
-                            created_at = comm.CreatedAt,
-                            updated_at = comm.UpdatedAt,
+                            createdAt = comm.CreatedAt,
+                            updatedAt = comm.UpdatedAt,
                             association = comm.AuthorAssociation.StringValue
                         };
 
@@ -811,8 +811,8 @@ public class GitHubController : ControllerBase
                             id = rev.Id,
                             author = rev.User.Login,
                             body = rev.Body,
-                            created_at = rev.CreatedAt,
-                            updated_at = rev.UpdatedAt,
+                            createdAt = rev.CreatedAt,
+                            updatedAt = rev.UpdatedAt,
                             association = rev.AuthorAssociation.StringValue
                         };
 
@@ -836,7 +836,7 @@ public class GitHubController : ControllerBase
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         var commit = await client.Repository.Commit.Get(owner, repoName, sha);
         await client.PullRequest.ReviewComment.Create(owner, repoName, prnumber, comment);
-        return Ok(commit.Files[0].Filename);   
+        return Ok(commit.Files[0].Filename);
     }*/
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_commits")]

@@ -100,7 +100,7 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
         { withCredentials: true },
       );
       if (res) {
-        setApiComments({ ...res.data, updatedAt: res.data.updated_at, createdAt: res.data.created_at });
+        setApiComments(res.data);
       }
     } catch (error) {
       console.error("Error fetching PR comments:", error);
