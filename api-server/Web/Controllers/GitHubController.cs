@@ -27,6 +27,8 @@ public class GitHubController : ControllerBase
     private readonly IEnvReader _reader;
     private GitHubClient _appClient;
 
+    public object[]? Reviews { get; private set; }
+
     private static GitHubClient _getGitHubClient(string token)
     {
         return new GitHubClient(new Octokit.ProductHeaderValue("HubReviewApp"))
@@ -1125,46 +1127,248 @@ public class GitHubController : ControllerBase
         return Ok(suggestedReviewersList);
     }
 
-    [HttpGet("prs/needsreview/{userLogin}")]
-    public async Task<ActionResult> GetNeedsYourReview(string userLogin)
+    [HttpGet("prs/needsreview")]
+    public async Task<ActionResult> GetNeedsYourReview()
     {
 
-        return Ok();
+        List<PRInfo> allPRs = new List<PRInfo>();
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        {
+            await connection.OpenAsync();
+
+            string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
+            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'open' AND @ownerLogin = ANY(reviewers)";
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        PRInfo pr = new PRInfo
+                        {
+                            Id = reader.GetInt64(0),
+                            Title = reader.GetString(1),
+                            PRNumber = reader.GetInt32(2),
+                            Author = reader.GetString(3),
+                            AuthorAvatarURL = reader.GetString(4),
+                            CreatedAt = reader.GetString(5),
+                            UpdatedAt = reader.GetString(6),
+                            RepoName = reader.GetString(7),
+                            Additions = reader.GetInt32(8),
+                            Deletions = reader.GetInt32(9),
+                            Files = reader.GetInt32(10),
+                            Comments = reader.GetInt32(11),
+                            Labels = JsonConvert.DeserializeObject<object[]>(reader.GetString(12)),
+                            RepoOwner = reader.GetString(13),
+                            Checks = JsonConvert.DeserializeObject<object[]>(reader.GetString(14)),
+                            ChecksComplete = reader.GetInt32(15),
+                            ChecksIncomplete = reader.GetInt32(16),
+                            ChecksSuccess = reader.GetInt32(17),
+                            ChecksFail = reader.GetInt32(18),
+                            Assignees = reader.IsDBNull(19) ? new string[] { } : ((object[])reader.GetValue(19)).Select(obj => obj.ToString()).ToArray(),
+                            Reviews = JsonConvert.DeserializeObject<object[]>(reader.GetString(20)),
+                            Reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray()
+
+                        };
+
+                        allPRs.Add(pr);
+                    }
+                }
+            }
+
+            await connection.CloseAsync();
+        }
+
+        return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
     }
 
-    [HttpGet("prs/userprs/{userLogin}")]
-    public async Task<ActionResult> GetUserPRs(string userLogin)
+    [HttpGet("prs/userprs")]
+    public async Task<ActionResult> GetUserPRs()
+    {
+        
+        List<PRInfo> allPRs = new List<PRInfo>();
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        {
+            await connection.OpenAsync();
+
+            string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
+            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'open' AND author = @ownerLogin";
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        PRInfo pr = new PRInfo
+                        {
+                            Id = reader.GetInt64(0),
+                            Title = reader.GetString(1),
+                            PRNumber = reader.GetInt32(2),
+                            Author = reader.GetString(3),
+                            AuthorAvatarURL = reader.GetString(4),
+                            CreatedAt = reader.GetString(5),
+                            UpdatedAt = reader.GetString(6),
+                            RepoName = reader.GetString(7),
+                            Additions = reader.GetInt32(8),
+                            Deletions = reader.GetInt32(9),
+                            Files = reader.GetInt32(10),
+                            Comments = reader.GetInt32(11),
+                            Labels = JsonConvert.DeserializeObject<object[]>(reader.GetString(12)),
+                            RepoOwner = reader.GetString(13),
+                            Checks = JsonConvert.DeserializeObject<object[]>(reader.GetString(14)),
+                            ChecksComplete = reader.GetInt32(15),
+                            ChecksIncomplete = reader.GetInt32(16),
+                            ChecksSuccess = reader.GetInt32(17),
+                            ChecksFail = reader.GetInt32(18),
+                            Assignees = reader.IsDBNull(19) ? new string[] { } : ((object[])reader.GetValue(19)).Select(obj => obj.ToString()).ToArray(),
+                            Reviews = JsonConvert.DeserializeObject<object[]>(reader.GetString(20)),
+                            Reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray()
+
+                        };
+
+                        allPRs.Add(pr);
+                    }
+                }
+            }
+
+            await connection.CloseAsync();
+        }
+
+        return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
+    }
+
+    [HttpGet("prs/waitingauthor")]
+    public async Task<ActionResult> GetWaitingAuthorS()
     {
         
         return Ok();
     }
 
-    [HttpGet("prs/waitingauthor/{userLogin}")]
-    public async Task<ActionResult> GetWaitingAuthorS(string userLogin)
+    [HttpGet("prs/open/")]
+    public async Task<ActionResult> GetOpenPRs()
     {
-        
+        List<PRInfo> allPRs = new List<PRInfo>();
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        {
+            await connection.OpenAsync();
+
+            string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
+            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'open'";
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+            {
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        PRInfo pr = new PRInfo
+                        {
+                            Id = reader.GetInt64(0),
+                            Title = reader.GetString(1),
+                            PRNumber = reader.GetInt32(2),
+                            Author = reader.GetString(3),
+                            AuthorAvatarURL = reader.GetString(4),
+                            CreatedAt = reader.GetString(5),
+                            UpdatedAt = reader.GetString(6),
+                            RepoName = reader.GetString(7),
+                            Additions = reader.GetInt32(8),
+                            Deletions = reader.GetInt32(9),
+                            Files = reader.GetInt32(10),
+                            Comments = reader.GetInt32(11),
+                            Labels = JsonConvert.DeserializeObject<object[]>(reader.GetString(12)),
+                            RepoOwner = reader.GetString(13),
+                            Checks = JsonConvert.DeserializeObject<object[]>(reader.GetString(14)),
+                            ChecksComplete = reader.GetInt32(15),
+                            ChecksIncomplete = reader.GetInt32(16),
+                            ChecksSuccess = reader.GetInt32(17),
+                            ChecksFail = reader.GetInt32(18),
+                            Assignees = reader.IsDBNull(19) ? new string[] { } : ((object[])reader.GetValue(19)).Select(obj => obj.ToString()).ToArray(),
+                            Reviews = JsonConvert.DeserializeObject<object[]>(reader.GetString(20)),
+                            Reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray()
+
+                        };
+
+                        allPRs.Add(pr);
+                    }
+                }
+            }
+
+            await connection.CloseAsync();
+        }
+
+        return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
+    }
+
+    [HttpGet("prs/merged")]
+    public async Task<ActionResult> GetMergedPRs()
+    {
+
         return Ok();
     }
 
-    [HttpGet("prs/open/{userLogin}")]
-    public async Task<ActionResult> GetOpenPRs(string userLogin)
+    [HttpGet("prs/closed")]
+    public async Task<ActionResult> GetClosedPRs()
     {
-        
-        return Ok();
-    }
+        List<PRInfo> allPRs = new List<PRInfo>();
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        {
+            await connection.OpenAsync();
 
-    [HttpGet("prs/merged/{userLogin}")]
-    public async Task<ActionResult> GetMergedPRs(string userLogin)
-    {
-        
-        return Ok();
-    }
+            string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
+            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'closed'";
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+            {
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        PRInfo pr = new PRInfo
+                        {
+                            Id = reader.GetInt64(0),
+                            Title = reader.GetString(1),
+                            PRNumber = reader.GetInt32(2),
+                            Author = reader.GetString(3),
+                            AuthorAvatarURL = reader.GetString(4),
+                            CreatedAt = reader.GetString(5),
+                            UpdatedAt = reader.GetString(6),
+                            RepoName = reader.GetString(7),
+                            Additions = reader.GetInt32(8),
+                            Deletions = reader.GetInt32(9),
+                            Files = reader.GetInt32(10),
+                            Comments = reader.GetInt32(11),
+                            Labels = JsonConvert.DeserializeObject<object[]>(reader.GetString(12)),
+                            RepoOwner = reader.GetString(13),
+                            Checks = JsonConvert.DeserializeObject<object[]>(reader.GetString(14)),
+                            ChecksComplete = reader.GetInt32(15),
+                            ChecksIncomplete = reader.GetInt32(16),
+                            ChecksSuccess = reader.GetInt32(17),
+                            ChecksFail = reader.GetInt32(18),
+                            Assignees = reader.IsDBNull(19) ? new string[] { } : ((object[])reader.GetValue(19)).Select(obj => obj.ToString()).ToArray(),
+                            Reviews = JsonConvert.DeserializeObject<object[]>(reader.GetString(20)),
+                            Reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray()
 
-    [HttpGet("prs/closed/{userLogin}")]
-    public async Task<ActionResult> GetClosedPRs(string userLogin)
-    {
-        
-        return Ok();
+                        };
+
+                        allPRs.Add(pr);
+                    }
+                }
+            }
+
+            await connection.CloseAsync();
+        }
+
+        return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
     }
 }
 

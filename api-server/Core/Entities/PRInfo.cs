@@ -18,5 +18,13 @@ namespace CS.Core.Entities
         public int Comments { get; set; }
         public Array? Labels { get; set; }
         public string? RepoOwner { get; set; }
+        public Array? Checks { get; set; }
+        public int ChecksComplete { get; set; }
+        public int ChecksIncomplete { get; set; }
+        public int ChecksSuccess { get; set; }
+        public int ChecksFail { get; set; }
+        public string[]? Reviewers { get; set; }
+        public Array? Reviews { get; set; }
+        public string[]? Assignees { get; set; }
     }
 }
