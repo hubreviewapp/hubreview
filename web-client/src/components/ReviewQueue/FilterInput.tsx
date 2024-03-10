@@ -15,7 +15,7 @@ export interface FilterInputProps {
 }
 function FilterInput() {
   const [filterValues, setFilterValues] = useState(["review-requested:@me", "sort-by:priority:desc"]);
-  const [labels, setLabels] = useState(["bug", "enhancement", "question"]);
+  const labels = ["bug", "enhancement", "question", "suggestion"];
 
   return (
     <>
@@ -25,6 +25,7 @@ function FilterInput() {
           placeholder="Author"
           leftSection={<IconUser width={rem(15)} />}
           data={['aysekelleci', 'irem_aydın', 'ecekahraman']}
+          searchable
         />
 
         <MultiSelect
@@ -32,8 +33,10 @@ function FilterInput() {
           placeholder="Labels"
           data={labels}
           leftSection={<IconTag width={rem(15)} />}
-
+          searchable
           clearable
+          className="hide-pills"
+          maxDropdownHeight={150}
         />
 
         <Select
@@ -67,16 +70,6 @@ function FilterInput() {
       </Flex>
 
       <TagsInput
-        value={labels}
-        onChange={setLabels}
-        leftSection={<IconSearch width={rem(18)} />}
-        description="Filter"
-        placeholder="Tags"
-        w="100%"
-      />
-
-
-      <TagsInput
         value={filterValues}
         onChange={setFilterValues}
         leftSection={<IconSearch width={rem(18)} />}
@@ -84,6 +77,7 @@ function FilterInput() {
         placeholder="Tags"
         w="100%"
       />
+
     </>
   );
 }
