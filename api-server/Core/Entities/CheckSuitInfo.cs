@@ -9,7 +9,7 @@ namespace CS.Core.Entities
         public string? created_at { get; set; }
         public string? head_branch { get; set; }
         public string? head_sha { get; set; }
-        public int id { get; set; }
+        public long id { get; set; }
         public string? node_id { get; set; }
         public PullRequestInfo[]? pull_requests { get; set; }
         public RepositoryInfo? repository { get; set; }
