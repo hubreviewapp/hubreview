@@ -5,7 +5,6 @@ import WorkloadAnalytics from "../components/WorkloadAnalytics";
 import ApprovalRejectionRatesForReviewer from "../components/ApprovalRejectionRatesForReviewer.tsx";
 
 function AnalyticsPage() {
-
   return (
     <Container size="responsive">
       <Group style={{ justifyContent: "center" }}>

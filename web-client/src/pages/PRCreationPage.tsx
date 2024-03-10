@@ -1,6 +1,6 @@
 import { Container, Grid, Group, Title, Button, Stack, Flex, Box, TextInput, MultiSelect, Modal } from "@mantine/core";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import PRDetailsBox from "../components/PRCreate/PRDetailsBox";
 import FileGrouping from "../components/PRCreate/FileGrouping";
 import { useDisclosure } from "@mantine/hooks";

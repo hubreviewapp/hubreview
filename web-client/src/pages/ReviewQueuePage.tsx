@@ -104,7 +104,7 @@ function ReviewQueuePage() {
     };
 
     fetchPRInfo();
-  }, );
+  });
 
   return (
     <Grid mt="md">
