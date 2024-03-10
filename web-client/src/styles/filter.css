@@ -1,0 +1,7 @@
+.hide-pills .mantine-MultiSelect-pill {
+  display: none !important;
+}
+
+.mantine-multi-select-pill {
+  display: none !important;
+}
