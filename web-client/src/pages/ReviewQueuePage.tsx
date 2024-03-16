@@ -3,7 +3,6 @@ import FilterInput from "../components/ReviewQueue/FilterInput";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useListState } from "@mantine/hooks";
-import { useNavigate } from "react-router-dom";
 import { PRNavbar } from "../components/ReviewQueue/PRNavbar.tsx";
 import PRCardList from "../components/ReviewQueue/PRCardList";
 import { PRInfo } from "../models/PRInfo";
@@ -79,16 +78,11 @@ export interface SelectedRepos {
  */
 function ReviewQueuePage() {
   const [prInfo, setPrInfo] = useState<PRInfo[]>([]);
-  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<string>("");
 
   const [values, handlers] = useListState<SelectedRepos>([]);
 
   useEffect(() => {
-    if (localStorage.getItem("userLogin") === null) {
-      navigate("/signIn");
-      return;
-    }
     const fetchPRInfo = async () => {
       try {
         const res = await axios
@@ -110,7 +104,7 @@ function ReviewQueuePage() {
     };
 
     fetchPRInfo();
-  }, [navigate]);
+  });
 
   return (
     <Grid mt="md">

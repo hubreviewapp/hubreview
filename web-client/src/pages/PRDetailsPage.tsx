@@ -6,7 +6,6 @@ import TabComp from "../components/Tab.tsx";
 import * as React from "react";
 import { IconGitPullRequest } from "@tabler/icons-react";
 import PrContextTab from "../tabs/PrContextTab.tsx";
-import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
@@ -59,13 +58,6 @@ function PRDetailsPage() {
   const tabs = ["comments", "commits", "details", "modified files"];
 
   const [currentTab, setCurrentTab] = React.useState<string | null>(tabs[0]);
-  const navigate = useNavigate();
-
-  React.useEffect(() => {
-    if (localStorage.getItem("userLogin") === null) {
-      navigate("/signIn");
-    }
-  }, [navigate]);
 
   const updateTab = (newTab: string | null) => {
     setCurrentTab(newTab);

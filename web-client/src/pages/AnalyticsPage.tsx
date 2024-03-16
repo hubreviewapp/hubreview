@@ -33,6 +33,7 @@ function AnalyticsPage() {
 
     getRepos();
   }, []);
+
   return (
     <Container fluid my="md">
       <Box mb="sm" align="center" >

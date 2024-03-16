@@ -1,8 +1,7 @@
 import { Table, Box, Text, rem, Container } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { NativeSelect } from "@mantine/core";
 import { IconCheck, IconX, IconClock } from "@tabler/icons-react";
-import { useNavigate } from "react-router-dom";
 
 export default function ApprRejRatesForAuthorPage() {
   const sort: string[] = ["Most approved", "Least approved", "Most rejected", "Least rejected"];
@@ -14,14 +13,6 @@ export default function ApprRejRatesForAuthorPage() {
   const [filteredRepo, setFilteredRepo] = useState("All");
   const [filteredAuthor, setFilteredAuthor] = useState("All");
   const [filteredTimeline, setFilteredTimeline] = useState("All");
-
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (localStorage.getItem("userLogin") === null) {
-      navigate("/signIn");
-    }
-  }, [navigate]);
 
   const elements = [
     { author: "aysekelleci", approves: 10, rejects: 4, waiting: 7 },
