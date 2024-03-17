@@ -8,7 +8,7 @@ import ReviewerSpeedAnalytics from "../components/Analytics/ReviewerSpeedAnalyti
 
 function AnalyticsPage() {
   const navigate = useNavigate();
-  const [repoList, setRepoList] = useState<RepoListResponse>({repoNames:[]} );
+  const [repoList, setRepoList] = useState<RepoListResponse>({ repoNames: [] });
 
   type Repo = {
     id: number;
@@ -18,7 +18,6 @@ function AnalyticsPage() {
   interface RepoListResponse {
     repoNames: [];
   }
-
 
   useEffect(() => {
     if (localStorage.getItem("userLogin") === null) {
@@ -41,7 +40,6 @@ function AnalyticsPage() {
 
     const promise = getRepos();
     console.log(promise);
-
   }, []);
 
   return (
@@ -67,7 +65,7 @@ function AnalyticsPage() {
                 Repository Analytics
               </Title>
               <Flex direction="column" justify="center" align="center">
-                {repoList.repoNames.map((r:Repo) => (
+                {repoList.repoNames.map((r: Repo) => (
                   <Button key={r.id} mb="sm" w="50%" variant="outline" color="blue">
                     {r.name}
                   </Button>
