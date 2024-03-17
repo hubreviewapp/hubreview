@@ -1,5 +1,5 @@
-import {RichTextEditor, Link} from "@mantine/tiptap";
-import {Button, Box, TypographyStylesProvider} from "@mantine/core";
+import { RichTextEditor, Link } from "@mantine/tiptap";
+import { Button, Box, TypographyStylesProvider } from "@mantine/core";
 import { useEditor } from "@tiptap/react";
 import Highlight from "@tiptap/extension-highlight";
 import StarterKit from "@tiptap/starter-kit";
@@ -18,12 +18,10 @@ interface TextEditorProps {
 function TextEditor({ content, addComment }: TextEditorProps) {
   const [editorContent, setEditorContent] = useState(content);
 
-  function handleAddComment(){
+  function handleAddComment() {
     addComment(editorContent);
-    //editor?.commands.insertContent("<h1> inserted </h1>")
     editor?.commands.clearContent();
     setEditorContent("");
-
   }
   const editor = useEditor({
     extensions: [
@@ -88,10 +86,9 @@ function TextEditor({ content, addComment }: TextEditorProps) {
             <RichTextEditor.Undo />
             <RichTextEditor.Redo />
           </RichTextEditor.ControlsGroup>
-
         </RichTextEditor.Toolbar>
 
-        <RichTextEditor.Content/>
+        <RichTextEditor.Content />
       </RichTextEditor>
 
       <Box style={{ position: "absolute", right: 0, top: "100%" }}>
@@ -99,7 +96,7 @@ function TextEditor({ content, addComment }: TextEditorProps) {
           Comment
         </Button>
       </Box>
-      <br/>
+      <br />
     </Box>
   );
 }
