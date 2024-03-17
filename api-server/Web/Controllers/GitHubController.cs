@@ -314,7 +314,7 @@ public class GitHubController : ControllerBase
                             Id = reader.GetInt64(0),
                             Name = reader.GetString(1),
                             OwnerLogin = reader.GetString(2),
-                            CreatedAt = reader.GetString(3)
+                            CreatedAt = reader.GetFieldValue<DateOnly>(3)
                         };
                         allRepos.Add(repo);
                     }
