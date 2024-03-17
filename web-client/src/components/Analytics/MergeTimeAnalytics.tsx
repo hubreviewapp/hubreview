@@ -26,7 +26,7 @@ const data = [
 
 function MergeTimeAnalytics() {
   return (
-    <Box align="center">
+    <Box>
       <Text mb="sm">Average Merge Time of PRs</Text>
       <Paper withBorder p="md">
         <LineChart

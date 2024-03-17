@@ -9,6 +9,13 @@ import ReviewerSpeedAnalytics from "../components/Analytics/ReviewerSpeedAnalyti
 function AnalyticsPage() {
   const navigate = useNavigate();
   const [repoList, setRepoList] = useState([]);
+
+  type Repo = {
+    id: number;
+    name: string;
+  };
+
+
   useEffect(() => {
     if (localStorage.getItem("userLogin") === null) {
       navigate("/signIn");
@@ -33,7 +40,7 @@ function AnalyticsPage() {
 
   return (
     <Container fluid my="md">
-      <Box mb="sm" align="center">
+      <Box mb="sm">
         <Title order={3}>Dashboard</Title>
       </Box>
       <SimpleGrid cols={{ base: 1, sm: 1 }} spacing="md">
@@ -54,7 +61,7 @@ function AnalyticsPage() {
                 Repository Analytics
               </Title>
               <Flex direction="column" justify="center" align="center">
-                {repoList.map((r) => (
+                {repoList.map((r:Repo) => (
                   <Button key={r.id} mb="sm" w="50%" variant="outline" color="blue">
                     {r.name}
                   </Button>
