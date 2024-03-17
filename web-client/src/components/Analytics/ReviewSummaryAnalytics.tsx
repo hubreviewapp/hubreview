@@ -1,4 +1,4 @@
-import { Flex, Text, Paper, Group, rem, Title } from "@mantine/core";
+import { Flex, Text, Paper, rem, Title } from "@mantine/core";
 import { DonutChart } from "@mantine/charts";
 import { IconSend, IconMailbox, IconClock } from "@tabler/icons-react";
 

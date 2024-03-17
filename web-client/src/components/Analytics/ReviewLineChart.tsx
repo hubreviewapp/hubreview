@@ -3,27 +3,27 @@ import { Paper, Title } from "@mantine/core";
 const data = [
   {
     date: "Mar 22",
-    Submitted: 9,
-    Received: 8,
-    Waiting: 2,
+    submitted: 9,
+    received: 8,
+    waiting: 2,
   },
   {
     date: "Mar 23",
-    Submitted: 12,
-    Received: 6,
-    Waiting: 4,
+    submitted: 12,
+    received: 6,
+    waiting: 4,
   },
   {
     date: "Mar 24",
-    Submitted: 8,
-    Received: 11,
-    Waiting: 3,
+    submitted: 8,
+    received: 11,
+    waiting: 3,
   },
   {
     date: "Mar 25",
-    Submitted: 9,
-    Received: 8,
-    Waiting: 2,
+    submitted: 9,
+    received: 8,
+    waiting: 2,
   },
 ];
 function ReviewLineChart() {
@@ -37,9 +37,9 @@ function ReviewLineChart() {
         data={data}
         dataKey="date"
         series={[
-          { name: "Submitted", color: "indigo.6" },
-          { name: "Received", color: "yellow.6" },
-          { name: "Waiting", color: "gray.6" },
+          { name: "submitted", color: "indigo.6" },
+          { name: "received", color: "yellow.6" },
+          { name: "waiting", color: "gray.6" },
         ]}
         curveType="linear"
         withLegend

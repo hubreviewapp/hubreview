@@ -44,4 +44,5 @@ function MergeTimeAnalytics() {
   );
 }
 
+// noinspection JSUnusedGlobalSymbols
 export default MergeTimeAnalytics;
