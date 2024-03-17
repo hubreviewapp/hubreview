@@ -9,8 +9,8 @@ namespace CS.Core.Entities
         public long PRNumber { get; set; }
         public string? Author { get; set; }
         public string? AuthorAvatarURL { get; set; }
-        public string? CreatedAt { get; set; }
-        public string? UpdatedAt { get; set; }
+        public DateOnly? CreatedAt { get; set; }
+        public DateOnly? UpdatedAt { get; set; }
         public string? RepoName { get; set; }
         public int Additions { get; set; }
         public int Deletions { get; set; }
