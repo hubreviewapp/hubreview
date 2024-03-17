@@ -8,12 +8,16 @@ import ReviewerSpeedAnalytics from "../components/Analytics/ReviewerSpeedAnalyti
 
 function AnalyticsPage() {
   const navigate = useNavigate();
-  const [repoList, setRepoList] = useState([]);
+  const [repoList, setRepoList] = useState<RepoListResponse>({repoNames:[]} );
 
   type Repo = {
     id: number;
     name: string;
   };
+
+  interface RepoListResponse {
+    repoNames: [];
+  }
 
 
   useEffect(() => {
@@ -28,14 +32,16 @@ function AnalyticsPage() {
           withCredentials: true,
         });
         if (res.data) {
-          setRepoList(res.data.repoNames);
+          setRepoList(res.data);
         }
       } catch (error) {
         console.error("Error fetching repositories", error);
       }
     };
 
-    getRepos();
+    const promise = getRepos();
+    console.log(promise);
+
   }, []);
 
   return (
@@ -61,7 +67,7 @@ function AnalyticsPage() {
                 Repository Analytics
               </Title>
               <Flex direction="column" justify="center" align="center">
-                {repoList.map((r:Repo) => (
+                {repoList.repoNames.map((r:Repo) => (
                   <Button key={r.id} mb="sm" w="50%" variant="outline" color="blue">
                     {r.name}
                   </Button>
