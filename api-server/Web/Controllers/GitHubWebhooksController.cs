@@ -325,7 +325,7 @@ namespace CS.Web.Controllers
                                 query = query.Substring(0, query.Length - 2);
                                 using (var command = new NpgsqlCommand(query, connection))
                                 {
-                                    command.ExecuteNonQuery();  
+                                    command.ExecuteNonQuery();
                                 }
                             }
 
