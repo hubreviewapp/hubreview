@@ -1,5 +1,5 @@
-import { RichTextEditor, Link } from "@mantine/tiptap";
-import { Button, Box } from "@mantine/core";
+import {RichTextEditor, Link} from "@mantine/tiptap";
+import {Button, Box, TypographyStylesProvider} from "@mantine/core";
 import { useEditor } from "@tiptap/react";
 import Highlight from "@tiptap/extension-highlight";
 import StarterKit from "@tiptap/starter-kit";
@@ -17,6 +17,14 @@ interface TextEditorProps {
 
 function TextEditor({ content, addComment }: TextEditorProps) {
   const [editorContent, setEditorContent] = useState(content);
+
+  function handleAddComment(){
+    addComment(editorContent);
+    //editor?.commands.insertContent("<h1> inserted </h1>")
+    editor?.commands.clearContent();
+    setEditorContent("");
+
+  }
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -25,6 +33,7 @@ function TextEditor({ content, addComment }: TextEditorProps) {
       Superscript,
       SubScript,
       Highlight,
+      TypographyStylesProvider,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
     ],
     content: "",
@@ -79,17 +88,18 @@ function TextEditor({ content, addComment }: TextEditorProps) {
             <RichTextEditor.Undo />
             <RichTextEditor.Redo />
           </RichTextEditor.ControlsGroup>
+
         </RichTextEditor.Toolbar>
 
-        <RichTextEditor.Content />
+        <RichTextEditor.Content/>
       </RichTextEditor>
 
       <Box style={{ position: "absolute", right: 0, top: "100%" }}>
-        <Button size="md" color="green" top={20} onClick={() => addComment(editorContent)}>
+        <Button size="md" color="green" top={20} onClick={() => handleAddComment()}>
           Comment
         </Button>
       </Box>
-      <br></br>
+      <br/>
     </Box>
   );
 }
