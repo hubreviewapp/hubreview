@@ -17,6 +17,13 @@ interface TextEditorProps {
 
 function TextEditor({ content, addComment }: TextEditorProps) {
   const [editorContent, setEditorContent] = useState(content);
+
+  function handleAddComment() {
+    addComment(editorContent);
+    editor?.commands.clearContent();
+    setEditorContent("");
+  }
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -85,11 +92,11 @@ function TextEditor({ content, addComment }: TextEditorProps) {
       </RichTextEditor>
 
       <Box style={{ position: "absolute", right: 0, top: "100%" }}>
-        <Button size="md" color="green" top={20} onClick={() => addComment(editorContent)}>
+        <Button size="md" color="green" top={20} onClick={() => handleAddComment()}>
           Comment
         </Button>
       </Box>
-      <br></br>
+      <br />
     </Box>
   );
 }
