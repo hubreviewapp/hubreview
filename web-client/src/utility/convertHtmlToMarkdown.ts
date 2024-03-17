@@ -1,34 +1,34 @@
-function convertHtmlToMarkdown(html) {
+function convertHtmlToMarkdown(html: string): string {
   // Function to recursively traverse the DOM tree and generate Markdown
-  const traverse = (node) => {
-    let markdown = "";
+  const traverse = (node: Node): string => {
+    let markdown = '';
 
     if (node.nodeType === Node.TEXT_NODE) {
-      markdown += node.textContent;
+      markdown += node.textContent || '';
     } else if (node.nodeType === Node.ELEMENT_NODE) {
-      const tagName = node.tagName.toLowerCase();
-      const children = Array.from(node.childNodes).map(traverse).join("");
+      const tagName = (node as Element).tagName.toLowerCase();
+      const children = Array.from(node.childNodes).map(traverse).join('');
 
       switch (tagName) {
-        case "p":
-          markdown += children + "\n\n";
+        case 'p':
+          markdown += children + '\n\n';
           break;
-        case "a":
-          markdown += `[${children}](${node.getAttribute("href")})`;
+        case 'a':
+          markdown += `[${children}](${(node as HTMLAnchorElement).getAttribute('href')})`;
           break;
-        case "strong":
+        case 'strong':
           markdown += `**${children}**`;
           break;
-        case "em":
+        case 'em':
           markdown += `*${children}*`;
           break;
-        case "h1":
+        case 'h1':
           markdown += `# ${children}\n\n`;
           break;
-        case "h2":
+        case 'h2':
           markdown += `## ${children}\n\n`;
           break;
-        case "h3":
+        case 'h3':
           markdown += `### ${children}\n\n`;
           break;
         // Add cases for other HTML elements you want to handle
@@ -41,7 +41,7 @@ function convertHtmlToMarkdown(html) {
     return markdown;
   };
 
-  const wrapper = document.createElement("div");
+  const wrapper = document.createElement('div');
   wrapper.innerHTML = html;
   return traverse(wrapper);
 }
