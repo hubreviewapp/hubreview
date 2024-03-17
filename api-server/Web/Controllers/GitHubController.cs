@@ -1,3 +1,4 @@
+using System.Data;
 using System.Web;
 using CS.Core.Configuration;
 using CS.Core.Entities;
@@ -468,8 +469,8 @@ public class GitHubController : ControllerBase
                             PRNumber = reader.GetInt32(2),
                             Author = reader.GetString(3),
                             AuthorAvatarURL = reader.GetString(4),
-                            CreatedAt = reader.GetString(5),
-                            UpdatedAt = reader.GetString(6),
+                            CreatedAt = reader.GetFieldValue<DateOnly>(5),
+                            UpdatedAt = reader.GetFieldValue<DateOnly>(6),
                             RepoName = reader.GetString(7),
                             Additions = reader.GetInt32(8),
                             Deletions = reader.GetInt32(9),
