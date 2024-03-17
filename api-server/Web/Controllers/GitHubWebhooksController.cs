@@ -320,12 +320,12 @@ namespace CS.Web.Controllers
                                     var installationReviewsJson = JsonConvert.SerializeObject(installationLatestReviews);
 
 
-                                    query += $"({repository.id}, {pull.Id}, '{pull.Base.Repository.Name}', {pull.Number}, '{pull.Title}', '{pull.User.Login}', '{pull.User.AvatarUrl}', '{pull.CreatedAt.Date.ToString("dd/MM/yyyy")}', '{pull.UpdatedAt.Date.ToString("dd/MM/yyyy")}', {pull.Comments}, {pull.Commits}, {pull.ChangedFiles}, {pull.Additions}, {pull.Deletions}, {pull.Draft}, '{pull.State.ToString()}', {requestedReviewers}, '{labeljson}', '{pull.Url}', '{pull.Base.Repository.Owner.Login}', '{JsonConvert.SerializeObject(checksList)}', {checks_complete_count}, {checks_incomplete_count}, {checks_success_count}, {checks_fail_count}, {assignedReviewers}, '{installationReviewsJson}'), ";
+                                    query += $"({repository.id}, {pull.Id}, '{pull.Base.Repository.Name}', {pull.Number}, '{pull.Title}', '{pull.User.Login}', '{pull.User.AvatarUrl}', '{pull.CreatedAt.Date:YYYY-MM-DD}', '{pull.UpdatedAt.Date:YYYY-MM-DD}', {pull.Comments}, {pull.Commits}, {pull.ChangedFiles}, {pull.Additions}, {pull.Deletions}, {pull.Draft}, '{pull.State.ToString()}', {requestedReviewers}, '{labeljson}', '{pull.Url}', '{pull.Base.Repository.Owner.Login}', '{JsonConvert.SerializeObject(checksList)}', {checks_complete_count}, {checks_incomplete_count}, {checks_success_count}, {checks_fail_count}, {assignedReviewers}, '{installationReviewsJson}'), ";
                                 }
                                 query = query.Substring(0, query.Length - 2);
                                 using (var command = new NpgsqlCommand(query, connection))
                                 {
-                                    command.ExecuteNonQuery();
+                                    command.ExecuteNonQuery();  
                                 }
                             }
 
@@ -544,7 +544,7 @@ namespace CS.Web.Controllers
 
 
 
-                                    query += $"({repository.id}, {pull.Id}, '{pull.Base.Repository.Name}', {pull.Number}, '{pull.Title}', '{pull.User.Login}', '{pull.User.AvatarUrl}', '{pull.CreatedAt.Date.ToString("dd/MM/yyyy")}', '{pull.UpdatedAt.Date.ToString("dd/MM/yyyy")}', {pull.Comments}, {pull.Commits}, {pull.ChangedFiles}, {pull.Additions}, {pull.Deletions}, {pull.Draft}, '{pull.State.ToString()}', {requestedReviewers}, '{labeljson}', '{pull.Url}', '{pull.Base.Repository.Owner.Login}', '{JsonConvert.SerializeObject(checksList)}', {checks_complete_count}, {checks_incomplete_count}, {checks_success_count}, {checks_fail_count}, {assignedReviewers}, '{installationReviewsJson}'), ";
+                                    query += $"({repository.id}, {pull.Id}, '{pull.Base.Repository.Name}', {pull.Number}, '{pull.Title}', '{pull.User.Login}', '{pull.User.AvatarUrl}', '{pull.CreatedAt.Date:YYYY-MM-DD}', '{pull.CreatedAt.Date:YYYY-MM-DD}', {pull.Comments}, {pull.Commits}, {pull.ChangedFiles}, {pull.Additions}, {pull.Deletions}, {pull.Draft}, '{pull.State.ToString()}', {requestedReviewers}, '{labeljson}', '{pull.Url}', '{pull.Base.Repository.Owner.Login}', '{JsonConvert.SerializeObject(checksList)}', {checks_complete_count}, {checks_incomplete_count}, {checks_success_count}, {checks_fail_count}, {assignedReviewers}, '{installationReviewsJson}'), ";
                                 }
                                 query = query.Substring(0, query.Length - 2);
                                 using (var command = new NpgsqlCommand(query, connection))
@@ -827,7 +827,7 @@ namespace CS.Web.Controllers
         {
             if (DateTime.TryParse(dateString, out DateTime date))
             {
-                return date.ToString("dd/MM/yyyy");
+                return date.ToString("YYYY-MM-DD");
             }
             else
             {
