@@ -11,6 +11,7 @@ using Newtonsoft.Json.Converters;
 using Npgsql;
 using Octokit;
 using Octokit.GraphQL;
+using Octokit.GraphQL.Model;
 using static Octokit.GraphQL.Variable;
 
 
@@ -66,7 +67,7 @@ public class GitHubController : ControllerBase
         return res;
     }
 
-    private string GenerateRandomColor()
+    private static string GenerateRandomColor()
     {
         var random = new Random();
         var color = String.Format("#{0:X6}", random.Next(0x1000000)); // Generates a random color code in hexadecimal format
@@ -215,7 +216,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpGet("getUserInfo")]
-    public async Task<ActionResult> getUserInfo()
+    public ActionResult getUserInfo()
     {
 
         var userInfo = new
@@ -229,7 +230,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpGet("logoutUser")]
-    public async Task<ActionResult> logoutUser()
+    public ActionResult logoutUser()
     {
         _httpContextAccessor?.HttpContext?.Session.Clear();
         return Ok();
@@ -334,7 +335,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpGet("getRepository/{id}")] // Update the route to include repository ID
-    public async Task<Repository> GetRepositoryById(int id) // Change the method signature to accept ID
+    public async Task<Octokit.Repository?> GetRepositoryById(int id) // Change the method signature to accept ID
     {
         var appClient = GetNewClient();
 
@@ -865,11 +866,12 @@ public class GitHubController : ControllerBase
         return Ok(bbb);
     }
 
-    [HttpGet()]
-    public async Task<ActionResult> RemoveRevComment()
+    [HttpGet("pullrequest/{owner}/{repoName}/{comment_id}/removeRevComment")]
+    public async Task<ActionResult> RemoveRevComment(string owner, string repoName, int comment_id)
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        await client.PullRequest.ReviewComment.Delete()
+        await client.PullRequest.ReviewComment.Delete(owner, repoName, comment_id);
+        return Ok();
     }
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_commits")]
@@ -1194,8 +1196,6 @@ public class GitHubController : ControllerBase
         return Ok(suggestedReviewersList);
     }
 
-
-
     [HttpGet("prs/{owner}/{repoName}/{prNumber}")]
     public async Task<ActionResult> PRFilter(string owner, string repoName, int prNumber)
     {
@@ -1203,5 +1203,3 @@ public class GitHubController : ControllerBase
         return Ok();
     }
 }
-
-
