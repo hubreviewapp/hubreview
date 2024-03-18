@@ -13,6 +13,8 @@ import ReviewQueuePage from "./pages/ReviewQueuePage.tsx";
 import UserProvider from "./providers/UserProvider.tsx";
 import NoRenderOnPath from "./utility/NoRenderOnPath";
 import "@mantine/tiptap/styles.css";
+import "@mantine/charts/styles.css";
+import "./styles/filter.css";
 
 function App() {
   return (

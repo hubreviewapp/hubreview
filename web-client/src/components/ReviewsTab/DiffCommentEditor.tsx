@@ -51,6 +51,20 @@ function DiffCommentEditor({ onAdd, onCancel }: DiffCommentEditorProps) {
   const [commentLabel, setCommentLabel] = useState("None");
   const [decorationType, setDecorationType] = useState<ReviewCommentDecoration>("non-blocking");
 
+  const handleLabelChange = (newLabel: string) => {
+    setCommentLabel(newLabel);
+
+    switch (newLabel) {
+      case "Nitpick":
+        setDecorationType("non-blocking");
+        break;
+      case "Issue":
+      case "Question":
+        setDecorationType("blocking");
+        break;
+    }
+  };
+
   const handleSubmit = () => {
     onAdd({
       label: commentLabel,
@@ -78,7 +92,7 @@ function DiffCommentEditor({ onAdd, onCancel }: DiffCommentEditorProps) {
       <Group justify="end" mt={5}>
         <Select
           value={commentLabel}
-          onChange={(val) => setCommentLabel(val ?? "None")}
+          onChange={(val) => handleLabelChange(val ?? "None")}
           data={["None", "Nitpick", "Suggestion", "Issue", "Question", "Thought"]}
           label="Label"
         />

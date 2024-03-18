@@ -17,20 +17,12 @@ import { IconCirclePlus, IconSearch } from "@tabler/icons-react";
 import { useState, useEffect } from "react";
 import { Repository } from "../models/Repository";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 
 function RepositoriesPage() {
   const iconPlus = <IconCirclePlus style={{ width: rem(22), height: rem(22) }} />;
   const [query, setQuery] = useState("");
   const [repository, setRepository] = useState<Repository[]>([]);
-  const navigate = useNavigate();
   const iconSearch = <IconSearch style={{ width: rem(16), height: rem(16) }} />;
-
-  useEffect(() => {
-    if (localStorage.getItem("userLogin") === null) {
-      navigate("/signIn");
-    }
-  }, [navigate]);
 
   const filtered = repository.filter((item) => item.name.toLowerCase().includes(query.toLowerCase()));
   const [isLoading, setIsLoading] = useState(true);

@@ -1,5 +1,4 @@
-using System;
-using System.Globalization;
+using System.Data;
 using System.Web;
 using CS.Core.Configuration;
 using CS.Core.Entities;
@@ -317,7 +316,7 @@ public class GitHubController : ControllerBase
                             Id = reader.GetInt64(0),
                             Name = reader.GetString(1),
                             OwnerLogin = reader.GetString(2),
-                            CreatedAt = reader.GetDateTime(3)
+                            CreatedAt = reader.GetFieldValue<DateOnly>(3)
                         };
                         allRepos.Add(repo);
                     }
@@ -472,8 +471,8 @@ public class GitHubController : ControllerBase
                             PRNumber = reader.GetInt32(2),
                             Author = reader.GetString(3),
                             AuthorAvatarURL = reader.GetString(4),
-                            CreatedAt = reader.GetDateTime(5),
-                            UpdatedAt = reader.GetDateTime(6),
+                            CreatedAt = reader.GetFieldValue<DateOnly>(5),
+                            UpdatedAt = reader.GetFieldValue<DateOnly>(6),
                             RepoName = reader.GetString(7),
                             Additions = reader.GetInt32(8),
                             Deletions = reader.GetInt32(9),
@@ -762,8 +761,8 @@ public class GitHubController : ControllerBase
                             id = comm.Id,
                             author = comm.User.Login,
                             body = comm.Body,
-                            created_at = comm.CreatedAt,
-                            updated_at = comm.UpdatedAt,
+                            createdAt = comm.CreatedAt,
+                            updatedAt = comm.UpdatedAt,
                             association = comm.AuthorAssociation.StringValue
                         };
 
@@ -815,8 +814,8 @@ public class GitHubController : ControllerBase
                             id = rev.Id,
                             author = rev.User.Login,
                             body = rev.Body,
-                            created_at = rev.CreatedAt,
-                            updated_at = rev.UpdatedAt,
+                            createdAt = rev.CreatedAt,
+                            updatedAt = rev.UpdatedAt,
                             association = rev.AuthorAssociation.StringValue
                         };
 
@@ -840,7 +839,7 @@ public class GitHubController : ControllerBase
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         var commit = await client.Repository.Commit.Get(owner, repoName, sha);
         await client.PullRequest.ReviewComment.Create(owner, repoName, prnumber, comment);
-        return Ok(commit.Files[0].Filename);   
+        return Ok(commit.Files[0].Filename);
     }*/
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_commits")]
