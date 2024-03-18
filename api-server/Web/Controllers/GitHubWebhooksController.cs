@@ -770,9 +770,18 @@ namespace CS.Web.Controllers
                     connection.Close();
                     Console.WriteLine("PR Reviews Updated");
                     break;
-                case "pull_request_review_thread": // resolved unresolved olayı. Gösterceksek faydalı yoksa gerek yok
+                /*case "pull_request_review_thread": // resolved unresolved olayı. Gösterceksek faydalı yoksa gerek yok
                     var pullRequestReviewThreadPayload = JsonConvert.DeserializeObject<PullRequestReviewThreadPayload>(requestBody);
                     //TO DO
+                    break;*/
+                case "pull_request_review_comment":
+                    Console.WriteLine("PR review comment");
+                    break;
+                case "commit_comment":
+                    Console.WriteLine("Commit comment");
+                    break;
+                case "issue_comment":
+                    Console.WriteLine("Issue comment");
                     break;
             }
 

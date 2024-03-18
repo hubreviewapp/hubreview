@@ -705,7 +705,20 @@ public class GitHubController : ControllerBase
     public async Task<ActionResult> AddCommentToPR(string owner, string repoName, int prnumber, [FromBody] string commentBody)
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        await client.Issue.Comment.Create(owner, repoName, prnumber, commentBody);
+        var comment = await client.Issue.Comment.Create(owner, repoName, prnumber, commentBody);
+
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        using var connection = new NpgsqlConnection(connectionString);
+        connection.Open();
+
+        string query = $"INSERT INTO comments VALUES ({comment.Id}, '{repoName}', {prnumber}, 'ACTIVE')";
+        using (var command = new NpgsqlCommand(query, connection))
+        {
+            command.ExecuteNonQuery();
+        }
+        connection.Close();
+        
         return Ok($"Comment added to pull request #{prnumber} in repository {repoName}.");
     }
 
@@ -722,6 +735,18 @@ public class GitHubController : ControllerBase
     {
         var client = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         await client.Issue.Comment.Delete(owner, repoName, comment_id);
+        
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        using var connection = new NpgsqlConnection(connectionString);
+        connection.Open();
+
+        string query = $"DELETE FROM comments WHERE commentid = {comment_id}";
+        using (var command = new NpgsqlCommand(query, connection))
+        {
+            command.ExecuteNonQuery();
+        }
+        connection.Close();
         return Ok($"Comment deleted.");
     }
 
@@ -830,15 +855,22 @@ public class GitHubController : ControllerBase
 
         return Ok(result);
     }
-    /*
-    [HttpGet("pullrequest/{owner}/{repoName}/{sha}/addRevComment")]
-    public async Task<ActionResult> AddRevCommentToPR(string owner, string repoName, string sha)
+    
+    [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/{sha}/addRevComment/{body}/{filename}/{position}")]
+    public async Task<ActionResult> AddRevCommentToPR(string owner, string repoName, int prnumber, string sha, string body, string filename, int position)
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        var commit = await client.Repository.Commit.Get(owner, repoName, sha);
-        await client.PullRequest.ReviewComment.Create(owner, repoName, prnumber, comment);
-        return Ok(commit.Files[0].Filename);
-    }*/
+        var comment = new PullRequestReviewCommentCreate( body, sha, filename, position );
+        var bbb = await client.PullRequest.ReviewComment.Create(owner, repoName, prnumber, comment);
+        return Ok(bbb);
+    }
+
+    [HttpGet()]
+    public async Task<ActionResult> RemoveRevComment() 
+    {
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        await client.PullRequest.ReviewComment.Delete()
+    }
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_commits")]
     public async Task<ActionResult> getCommits(string owner, string repoName, int prnumber)
@@ -920,6 +952,41 @@ public class GitHubController : ControllerBase
         }
 
         return Ok(result);
+    }
+
+    [HttpGet("commit/{owner}/{repoName}/{prnumber}/{sha}/get_patches")]
+    public async Task<ActionResult> getDiffs( string owner, string repoName, int prnumber, string sha )
+    {
+        var appClient = GetNewClient();
+        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+        var result = new List<object>([]);
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent();
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        foreach (var installation in installations)
+        {
+            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            {
+                var commit = await userClient.Repository.Commit.Get(owner, repoName, sha);
+                foreach (var file in commit.Files)
+                {
+                    var fileContent = await userClient.Repository.Content.GetAllContentsByRef(owner, repoName, file.Filename, sha);
+                    result.Add(new {
+                        name = file.Filename,
+                        status = file.Status,
+                        sha = file.Sha,
+                        content = file.Patch
+                    });
+                }
+
+                return Ok(result);
+            }
+        }
+        return NotFound("not found");
     }
 
     [HttpGet("getPRReviewerSuggestion/{owner}/{repoName}/{prOwner}")]
@@ -1125,6 +1192,8 @@ public class GitHubController : ControllerBase
 
         return Ok(suggestedReviewersList);
     }
+
+
 
     [HttpGet("prs/{owner}/{repoName}/{prNumber}")]
     public async Task<ActionResult> PRFilter(string owner, string repoName, int prNumber)
