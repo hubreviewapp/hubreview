@@ -1190,7 +1190,7 @@ public class GitHubController : ControllerBase
     [HttpGet("prs/userprs")]
     public async Task<ActionResult> GetUserPRs()
     {
-        
+
         List<PRInfo> allPRs = new List<PRInfo>();
         var config = new CoreConfiguration();
         string connectionString = config.DbConnectionString;
@@ -1249,7 +1249,7 @@ public class GitHubController : ControllerBase
     [HttpGet("prs/waitingauthor")]
     public async Task<ActionResult> GetWaitingAuthors()
     {
-        
+
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
 
@@ -1257,7 +1257,7 @@ public class GitHubController : ControllerBase
         var config = new CoreConfiguration();
         string connectionString = config.DbConnectionString;
 
-         // Get organizations for the current user
+        // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
@@ -1325,7 +1325,7 @@ public class GitHubController : ControllerBase
         var config = new CoreConfiguration();
         string connectionString = config.DbConnectionString;
 
-         // Get organizations for the current user
+        // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
@@ -1386,7 +1386,7 @@ public class GitHubController : ControllerBase
     [HttpGet("prs/merged")]
     public async Task<ActionResult> GetMergedPRs()
     {
-        
+
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
 
@@ -1394,7 +1394,7 @@ public class GitHubController : ControllerBase
         var config = new CoreConfiguration();
         string connectionString = config.DbConnectionString;
 
-         // Get organizations for the current user
+        // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
@@ -1455,7 +1455,7 @@ public class GitHubController : ControllerBase
     [HttpGet("prs/closed")]
     public async Task<ActionResult> GetClosedPRs()
     {
-    
+
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
 
@@ -1463,7 +1463,7 @@ public class GitHubController : ControllerBase
         var config = new CoreConfiguration();
         string connectionString = config.DbConnectionString;
 
-         // Get organizations for the current user
+        // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
@@ -1522,7 +1522,8 @@ public class GitHubController : ControllerBase
     }
 
     [HttpGet("pullrequest/filter")]
-    public async Task<ActionResult> FilterPRs([FromQuery] PRFilter filter){
+    public async Task<ActionResult> FilterPRs([FromQuery] PRFilter filter)
+    {
         filter.Author = "Ece-Kahraman";
         filter.repositories = ["hubreviewapp.github.io", "hubreview"];
 
@@ -1533,7 +1534,7 @@ public class GitHubController : ControllerBase
         var config = new CoreConfiguration();
         string connectionString = config.DbConnectionString;
 
-         // Get organizations for the current user
+        // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
@@ -1543,7 +1544,7 @@ public class GitHubController : ControllerBase
             await connection.OpenAsync();
 
             string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
-            
+
             string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'open' AND @ownerLogin = ANY(reviewers)";
             if (!string.IsNullOrEmpty(filter.Author))
             {
@@ -1579,7 +1580,7 @@ public class GitHubController : ControllerBase
                 }
             } */
 
-            
+
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
                 command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
