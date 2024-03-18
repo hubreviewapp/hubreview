@@ -718,7 +718,7 @@ public class GitHubController : ControllerBase
             command.ExecuteNonQuery();
         }
         connection.Close();
-        
+
         return Ok($"Comment added to pull request #{prnumber} in repository {repoName}.");
     }
 
@@ -735,7 +735,7 @@ public class GitHubController : ControllerBase
     {
         var client = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         await client.Issue.Comment.Delete(owner, repoName, comment_id);
-        
+
         var config = new CoreConfiguration();
         string connectionString = config.DbConnectionString;
         using var connection = new NpgsqlConnection(connectionString);
@@ -855,18 +855,18 @@ public class GitHubController : ControllerBase
 
         return Ok(result);
     }
-    
+
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/{sha}/addRevComment/{body}/{filename}/{position}")]
     public async Task<ActionResult> AddRevCommentToPR(string owner, string repoName, int prnumber, string sha, string body, string filename, int position)
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        var comment = new PullRequestReviewCommentCreate( body, sha, filename, position );
+        var comment = new PullRequestReviewCommentCreate(body, sha, filename, position);
         var bbb = await client.PullRequest.ReviewComment.Create(owner, repoName, prnumber, comment);
         return Ok(bbb);
     }
 
     [HttpGet()]
-    public async Task<ActionResult> RemoveRevComment() 
+    public async Task<ActionResult> RemoveRevComment()
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         await client.PullRequest.ReviewComment.Delete()
@@ -955,7 +955,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpGet("commit/{owner}/{repoName}/{prnumber}/{sha}/get_patches")]
-    public async Task<ActionResult> getDiffs( string owner, string repoName, int prnumber, string sha )
+    public async Task<ActionResult> getDiffs(string owner, string repoName, int prnumber, string sha)
     {
         var appClient = GetNewClient();
         var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
@@ -975,7 +975,8 @@ public class GitHubController : ControllerBase
                 foreach (var file in commit.Files)
                 {
                     var fileContent = await userClient.Repository.Content.GetAllContentsByRef(owner, repoName, file.Filename, sha);
-                    result.Add(new {
+                    result.Add(new
+                    {
                         name = file.Filename,
                         status = file.Status,
                         sha = file.Sha,
