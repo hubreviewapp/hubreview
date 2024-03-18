@@ -545,6 +545,7 @@ namespace CS.Web.Controllers
 
 
                                     query += $"({repository.id}, {pull.Id}, '{pull.Base.Repository.Name}', {pull.Number}, '{pull.Title}', '{pull.User.Login}', '{pull.User.AvatarUrl}', '{pull.CreatedAt.Date:yyyy-MM-dd}', '{pull.UpdatedAt.Date:yyyy-MM-dd}', {pull.Comments}, {pull.Commits}, {pull.ChangedFiles}, {pull.Additions}, {pull.Deletions}, {pull.Draft}, '{pull.State.ToString()}', {requestedReviewers}, '{labeljson}', '{pull.Url}', '{pull.Base.Repository.Owner.Login}', '{JsonConvert.SerializeObject(checksList)}', {checks_complete_count}, {checks_incomplete_count}, {checks_success_count}, {checks_fail_count}, {assignedReviewers}, '{installationReviewsJson}'), ";
+
                                 }
                                 query = query.Substring(0, query.Length - 2);
                                 using (var command = new NpgsqlCommand(query, connection))
