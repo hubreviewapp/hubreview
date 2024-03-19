@@ -1521,8 +1521,9 @@ public class GitHubController : ControllerBase
         return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
     }
 
-    [HttpGet("pullrequest/filter")]
-    public async Task<ActionResult> FilterPRs([FromQuery] PRFilter filter)
+    [HttpGet("prs/needsreview/filter")]
+    public async Task<ActionResult> FilterNeedsYourReviewPRs([FromQuery] PRFilter filter)
+    
     {
         /*
         filter.Assignee string
@@ -1680,6 +1681,811 @@ public class GitHubController : ControllerBase
 
         return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
     }
+    
+    [HttpGet("prs/userprs/filter")]
+    public async Task<ActionResult> FilterUserPRs([FromQuery] PRFilter filter)
+    
+    {
+        /*
+        filter.Assignee string
+        filter.Author string
+        filter.repositories string[]
+        filter.FromDate string
+        string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
+
+        */
+        filter.Repositories = ["hubreviewapp.github.io"];
+        filter.Author = "Ece-Kahraman";
+        filter.FromDate = "thisyear";
+        filter.Priority = "3";
+
+        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
+        var userClient = GetNewClient(access_token);
+
+        List<PRInfo> allPRs = new List<PRInfo>();
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+
+        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        {
+            await connection.OpenAsync();
+
+            string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
+
+            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'open' AND author = @ownerLogin";
+            if (!string.IsNullOrEmpty(filter.Author))
+            {
+                query += " AND author = @author";
+            }
+            if (!string.IsNullOrEmpty(filter.Assignee))
+            {
+                query += " AND @assignee = ANY(assignees)";
+            }
+            query += " AND reponame = ANY(@repositories)";
+            if (!string.IsNullOrEmpty(filter.Priority))
+            {
+                query += " AND priority = " + filter.Priority;
+            }
+
+            // Add date filter condition based on the selected value
+            if (!string.IsNullOrEmpty(filter.FromDate))
+            {
+                switch (filter.FromDate.ToLower())
+                {
+                    case "today":
+                        query += " AND createdat >= CURRENT_DATE AND createdat < CURRENT_DATE + INTERVAL '1 day'";
+                        break;
+                    case "thisweek":
+                        query += " AND createdat >= date_trunc('week', CURRENT_DATE) AND createdat < date_trunc('week', CURRENT_DATE) + INTERVAL '1 week'";
+                        break;
+                    case "thismonth":
+                        query += " AND createdat >= date_trunc('month', CURRENT_DATE) AND createdat < date_trunc('month', CURRENT_DATE) + INTERVAL '1 month'";
+                        break;
+                    case "thisyear":
+                        query += " AND createdat >= date_trunc('year', CURRENT_DATE) AND createdat < date_trunc('year', CURRENT_DATE) + INTERVAL '1 year'";
+                        break;
+                    default:
+                        // Handle unsupported date filter value
+                        break;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(filter.OrderBy))
+            {
+                switch (filter.OrderBy.ToLower())
+                {
+                    case "newest":
+                        query += " ORDER BY createdat DESC";
+                        break;
+                    case "oldest":
+                        query += " ORDER BY createdat ASC";
+                        break;
+                    case "priority":
+                        query += " ORDER BY priority DESC";
+                        break;
+                    case "recentlyupdated":
+                        query += " ORDER BY updatedat DESC";
+                        break;
+                        // Add more cases for other sorting options
+                }
+            }
+            /*
+            if (filter.Labels != null && filter.Labels.Length > 0)
+            {
+                query += " AND labels @> @labels";
+            }            
+             */
+
+
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                if (!string.IsNullOrEmpty(filter.Author))
+                {
+                    command.Parameters.AddWithValue("@author", filter.Author);
+                }
+                if (!string.IsNullOrEmpty(filter.Assignee))
+                {
+                    command.Parameters.AddWithValue("@assignee", filter.Assignee);
+                }
+                command.Parameters.AddWithValue("@repositories", filter.Repositories);
+                /*
+                if (filter.Labels != null && filter.Labels.Length > 0)
+                {
+                    command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.Labels));
+                } 
+                */
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        PRInfo pr = new PRInfo
+                        {
+                            Id = reader.GetInt64(0),
+                            Title = reader.GetString(1),
+                            PRNumber = reader.GetInt32(2),
+                            Author = reader.GetString(3),
+                            AuthorAvatarURL = reader.GetString(4),
+                            CreatedAt = reader.GetFieldValue<DateOnly>(5),
+                            UpdatedAt = reader.GetFieldValue<DateOnly>(6),
+                            RepoName = reader.GetString(7),
+                            Additions = reader.GetInt32(8),
+                            Deletions = reader.GetInt32(9),
+                            Files = reader.GetInt32(10),
+                            Comments = reader.GetInt32(11),
+                            Labels = JsonConvert.DeserializeObject<object[]>(reader.GetString(12)),
+                            RepoOwner = reader.GetString(13),
+                            Checks = JsonConvert.DeserializeObject<object[]>(reader.GetString(14)),
+                            ChecksComplete = reader.GetInt32(15),
+                            ChecksIncomplete = reader.GetInt32(16),
+                            ChecksSuccess = reader.GetInt32(17),
+                            ChecksFail = reader.GetInt32(18),
+                            Assignees = reader.IsDBNull(19) ? new string[] { } : ((object[])reader.GetValue(19)).Select(obj => obj.ToString()).ToArray(),
+                            Reviews = JsonConvert.DeserializeObject<object[]>(reader.GetString(20)),
+                            Reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray()
+
+                        };
+
+                        allPRs.Add(pr);
+                    }
+                }
+            }
+
+            await connection.CloseAsync();
+        }
+
+        return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
+    }
+    
+    [HttpGet("prs/waitingauthor/filter")]
+    public async Task<ActionResult> FilterWaitingAuthors([FromQuery] PRFilter filter)
+    
+    {
+        /*
+        filter.Assignee string
+        filter.Author string
+        filter.repositories string[]
+        filter.FromDate string
+        string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
+
+        */
+        filter.Repositories = ["hubreviewapp.github.io"];
+        filter.Author = "Ece-Kahraman";
+        filter.FromDate = "thisyear";
+        filter.Priority = "3";
+
+        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
+        var userClient = GetNewClient(access_token);
+
+        List<PRInfo> allPRs = new List<PRInfo>();
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+
+        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        {
+            await connection.OpenAsync();
+
+            string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
+
+            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE ( @ownerLogin != ANY(reviewers) AND EXISTS ( SELECT 1 FROM json_array_elements(reviews) AS review WHERE review->>'login' = @ownerLogin) ) AND state='open' AND @ownerLogin != author AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
+            if (!string.IsNullOrEmpty(filter.Author))
+            {
+                query += " AND author = @author";
+            }
+            if (!string.IsNullOrEmpty(filter.Assignee))
+            {
+                query += " AND @assignee = ANY(assignees)";
+            }
+            query += " AND reponame = ANY(@repositories)";
+            if (!string.IsNullOrEmpty(filter.Priority))
+            {
+                query += " AND priority = " + filter.Priority;
+            }
+
+            // Add date filter condition based on the selected value
+            if (!string.IsNullOrEmpty(filter.FromDate))
+            {
+                switch (filter.FromDate.ToLower())
+                {
+                    case "today":
+                        query += " AND createdat >= CURRENT_DATE AND createdat < CURRENT_DATE + INTERVAL '1 day'";
+                        break;
+                    case "thisweek":
+                        query += " AND createdat >= date_trunc('week', CURRENT_DATE) AND createdat < date_trunc('week', CURRENT_DATE) + INTERVAL '1 week'";
+                        break;
+                    case "thismonth":
+                        query += " AND createdat >= date_trunc('month', CURRENT_DATE) AND createdat < date_trunc('month', CURRENT_DATE) + INTERVAL '1 month'";
+                        break;
+                    case "thisyear":
+                        query += " AND createdat >= date_trunc('year', CURRENT_DATE) AND createdat < date_trunc('year', CURRENT_DATE) + INTERVAL '1 year'";
+                        break;
+                    default:
+                        // Handle unsupported date filter value
+                        break;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(filter.OrderBy))
+            {
+                switch (filter.OrderBy.ToLower())
+                {
+                    case "newest":
+                        query += " ORDER BY createdat DESC";
+                        break;
+                    case "oldest":
+                        query += " ORDER BY createdat ASC";
+                        break;
+                    case "priority":
+                        query += " ORDER BY priority DESC";
+                        break;
+                    case "recentlyupdated":
+                        query += " ORDER BY updatedat DESC";
+                        break;
+                        // Add more cases for other sorting options
+                }
+            }
+            /*
+            if (filter.Labels != null && filter.Labels.Length > 0)
+            {
+                query += " AND labels @> @labels";
+            }            
+             */
+
+
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                if (!string.IsNullOrEmpty(filter.Author))
+                {
+                    command.Parameters.AddWithValue("@author", filter.Author);
+                }
+                if (!string.IsNullOrEmpty(filter.Assignee))
+                {
+                    command.Parameters.AddWithValue("@assignee", filter.Assignee);
+                }
+                command.Parameters.AddWithValue("@repositories", filter.Repositories);
+                /*
+                if (filter.Labels != null && filter.Labels.Length > 0)
+                {
+                    command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.Labels));
+                } 
+                */
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        PRInfo pr = new PRInfo
+                        {
+                            Id = reader.GetInt64(0),
+                            Title = reader.GetString(1),
+                            PRNumber = reader.GetInt32(2),
+                            Author = reader.GetString(3),
+                            AuthorAvatarURL = reader.GetString(4),
+                            CreatedAt = reader.GetFieldValue<DateOnly>(5),
+                            UpdatedAt = reader.GetFieldValue<DateOnly>(6),
+                            RepoName = reader.GetString(7),
+                            Additions = reader.GetInt32(8),
+                            Deletions = reader.GetInt32(9),
+                            Files = reader.GetInt32(10),
+                            Comments = reader.GetInt32(11),
+                            Labels = JsonConvert.DeserializeObject<object[]>(reader.GetString(12)),
+                            RepoOwner = reader.GetString(13),
+                            Checks = JsonConvert.DeserializeObject<object[]>(reader.GetString(14)),
+                            ChecksComplete = reader.GetInt32(15),
+                            ChecksIncomplete = reader.GetInt32(16),
+                            ChecksSuccess = reader.GetInt32(17),
+                            ChecksFail = reader.GetInt32(18),
+                            Assignees = reader.IsDBNull(19) ? new string[] { } : ((object[])reader.GetValue(19)).Select(obj => obj.ToString()).ToArray(),
+                            Reviews = JsonConvert.DeserializeObject<object[]>(reader.GetString(20)),
+                            Reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray()
+
+                        };
+
+                        allPRs.Add(pr);
+                    }
+                }
+            }
+
+            await connection.CloseAsync();
+        }
+
+        return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
+    }
+    [HttpGet("prs/open/filter")]
+    public async Task<ActionResult> FilterOpenPRs([FromQuery] PRFilter filter)
+    
+    {
+        /*
+        filter.Assignee string
+        filter.Author string
+        filter.repositories string[]
+        filter.FromDate string
+        string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
+
+        */
+        filter.Repositories = ["hubreviewapp.github.io"];
+        filter.Author = "Ece-Kahraman";
+        filter.FromDate = "thisyear";
+        filter.Priority = "3";
+
+        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
+        var userClient = GetNewClient(access_token);
+
+        List<PRInfo> allPRs = new List<PRInfo>();
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+
+        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        {
+            await connection.OpenAsync();
+
+            string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
+
+            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'open' AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
+            if (!string.IsNullOrEmpty(filter.Author))
+            {
+                query += " AND author = @author";
+            }
+            if (!string.IsNullOrEmpty(filter.Assignee))
+            {
+                query += " AND @assignee = ANY(assignees)";
+            }
+            query += " AND reponame = ANY(@repositories)";
+            if (!string.IsNullOrEmpty(filter.Priority))
+            {
+                query += " AND priority = " + filter.Priority;
+            }
+
+            // Add date filter condition based on the selected value
+            if (!string.IsNullOrEmpty(filter.FromDate))
+            {
+                switch (filter.FromDate.ToLower())
+                {
+                    case "today":
+                        query += " AND createdat >= CURRENT_DATE AND createdat < CURRENT_DATE + INTERVAL '1 day'";
+                        break;
+                    case "thisweek":
+                        query += " AND createdat >= date_trunc('week', CURRENT_DATE) AND createdat < date_trunc('week', CURRENT_DATE) + INTERVAL '1 week'";
+                        break;
+                    case "thismonth":
+                        query += " AND createdat >= date_trunc('month', CURRENT_DATE) AND createdat < date_trunc('month', CURRENT_DATE) + INTERVAL '1 month'";
+                        break;
+                    case "thisyear":
+                        query += " AND createdat >= date_trunc('year', CURRENT_DATE) AND createdat < date_trunc('year', CURRENT_DATE) + INTERVAL '1 year'";
+                        break;
+                    default:
+                        // Handle unsupported date filter value
+                        break;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(filter.OrderBy))
+            {
+                switch (filter.OrderBy.ToLower())
+                {
+                    case "newest":
+                        query += " ORDER BY createdat DESC";
+                        break;
+                    case "oldest":
+                        query += " ORDER BY createdat ASC";
+                        break;
+                    case "priority":
+                        query += " ORDER BY priority DESC";
+                        break;
+                    case "recentlyupdated":
+                        query += " ORDER BY updatedat DESC";
+                        break;
+                        // Add more cases for other sorting options
+                }
+            }
+            /*
+            if (filter.Labels != null && filter.Labels.Length > 0)
+            {
+                query += " AND labels @> @labels";
+            }            
+             */
+
+
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                if (!string.IsNullOrEmpty(filter.Author))
+                {
+                    command.Parameters.AddWithValue("@author", filter.Author);
+                }
+                if (!string.IsNullOrEmpty(filter.Assignee))
+                {
+                    command.Parameters.AddWithValue("@assignee", filter.Assignee);
+                }
+                command.Parameters.AddWithValue("@repositories", filter.Repositories);
+                /*
+                if (filter.Labels != null && filter.Labels.Length > 0)
+                {
+                    command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.Labels));
+                } 
+                */
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        PRInfo pr = new PRInfo
+                        {
+                            Id = reader.GetInt64(0),
+                            Title = reader.GetString(1),
+                            PRNumber = reader.GetInt32(2),
+                            Author = reader.GetString(3),
+                            AuthorAvatarURL = reader.GetString(4),
+                            CreatedAt = reader.GetFieldValue<DateOnly>(5),
+                            UpdatedAt = reader.GetFieldValue<DateOnly>(6),
+                            RepoName = reader.GetString(7),
+                            Additions = reader.GetInt32(8),
+                            Deletions = reader.GetInt32(9),
+                            Files = reader.GetInt32(10),
+                            Comments = reader.GetInt32(11),
+                            Labels = JsonConvert.DeserializeObject<object[]>(reader.GetString(12)),
+                            RepoOwner = reader.GetString(13),
+                            Checks = JsonConvert.DeserializeObject<object[]>(reader.GetString(14)),
+                            ChecksComplete = reader.GetInt32(15),
+                            ChecksIncomplete = reader.GetInt32(16),
+                            ChecksSuccess = reader.GetInt32(17),
+                            ChecksFail = reader.GetInt32(18),
+                            Assignees = reader.IsDBNull(19) ? new string[] { } : ((object[])reader.GetValue(19)).Select(obj => obj.ToString()).ToArray(),
+                            Reviews = JsonConvert.DeserializeObject<object[]>(reader.GetString(20)),
+                            Reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray()
+
+                        };
+
+                        allPRs.Add(pr);
+                    }
+                }
+            }
+
+            await connection.CloseAsync();
+        }
+
+        return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
+    }
+    
+    [HttpGet("prs/merged/filter")]
+    public async Task<ActionResult> FilterMergedPRs([FromQuery] PRFilter filter)
+    
+    {
+        /*
+        filter.Assignee string
+        filter.Author string
+        filter.repositories string[]
+        filter.FromDate string
+        string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
+
+        */
+        filter.Repositories = ["hubreviewapp.github.io"];
+        filter.Author = "Ece-Kahraman";
+        filter.FromDate = "thisyear";
+        filter.Priority = "3";
+
+        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
+        var userClient = GetNewClient(access_token);
+
+        List<PRInfo> allPRs = new List<PRInfo>();
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+
+        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        {
+            await connection.OpenAsync();
+
+            string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
+
+            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE merged = true AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
+            if (!string.IsNullOrEmpty(filter.Author))
+            {
+                query += " AND author = @author";
+            }
+            if (!string.IsNullOrEmpty(filter.Assignee))
+            {
+                query += " AND @assignee = ANY(assignees)";
+            }
+            query += " AND reponame = ANY(@repositories)";
+            if (!string.IsNullOrEmpty(filter.Priority))
+            {
+                query += " AND priority = " + filter.Priority;
+            }
+
+            // Add date filter condition based on the selected value
+            if (!string.IsNullOrEmpty(filter.FromDate))
+            {
+                switch (filter.FromDate.ToLower())
+                {
+                    case "today":
+                        query += " AND createdat >= CURRENT_DATE AND createdat < CURRENT_DATE + INTERVAL '1 day'";
+                        break;
+                    case "thisweek":
+                        query += " AND createdat >= date_trunc('week', CURRENT_DATE) AND createdat < date_trunc('week', CURRENT_DATE) + INTERVAL '1 week'";
+                        break;
+                    case "thismonth":
+                        query += " AND createdat >= date_trunc('month', CURRENT_DATE) AND createdat < date_trunc('month', CURRENT_DATE) + INTERVAL '1 month'";
+                        break;
+                    case "thisyear":
+                        query += " AND createdat >= date_trunc('year', CURRENT_DATE) AND createdat < date_trunc('year', CURRENT_DATE) + INTERVAL '1 year'";
+                        break;
+                    default:
+                        // Handle unsupported date filter value
+                        break;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(filter.OrderBy))
+            {
+                switch (filter.OrderBy.ToLower())
+                {
+                    case "newest":
+                        query += " ORDER BY createdat DESC";
+                        break;
+                    case "oldest":
+                        query += " ORDER BY createdat ASC";
+                        break;
+                    case "priority":
+                        query += " ORDER BY priority DESC";
+                        break;
+                    case "recentlyupdated":
+                        query += " ORDER BY updatedat DESC";
+                        break;
+                        // Add more cases for other sorting options
+                }
+            }
+            /*
+            if (filter.Labels != null && filter.Labels.Length > 0)
+            {
+                query += " AND labels @> @labels";
+            }            
+             */
+
+
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                if (!string.IsNullOrEmpty(filter.Author))
+                {
+                    command.Parameters.AddWithValue("@author", filter.Author);
+                }
+                if (!string.IsNullOrEmpty(filter.Assignee))
+                {
+                    command.Parameters.AddWithValue("@assignee", filter.Assignee);
+                }
+                command.Parameters.AddWithValue("@repositories", filter.Repositories);
+                /*
+                if (filter.Labels != null && filter.Labels.Length > 0)
+                {
+                    command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.Labels));
+                } 
+                */
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        PRInfo pr = new PRInfo
+                        {
+                            Id = reader.GetInt64(0),
+                            Title = reader.GetString(1),
+                            PRNumber = reader.GetInt32(2),
+                            Author = reader.GetString(3),
+                            AuthorAvatarURL = reader.GetString(4),
+                            CreatedAt = reader.GetFieldValue<DateOnly>(5),
+                            UpdatedAt = reader.GetFieldValue<DateOnly>(6),
+                            RepoName = reader.GetString(7),
+                            Additions = reader.GetInt32(8),
+                            Deletions = reader.GetInt32(9),
+                            Files = reader.GetInt32(10),
+                            Comments = reader.GetInt32(11),
+                            Labels = JsonConvert.DeserializeObject<object[]>(reader.GetString(12)),
+                            RepoOwner = reader.GetString(13),
+                            Checks = JsonConvert.DeserializeObject<object[]>(reader.GetString(14)),
+                            ChecksComplete = reader.GetInt32(15),
+                            ChecksIncomplete = reader.GetInt32(16),
+                            ChecksSuccess = reader.GetInt32(17),
+                            ChecksFail = reader.GetInt32(18),
+                            Assignees = reader.IsDBNull(19) ? new string[] { } : ((object[])reader.GetValue(19)).Select(obj => obj.ToString()).ToArray(),
+                            Reviews = JsonConvert.DeserializeObject<object[]>(reader.GetString(20)),
+                            Reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray()
+
+                        };
+
+                        allPRs.Add(pr);
+                    }
+                }
+            }
+
+            await connection.CloseAsync();
+        }
+
+        return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
+    }
+    
+    [HttpGet("prs/closed/filter")]
+    public async Task<ActionResult> FilterClosedPRs([FromQuery] PRFilter filter)
+    
+    {
+        /*
+        filter.Assignee string
+        filter.Author string
+        filter.repositories string[]
+        filter.FromDate string
+        string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
+
+        */
+        filter.Repositories = ["hubreviewapp.github.io"];
+        filter.Author = "Ece-Kahraman";
+        filter.FromDate = "thisyear";
+        filter.Priority = "3";
+
+        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
+        var userClient = GetNewClient(access_token);
+
+        List<PRInfo> allPRs = new List<PRInfo>();
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+
+        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        {
+            await connection.OpenAsync();
+
+            string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
+
+            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'closed' AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
+            if (!string.IsNullOrEmpty(filter.Author))
+            {
+                query += " AND author = @author";
+            }
+            if (!string.IsNullOrEmpty(filter.Assignee))
+            {
+                query += " AND @assignee = ANY(assignees)";
+            }
+            query += " AND reponame = ANY(@repositories)";
+            if (!string.IsNullOrEmpty(filter.Priority))
+            {
+                query += " AND priority = " + filter.Priority;
+            }
+
+            // Add date filter condition based on the selected value
+            if (!string.IsNullOrEmpty(filter.FromDate))
+            {
+                switch (filter.FromDate.ToLower())
+                {
+                    case "today":
+                        query += " AND createdat >= CURRENT_DATE AND createdat < CURRENT_DATE + INTERVAL '1 day'";
+                        break;
+                    case "thisweek":
+                        query += " AND createdat >= date_trunc('week', CURRENT_DATE) AND createdat < date_trunc('week', CURRENT_DATE) + INTERVAL '1 week'";
+                        break;
+                    case "thismonth":
+                        query += " AND createdat >= date_trunc('month', CURRENT_DATE) AND createdat < date_trunc('month', CURRENT_DATE) + INTERVAL '1 month'";
+                        break;
+                    case "thisyear":
+                        query += " AND createdat >= date_trunc('year', CURRENT_DATE) AND createdat < date_trunc('year', CURRENT_DATE) + INTERVAL '1 year'";
+                        break;
+                    default:
+                        // Handle unsupported date filter value
+                        break;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(filter.OrderBy))
+            {
+                switch (filter.OrderBy.ToLower())
+                {
+                    case "newest":
+                        query += " ORDER BY createdat DESC";
+                        break;
+                    case "oldest":
+                        query += " ORDER BY createdat ASC";
+                        break;
+                    case "priority":
+                        query += " ORDER BY priority DESC";
+                        break;
+                    case "recentlyupdated":
+                        query += " ORDER BY updatedat DESC";
+                        break;
+                        // Add more cases for other sorting options
+                }
+            }
+            /*
+            if (filter.Labels != null && filter.Labels.Length > 0)
+            {
+                query += " AND labels @> @labels";
+            }            
+             */
+
+
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                if (!string.IsNullOrEmpty(filter.Author))
+                {
+                    command.Parameters.AddWithValue("@author", filter.Author);
+                }
+                if (!string.IsNullOrEmpty(filter.Assignee))
+                {
+                    command.Parameters.AddWithValue("@assignee", filter.Assignee);
+                }
+                command.Parameters.AddWithValue("@repositories", filter.Repositories);
+                /*
+                if (filter.Labels != null && filter.Labels.Length > 0)
+                {
+                    command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.Labels));
+                } 
+                */
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        PRInfo pr = new PRInfo
+                        {
+                            Id = reader.GetInt64(0),
+                            Title = reader.GetString(1),
+                            PRNumber = reader.GetInt32(2),
+                            Author = reader.GetString(3),
+                            AuthorAvatarURL = reader.GetString(4),
+                            CreatedAt = reader.GetFieldValue<DateOnly>(5),
+                            UpdatedAt = reader.GetFieldValue<DateOnly>(6),
+                            RepoName = reader.GetString(7),
+                            Additions = reader.GetInt32(8),
+                            Deletions = reader.GetInt32(9),
+                            Files = reader.GetInt32(10),
+                            Comments = reader.GetInt32(11),
+                            Labels = JsonConvert.DeserializeObject<object[]>(reader.GetString(12)),
+                            RepoOwner = reader.GetString(13),
+                            Checks = JsonConvert.DeserializeObject<object[]>(reader.GetString(14)),
+                            ChecksComplete = reader.GetInt32(15),
+                            ChecksIncomplete = reader.GetInt32(16),
+                            ChecksSuccess = reader.GetInt32(17),
+                            ChecksFail = reader.GetInt32(18),
+                            Assignees = reader.IsDBNull(19) ? new string[] { } : ((object[])reader.GetValue(19)).Select(obj => obj.ToString()).ToArray(),
+                            Reviews = JsonConvert.DeserializeObject<object[]>(reader.GetString(20)),
+                            Reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray()
+
+                        };
+
+                        allPRs.Add(pr);
+                    }
+                }
+            }
+
+            await connection.CloseAsync();
+        }
+
+        return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
+    }
+    
 }
 
 
