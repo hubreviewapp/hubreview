@@ -4,8 +4,8 @@ public class PRFilter
     public string[]? Labels { get; set; }
     public string? Priority { get; set; }
     public string? Assignee { get; set; }
-    public DateTime? FromDate { get; set; }
+    public string? FromDate { get; set; }
     public string? OrderBy { get; set; }
     public string? state { get; set; }
-    public string[]? repositories { get; set; }
+    public string[]? Repositories { get; set; }
 }

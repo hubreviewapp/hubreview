@@ -1524,8 +1524,18 @@ public class GitHubController : ControllerBase
     [HttpGet("pullrequest/filter")]
     public async Task<ActionResult> FilterPRs([FromQuery] PRFilter filter)
     {
+        /*
+        filter.Assignee string
+        filter.Author string
+        filter.repositories string[]
+        filter.FromDate string
+        string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
+
+        */
+        filter.Repositories = ["hubreviewapp.github.io"];
         filter.Author = "Ece-Kahraman";
-        filter.repositories = ["hubreviewapp.github.io", "hubreview"];
+        filter.FromDate = "thisyear";
+        filter.Priority = "3";
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -1554,11 +1564,34 @@ public class GitHubController : ControllerBase
             {
                 query += " AND @assignee = ANY(assignees)";
             }
-            /*
-            if (filter.Labels != null && filter.Labels.Length > 0)
+            query += " AND reponame = ANY(@repositories)";
+            if (!string.IsNullOrEmpty(filter.Priority))
             {
-                query += " AND labels @> @labels";
-            }            
+                query += " AND priority = " + filter.Priority;
+            }
+
+            // Add date filter condition based on the selected value
+            if (!string.IsNullOrEmpty(filter.FromDate))
+            {
+                switch (filter.FromDate.ToLower())
+                {
+                    case "today":
+                        query += " AND createdat >= CURRENT_DATE AND createdat < CURRENT_DATE + INTERVAL '1 day'";
+                        break;
+                    case "thisweek":
+                        query += " AND createdat >= date_trunc('week', CURRENT_DATE) AND createdat < date_trunc('week', CURRENT_DATE) + INTERVAL '1 week'";
+                        break;
+                    case "thismonth":
+                        query += " AND createdat >= date_trunc('month', CURRENT_DATE) AND createdat < date_trunc('month', CURRENT_DATE) + INTERVAL '1 month'";
+                        break;
+                    case "thisyear":
+                        query += " AND createdat >= date_trunc('year', CURRENT_DATE) AND createdat < date_trunc('year', CURRENT_DATE) + INTERVAL '1 year'";
+                        break;
+                    default:
+                        // Handle unsupported date filter value
+                        break;
+                }
+            }
 
             if (!string.IsNullOrEmpty(filter.OrderBy))
             {
@@ -1571,14 +1604,20 @@ public class GitHubController : ControllerBase
                         query += " ORDER BY createdat ASC";
                         break;
                     case "priority":
-                        query += " ORDER BY priority ASC";
+                        query += " ORDER BY priority DESC";
                         break;
                     case "recentlyupdated":
                         query += " ORDER BY updatedat DESC";
                         break;
-                    // Add more cases for other sorting options
+                        // Add more cases for other sorting options
                 }
-            } */
+            }
+            /*
+            if (filter.Labels != null && filter.Labels.Length > 0)
+            {
+                query += " AND labels @> @labels";
+            }            
+             */
 
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
@@ -1593,6 +1632,7 @@ public class GitHubController : ControllerBase
                 {
                     command.Parameters.AddWithValue("@assignee", filter.Assignee);
                 }
+                command.Parameters.AddWithValue("@repositories", filter.Repositories);
                 /*
                 if (filter.Labels != null && filter.Labels.Length > 0)
                 {
