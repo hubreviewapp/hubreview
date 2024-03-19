@@ -1529,11 +1529,13 @@ public class GitHubController : ControllerBase
         filter.Author string
         filter.repositories string[]
         filter.FromDate string
+        string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
         filter.Author = "Ece-Kahraman";
         filter.FromDate = "thisyear";
+        filter.Priority = "3";
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -1563,6 +1565,10 @@ public class GitHubController : ControllerBase
                 query += " AND @assignee = ANY(assignees)";
             }
             query += " AND reponame = ANY(@repositories)";
+            if (!string.IsNullOrEmpty(filter.Priority))
+            {
+                query += " AND priority = " + filter.Priority;
+            }
 
             // Add date filter condition based on the selected value
             if (!string.IsNullOrEmpty(filter.FromDate))
@@ -1586,11 +1592,6 @@ public class GitHubController : ControllerBase
                         break;
                 }
             }
-            /*
-            if (filter.Labels != null && filter.Labels.Length > 0)
-            {
-                query += " AND labels @> @labels";
-            }            
 
             if (!string.IsNullOrEmpty(filter.OrderBy))
             {
@@ -1603,14 +1604,20 @@ public class GitHubController : ControllerBase
                         query += " ORDER BY createdat ASC";
                         break;
                     case "priority":
-                        query += " ORDER BY priority ASC";
+                        query += " ORDER BY priority DESC";
                         break;
                     case "recentlyupdated":
                         query += " ORDER BY updatedat DESC";
                         break;
                     // Add more cases for other sorting options
-                }
-            } */
+                } 
+            }
+            /*
+            if (filter.Labels != null && filter.Labels.Length > 0)
+            {
+                query += " AND labels @> @labels";
+            }            
+             */
 
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
