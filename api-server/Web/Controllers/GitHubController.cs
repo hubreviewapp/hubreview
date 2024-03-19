@@ -1609,8 +1609,8 @@ public class GitHubController : ControllerBase
                     case "recentlyupdated":
                         query += " ORDER BY updatedat DESC";
                         break;
-                    // Add more cases for other sorting options
-                } 
+                        // Add more cases for other sorting options
+                }
             }
             /*
             if (filter.Labels != null && filter.Labels.Length > 0)
