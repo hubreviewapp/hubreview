@@ -1523,7 +1523,7 @@ public class GitHubController : ControllerBase
 
     [HttpGet("prs/needsreview/filter")]
     public async Task<ActionResult> FilterNeedsYourReviewPRs([FromQuery] PRFilter filter)
-    
+
     {
         /*
         filter.Assignee string
@@ -1681,10 +1681,10 @@ public class GitHubController : ControllerBase
 
         return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
     }
-    
+
     [HttpGet("prs/userprs/filter")]
     public async Task<ActionResult> FilterUserPRs([FromQuery] PRFilter filter)
-    
+
     {
         /*
         filter.Assignee string
@@ -1842,10 +1842,10 @@ public class GitHubController : ControllerBase
 
         return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
     }
-    
+
     [HttpGet("prs/waitingauthor/filter")]
     public async Task<ActionResult> FilterWaitingAuthors([FromQuery] PRFilter filter)
-    
+
     {
         /*
         filter.Assignee string
@@ -2005,7 +2005,7 @@ public class GitHubController : ControllerBase
     }
     [HttpGet("prs/open/filter")]
     public async Task<ActionResult> FilterOpenPRs([FromQuery] PRFilter filter)
-    
+
     {
         /*
         filter.Assignee string
@@ -2163,10 +2163,10 @@ public class GitHubController : ControllerBase
 
         return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
     }
-    
+
     [HttpGet("prs/merged/filter")]
     public async Task<ActionResult> FilterMergedPRs([FromQuery] PRFilter filter)
-    
+
     {
         /*
         filter.Assignee string
@@ -2324,10 +2324,10 @@ public class GitHubController : ControllerBase
 
         return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
     }
-    
+
     [HttpGet("prs/closed/filter")]
     public async Task<ActionResult> FilterClosedPRs([FromQuery] PRFilter filter)
-    
+
     {
         /*
         filter.Assignee string
@@ -2485,7 +2485,7 @@ public class GitHubController : ControllerBase
 
         return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
     }
-    
+
 }
 
 
