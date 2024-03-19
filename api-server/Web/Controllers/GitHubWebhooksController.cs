@@ -201,7 +201,7 @@ namespace CS.Web.Controllers
                                 command.ExecuteNonQuery();
                             }
 
-                            string parameters = "(repoid, pullid, reponame, pullnumber, title, author, authoravatarurl, createdat, updatedat, comments, commits, changedfiles, additions, deletions, draft, state, reviewers, labels, pullurl, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews)";
+                            string parameters = "(repoid, pullid, reponame, pullnumber, title, author, authoravatarurl, createdat, updatedat, comments, commits, changedfiles, additions, deletions, draft, merged, state, reviewers, labels, pullurl, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews)";
 
                             query = "INSERT INTO pullrequestinfo " + parameters + " VALUES "; //+ at_parameters;
 
@@ -421,7 +421,7 @@ namespace CS.Web.Controllers
                                 command.ExecuteNonQuery();
                             }
 
-                            string parameters = "(repoid, pullid, reponame, pullnumber, title, author, authoravatarurl, createdat, updatedat, comments, commits, changedfiles, additions, deletions, draft, state, reviewers, labels, pullurl, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews)";
+                            string parameters = "(repoid, pullid, reponame, pullnumber, title, author, authoravatarurl, createdat, updatedat, comments, commits, changedfiles, additions, deletions, draft, merged, state, reviewers, labels, pullurl, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews)";
                             query = "INSERT INTO pullrequestinfo " + parameters + " VALUES "; //+ at_parameters;
 
                             var repoPulls = await GetRepoPullsById(repository.id, installationClient);
@@ -545,7 +545,6 @@ namespace CS.Web.Controllers
 
 
                                     query += $"({repository.id}, {pull.Id}, '{pull.Base.Repository.Name}', {pull.Number}, '{pull.Title}', '{pull.User.Login}', '{pull.User.AvatarUrl}', '{pull.CreatedAt.Date:yyyy-MM-dd}', '{pull.UpdatedAt.Date:yyyy-MM-dd}', {pull.Comments}, {pull.Commits}, {pull.ChangedFiles}, {pull.Additions}, {pull.Deletions}, {pull.Draft}, '{pull.State.ToString()}', {requestedReviewers}, '{labeljson}', '{pull.Url}', '{pull.Base.Repository.Owner.Login}', '{JsonConvert.SerializeObject(checksList)}', {checks_complete_count}, {checks_incomplete_count}, {checks_success_count}, {checks_fail_count}, {assignedReviewers}, '{installationReviewsJson}'), ";
-
                                 }
                                 query = query.Substring(0, query.Length - 2);
                                 using (var command = new NpgsqlCommand(query, connection))
@@ -615,7 +614,7 @@ namespace CS.Web.Controllers
                     {
                         connection.Open();
 
-                        string parameters = "(repoid, pullid, reponame, pullnumber, title, author, authoravatarurl, createdat, updatedat, comments, commits, changedfiles, additions, deletions, draft, state, reviewers, labels, pullurl, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews)";
+                        string parameters = "(repoid, pullid, reponame, pullnumber, title, author, authoravatarurl, createdat, updatedat, comments, commits, changedfiles, additions, deletions, draft, merged, state, reviewers, labels, pullurl, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews)";
 
                         string query = "INSERT INTO pullrequestinfo " + parameters + " VALUES ";
 
@@ -653,7 +652,7 @@ namespace CS.Web.Controllers
                         var installationReviewsJson = JsonConvert.SerializeObject(installationLatestReviews);
 
 
-                        query += $"({pullRequestPayload.repository.id}, {pullRequestPayload.pull_request.id}, '{pullRequestPayload.pull_request.@base.repo.name}', {pull.number}, '{pull.title}', '{pull.user.login}', '{pull.user.avatar_url}', '{createdAtFormatted}', '{updatedAtFormatted}', {pull.comments}, {pull.commits}, {pull.changed_files}, {pull.additions}, {pull.deletions}, {pull.draft}, '{pull.state}', {requestedReviewers}, '{labeljson}', '{pull.url}', '{pull.@base.repo.owner.login}', '{JsonConvert.SerializeObject(checksList)}', {checks_complete_count}, {checks_incomplete_count}, {checks_success_count}, {checks_fail_count}, {assignedReviewers}, '{installationReviewsJson}')";
+                        query += $"({pullRequestPayload.repository.id}, {pullRequestPayload.pull_request.id}, '{pullRequestPayload.pull_request.@base.repo.name}', {pull.number}, '{pull.title}', '{pull.user.login}', '{pull.user.avatar_url}', '{createdAtFormatted}', '{updatedAtFormatted}', {pull.comments}, {pull.commits}, {pull.changed_files}, {pull.additions}, {pull.deletions}, {pull.draft}, {pull.merged}, '{pull.state}', {requestedReviewers}, '{labeljson}', '{pull.url}', '{pull.@base.repo.owner.login}', '{JsonConvert.SerializeObject(checksList)}', {checks_complete_count}, {checks_incomplete_count}, {checks_success_count}, {checks_fail_count}, {assignedReviewers}, '{installationReviewsJson}')";
 
                         using (var command = new NpgsqlCommand(query, connection))
                         {
