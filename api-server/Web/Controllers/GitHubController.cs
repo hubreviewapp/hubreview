@@ -2,6 +2,7 @@ using System.Data;
 using System.Web;
 using CS.Core.Configuration;
 using CS.Core.Entities;
+using CS.Web.Models.Api.Request;
 using DotEnv.Core;
 using GitHubJwt;
 using Microsoft.AspNetCore.Http;
@@ -715,7 +716,7 @@ public class GitHubController : ControllerBase
         using var connection = new NpgsqlConnection(connectionString);
         connection.Open();
 
-        string query = $"INSERT INTO comments VALUES ({comment.Id}, '{repoName}', {prnumber}, 'ACTIVE')";
+        string query = $"INSERT INTO comments VALUES ({comment.Id}, '{repoName}', {prnumber}, {false}, '', '', 'ACTIVE')";
         using (var command = new NpgsqlCommand(query, connection))
         {
             command.ExecuteNonQuery();
@@ -859,13 +860,47 @@ public class GitHubController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/{sha}/addRevComment/{body}/{filename}/{position}")]
-    public async Task<ActionResult> AddRevCommentToPR(string owner, string repoName, int prnumber, string sha, string body, string filename, int position)
+    [HttpGet("{owner}/{reponame}/{prnumber}/{reviewid}")]
+    public async Task<ActionResult> foo(string owner, string reponame, int prnumber, long reviewid)
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        var comment = new PullRequestReviewCommentCreate(body, sha, filename, position);
-        var bbb = await client.PullRequest.ReviewComment.Create(owner, repoName, prnumber, comment);
-        return Ok(bbb);
+        var reviews = await client.PullRequest.Review.GetAllComments(owner, reponame, prnumber, reviewid);
+        return Ok(reviews);
+    }
+
+    [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/{sha}/addRevComment")]// /{body}/{filename}/{position}/{label}/{decoration}/{verdict}")]
+    public async Task<ActionResult> AddRevCommentToPR(string owner, string repoName, int prnumber, string sha, [FromBody] CreateReviewRequestModel req)
+    {
+        
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        //var decorated_body = (label != "NONE") ? $"{label} ({decoration}): {body}" : $"({decoration}): {body}";
+        var decorated_body = $"{req.label} ({req.decoration}): {req.body}";
+        var comment = new Octokit.DraftPullRequestReviewComment(decorated_body, req.filename, req.position);
+
+        var rev = new PullRequestReviewCreate()
+        {
+            CommitId = sha,
+            Body = req.body,
+            Event = (req.verdict != "APPROVE") ? ((req.verdict != "REQUEST CHANGES") ? Octokit.PullRequestReviewEvent.Comment : Octokit.PullRequestReviewEvent.RequestChanges) : Octokit.PullRequestReviewEvent.Approve
+        };
+        rev.Comments.Add(comment);
+        var aa = await client.PullRequest.Review.Create(owner, repoName, prnumber, rev);
+        
+        return Ok(aa);
+
+        /*var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        using var connection = new NpgsqlConnection(connectionString);
+        connection.Open();
+
+        string query = $"INSERT INTO comments VALUES ({review.Id}, '{repoName}', {prnumber}, {true}, '{label}', '{decoration}', 'ACTIVE')";
+        using (var command = new NpgsqlCommand(query, connection))
+        {
+            command.ExecuteNonQuery();
+        }
+        connection.Close();*/
+
+        //return Ok($"Review added to pull request #{prnumber} in repository {repoName}.");
     }
 
     [HttpGet("pullrequest/{owner}/{repoName}/{comment_id}/removeRevComment")]
