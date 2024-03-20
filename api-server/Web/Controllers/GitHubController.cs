@@ -871,36 +871,66 @@ public class GitHubController : ControllerBase
     [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/{sha}/addRevComment")]// /{body}/{filename}/{position}/{label}/{decoration}/{verdict}")]
     public async Task<ActionResult> AddRevCommentToPR(string owner, string repoName, int prnumber, string sha, [FromBody] CreateReviewRequestModel req)
     {
-        
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        //var decorated_body = (label != "NONE") ? $"{label} ({decoration}): {body}" : $"({decoration}): {body}";
-        var decorated_body = $"{req.label} ({req.decoration}): {req.body}";
-        var comment = new Octokit.DraftPullRequestReviewComment(decorated_body, req.filename, req.position);
 
         var rev = new PullRequestReviewCreate()
         {
             CommitId = sha,
             Body = req.body,
-            Event = (req.verdict != "APPROVE") ? ((req.verdict != "REQUEST CHANGES") ? Octokit.PullRequestReviewEvent.Comment : Octokit.PullRequestReviewEvent.RequestChanges) : Octokit.PullRequestReviewEvent.Approve
+            Event = (req.verdict != "APPROVE") ? ((req.verdict != "REQUEST CHANGES") ? Octokit.PullRequestReviewEvent.Comment : Octokit.PullRequestReviewEvent.RequestChanges) : Octokit.PullRequestReviewEvent.Approve,
+            Comments = []
         };
-        rev.Comments.Add(comment);
-        var aa = await client.PullRequest.Review.Create(owner, repoName, prnumber, rev);
-        
-        return Ok(aa);
 
-        /*var config = new CoreConfiguration();
+        if (req.comments.Length != 0)
+        {
+            foreach (var comment in req.comments)
+            {
+                var decorated_body = $"{comment.label} ({comment.decoration}): {comment.message}";
+                var draft = new Octokit.DraftPullRequestReviewComment(decorated_body, comment.filename, comment.position);
+                rev.Comments.Add(draft);
+            }
+        }
+
+        var review = await client.PullRequest.Review.Create(owner, repoName, prnumber, rev);
+
+        if (review == null)
+        {
+            return NotFound("Review can not be created.");
+        }
+
+        var published_comments = await client.PullRequest.Review.GetAllComments(owner, repoName, prnumber, review.Id);
+        var comment_id_list = string.Join(",", published_comments.Select(c => c.Id));
+
+        var config = new CoreConfiguration();
         string connectionString = config.DbConnectionString;
         using var connection = new NpgsqlConnection(connectionString);
         connection.Open();
 
-        string query = $"INSERT INTO comments VALUES ({review.Id}, '{repoName}', {prnumber}, {true}, '{label}', '{decoration}', 'ACTIVE')";
-        using (var command = new NpgsqlCommand(query, connection))
+        string query1 = $"INSERT INTO reviewhead (review_id, reponame, prnumber, body, verdict, comments) VALUES ({review.Id}, '{repoName}', {prnumber}, '{req.body}', '{req.verdict}', ARRAY[{comment_id_list}])";
+
+        using (var command = new NpgsqlCommand(query1, connection))
         {
             command.ExecuteNonQuery();
         }
-        connection.Close();*/
 
-        //return Ok($"Review added to pull request #{prnumber} in repository {repoName}.");
+        string query2 = "INSERT INTO comments (commentid, reponame, prnumber, is_review, label, decoration, status) VALUES ";
+
+        for (int i = 0; i < published_comments.Count; i++)
+        {
+            query2 += $"({published_comments[i].Id}, '{repoName}', {prnumber}, {true}, '{req.comments[i].label}', '{req.comments[i].decoration}', 'ACTIVE'), ";
+        }
+
+        query2 = query2[..^2];
+
+        using (var command = new NpgsqlCommand(query2, connection))
+        {
+            command.ExecuteNonQuery();
+        }
+
+        connection.Close();
+
+
+        return Ok($"Review added to pull request #{prnumber} in repository {repoName}.");
     }
 
     [HttpGet("pullrequest/{owner}/{repoName}/{comment_id}/removeRevComment")]
