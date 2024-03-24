@@ -753,10 +753,10 @@ public class GitHubController : ControllerBase
 
         return Ok(result);
     }
-    
+
     [HttpPatch("pullrequest/{owner}/{repoName}/{comment_id}/updateComment")]
     public async Task<ActionResult> UpdateComment(string owner, string repoName, int comment_id, [FromBody] string body)
-    {        
+    {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         var comment = await client.Issue.Comment.Get(owner, repoName, comment_id);
         var before_colon = comment.Body[..(comment.Body.IndexOf(':') + 2)];
@@ -780,18 +780,18 @@ public class GitHubController : ControllerBase
         connection.Open();
 
         string select = $"SELECT is_review FROM comments WHERE commentid = {comment_id}";
-        
+
         using var command = new NpgsqlCommand(select, connection);
         NpgsqlDataReader reader = await command.ExecuteReaderAsync();
-        while ( await reader.ReadAsync() )
+        while (await reader.ReadAsync())
         {
             is_review = reader.GetBoolean(0);
         }
-        
+
         reader.Close();
         connection.Close();
 
-        if ( is_review )
+        if (is_review)
         {
             await client.PullRequest.ReviewComment.Delete(owner, repoName, comment_id);
         }
@@ -808,7 +808,7 @@ public class GitHubController : ControllerBase
             command2.ExecuteNonQuery();
         }
         connection.Close();
-        
+
         return Ok($"Comment deleted.");
     }
 
@@ -845,8 +845,8 @@ public class GitHubController : ControllerBase
                     // Check if the comment ID has already been processed
                     if (!processedCommentIds.Contains(comm.Id))
                     {
-                        
-                        if ( !comm.Body.Contains("<!--Using HubReview-->") ) 
+
+                        if (!comm.Body.Contains("<!--Using HubReview-->"))
                         {
                             var commentObj = new IssueCommentInfo
                             {
@@ -918,7 +918,7 @@ public class GitHubController : ControllerBase
 
         var result = new List<IssueCommentInfo>([]);
         var processedCommentIds = new HashSet<long>();
-        
+
         var config = new CoreConfiguration();
         string connectionString = config.DbConnectionString;
         using var connection = new NpgsqlConnection(connectionString);
@@ -939,7 +939,7 @@ public class GitHubController : ControllerBase
                     if (!processedCommentIds.Contains(rev.Id))
                     {
 
-                        if ( !rev.Body.Contains("<!--Using HubReview-->") ) 
+                        if (!rev.Body.Contains("<!--Using HubReview-->"))
                         {
                             var commentObj = new IssueCommentInfo
                             {
@@ -985,8 +985,8 @@ public class GitHubController : ControllerBase
 
                             await connection.CloseAsync();
                         }
-                        
-                        
+
+
 
                         // Add the comment ID to the set of processed IDs
                         processedCommentIds.Add(rev.Id);
@@ -1027,7 +1027,7 @@ public class GitHubController : ControllerBase
 
         return Ok(id_list);
     }*/
-    
+
     [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/{sha}/addRevComment")]
     public async Task<ActionResult> AddRevCommentToPR(string owner, string repoName, int prnumber, string sha, [FromBody] CreateReviewRequestModel req)
     {
@@ -1092,7 +1092,7 @@ public class GitHubController : ControllerBase
 
         return Ok($"Review added to pull request #{prnumber} in repository {repoName}.");
     }
-    
+
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_commits")]
     public async Task<ActionResult> getCommits(string owner, string repoName, int prnumber)
     {
