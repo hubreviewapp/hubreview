@@ -2486,6 +2486,77 @@ public class GitHubController : ControllerBase
         return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
     }
 
+    [HttpGet("user/weeklysummary")]
+    public async Task<ActionResult> GetReviewsForUserInLastWeek()
+    {
+        var github = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        List<PRInfo> allPRs = new List<PRInfo>();
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+
+        // Get organizations for the current user
+        var organizations = await github.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        var lastWeek = DateTime.Today.AddDays(-7);
+
+        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        {
+            await connection.OpenAsync();
+
+            string selects = "pullnumber, reponame, repoowner";
+            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) ) AND updatedat >= @lastWeek AND EXISTS (SELECT 1 FROM json_array_elements(reviews) AS elem WHERE elem->>'login' = @ownerLogin)";
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@lastWeek", lastWeek);
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        PRInfo pr = new PRInfo
+                        {
+                            PRNumber = reader.GetInt32(0),
+                            RepoName = reader.GetString(1),
+                            RepoOwner = reader.GetString(2),
+                        };
+
+                        allPRs.Add(pr);
+                    }
+                }
+            }
+
+            await connection.CloseAsync();
+        }
+
+        var reviewsLastWeek = new List<PullRequestReview>();
+        int submitted = 0;
+
+        foreach (var pull in allPRs)
+        {
+            bool isReviewed = false;
+            var reviews = await github.PullRequest.Review.GetAll(pull.RepoOwner, pull.RepoName, (int) pull.PRNumber);
+
+            foreach (var review in reviews)
+            {
+                if (review.User.Login == userLogin && review.SubmittedAt >= lastWeek)
+                {
+                    reviewsLastWeek.Add(review);
+                    submitted++;
+                    isReviewed = true; 
+                    break;
+                }
+            }
+        }
+        
+
+        return Ok(submitted);
+    }
 }
 
 
