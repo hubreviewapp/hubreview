@@ -3,8 +3,9 @@ import { Combobox, useCombobox, Input, Button } from "@mantine/core";
 import classes from "../styles/comment.module.css";
 import UserLogo from "../assets/icons/user.png";
 import { IconDots, IconSparkles, IconBrandSlack } from "@tabler/icons-react";
-
+import Markdown from "react-markdown";
 import { useState } from "react";
+import convertHtmlToMarkdown from "../utility/convertHtmlToMarkdown";
 
 interface CommentProps {
   id: number;
@@ -18,10 +19,9 @@ interface CommentProps {
 
 export function Comment({ id, author, text, date, isResolved, isAIGenerated, deletePRComment }: CommentProps) {
   const settings = ["Copy Link", "Quote Reply", "Edit", "Delete", "Reply", "Reference in new issue"];
-
   const [, setSelectedItem] = useState<string | null>(null);
   const combobox = useCombobox({
-    onDropdownClose: () => combobox.resetSelectedOption(),
+    //  onDropdownClose: () => combobox.resetSelectedOption(),
   });
 
   const iconSparkles = <IconSparkles style={{ width: rem(22), height: rem(22) }} />;
@@ -109,7 +109,7 @@ export function Comment({ id, author, text, date, isResolved, isAIGenerated, del
 
         {!isResolved && (
           <>
-            <Text style={{ maxWidth: "100%", wordWrap: "break-word" }}> {text} </Text>
+            <Markdown>{convertHtmlToMarkdown(text)}</Markdown>
             <Box style={{ display: "flex" }}>
               <Input
                 radius="xl"
