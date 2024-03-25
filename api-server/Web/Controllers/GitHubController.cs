@@ -759,8 +759,8 @@ public class GitHubController : ControllerBase
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         var comment = await client.Issue.Comment.Get(owner, repoName, comment_id);
-        var before_colon = comment.Body[..(comment.Body.IndexOf(':') + 2)];
 
+        var before_colon = comment.Body[..(comment.Body.IndexOf(':') + 2)];
         string new_body = before_colon + body;
 
         var result = await client.Issue.Comment.Update(owner, repoName, comment_id, new_body);
@@ -817,7 +817,7 @@ public class GitHubController : ControllerBase
     {
         var appClient = GetNewClient();
         var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        var userLogin = "Ece-Kahraman"; //_httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent();
@@ -1148,7 +1148,8 @@ public class GitHubController : ControllerBase
                             title = message[0],
                             description = message[1],
                             author = commit.Author.Login,
-                            githubLink = link + commit.Sha
+                            githubLink = link + commit.Sha,
+                            sha = commit.Sha
                         };
 
                     }
@@ -1159,7 +1160,8 @@ public class GitHubController : ControllerBase
                             title = commit.Commit.Message,
                             description = null,
                             author = commit.Author.Login,
-                            githubLink = link + commit.Sha
+                            githubLink = link + commit.Sha,
+                            sha = commit.Sha
                         };
                     }
 
