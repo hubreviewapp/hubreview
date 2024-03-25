@@ -38,7 +38,6 @@ function CommitHistory() {
         }
       } catch (error) {
         console.error("Error fetching PR info:", error);
-        setTimeout(fetchCommitInfo, 1000);
       }
     };
     fetchCommitInfo();

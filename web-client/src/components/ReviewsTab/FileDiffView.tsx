@@ -1,6 +1,6 @@
-import { Box, Group, Text, ActionIcon } from "@mantine/core";
+import { Box, Group, Text, ActionIcon, Tooltip, Textarea, Paper, Title } from "@mantine/core";
 import { useHover } from "@mantine/hooks";
-import { IconPlus } from "@tabler/icons-react";
+import { IconPlus, IconX } from "@tabler/icons-react";
 import { useState } from "react";
 import { DiffLine, DiffLineType, FileDiff } from "../../utility/diff-types";
 import DiffCommentEditor from "./DiffCommentEditor";
@@ -41,6 +41,7 @@ function DiffLineNonMarkerView({
 }: DiffLineNonMarkerViewProps) {
   const { hovered, ref } = useHover();
   const [addingComment, setAddingComment] = useState(false);
+  const [addingSelfNote, setAddingSelfNote] = useState(false);
 
   return (
     <Box>
@@ -73,17 +74,33 @@ function DiffLineNonMarkerView({
             width: "min-content",
           }}
         >
-          <ActionIcon
-            pos="absolute"
-            style={{ visibility: hovered && hasStartedReview ? "visible" : "hidden" }}
-            size="xs"
-            onClick={() => setAddingComment(true)}
-          >
-            <IconPlus size="16px" />
-          </ActionIcon>
+          <Group pos="absolute" style={{ visibility: hovered && hasStartedReview ? "visible" : "hidden" }} gap="xs">
+            <Tooltip label="Add review comment">
+              <ActionIcon size="xs" onClick={() => setAddingComment(true)}>
+                <IconPlus size="16px" />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="Add note to self">
+              <ActionIcon size="xs" color="gray" onClick={() => setAddingSelfNote(true)}>
+                <IconPlus size="16px" />
+              </ActionIcon>
+            </Tooltip>
+          </Group>
           <code style={{ whiteSpace: "pre-wrap" }}>{l.content}</code>
         </Box>
       </Group>
+
+      {addingSelfNote && (
+        <Paper withBorder p="sm">
+          <Group justify="space-between" mb="xs">
+            <Title order={6}>Self Note</Title>
+            <ActionIcon color="darkred" title="Discard" onClick={() => setAddingSelfNote(false)}>
+              <IconX size="16px" />
+            </ActionIcon>
+          </Group>
+          <Textarea autosize placeholder="Note..." />
+        </Paper>
+      )}
 
       {addingComment && (
         <DiffCommentEditor
