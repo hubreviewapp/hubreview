@@ -7,6 +7,16 @@ export interface Label {
   description: string | null;
   default: boolean;
 }
+export interface Check {
+  id: number;
+  name: string;
+  status: {
+    StringValue: string;
+  };
+  conclusion: {
+    StringValue: string;
+  };
+}
 
 export interface PRInfo {
   repoOwner: string;
@@ -23,4 +33,5 @@ export interface PRInfo {
   files: number;
   comments: number;
   labels: Array<Label>;
+  checks: Array<Check>;
 }

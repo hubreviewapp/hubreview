@@ -3,8 +3,9 @@ import { Link } from "react-router-dom";
 import UserLogo from "../../assets/icons/user.png";
 import LabelButton, { HubReviewLabelType } from "../LabelButton";
 import { useDisclosure } from "@mantine/hooks";
-import { IconCaretDown, IconCaretUp } from "@tabler/icons-react";
-import { PRInfo } from "../../models/PRInfo.tsx";
+import { IconCaretDown, IconCaretUp, IconCircleCheck, IconXboxX} from "@tabler/icons-react";
+import {PRInfo} from "../../models/PRInfo.tsx";
+import {useState} from "react";
 
 export interface PullRequestCardProps {
   data: PRInfo;
@@ -14,6 +15,8 @@ function PRCard({ data: pr }: PullRequestCardProps) {
   const [opened, { toggle }] = useDisclosure(false);
   const iconDown = <IconCaretDown style={{ width: rem(22), height: rem(22) }} />;
   const iconUp = <IconCaretUp style={{ width: rem(22), height: rem(22) }} />;
+  const iconSuccess = <IconCircleCheck style={{ width: rem(22), height: rem(22) }} />;
+
   return (
     <Card withBorder>
       <Link to={`pulls/pullrequest/${pr.repoOwner}/${pr.repoName}/${pr.prNumber}`} style={{ textDecoration: "none" }}>
@@ -57,33 +60,30 @@ function PRCard({ data: pr }: PullRequestCardProps) {
 
       <Collapse in={opened}>
         <Blockquote p="sm">
-          <Text>
-            Checkler buraya gelecek.
-            {/*Currently{" "}
-            <Text span c="green">
-              2 passed
-            </Text>
-            ,
-            <Text span c="red">
-              0 failed
-            </Text>{" "}
-            of {pr.ciChecks.totalCount} CI checks (prereview checks:{" "}
-            {pr.ciChecks.prereviewChecks.map((c, i) => (
-              <>
-                <Text span c={c.passed ? "green" : "red"}>
-                  {c.name}
-                </Text>
-                {i !== pr.ciChecks.prereviewChecks.length - 1 && ", "}
-              </>
-            ))}
-            )*/}
-          </Text>
           <Text c="green">
             +{pr.additions} lines added ,{" "}
             <Text span c="red">
               -{pr.deletions} lines deleted
             </Text>
           </Text>
+          {
+            pr.checks.length == 0 ?
+            <div/> :
+              <Group my="sm">
+                <Text c="dimmed">Checks:</Text>
+                {
+                  pr.checks.filter(c => c.conclusion.StringValue == "failure").map(
+                    c =>(
+                      <Group key={c.id}>
+                        <Text color="red">{c.name}</Text>
+                      <IconXboxX color="red" style={{ width: rem(22), height: rem(22), color:"red" }}/>
+                      </Group>
+                    )
+                  )
+                }
+              </Group>
+          }
+
           <Group>
             <Text c="dimmed">Reviewers:</Text>
             <Text>
