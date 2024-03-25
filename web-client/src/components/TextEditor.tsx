@@ -14,14 +14,13 @@ interface TextEditorProps {
   content: string;
   addComment?: (content: string) => void;
   setIsEditActive?: (isEditActive: boolean) => void;
-  editComment?: (id:number, body: string) => void;
+  editComment?: (id: number, body: string) => void;
   commentId?: number;
 }
 
 function TextEditor({ content, addComment, setIsEditActive, editComment, commentId }: TextEditorProps) {
   const [editorContent, setEditorContent] = useState(content);
-  const isAddComment = !!addComment
-
+  const isAddComment = !!addComment;
 
   const editor = useEditor({
     extensions: [
@@ -40,15 +39,14 @@ function TextEditor({ content, addComment, setIsEditActive, editComment, comment
   });
 
   function handleAddComment() {
-    if(addComment) {
+    if (addComment) {
       addComment(editorContent);
       editor?.commands.clearContent();
       setEditorContent("");
-    }
-    else if(editComment && commentId && setIsEditActive) {
-      editComment(commentId, editorContent)
+    } else if (editComment && commentId && setIsEditActive) {
+      editComment(commentId, editorContent);
 
-      setIsEditActive(false)
+      setIsEditActive(false);
     }
   }
 
@@ -103,7 +101,7 @@ function TextEditor({ content, addComment, setIsEditActive, editComment, comment
         <RichTextEditor.Content />
       </RichTextEditor>
 
-      { isAddComment && (
+      {isAddComment && (
         <>
           <Box style={{ position: "absolute", right: 0, top: "100%" }}>
             <Button size="md" color="green" top={20} onClick={() => handleAddComment()}>
@@ -112,21 +110,25 @@ function TextEditor({ content, addComment, setIsEditActive, editComment, comment
           </Box>
           <br />
         </>
-        )}
-      {
-        !isAddComment && (
-          <Box style={{ position: "relative", right: 0, top: -20, display:"flex", justifyContent: "flex-end"}}>
-            <Button size="md" color="green" top={20} right={20} onClick={() => handleAddComment()}>
-              Edit
-            </Button>
+      )}
+      {!isAddComment && (
+        <Box style={{ position: "relative", right: 0, top: -20, display: "flex", justifyContent: "flex-end" }}>
+          <Button size="md" color="green" top={20} right={20} onClick={() => handleAddComment()}>
+            Edit
+          </Button>
 
-            <Button size="md" color="grey" top={20} onClick={() => { setIsEditActive && setIsEditActive(false) }}>
-              Cancel
-            </Button>
-          </Box>
-        )
-      }
-
+          <Button
+            size="md"
+            color="grey"
+            top={20}
+            onClick={() => {
+              setIsEditActive && setIsEditActive(false);
+            }}
+          >
+            Cancel
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 }

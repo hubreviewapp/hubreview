@@ -18,7 +18,7 @@ interface CommentProps {
   association: string;
 }
 
-const comments: {author: string, text: string, date: Date, isResolved: boolean, isAIGenerated: boolean}[] = [
+const comments: { author: string; text: string; date: Date; isResolved: boolean; isAIGenerated: boolean }[] = [
   /*
   {
     author: "irem_aydın",
@@ -178,8 +178,6 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
         console.log(error);
       });
   }
-
-
 
   return (
     <Grid>
