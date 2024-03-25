@@ -758,14 +758,44 @@ public class GitHubController : ControllerBase
     public async Task<ActionResult> UpdateComment(string owner, string repoName, int comment_id, [FromBody] string body)
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        var comment = await client.Issue.Comment.Get(owner, repoName, comment_id);
+        bool is_review = false;
+        Octokit.PullRequestReviewComment? res1 = null;
+        Octokit.IssueComment? res2 = null;
 
-        var before_colon = comment.Body[..(comment.Body.IndexOf(':') + 2)];
-        string new_body = before_colon + body;
 
-        var result = await client.Issue.Comment.Update(owner, repoName, comment_id, new_body);
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        using var connection = new NpgsqlConnection(connectionString);
+        connection.Open();
 
-        return Ok(result);
+        string select = $"SELECT is_review FROM comments WHERE commentid = {comment_id}";
+
+        using var command = new NpgsqlCommand(select, connection);
+        NpgsqlDataReader reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            is_review = reader.GetBoolean(0);
+        }
+
+        reader.Close();
+        connection.Close();
+
+        if( is_review )
+        {
+            var comment = await client.PullRequest.ReviewComment.GetComment(owner, repoName, comment_id);
+            var before_colon = comment.Body[..(comment.Body.IndexOf(':') + 2)];
+            string new_body = before_colon + body;
+            res1 = await client.PullRequest.ReviewComment.Edit(owner, repoName, comment_id, new PullRequestReviewCommentEdit(body = new_body));
+        }
+        else
+        {
+            var comment = await client.Issue.Comment.Get(owner, repoName, comment_id);
+            var before_colon = comment.Body[..(comment.Body.IndexOf(':') + 2)];
+            string new_body = before_colon + body;
+            res2 = await client.Issue.Comment.Update(owner, repoName, comment_id, new_body);
+        }
+
+        return (res1 == null) ? Ok(res2) : Ok(res1);
     }
 
     [HttpDelete("pullrequest/{owner}/{repoName}/{comment_id}/deleteComment")]
