@@ -58,25 +58,14 @@ function PRCard({ data: pr }: PullRequestCardProps) {
       <Collapse in={opened}>
         <Blockquote p="sm">
           <Text>
-            Checkler buraya gelecek.
-            {/*Currently{" "}
-            <Text span c="green">
-              2 passed
-            </Text>
-            ,
-            <Text span c="red">
-              0 failed
-            </Text>{" "}
-            of {pr.ciChecks.totalCount} CI checks (prereview checks:{" "}
-            {pr.ciChecks.prereviewChecks.map((c, i) => (
-              <>
-                <Text span c={c.passed ? "green" : "red"}>
-                  {c.name}
-                </Text>
-                {i !== pr.ciChecks.prereviewChecks.length - 1 && ", "}
-              </>
-            ))}
-            )*/}
+            Checks:
+            {
+              pr.checks?.map(itm => (
+                <Box>{itm.name}
+                  {itm.conclusion.StringValue}
+                </Box>
+              ))
+            }
           </Text>
           <Text c="green">
             +{pr.additions} lines added ,{" "}

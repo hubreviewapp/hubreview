@@ -7,6 +7,19 @@ export interface Label {
   description: string | null;
   default: boolean;
 }
+export interface Check {
+  id: number;
+  name: string;
+  status: {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    StringValue: string;
+    Value: number;
+  };
+  conclusion: {
+    StringValue: string;
+    Value: number;
+  };
+}
 
 export interface PRInfo {
   repoOwner: string;
@@ -22,5 +35,6 @@ export interface PRInfo {
   deletions: number;
   files: number;
   comments: number;
+  checks: Array<Check>;
   labels: Array<Label>;
 }
