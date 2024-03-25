@@ -40,7 +40,7 @@ function NavBar() {
   const { userLogin, userAvatarUrl } = useUser();
 
   useEffect(() => {
-    if (localStorage.getItem("userLogin") === null) {
+    if (localStorage.getItem("userLogin") === null || userLogin === null) {
       navigate("/signIn");
     }
   }, [navigate]);

@@ -6,6 +6,7 @@ import { IconDots, IconSparkles, IconBrandSlack } from "@tabler/icons-react";
 import Markdown from "react-markdown";
 import { useState } from "react";
 import convertHtmlToMarkdown from "../utility/convertHtmlToMarkdown";
+import TextEditor from "./TextEditor.tsx";
 
 interface CommentProps {
   id: number;
@@ -15,16 +16,20 @@ interface CommentProps {
   isResolved?: boolean;
   isAIGenerated?: boolean;
   deletePRComment: (id: number) => void;
+  editPRComment: (id: number, body:string) => void;
 }
 
-export function Comment({ id, author, text, date, isResolved, isAIGenerated, deletePRComment }: CommentProps) {
+
+export function Comment({ id, author, text, date, isResolved, isAIGenerated, deletePRComment, editPRComment }: CommentProps) {
   const settings = ["Copy Link", "Quote Reply", "Edit", "Delete", "Reply", "Reference in new issue"];
   const [, setSelectedItem] = useState<string | null>(null);
+  const [isEditActive, setIsEditActive] = useState<boolean>(false);
   const combobox = useCombobox({
     //  onDropdownClose: () => combobox.resetSelectedOption(),
   });
 
   const iconSparkles = <IconSparkles style={{ width: rem(22), height: rem(22) }} />;
+
 
   const options = settings.map((item) => (
     <Combobox.Option
@@ -33,6 +38,9 @@ export function Comment({ id, author, text, date, isResolved, isAIGenerated, del
       onClick={() => {
         if (item === "Delete") {
           deletePRComment(id);
+        }
+        if (item === "Edit") {
+          setIsEditActive(true)
         }
       }}
     >
@@ -47,6 +55,7 @@ export function Comment({ id, author, text, date, isResolved, isAIGenerated, del
           PR Summary
         </Badge>
       )}
+      { !isEditActive &&
       <Box
         className={classes.comment}
         style={{
@@ -125,6 +134,10 @@ export function Comment({ id, author, text, date, isResolved, isAIGenerated, del
           </>
         )}
       </Box>
+      }
+      { isEditActive &&
+        <TextEditor content={text} editComment={editPRComment} setIsEditActive={setIsEditActive} commentId={id}/>
+      }
     </>
   );
 }
