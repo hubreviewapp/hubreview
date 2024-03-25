@@ -12,7 +12,6 @@ import {
   Textarea,
   Paper,
   Avatar,
-  TextInput,
   Badge,
 } from "@mantine/core";
 import FileDiffView from "../components/ReviewsTab/FileDiffView";
@@ -355,6 +354,7 @@ function ModifiedFilesTab() {
         </Box>
       </Collapse>
 
+      <Title order={4}>Review Verdicts</Title>
       {mainComments.map((c, i) => (
         <Paper key={i} withBorder radius="md" shadow="lg" my="sm" p="sm">
           <Group>
@@ -370,17 +370,16 @@ function ModifiedFilesTab() {
                 })}
               </Text>
             </div>
-            <Badge ml="auto">
+            <Badge ml="auto" color={c.verdict === "approve" ? "lime" : c.verdict === "reject" ? "crimson" : "gray"}>
               {c.verdict === "approve" ? "Approved" : c.verdict === "reject" ? "Requested changes" : "Comment"}
             </Badge>
           </Group>
 
-          <h5>{c.content}</h5>
-
-          <TextInput placeholder="Reply..."></TextInput>
+          <Text py="sm">{c.content}</Text>
         </Paper>
       ))}
 
+      <Title order={4}>Modified Files</Title>
       {mockFileDiffs.map((f) => (
         <FileDiffView
           key={f.fileName}
