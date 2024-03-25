@@ -1,5 +1,5 @@
 import { IconCaretDownFilled, IconX } from "@tabler/icons-react";
-import { Button, Divider, Group, ActionIcon, Paper, Select, Textarea, Menu } from "@mantine/core";
+import { Button, Divider, Group, ActionIcon, Paper, Select, Textarea, Menu, Title } from "@mantine/core";
 import { useState } from "react";
 import { ReviewComment, ReviewCommentDecoration } from "../../tabs/ModifiedFilesTab";
 
@@ -75,7 +75,8 @@ function DiffCommentEditor({ onAdd, onCancel }: DiffCommentEditorProps) {
 
   return (
     <Paper withBorder p="sm">
-      <Group justify="end">
+      <Group justify="space-between" mb="xs">
+        <Title order={6}>Review Comment</Title>
         <ActionIcon color="darkred" title="Cancel" onClick={onCancel}>
           <IconX size="16px" />
         </ActionIcon>
