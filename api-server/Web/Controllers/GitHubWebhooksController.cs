@@ -858,27 +858,27 @@ namespace CS.Web.Controllers
                     break;
                 case "pull_request_review_thread": // resolved unresolved olayı. Gösterceksek faydalı yoksa gerek yok
                     var pullRequestReviewThreadPayload = JsonConvert.DeserializeObject<PullRequestReviewThreadPayload>(requestBody);
-                    if( pullRequestReviewThreadPayload.action == "resolved" )
+                    if (pullRequestReviewThreadPayload.action == "resolved")
                     {
                         Console.WriteLine($"PR review thread {pullRequestReviewThreadPayload.thread.node_id} resolved");
                     }
-                    else if( pullRequestReviewThreadPayload.action == "unresolved" )
+                    else if (pullRequestReviewThreadPayload.action == "unresolved")
                     {
                         Console.WriteLine($"PR review thread {pullRequestReviewThreadPayload.thread.node_id} unresolved");
                     }
                     break;
                 case "pull_request_review_comment":
                     var pullRequestReviewCommentPayload = JsonConvert.DeserializeObject<PullRequestReviewCommentPayload>(requestBody);
-                    if( pullRequestReviewCommentPayload.action == "created" )
+                    if (pullRequestReviewCommentPayload.action == "created")
                     {
-                        
+
                         Console.WriteLine($"PR review comment {pullRequestReviewCommentPayload.comment.id} created\n {pullRequestReviewCommentPayload.comment.pull_request_review_id}");
                     }
-                    else if( pullRequestReviewCommentPayload.action == "edited" )
+                    else if (pullRequestReviewCommentPayload.action == "edited")
                     {
                         Console.WriteLine($"PR review comment {pullRequestReviewCommentPayload.comment.id} edited\n {pullRequestReviewCommentPayload.comment.pull_request_review_id}");
                     }
-                    else if( pullRequestReviewCommentPayload.action == "deleted" )
+                    else if (pullRequestReviewCommentPayload.action == "deleted")
                     {
                         Console.WriteLine($"PR review comment {pullRequestReviewCommentPayload.comment.id} deleted\n {pullRequestReviewCommentPayload.comment.pull_request_review_id}");
                     }
