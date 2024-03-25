@@ -98,8 +98,6 @@ function ReviewQueuePage() {
         }
       } catch (error) {
         console.error("Error fetching PR info:", error);
-        // Retry fetching PR info after a delay
-        setTimeout(fetchPRInfo, 1000); // Retry after 3 seconds
       }
     };
 

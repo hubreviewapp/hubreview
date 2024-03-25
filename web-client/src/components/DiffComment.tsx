@@ -1,7 +1,8 @@
-import { Avatar, Badge, Button, Divider, Group, Paper, Text, TextInput } from "@mantine/core";
+import { Avatar, Badge, Box, Button, Divider, Group, Paper, Text, Textarea } from "@mantine/core";
 import classes from "../styles/comment.module.css";
 import UserLogo from "../assets/icons/user.png";
 import { ReviewComment } from "../tabs/ModifiedFilesTab";
+import { useEffect, useRef, useState } from "react";
 
 export interface DiffCommentProps {
   comment: ReviewComment;
@@ -9,6 +10,33 @@ export interface DiffCommentProps {
 }
 
 function DiffComment({ comment, isPending }: DiffCommentProps) {
+  const [replies, setReplies] = useState<string[]>([]);
+
+  const [isReplyEditorFocused, setIsReplyEditorFocused] = useState(false);
+  const [replyEditorContent, setReplyEditorContent] = useState("");
+  const replyEditorRef = useRef<HTMLTextAreaElement>(null);
+
+  const onReplyEditorFocus = () => {
+    setIsReplyEditorFocused(true);
+  };
+  const onReplyEditorBlur = () => {
+    setIsReplyEditorFocused(false);
+  };
+
+  const handleReplyEditorSubmit = () => {
+    setReplies([...replies, replyEditorContent]);
+    setReplyEditorContent("");
+    setIsReplyEditorFocused(false);
+  };
+
+  useEffect(() => {
+    if (isReplyEditorFocused) {
+      // This hack was needed because `Textarea` is blurred when props like `autosize` are changed.
+      // Ideally, this hack should be removed.
+      replyEditorRef.current?.focus();
+    }
+  }, [isReplyEditorFocused]);
+
   return (
     <Paper withBorder radius="md" className={classes.comment} shadow="lg">
       <Divider my={9} />
@@ -41,10 +69,48 @@ function DiffComment({ comment, isPending }: DiffCommentProps) {
           </Text>
         </div>
       </Group>
-      <h5>{comment.content}</h5>
-      <div />
+      <Text py="sm">{comment.content}</Text>
 
-      <TextInput placeholder="Reply..."></TextInput>
+      {replies.length !== 0 &&
+        replies.map((r, i) => (
+          <Box key={i}>
+            <Divider mb="sm" />
+            <Group>
+              <Avatar src={UserLogo} alt="Jacob Warnhalter" radius="xl" />
+              <div>
+                <Text fz="sm">AUTHOR</Text>
+                <Text fz="xs" c="dimmed">
+                  {new Date(2023, 4, 7).toLocaleString("en-US", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                    hour: "numeric",
+                  })}
+                </Text>
+              </div>
+            </Group>
+            <Text py="sm">{r}</Text>
+          </Box>
+        ))}
+
+      <Textarea
+        ref={replyEditorRef}
+        rows={isReplyEditorFocused ? undefined : 1}
+        minRows={isReplyEditorFocused ? 3 : undefined}
+        autosize={isReplyEditorFocused}
+        onClick={onReplyEditorFocus}
+        placeholder="Reply..."
+        value={replyEditorContent}
+        onChange={(e) => setReplyEditorContent(e.currentTarget.value)}
+      />
+      {isReplyEditorFocused && (
+        <Group>
+          <Button onClick={onReplyEditorBlur}>Cancel</Button>
+          <Button disabled={replyEditorContent.length === 0} onClick={handleReplyEditorSubmit}>
+            Add comment
+          </Button>
+        </Group>
+      )}
 
       {!isPending && (
         <>
