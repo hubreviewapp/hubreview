@@ -733,39 +733,95 @@ public class GitHubController : ControllerBase
     public async Task<ActionResult> UpdateStatus(string owner, string repoName, int comment_id, [FromBody] string status)
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        var comment = await client.Issue.Comment.Get(owner, repoName, comment_id);
+        bool is_review = false;
+        Octokit.PullRequestReviewComment? res1 = null;
+        Octokit.IssueComment? res2 = null;
 
-        string new_body = $"<!--Using HubReview-->**{status}**: {comment.Body[(comment.Body.IndexOf(':') + 2)..]}";
-
-        var result = await client.Issue.Comment.Update(owner, repoName, comment_id, new_body);
 
         var config = new CoreConfiguration();
         string connectionString = config.DbConnectionString;
         using var connection = new NpgsqlConnection(connectionString);
         connection.Open();
 
-        string query = $"UPDATE comments SET status = '{status}' where commentid = {comment_id}";
-        using (var command = new NpgsqlCommand(query, connection))
+        string select = $"SELECT is_review FROM comments WHERE commentid = {comment_id}";
+
+        using var command = new NpgsqlCommand(select, connection);
+        NpgsqlDataReader reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
         {
-            command.ExecuteNonQuery();
+            is_review = reader.GetBoolean(0);
+        }
+
+        reader.Close();
+        connection.Close();
+
+        if (is_review)
+        {
+            var comment = await client.PullRequest.ReviewComment.GetComment(owner, repoName, comment_id);
+            string new_body = $"<!--Using HubReview-->**{status}** {comment.Body[comment.Body.IndexOf('\n')..]}";
+            res1 = await client.PullRequest.ReviewComment.Edit(owner, repoName, comment_id, new PullRequestReviewCommentEdit(new_body));
+        }
+        else
+        {
+            var comment = await client.Issue.Comment.Get(owner, repoName, comment_id);
+            string new_body = $"<!--Using HubReview-->**{status}**: {comment.Body[(comment.Body.IndexOf(':') + 2)..]}";
+            res2 = await client.Issue.Comment.Update(owner, repoName, comment_id, new_body);
+        }
+
+        connection.Open();
+
+        string query = $"UPDATE comments SET status = '{status}' where commentid = {comment_id}";
+        using (var command2 = new NpgsqlCommand(query, connection))
+        {
+            command2.ExecuteNonQuery();
         }
         connection.Close();
 
-        return Ok(result);
+        return (res1 == null) ? Ok(res2) : Ok(res1);
     }
 
     [HttpPatch("pullrequest/{owner}/{repoName}/{comment_id}/updateComment")]
     public async Task<ActionResult> UpdateComment(string owner, string repoName, int comment_id, [FromBody] string body)
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        var comment = await client.Issue.Comment.Get(owner, repoName, comment_id);
+        bool is_review = false;
+        Octokit.PullRequestReviewComment? res1 = null;
+        Octokit.IssueComment? res2 = null;
 
-        var before_colon = comment.Body[..(comment.Body.IndexOf(':') + 2)];
-        string new_body = before_colon + body;
 
-        var result = await client.Issue.Comment.Update(owner, repoName, comment_id, new_body);
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        using var connection = new NpgsqlConnection(connectionString);
+        connection.Open();
 
-        return Ok(result);
+        string select = $"SELECT is_review FROM comments WHERE commentid = {comment_id}";
+
+        using var command = new NpgsqlCommand(select, connection);
+        NpgsqlDataReader reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            is_review = reader.GetBoolean(0);
+        }
+
+        reader.Close();
+        connection.Close();
+
+        if (is_review)
+        {
+            var comment = await client.PullRequest.ReviewComment.GetComment(owner, repoName, comment_id);
+            var before_colon = comment.Body[..(comment.Body.IndexOf(':') + 2)];
+            string new_body = before_colon + body;
+            res1 = await client.PullRequest.ReviewComment.Edit(owner, repoName, comment_id, new PullRequestReviewCommentEdit(body = new_body));
+        }
+        else
+        {
+            var comment = await client.Issue.Comment.Get(owner, repoName, comment_id);
+            var before_colon = comment.Body[..(comment.Body.IndexOf(':') + 2)];
+            string new_body = before_colon + body;
+            res2 = await client.Issue.Comment.Update(owner, repoName, comment_id, new_body);
+        }
+
+        return (res1 == null) ? Ok(res2) : Ok(res1);
     }
 
     [HttpDelete("pullrequest/{owner}/{repoName}/{comment_id}/deleteComment")]
@@ -1045,7 +1101,7 @@ public class GitHubController : ControllerBase
         {
             foreach (var comment in req.comments)
             {
-                var decorated_body = $"<!--Using HubReview-->\n{comment.label} ({comment.decoration}): {comment.message}";
+                var decorated_body = $"<!--Using HubReview-->\nACTIVE {comment.label} ({comment.decoration}): {comment.message}";
                 var draft = new Octokit.DraftPullRequestReviewComment(decorated_body, comment.filename, comment.position);
                 rev.Comments.Add(draft);
             }
