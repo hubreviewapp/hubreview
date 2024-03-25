@@ -816,6 +816,8 @@ namespace CS.Web.Controllers
                     //Console.WriteLine(pullRequestReviewPayload.review.state);
                     //Console.WriteLine(pullRequestReviewPayload.review.user.login);
 
+                    Console.WriteLine("PR review " + pullRequestReviewPayload.action);
+
                     response = await _client.GitHubApps.CreateInstallationToken(pullRequestReviewPayload.installation.id);
                     installationClient = GetNewClient(response.Token);
 
@@ -856,7 +858,36 @@ namespace CS.Web.Controllers
                     break;
                 case "pull_request_review_thread": // resolved unresolved olayı. Gösterceksek faydalı yoksa gerek yok
                     var pullRequestReviewThreadPayload = JsonConvert.DeserializeObject<PullRequestReviewThreadPayload>(requestBody);
-                    //TO DO
+                    if (pullRequestReviewThreadPayload.action == "resolved")
+                    {
+                        Console.WriteLine($"PR review thread {pullRequestReviewThreadPayload.thread.node_id} resolved");
+                    }
+                    else if (pullRequestReviewThreadPayload.action == "unresolved")
+                    {
+                        Console.WriteLine($"PR review thread {pullRequestReviewThreadPayload.thread.node_id} unresolved");
+                    }
+                    break;
+                case "pull_request_review_comment":
+                    var pullRequestReviewCommentPayload = JsonConvert.DeserializeObject<PullRequestReviewCommentPayload>(requestBody);
+                    if (pullRequestReviewCommentPayload.action == "created")
+                    {
+
+                        Console.WriteLine($"PR review comment {pullRequestReviewCommentPayload.comment.id} created\n {pullRequestReviewCommentPayload.comment.pull_request_review_id}");
+                    }
+                    else if (pullRequestReviewCommentPayload.action == "edited")
+                    {
+                        Console.WriteLine($"PR review comment {pullRequestReviewCommentPayload.comment.id} edited\n {pullRequestReviewCommentPayload.comment.pull_request_review_id}");
+                    }
+                    else if (pullRequestReviewCommentPayload.action == "deleted")
+                    {
+                        Console.WriteLine($"PR review comment {pullRequestReviewCommentPayload.comment.id} deleted\n {pullRequestReviewCommentPayload.comment.pull_request_review_id}");
+                    }
+                    break;
+                case "commit_comment":
+                    Console.WriteLine("Commit comment");
+                    break;
+                case "issue_comment":
+                    Console.WriteLine("Issue comment");
                     break;
             }
 
