@@ -18,7 +18,8 @@ interface CommentProps {
   association: string;
 }
 
-const comments = [
+const comments: { author: string; text: string; date: Date; isResolved: boolean; isAIGenerated: boolean }[] = [
+  /*
   {
     author: "irem_aydın",
     text:
@@ -59,6 +60,7 @@ const comments = [
     isResolved: false,
     isAIGenerated: false,
   },
+   */
 ];
 export interface CommentsTabProps {
   pullRequest: PullRequest;
@@ -80,6 +82,9 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
           date={comment.date}
           isResolved={comment.isResolved}
           deletePRComment={() => {
+            return;
+          }}
+          editPRComment={() => {
             return;
           }}
         />
@@ -146,6 +151,34 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
       });
   }
 
+  /*
+    [HttpPatch("pullrequest/{owner}/{repoName}/{comment_id}/updateComment")]
+    public async Task<ActionResult> UpdateComment(string owner, string repoName, int comment_id, [FromBody] string commentBody)
+    {
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        await client.Issue.Comment.Update(owner, repoName, comment_id, commentBody);
+        return Ok($"Comment updated.");
+    }
+ */
+  function editPRComment(commentId: number, content: string) {
+    const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${commentId}/updateComment`;
+
+    axios
+      .patch(apiUrl, content, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        withCredentials: true,
+        baseURL: "http://localhost:5018/api/github",
+      })
+      .then(function () {
+        fetchPRComments();
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  }
+
   return (
     <Grid>
       <Grid.Col span={8}>
@@ -176,6 +209,7 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
               isResolved={false}
               isAIGenerated={false}
               deletePRComment={() => deletePRComment(comment.id)}
+              editPRComment={editPRComment}
             />
             <br />
           </Box>
@@ -193,6 +227,9 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
               isResolved={false}
               isAIGenerated={false}
               deletePRComment={() => {
+                return;
+              }}
+              editPRComment={() => {
                 return;
               }}
             />

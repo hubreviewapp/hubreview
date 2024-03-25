@@ -3,7 +3,6 @@ import CommentsTab from "../tabs/CommentsTab.tsx";
 import CommitsTab from "../tabs/CommitsTab.tsx";
 import { Box, Badge, rem, Group, UnstyledButton } from "@mantine/core";
 import TabComp from "../components/Tab.tsx";
-import * as React from "react";
 import { IconGitPullRequest } from "@tabler/icons-react";
 import PrContextTab from "../tabs/PrContextTab.tsx";
 import { useEffect, useState } from "react";
@@ -34,9 +33,19 @@ export interface PullRequest {
   assignees: Assignee[];
 }
 
-function PRDetailsPage() {
+export type PRDetailsPageTabName = "comments" | "commits" | "details" | "reviews";
+const tabs: PRDetailsPageTabName[] = ["comments", "commits", "details", "reviews"];
+
+export interface PRDetailsPageProps {
+  tab?: PRDetailsPageTabName;
+}
+
+function PRDetailsPage(props: PRDetailsPageProps) {
   const { owner, repoName, prnumber } = useParams();
   const [pullRequest, setPullRequest] = useState<PullRequest | null>(null);
+
+  const currentTab = props.tab ?? tabs[0];
+  console.log(currentTab);
 
   useEffect(() => {
     const fetchPRInfo = async () => {
@@ -54,14 +63,6 @@ function PRDetailsPage() {
     };
     fetchPRInfo();
   }, [owner, prnumber, repoName]);
-
-  const tabs = ["comments", "commits", "details", "modified files"];
-
-  const [currentTab, setCurrentTab] = React.useState<string | null>(tabs[0]);
-
-  const updateTab = (newTab: string | null) => {
-    setCurrentTab(newTab);
-  };
 
   return (
     <div style={{ textAlign: "left", marginLeft: 100 }}>
@@ -109,10 +110,10 @@ function PRDetailsPage() {
 
       <Box>
         <br />
-        <TabComp tabs={tabs} updateTab={updateTab} />
+        <TabComp tabs={tabs} currentTab={currentTab} />
         <br />
         <Box>
-          {currentTab === "modified files" && <ModifiedFilesTab />}
+          {currentTab === "reviews" && <ModifiedFilesTab />}
           {currentTab === "comments" && pullRequest && <CommentsTab pullRequest={pullRequest} />}
           {currentTab === "details" && <PrContextTab />}
           {currentTab === "commits" && <CommitsTab />}

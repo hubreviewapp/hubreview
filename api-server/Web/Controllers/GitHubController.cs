@@ -1,7 +1,9 @@
 using System.Data;
+using System.Text;
 using System.Web;
 using CS.Core.Configuration;
 using CS.Core.Entities;
+using CS.Web.Models.Api.Request;
 using DotEnv.Core;
 using GitHubJwt;
 using Microsoft.AspNetCore.Http;
@@ -11,6 +13,8 @@ using Newtonsoft.Json.Converters;
 using Npgsql;
 using Octokit;
 using Octokit.GraphQL;
+using Octokit.GraphQL.Model;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using static Octokit.GraphQL.Variable;
 
 
@@ -68,7 +72,7 @@ public class GitHubController : ControllerBase
         return res;
     }
 
-    private string GenerateRandomColor()
+    private static string GenerateRandomColor()
     {
         var random = new Random();
         var color = String.Format("#{0:X6}", random.Next(0x1000000)); // Generates a random color code in hexadecimal format
@@ -217,7 +221,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpGet("getUserInfo")]
-    public async Task<ActionResult> getUserInfo()
+    public ActionResult getUserInfo()
     {
 
         var userInfo = new
@@ -231,7 +235,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpGet("logoutUser")]
-    public async Task<ActionResult> logoutUser()
+    public ActionResult logoutUser()
     {
         _httpContextAccessor?.HttpContext?.Session.Clear();
         return Ok();
@@ -336,7 +340,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpGet("getRepository/{id}")] // Update the route to include repository ID
-    public async Task<Repository> GetRepositoryById(int id) // Change the method signature to accept ID
+    public async Task<Octokit.Repository?> GetRepositoryById(int id) // Change the method signature to accept ID
     {
         var appClient = GetNewClient();
 
@@ -707,23 +711,160 @@ public class GitHubController : ControllerBase
     public async Task<ActionResult> AddCommentToPR(string owner, string repoName, int prnumber, [FromBody] string commentBody)
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        await client.Issue.Comment.Create(owner, repoName, prnumber, commentBody);
+        string decorated_body = $"<!--Using HubReview-->**ACTIVE**: {commentBody}";
+        var comment = await client.Issue.Comment.Create(owner, repoName, prnumber, decorated_body);
+
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        using var connection = new NpgsqlConnection(connectionString);
+        connection.Open();
+
+        string query = $"INSERT INTO comments VALUES ({comment.Id}, '{repoName}', {prnumber}, {false}, '', '', 'ACTIVE')";
+        using (var command = new NpgsqlCommand(query, connection))
+        {
+            command.ExecuteNonQuery();
+        }
+        connection.Close();
+
         return Ok($"Comment added to pull request #{prnumber} in repository {repoName}.");
     }
 
-    [HttpPatch("pullrequest/{owner}/{repoName}/{comment_id}/updateComment")]
-    public async Task<ActionResult> UpdateComment(string owner, string repoName, int comment_id, [FromBody] string commentBody)
+    [HttpPatch("pullrequest/{owner}/{repoName}/{comment_id}/updateCommentStatus")]
+    public async Task<ActionResult> UpdateStatus(string owner, string repoName, int comment_id, [FromBody] string status)
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        await client.Issue.Comment.Update(owner, repoName, comment_id, commentBody);
-        return Ok($"Comment updated.");
+        bool is_review = false;
+        Octokit.PullRequestReviewComment? res1 = null;
+        Octokit.IssueComment? res2 = null;
+
+
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        using var connection = new NpgsqlConnection(connectionString);
+        connection.Open();
+
+        string select = $"SELECT is_review FROM comments WHERE commentid = {comment_id}";
+
+        using var command = new NpgsqlCommand(select, connection);
+        NpgsqlDataReader reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            is_review = reader.GetBoolean(0);
+        }
+
+        reader.Close();
+        connection.Close();
+
+        if (is_review)
+        {
+            var comment = await client.PullRequest.ReviewComment.GetComment(owner, repoName, comment_id);
+            string new_body = $"<!--Using HubReview-->**{status}** {comment.Body[comment.Body.IndexOf('\n')..]}";
+            res1 = await client.PullRequest.ReviewComment.Edit(owner, repoName, comment_id, new PullRequestReviewCommentEdit(new_body));
+        }
+        else
+        {
+            var comment = await client.Issue.Comment.Get(owner, repoName, comment_id);
+            string new_body = $"<!--Using HubReview-->**{status}**: {comment.Body[(comment.Body.IndexOf(':') + 2)..]}";
+            res2 = await client.Issue.Comment.Update(owner, repoName, comment_id, new_body);
+        }
+
+        connection.Open();
+
+        string query = $"UPDATE comments SET status = '{status}' where commentid = {comment_id}";
+        using (var command2 = new NpgsqlCommand(query, connection))
+        {
+            command2.ExecuteNonQuery();
+        }
+        connection.Close();
+
+        return (res1 == null) ? Ok(res2) : Ok(res1);
+    }
+
+    [HttpPatch("pullrequest/{owner}/{repoName}/{comment_id}/updateComment")]
+    public async Task<ActionResult> UpdateComment(string owner, string repoName, int comment_id, [FromBody] string body)
+    {
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        bool is_review = false;
+        Octokit.PullRequestReviewComment? res1 = null;
+        Octokit.IssueComment? res2 = null;
+
+
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        using var connection = new NpgsqlConnection(connectionString);
+        connection.Open();
+
+        string select = $"SELECT is_review FROM comments WHERE commentid = {comment_id}";
+
+        using var command = new NpgsqlCommand(select, connection);
+        NpgsqlDataReader reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            is_review = reader.GetBoolean(0);
+        }
+
+        reader.Close();
+        connection.Close();
+
+        if (is_review)
+        {
+            var comment = await client.PullRequest.ReviewComment.GetComment(owner, repoName, comment_id);
+            var before_colon = comment.Body[..(comment.Body.IndexOf(':') + 2)];
+            string new_body = before_colon + body;
+            res1 = await client.PullRequest.ReviewComment.Edit(owner, repoName, comment_id, new PullRequestReviewCommentEdit(body = new_body));
+        }
+        else
+        {
+            var comment = await client.Issue.Comment.Get(owner, repoName, comment_id);
+            var before_colon = comment.Body[..(comment.Body.IndexOf(':') + 2)];
+            string new_body = before_colon + body;
+            res2 = await client.Issue.Comment.Update(owner, repoName, comment_id, new_body);
+        }
+
+        return (res1 == null) ? Ok(res2) : Ok(res1);
     }
 
     [HttpDelete("pullrequest/{owner}/{repoName}/{comment_id}/deleteComment")]
     public async Task<ActionResult> DeleteComment(string owner, string repoName, int comment_id)
     {
-        var client = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        await client.Issue.Comment.Delete(owner, repoName, comment_id);
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        bool is_review = false;
+
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        using var connection = new NpgsqlConnection(connectionString);
+        connection.Open();
+
+        string select = $"SELECT is_review FROM comments WHERE commentid = {comment_id}";
+
+        using var command = new NpgsqlCommand(select, connection);
+        NpgsqlDataReader reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            is_review = reader.GetBoolean(0);
+        }
+
+        reader.Close();
+        connection.Close();
+
+        if (is_review)
+        {
+            await client.PullRequest.ReviewComment.Delete(owner, repoName, comment_id);
+        }
+        else
+        {
+            await client.Issue.Comment.Delete(owner, repoName, comment_id);
+        }
+
+        connection.Open();
+
+        string query = $"DELETE FROM comments WHERE commentid = {comment_id}";
+        using (var command2 = new NpgsqlCommand(query, connection))
+        {
+            command2.ExecuteNonQuery();
+        }
+        connection.Close();
+
         return Ok($"Comment deleted.");
     }
 
@@ -741,6 +882,10 @@ public class GitHubController : ControllerBase
         var result = new List<IssueCommentInfo>([]);
         var processedCommentIds = new HashSet<long>();
 
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        using var connection = new NpgsqlConnection(connectionString);
+
         var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
         foreach (var installation in installations)
         {
@@ -756,17 +901,53 @@ public class GitHubController : ControllerBase
                     // Check if the comment ID has already been processed
                     if (!processedCommentIds.Contains(comm.Id))
                     {
-                        var commentObj = new IssueCommentInfo
-                        {
-                            id = comm.Id,
-                            author = comm.User.Login,
-                            body = comm.Body,
-                            createdAt = comm.CreatedAt,
-                            updatedAt = comm.UpdatedAt,
-                            association = comm.AuthorAssociation.StringValue
-                        };
 
-                        result.Add(commentObj);
+                        if (!comm.Body.Contains("<!--Using HubReview-->"))
+                        {
+                            var commentObj = new IssueCommentInfo
+                            {
+                                id = comm.Id,
+                                author = comm.User.Login,
+                                body = comm.Body,
+                                label = null,
+                                decoration = null,
+                                status = null,
+                                createdAt = comm.CreatedAt,
+                                updatedAt = comm.UpdatedAt,
+                                association = comm.AuthorAssociation.StringValue
+                            };
+
+                            result.Add(commentObj);
+                        }
+                        else
+                        {
+                            int index = comm.Body.IndexOf(':');
+                            string parsed_message = comm.Body[(index + 2)..];
+
+                            await connection.OpenAsync();
+                            string query = $"SELECT label, decoration, status FROM comments WHERE commentid = {comm.Id}";
+                            var command = new NpgsqlCommand(query, connection);
+                            NpgsqlDataReader reader = await command.ExecuteReaderAsync();
+                            while (await reader.ReadAsync())
+                            {
+                                var commentObj = new IssueCommentInfo
+                                {
+                                    id = comm.Id,
+                                    author = comm.User.Login,
+                                    body = parsed_message,
+                                    label = reader.GetString(0),
+                                    decoration = reader.GetString(1),
+                                    status = reader.GetString(2),
+                                    createdAt = comm.CreatedAt,
+                                    updatedAt = comm.UpdatedAt,
+                                    association = comm.AuthorAssociation.StringValue
+                                };
+
+                                result.Add(commentObj);
+                            }
+
+                            await connection.CloseAsync();
+                        }
 
                         // Add the comment ID to the set of processed IDs
                         processedCommentIds.Add(comm.Id);
@@ -794,6 +975,10 @@ public class GitHubController : ControllerBase
         var result = new List<IssueCommentInfo>([]);
         var processedCommentIds = new HashSet<long>();
 
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        using var connection = new NpgsqlConnection(connectionString);
+
         var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
         foreach (var installation in installations)
         {
@@ -809,38 +994,160 @@ public class GitHubController : ControllerBase
                     // Check if the comment ID has already been processed
                     if (!processedCommentIds.Contains(rev.Id))
                     {
-                        var commentObj = new IssueCommentInfo
-                        {
-                            id = rev.Id,
-                            author = rev.User.Login,
-                            body = rev.Body,
-                            createdAt = rev.CreatedAt,
-                            updatedAt = rev.UpdatedAt,
-                            association = rev.AuthorAssociation.StringValue
-                        };
 
-                        result.Add(commentObj);
+                        if (!rev.Body.Contains("<!--Using HubReview-->"))
+                        {
+                            var commentObj = new IssueCommentInfo
+                            {
+                                id = rev.Id,
+                                author = rev.User.Login,
+                                body = rev.Body,
+                                label = null,
+                                decoration = null,
+                                status = null,
+                                createdAt = rev.CreatedAt,
+                                updatedAt = rev.UpdatedAt,
+                                association = rev.AuthorAssociation.StringValue
+                            };
+
+                            result.Add(commentObj);
+                        }
+                        else
+                        {
+                            int index = rev.Body.IndexOf(':');
+                            string parsed_message = rev.Body[(index + 2)..];
+
+                            await connection.OpenAsync();
+                            string query = $"SELECT label, decoration, status FROM comments WHERE commentid = {rev.Id}";
+                            var command = new NpgsqlCommand(query, connection);
+                            NpgsqlDataReader reader = await command.ExecuteReaderAsync();
+                            while (await reader.ReadAsync())
+                            {
+                                var commentObj = new IssueCommentInfo
+                                {
+                                    id = rev.Id,
+                                    author = rev.User.Login,
+                                    body = parsed_message,
+                                    label = reader.GetString(0),
+                                    decoration = reader.GetString(1),
+                                    status = reader.GetString(2),
+                                    createdAt = rev.CreatedAt,
+                                    updatedAt = rev.UpdatedAt,
+                                    association = rev.AuthorAssociation.StringValue
+                                };
+
+                                result.Add(commentObj);
+                            }
+
+                            await connection.CloseAsync();
+                        }
+
+
 
                         // Add the comment ID to the set of processed IDs
                         processedCommentIds.Add(rev.Id);
+
                     }
 
                 }
-
             }
         }
 
         return Ok(result);
     }
-    /*
-    [HttpGet("pullrequest/{owner}/{repoName}/{sha}/addRevComment")]
-    public async Task<ActionResult> AddRevCommentToPR(string owner, string repoName, string sha)
+
+    /*[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_reviews")]
+    public async Task<ActionResult> getReviewsOnPR(string owner, string repoName, int prnumber)
+    {
+        
+        List<long> id_list = [];
+        
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        using var connection = new NpgsqlConnection(connectionString);
+        connection.Open();
+
+        string select = $"SELECT review_id FROM reviewhead WHERE reponame = '{repoName}' AND prnumber = {prnumber}";
+        
+        using var command = new NpgsqlCommand(select, connection);
+        NpgsqlDataReader reader = await command.ExecuteReaderAsync();
+        while ( await reader.ReadAsync() )
+        {
+            id_list.Add(reader.GetInt64(0));
+        }
+        
+        reader.Close();
+        connection.Close();
+
+        string select2 = $"SELECT (body, verdict, comments) FROM reviewhead WHERE review"
+
+        return Ok(id_list);
+    }*/
+
+    [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/{sha}/addRevComment")]
+    public async Task<ActionResult> AddRevCommentToPR(string owner, string repoName, int prnumber, string sha, [FromBody] CreateReviewRequestModel req)
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        var commit = await client.Repository.Commit.Get(owner, repoName, sha);
-        await client.PullRequest.ReviewComment.Create(owner, repoName, prnumber, comment);
-        return Ok(commit.Files[0].Filename);
-    }*/
+
+        var rev = new PullRequestReviewCreate()
+        {
+            CommitId = sha,
+            Body = req.body,
+            Event = (req.verdict != "APPROVE") ? ((req.verdict != "REQUEST CHANGES") ? Octokit.PullRequestReviewEvent.Comment : Octokit.PullRequestReviewEvent.RequestChanges) : Octokit.PullRequestReviewEvent.Approve,
+            Comments = []
+        };
+
+        if (req.comments.Length != 0)
+        {
+            foreach (var comment in req.comments)
+            {
+                var decorated_body = $"<!--Using HubReview-->\nACTIVE {comment.label} ({comment.decoration}): {comment.message}";
+                var draft = new Octokit.DraftPullRequestReviewComment(decorated_body, comment.filename, comment.position);
+                rev.Comments.Add(draft);
+            }
+        }
+
+        var review = await client.PullRequest.Review.Create(owner, repoName, prnumber, rev);
+
+        if (review == null)
+        {
+            return NotFound("Review can not be created.");
+        }
+
+        var published_comments = await client.PullRequest.Review.GetAllComments(owner, repoName, prnumber, review.Id);
+        var comment_id_list = string.Join(",", published_comments.Select(c => c.Id));
+
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        using var connection = new NpgsqlConnection(connectionString);
+        connection.Open();
+
+        string query1 = $"INSERT INTO reviewhead (review_id, reponame, prnumber, body, verdict, comments) VALUES ({review.Id}, '{repoName}', {prnumber}, '{req.body}', '{req.verdict}', ARRAY[{comment_id_list}])";
+
+        using (var command = new NpgsqlCommand(query1, connection))
+        {
+            command.ExecuteNonQuery();
+        }
+
+        string query2 = "INSERT INTO comments (commentid, reponame, prnumber, is_review, label, decoration, status) VALUES ";
+
+        for (int i = 0; i < published_comments.Count; i++)
+        {
+            query2 += $"({published_comments[i].Id}, '{repoName}', {prnumber}, {true}, '{req.comments[i].label}', '{req.comments[i].decoration}', 'ACTIVE'), ";
+        }
+
+        query2 = query2[..^2];
+
+        using (var command = new NpgsqlCommand(query2, connection))
+        {
+            command.ExecuteNonQuery();
+        }
+
+        connection.Close();
+
+
+        return Ok($"Review added to pull request #{prnumber} in repository {repoName}.");
+    }
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_commits")]
     public async Task<ActionResult> getCommits(string owner, string repoName, int prnumber)
@@ -897,7 +1204,8 @@ public class GitHubController : ControllerBase
                             title = message[0],
                             description = message[1],
                             author = commit.Author.Login,
-                            githubLink = link + commit.Sha
+                            githubLink = link + commit.Sha,
+                            sha = commit.Sha
                         };
 
                     }
@@ -908,7 +1216,8 @@ public class GitHubController : ControllerBase
                             title = commit.Commit.Message,
                             description = null,
                             author = commit.Author.Login,
-                            githubLink = link + commit.Sha
+                            githubLink = link + commit.Sha,
+                            sha = commit.Sha
                         };
                     }
 
@@ -922,6 +1231,42 @@ public class GitHubController : ControllerBase
         }
 
         return Ok(result);
+    }
+
+    [HttpGet("commit/{owner}/{repoName}/{prnumber}/{sha}/get_patches")]
+    public async Task<ActionResult> getDiffs(string owner, string repoName, int prnumber, string sha)
+    {
+        var appClient = GetNewClient();
+        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+        var result = new List<object>([]);
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent();
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        foreach (var installation in installations)
+        {
+            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            {
+                var commit = await userClient.Repository.Commit.Get(owner, repoName, sha);
+                foreach (var file in commit.Files)
+                {
+                    var fileContent = await userClient.Repository.Content.GetAllContentsByRef(owner, repoName, file.Filename, sha);
+                    result.Add(new
+                    {
+                        name = file.Filename,
+                        status = file.Status,
+                        sha = file.Sha,
+                        content = file.Patch
+                    });
+                }
+
+                return Ok(result);
+            }
+        }
+        return NotFound("not found");
     }
 
     [HttpGet("getPRReviewerSuggestion/{owner}/{repoName}/{prOwner}")]
@@ -1066,7 +1411,6 @@ public class GitHubController : ControllerBase
         }
         return NotFound("There exists no user in session.");
     }
-
 
     [HttpGet("GetReviewerSuggestions/{owner}/{repoName}/{prNumber}")]
     public async Task<ActionResult> GetReviewerSuggestions(string owner, string repoName, int prNumber)
@@ -2487,5 +2831,3 @@ public class GitHubController : ControllerBase
     }
 
 }
-
-

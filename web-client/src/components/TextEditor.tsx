@@ -1,5 +1,5 @@
-import {RichTextEditor, Link} from "@mantine/tiptap";
-import {Button, Box, TypographyStylesProvider} from "@mantine/core";
+import { RichTextEditor, Link } from "@mantine/tiptap";
+import { Button, Box } from "@mantine/core";
 import { useEditor } from "@tiptap/react";
 import Highlight from "@tiptap/extension-highlight";
 import StarterKit from "@tiptap/starter-kit";
@@ -12,19 +12,16 @@ import { useState } from "react";
 
 interface TextEditorProps {
   content: string;
-  addComment: (content: string) => void;
+  addComment?: (content: string) => void;
+  setIsEditActive?: (isEditActive: boolean) => void;
+  editComment?: (id: number, body: string) => void;
+  commentId?: number;
 }
 
-function TextEditor({ content, addComment }: TextEditorProps) {
+function TextEditor({ content, addComment, setIsEditActive, editComment, commentId }: TextEditorProps) {
   const [editorContent, setEditorContent] = useState(content);
+  const isAddComment = !!addComment;
 
-  function handleAddComment(){
-    addComment(editorContent);
-    //editor?.commands.insertContent("<h1> inserted </h1>")
-    editor?.commands.clearContent();
-    setEditorContent("");
-
-  }
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -33,14 +30,25 @@ function TextEditor({ content, addComment }: TextEditorProps) {
       Superscript,
       SubScript,
       Highlight,
-      TypographyStylesProvider,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
     ],
-    content: "",
+    content: content,
     onUpdate({ editor }) {
       setEditorContent(editor.getHTML());
     },
   });
+
+  function handleAddComment() {
+    if (addComment) {
+      addComment(editorContent);
+      editor?.commands.clearContent();
+      setEditorContent("");
+    } else if (editComment && commentId && setIsEditActive) {
+      editComment(commentId, editorContent);
+
+      setIsEditActive(false);
+    }
+  }
 
   return (
     <Box style={{ position: "relative", width: "100%" }}>
@@ -88,18 +96,39 @@ function TextEditor({ content, addComment }: TextEditorProps) {
             <RichTextEditor.Undo />
             <RichTextEditor.Redo />
           </RichTextEditor.ControlsGroup>
-
         </RichTextEditor.Toolbar>
 
-        <RichTextEditor.Content/>
+        <RichTextEditor.Content />
       </RichTextEditor>
 
-      <Box style={{ position: "absolute", right: 0, top: "100%" }}>
-        <Button size="md" color="green" top={20} onClick={() => handleAddComment()}>
-          Comment
-        </Button>
-      </Box>
-      <br/>
+      {isAddComment && (
+        <>
+          <Box style={{ position: "absolute", right: 0, top: "100%" }}>
+            <Button size="md" color="green" top={20} onClick={() => handleAddComment()}>
+              Comment
+            </Button>
+          </Box>
+          <br />
+        </>
+      )}
+      {!isAddComment && (
+        <Box style={{ position: "relative", right: 0, top: -20, display: "flex", justifyContent: "flex-end" }}>
+          <Button size="md" color="green" top={20} right={20} onClick={() => handleAddComment()}>
+            Edit
+          </Button>
+
+          <Button
+            size="md"
+            color="grey"
+            top={20}
+            onClick={() => {
+              setIsEditActive && setIsEditActive(false);
+            }}
+          >
+            Cancel
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 }
