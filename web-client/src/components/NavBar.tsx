@@ -43,7 +43,7 @@ function NavBar() {
     if (localStorage.getItem("userLogin") === null || userLogin === null) {
       navigate("/signIn");
     }
-  }, [navigate]);
+  }, [navigate, userLogin]);
 
   return (
     <Box bg="#0D1B2A" p="20px">
