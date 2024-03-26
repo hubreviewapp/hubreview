@@ -11,8 +11,11 @@ using Newtonsoft.Json.Converters;
 using Npgsql;
 using Octokit;
 using Octokit.GraphQL;
+using Octokit.GraphQL.Core;
+using Octokit.GraphQL.Model;
 using static Octokit.GraphQL.Variable;
-
+using Octokit.GraphQL.Core.Builders;
+using System.ComponentModel;
 
 
 
@@ -336,7 +339,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpGet("getRepository/{id}")] // Update the route to include repository ID
-    public async Task<Repository> GetRepositoryById(int id) // Change the method signature to accept ID
+    public async Task<Octokit.Repository> GetRepositoryById(int id) // Change the method signature to accept ID
     {
         var appClient = GetNewClient();
 
@@ -2534,7 +2537,7 @@ public class GitHubController : ControllerBase
             await connection.CloseAsync();
         }
 
-        var reviewsLastWeek = new List<PullRequestReview>();
+        var reviewsLastWeek = new List<Octokit.PullRequestReview>();
         int submitted = 0;
 
         foreach (var pull in allPRs)
@@ -2553,9 +2556,129 @@ public class GitHubController : ControllerBase
                 }
             }
         }
+
+
+
+        var requestedReviewsCount = await GetRequestedPRs(github);
         
 
-        return Ok(submitted);
+        //return Ok(requestedReviewsCount);
+
+        return Ok(requestedReviewsCount);
+    }
+
+    public async Task<int> GetRequestedPRs(GitHubClient github)
+    {
+        var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
+        var connection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
+
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+
+        List<PRInfo> allPRs = new List<PRInfo>();
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+
+        // Get organizations for the current user
+        var organizations = await github.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        var lastWeek = DateTime.Today.AddDays(-7);
+
+        using (NpgsqlConnection conn = new NpgsqlConnection(connectionString))
+        {
+            await conn.OpenAsync();
+
+            string selects = "pullnumber, reponame, repoowner";
+            string q = "SELECT " + selects + " FROM pullrequestinfo WHERE ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) ) AND updatedat >= @lastWeek";
+            using (NpgsqlCommand command = new NpgsqlCommand(q, conn))
+            {
+                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@lastWeek", lastWeek);
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        PRInfo pr = new PRInfo
+                        {
+                            PRNumber = reader.GetInt32(0),
+                            RepoName = reader.GetString(1),
+                            RepoOwner = reader.GetString(2),
+                        };
+
+                        allPRs.Add(pr);
+                    }
+                }
+            }
+
+            await conn.CloseAsync();
+        }
+
+        int requestedPRCount = 0;
+
+        foreach( var pr in allPRs ){
+            Console.WriteLine("In PR: " + pr.RepoOwner + "---->" + pr.RepoName + "---->" + pr.PRNumber);
+
+            var query = new Query()
+            .Repository(Var("name"), Var("owner"))
+            .PullRequest(Var("prnumber"))
+            .TimelineItems(40, null, null, null, null, null, null)
+            .Nodes
+            .Select(node => node.Switch<object>(when => when
+            .ReviewRequestedEvent(y => new
+            {
+                Actor = y.Actor.Select(actor => new
+                {
+                    AvatarUrl = actor.AvatarUrl(500),
+                    Login = actor.Login,
+                })
+                .SingleOrDefault(),
+
+                RequestedReviewer = y.RequestedReviewer.Select(reviewer => new
+                {
+                    
+                    User = reviewer.Switch<Core.Entities.User>(whenUser => whenUser
+                            .User(user => new Core.Entities.User
+                            {
+                                AvatarUrl = user.AvatarUrl(100),
+                                Login = user.Login,
+                            })),
+                })
+                .SingleOrDefault(),
+
+                CreatedAt = y.CreatedAt,
+            })
+            )).Compile();
+
+
+            var vars = new Dictionary<string, object>
+            {
+                { "owner", pr.RepoOwner },
+                { "name", pr.RepoName },
+                { "prnumber", pr.PRNumber },
+            };
+
+            var result = await connection.Run(query, vars);
+
+
+            
+            foreach (var node in result)
+            {
+                var reviewRequestedEvent = node as dynamic;
+                var requestedReviewer = reviewRequestedEvent?.RequestedReviewer;
+                var user = requestedReviewer?.User?.Login;
+                var created = reviewRequestedEvent?.CreatedAt; 
+                
+                if (user == userLogin && created >= lastWeek)
+                {
+                    requestedPRCount++;
+                }
+            } 
+        }
+
+        return requestedPRCount;
     }
 }
 
