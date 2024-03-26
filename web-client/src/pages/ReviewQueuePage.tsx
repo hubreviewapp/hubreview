@@ -76,149 +76,81 @@ export interface SelectedRepos {
  * - Prereview CI checks
  * - Estimated review load of a PR (e.g., a reapproval is likely to be low-effort)
  */
+const API = "http://localhost:5018/api/github/prs/";
 function ReviewQueuePage() {
   //const [prInfo, setPrInfo] = useState<PRInfo[]>([]);
+
   const [needsYourReviewPRs, setNeedsYourReviewPRs] = useState<PRInfo[]>([]);
-  const [yourPRs, setYourPRs] = useState<PRInfo[]>([]);
   const [waitingAuthorPRs, setWaitingAuthorPRs] = useState<PRInfo[]>([]);
+  const [yourPRs, setYourPrs] = useState<PRInfo[]>([]);
   const [openPRs, setOpenPRs] = useState<PRInfo[]>([]);
-  const [mergedPRs, setMergedPRs] = useState<PRInfo[]>([]);
-  const [closedPRs, setClosedPRs] = useState<PRInfo[]>([]);
+  //const [mergedPRs, setMergedPRs] = useState<PRInfo[]>([]);
+  //const [closedPRs, setClosedPRs] = useState<PRInfo[]>([]);
   const [activeSection, setActiveSection] = useState<string>("");
 
   const [values, handlers] = useListState<SelectedRepos>([]);
 
   useEffect(() => {
+    const apiEnd = "needsreview";
     const fetchNeedsYourReviewPRs = async () => {
       try {
-        const res = await axios
-          .create({
-            withCredentials: true,
-            baseURL: "http://localhost:5018/api/github",
-          })
-          .get("/prs/needsreview");
-
-        if (res) {
+        const res = await axios.get(API + apiEnd, { withCredentials: true });
+        if (res.data != undefined) {
           setNeedsYourReviewPRs(res.data);
-          console.log("res: ", res.data);
         }
       } catch (error) {
-        console.error("Error fetching PR info:", error);
+        console.error("Error fetching data:", error);
       }
     };
-
-    fetchNeedsYourReviewPRs();
-  });
+    fetchNeedsYourReviewPRs().then();
+  }, []);
 
   useEffect(() => {
-    const fetchYourPRs = async () => {
+    const apiEnd = "userprs";
+    const fetchUserPrs = async () => {
       try {
-        const res = await axios
-          .create({
-            withCredentials: true,
-            baseURL: "http://localhost:5018/api/github",
-          })
-          .get("/prs/userprs");
-
-        if (res) {
-          setYourPRs(res.data);
-          console.log("res: ", res.data);
+        const res = await axios.get(API + apiEnd, { withCredentials: true });
+        if (res.data != undefined) {
+          setYourPrs(res.data);
         }
       } catch (error) {
-        console.error("Error fetching PR info:", error);
+        console.error("Error fetching data:", error);
       }
     };
-
-    fetchYourPRs();
-  });
+    fetchUserPrs().then();
+  }, []);
 
   useEffect(() => {
-    const fetchWaitingAuthorPRs = async () => {
+    const apiEnd = "waitingauthor";
+    const fetchWaitingAuthor = async () => {
       try {
-        const res = await axios
-          .create({
-            withCredentials: true,
-            baseURL: "http://localhost:5018/api/github",
-          })
-          .get("/prs/waitingauthor");
-
-        if (res) {
+        const res = await axios.get(API + apiEnd, { withCredentials: true });
+        if (res.data != undefined) {
           setWaitingAuthorPRs(res.data);
-          console.log("res: ", res.data);
         }
       } catch (error) {
-        console.error("Error fetching PR info:", error);
+        console.error("Error fetching data:", error);
       }
     };
-
-    fetchWaitingAuthorPRs();
-  });
+    fetchWaitingAuthor().then();
+  }, []);
 
   useEffect(() => {
     const fetchOpenPRs = async () => {
       try {
-        const res = await axios
-          .create({
-            withCredentials: true,
-            baseURL: "http://localhost:5018/api/github",
-          })
-          .get("/prs/open");
-
+        const res = await axios.get(`http://localhost:5018/api/github/prs/open`, {
+          withCredentials: true,
+        });
         if (res) {
           setOpenPRs(res.data);
-          console.log("res: ", res.data);
         }
       } catch (error) {
         console.error("Error fetching PR info:", error);
       }
     };
 
-    fetchOpenPRs();
-  });
-
-  useEffect(() => {
-    const fetchMergedPRs = async () => {
-      try {
-        const res = await axios
-          .create({
-            withCredentials: true,
-            baseURL: "http://localhost:5018/api/github",
-          })
-          .get("/prs/merged");
-
-        if (res) {
-          setMergedPRs(res.data);
-          console.log("res: ", res.data);
-        }
-      } catch (error) {
-        console.error("Error fetching PR info:", error);
-      }
-    };
-
-    fetchMergedPRs();
-  });
-
-  useEffect(() => {
-    const fetchClosedPRs = async () => {
-      try {
-        const res = await axios
-          .create({
-            withCredentials: true,
-            baseURL: "http://localhost:5018/api/github",
-          })
-          .get("/prs/closed");
-
-        if (res) {
-          setClosedPRs(res.data);
-          console.log("res: ", res.data);
-        }
-      } catch (error) {
-        console.error("Error fetching PR info:", error);
-      }
-    };
-
-    fetchClosedPRs();
-  });
+    fetchOpenPRs().then();
+  }, []);
 
   return (
     <Grid mt="md">
@@ -248,10 +180,10 @@ function ReviewQueuePage() {
           <PRCardList pr={openPRs} name="All Open PRs" />
         </div>
         <div id="merged">
-          <PRCardList pr={mergedPRs} name="Merged" />
+          <PRCardList pr={[]} name="Merged" />
         </div>
         <div id="closed">
-          <PRCardList pr={closedPRs} name="Closed" />
+          <PRCardList pr={[]} name="Closed" />
         </div>
         <Center>
           <Link to="/createPR">
