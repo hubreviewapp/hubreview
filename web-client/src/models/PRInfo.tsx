@@ -11,9 +11,11 @@ export interface Check {
   id: number;
   name: string;
   status: {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     StringValue: string;
   };
   conclusion: {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     StringValue: string;
   };
 }
@@ -34,4 +36,8 @@ export interface PRInfo {
   comments: number;
   labels: Array<Label>;
   checks: Array<Check>;
+  checksComplete: number;
+  checksSuccess: number;
+  checksFail: number;
+  reviewers: Array<string>;
 }
