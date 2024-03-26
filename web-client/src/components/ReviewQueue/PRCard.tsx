@@ -4,12 +4,12 @@ import LabelButton, { HubReviewLabelType } from "../LabelButton";
 import { useDisclosure } from "@mantine/hooks";
 import { IconCaretDown, IconCaretUp, IconCircleCheck, IconXboxX, IconMessage, IconFiles } from "@tabler/icons-react";
 import { PRInfo } from "../../models/PRInfo.tsx";
-import PriorityBadge from "../PriorityBadge";
+import PriorityBadge, {PriorityBadgeLabel} from "../PriorityBadge";
 
 export interface PullRequestCardProps {
   data: PRInfo;
 }
-const formatDate = (dateString) => {
+const formatDate = (dateString: string) => {
   const currentDate = new Date();
   const pastDate = new Date(dateString);
   const timeDifference = currentDate.getTime() - pastDate.getTime();
@@ -27,7 +27,7 @@ function PRCard({ data: pr }: PullRequestCardProps) {
       {pr.labels
         .filter((l) => l.name.includes("Priority"))
         .map((label) => (
-          <PriorityBadge key={label.id} label={label.name.replace("Priority: ", "")} size="md" />
+          <PriorityBadge key={label.id} label={label.name.replace("Priority: ", "") as PriorityBadgeLabel} size="md" />
         ))}
       <Link to={`pulls/pullrequest/${pr.repoOwner}/${pr.repoName}/${pr.prNumber}`} style={{ textDecoration: "none" }}>
         <Group grow>

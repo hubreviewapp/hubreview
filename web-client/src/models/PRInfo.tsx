@@ -28,7 +28,7 @@ export interface PRInfo {
   author: string | null;
   authorAvatarURL: string | null;
   createdAt: string | null;
-  updatedAt: string | null;
+  updatedAt: string;
   repoName: string | null;
   additions: number;
   deletions: number;
