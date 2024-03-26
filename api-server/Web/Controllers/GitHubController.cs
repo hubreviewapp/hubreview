@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Data;
 using System.Web;
 using CS.Core.Configuration;
@@ -12,10 +13,9 @@ using Npgsql;
 using Octokit;
 using Octokit.GraphQL;
 using Octokit.GraphQL.Core;
+using Octokit.GraphQL.Core.Builders;
 using Octokit.GraphQL.Model;
 using static Octokit.GraphQL.Variable;
-using Octokit.GraphQL.Core.Builders;
-using System.ComponentModel;
 
 
 
@@ -2543,7 +2543,7 @@ public class GitHubController : ControllerBase
         foreach (var pull in allPRs)
         {
             bool isReviewed = false;
-            var reviews = await github.PullRequest.Review.GetAll(pull.RepoOwner, pull.RepoName, (int) pull.PRNumber);
+            var reviews = await github.PullRequest.Review.GetAll(pull.RepoOwner, pull.RepoName, (int)pull.PRNumber);
 
             foreach (var review in reviews)
             {
@@ -2551,7 +2551,7 @@ public class GitHubController : ControllerBase
                 {
                     reviewsLastWeek.Add(review);
                     submitted++;
-                    isReviewed = true; 
+                    isReviewed = true;
                     break;
                 }
             }
@@ -2560,7 +2560,7 @@ public class GitHubController : ControllerBase
 
 
         var requestedReviewsCount = await GetRequestedPRs(github);
-        
+
 
         //return Ok(requestedReviewsCount);
 
@@ -2618,7 +2618,8 @@ public class GitHubController : ControllerBase
 
         int requestedPRCount = 0;
 
-        foreach( var pr in allPRs ){
+        foreach (var pr in allPRs)
+        {
             Console.WriteLine("In PR: " + pr.RepoOwner + "---->" + pr.RepoName + "---->" + pr.PRNumber);
 
             var query = new Query()
@@ -2638,7 +2639,7 @@ public class GitHubController : ControllerBase
 
                 RequestedReviewer = y.RequestedReviewer.Select(reviewer => new
                 {
-                    
+
                     User = reviewer.Switch<Core.Entities.User>(whenUser => whenUser
                             .User(user => new Core.Entities.User
                             {
@@ -2663,19 +2664,19 @@ public class GitHubController : ControllerBase
             var result = await connection.Run(query, vars);
 
 
-            
+
             foreach (var node in result)
             {
                 var reviewRequestedEvent = node as dynamic;
                 var requestedReviewer = reviewRequestedEvent?.RequestedReviewer;
                 var user = requestedReviewer?.User?.Login;
-                var created = reviewRequestedEvent?.CreatedAt; 
-                
+                var created = reviewRequestedEvent?.CreatedAt;
+
                 if (user == userLogin && created >= lastWeek)
                 {
                     requestedPRCount++;
                 }
-            } 
+            }
         }
 
         return requestedPRCount;
