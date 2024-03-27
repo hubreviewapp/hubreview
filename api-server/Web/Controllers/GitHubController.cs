@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Data;
 using System.Text;
 using System.Web;
@@ -13,10 +14,11 @@ using Newtonsoft.Json.Converters;
 using Npgsql;
 using Octokit;
 using Octokit.GraphQL;
+using Octokit.GraphQL.Core;
+using Octokit.GraphQL.Core.Builders;
 using Octokit.GraphQL.Model;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using static Octokit.GraphQL.Variable;
-
 
 
 
@@ -2830,4 +2832,230 @@ public class GitHubController : ControllerBase
         return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
     }
 
+    [HttpGet("user/weeklysummary")]
+    public async Task<ActionResult> GetReviewsForUserInLastWeek()
+    {
+        var github = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        List<PRInfo> allPRs = new List<PRInfo>();
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+
+        // Get organizations for the current user
+        var organizations = await github.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        var lastWeek = DateTime.Today.AddDays(-7);
+
+        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        {
+            await connection.OpenAsync();
+
+            string selects = "pullnumber, reponame, repoowner";
+            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) ) AND updatedat >= @lastWeek AND EXISTS (SELECT 1 FROM json_array_elements(reviews) AS elem WHERE elem->>'login' = @ownerLogin)";
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@lastWeek", lastWeek);
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        PRInfo pr = new PRInfo
+                        {
+                            PRNumber = reader.GetInt32(0),
+                            RepoName = reader.GetString(1),
+                            RepoOwner = reader.GetString(2),
+                        };
+
+                        allPRs.Add(pr);
+                    }
+                }
+            }
+
+            await connection.CloseAsync();
+        }
+
+        var reviewsLastWeek = new List<Octokit.PullRequestReview>();
+        int submitted = 0;
+
+        foreach (var pull in allPRs)
+        {
+            bool isReviewed = false;
+            var reviews = await github.PullRequest.Review.GetAll(pull.RepoOwner, pull.RepoName, (int)pull.PRNumber);
+
+            foreach (var review in reviews)
+            {
+                if (review.User.Login == userLogin && review.SubmittedAt >= lastWeek)
+                {
+                    reviewsLastWeek.Add(review);
+                    submitted++;
+                    isReviewed = true;
+                    break;
+                }
+            }
+        }
+
+
+
+        var requestedReviewsCount = await GetRequestedPRs(github);
+
+        var waitingReviewsCount = await GetWaitingReviews();
+
+        // waiting --> o hafta yaratılmış ama henüz review edilmemiş olanlar (requested - submitted gibi)
+        List<int> result = [submitted, requestedReviewsCount, waitingReviewsCount];
+
+        return Ok(result);
+    }
+
+    public async Task<int> GetRequestedPRs(GitHubClient github)
+    {
+        var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
+        var connection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
+
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+
+        List<PRInfo> allPRs = new List<PRInfo>();
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+
+        // Get organizations for the current user
+        var organizations = await github.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        var lastWeek = DateTime.Today.AddDays(-7);
+
+        using (NpgsqlConnection conn = new NpgsqlConnection(connectionString))
+        {
+            await conn.OpenAsync();
+
+            string selects = "pullnumber, reponame, repoowner";
+            string q = "SELECT " + selects + " FROM pullrequestinfo WHERE ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) ) AND updatedat >= @lastWeek";
+            using (NpgsqlCommand command = new NpgsqlCommand(q, conn))
+            {
+                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@lastWeek", lastWeek);
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        PRInfo pr = new PRInfo
+                        {
+                            PRNumber = reader.GetInt32(0),
+                            RepoName = reader.GetString(1),
+                            RepoOwner = reader.GetString(2),
+                        };
+
+                        allPRs.Add(pr);
+                    }
+                }
+            }
+
+            await conn.CloseAsync();
+        }
+
+        int requestedPRCount = 0;
+
+        foreach (var pr in allPRs)
+        {
+            var query = new Query()
+            .Repository(Var("name"), Var("owner"))
+            .PullRequest(Var("prnumber"))
+            .TimelineItems(40, null, null, null, null, null, null)
+            .Nodes
+            .Select(node => node.Switch<object>(when => when
+            .ReviewRequestedEvent(y => new
+            {
+                Actor = y.Actor.Select(actor => new
+                {
+                    AvatarUrl = actor.AvatarUrl(500),
+                    Login = actor.Login,
+                })
+                .SingleOrDefault(),
+
+                RequestedReviewer = y.RequestedReviewer.Select(reviewer => new
+                {
+
+                    User = reviewer.Switch<Core.Entities.User>(whenUser => whenUser
+                            .User(user => new Core.Entities.User
+                            {
+                                AvatarUrl = user.AvatarUrl(100),
+                                Login = user.Login,
+                            })),
+                })
+                .SingleOrDefault(),
+
+                CreatedAt = y.CreatedAt,
+            })
+            )).Compile();
+
+
+            var vars = new Dictionary<string, object>
+            {
+                { "owner", pr.RepoOwner },
+                { "name", pr.RepoName },
+                { "prnumber", pr.PRNumber },
+            };
+
+            var result = await connection.Run(query, vars);
+
+
+
+            foreach (var node in result)
+            {
+                var reviewRequestedEvent = node as dynamic;
+                var requestedReviewer = reviewRequestedEvent?.RequestedReviewer;
+                var user = requestedReviewer?.User?.Login;
+                var created = reviewRequestedEvent?.CreatedAt;
+
+                if (user == userLogin && created >= lastWeek)
+                {
+                    requestedPRCount++;
+                }
+            }
+        }
+
+        return requestedPRCount;
+    }
+
+    public async Task<int> GetWaitingReviews()
+    {
+
+        try
+        {
+            var config = new CoreConfiguration();
+            string connectionString = config.DbConnectionString;
+
+            using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+
+                string query = "SELECT COUNT(*) FROM pullrequestinfo WHERE state = 'open' AND @ownerLogin = ANY(reviewers)";
+
+                using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                {
+                    // Assuming _httpContextAccessor.HttpContext.Session.GetString("UserLogin") returns the login string
+                    string userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin") ?? "";
+                    command.Parameters.AddWithValue("@ownerLogin", userLogin);
+
+                    long waitingReviewsCount = (long)await command.ExecuteScalarAsync();
+                    return (int)waitingReviewsCount;
+
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions appropriately
+            Console.WriteLine($"An error occurred: {ex.Message}");
+            throw; // Rethrow the exception or handle it as necessary
+        }
+    }
 }
