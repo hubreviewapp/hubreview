@@ -2564,7 +2564,10 @@ public class GitHubController : ControllerBase
 
         //return Ok(requestedReviewsCount);
 
-        return Ok(requestedReviewsCount);
+
+        List<int> result = [submitted, requestedReviewsCount, 0];
+
+        return Ok(result);
     }
 
     public async Task<int> GetRequestedPRs(GitHubClient github)
@@ -2620,8 +2623,6 @@ public class GitHubController : ControllerBase
 
         foreach (var pr in allPRs)
         {
-            Console.WriteLine("In PR: " + pr.RepoOwner + "---->" + pr.RepoName + "---->" + pr.PRNumber);
-
             var query = new Query()
             .Repository(Var("name"), Var("owner"))
             .PullRequest(Var("prnumber"))
