@@ -2561,11 +2561,10 @@ public class GitHubController : ControllerBase
 
         var requestedReviewsCount = await GetRequestedPRs(github);
 
+        var waitingReviewsCount = await GetWaitingReviews();
 
-        //return Ok(requestedReviewsCount);
-
-
-        List<int> result = [submitted, requestedReviewsCount, 0];
+        // waiting --> o hafta yaratılmış ama henüz review edilmemiş olanlar (requested - submitted gibi)
+        List<int> result = [submitted, requestedReviewsCount, waitingReviewsCount];
 
         return Ok(result);
     }
@@ -2681,6 +2680,40 @@ public class GitHubController : ControllerBase
         }
 
         return requestedPRCount;
+    }
+
+    public async Task<int> GetWaitingReviews()
+    {
+
+        try
+        {
+            var config = new CoreConfiguration();
+            string connectionString = config.DbConnectionString;
+
+            using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+
+                string query = "SELECT COUNT(*) FROM pullrequestinfo WHERE state = 'open' AND @ownerLogin = ANY(reviewers)";
+
+                using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                {
+                    // Assuming _httpContextAccessor.HttpContext.Session.GetString("UserLogin") returns the login string
+                    string userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin") ?? "";
+                    command.Parameters.AddWithValue("@ownerLogin", userLogin);
+
+                    long waitingReviewsCount = (long)await command.ExecuteScalarAsync();
+                    return (int)waitingReviewsCount;
+
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions appropriately
+            Console.WriteLine($"An error occurred: {ex.Message}");
+            throw; // Rethrow the exception or handle it as necessary
+        }
     }
 }
 
