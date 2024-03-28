@@ -1292,8 +1292,8 @@ public class GitHubController : ControllerBase
             if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
             {
                 var files = await userClient.PullRequest.Files(owner, repoName, prnumber);
-                result.AddRange(files.Select(file => new 
-                { 
+                result.AddRange(files.Select(file => new
+                {
                     name = file.FileName,
                     status = file.Status,
                     sha = file.Sha,
