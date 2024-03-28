@@ -1261,9 +1261,47 @@ public class GitHubController : ControllerBase
                         name = file.Filename,
                         status = file.Status,
                         sha = file.Sha,
+                        adds = file.Additions,
+                        dels = file.Deletions,
+                        changes = file.Changes,
                         content = file.Patch
                     });
                 }
+
+                return Ok(result);
+            }
+        }
+        return NotFound("not found");
+    }
+
+    [HttpGet("commit/{owner}/{repoName}/{prnumber}/get_all_patches")]
+    public async Task<ActionResult> getAllPatches(string owner, string repoName, int prnumber)
+    {
+        var appClient = GetNewClient();
+        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+        var result = new List<object>([]);
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent();
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        foreach (var installation in installations)
+        {
+            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            {
+                var files = await userClient.PullRequest.Files(owner, repoName, prnumber);
+                result.AddRange(files.Select(file => new 
+                { 
+                    name = file.FileName,
+                    status = file.Status,
+                    sha = file.Sha,
+                    adds = file.Additions,
+                    dels = file.Deletions,
+                    changes = file.Changes,
+                    content = file.Patch
+                }));
 
                 return Ok(result);
             }
