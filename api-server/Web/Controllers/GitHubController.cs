@@ -658,7 +658,23 @@ public class GitHubController : ControllerBase
                 {
                     var reviewRequest = new PullRequestReviewRequest(reviewers, null);
                     var pull = await client.PullRequest.ReviewRequest.Create(owner, repoName, (int)prnumber, reviewRequest);
+
+                    var config = new CoreConfiguration();
+                    string connectionString = config.DbConnectionString;
+                    using var connection = new NpgsqlConnection(connectionString);
+                    connection.Open();
+
+                    string query = $"UPDATE pullrequestinfo SET updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE reponame = '{repoName}' AND pullnumber = {prnumber}";
+
+                    using (var command = new NpgsqlCommand(query, connection))
+                    {
+                        command.ExecuteNonQuery();
+                    }
+
+                    connection.Close();
+
                     return Ok($"{string.Join(",", reviewers)} is assigned to PR #{prnumber}.");
+
                 }
                 catch (NotFoundException)
                 {
@@ -697,6 +713,21 @@ public class GitHubController : ControllerBase
                     string[] arr = [reviewer];
                     var reviewRequest = new PullRequestReviewRequest(arr, null);
                     await client.PullRequest.ReviewRequest.Delete(owner, repoName, (int)prnumber, reviewRequest);
+
+                    var config = new CoreConfiguration();
+                    string connectionString = config.DbConnectionString;
+                    using var connection = new NpgsqlConnection(connectionString);
+                    connection.Open();
+
+                    string query = $"UPDATE pullrequestinfo SET updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE reponame = '{repoName}' AND pullnumber = {prnumber}";
+
+                    using (var command = new NpgsqlCommand(query, connection))
+                    {
+                        command.ExecuteNonQuery();
+                    }
+
+                    connection.Close();
+
                     return Ok($"{reviewer} is removed from PR #{prnumber}.");
                 }
                 catch (NotFoundException)
@@ -726,6 +757,14 @@ public class GitHubController : ControllerBase
         {
             command.ExecuteNonQuery();
         }
+
+        string query1 = $"UPDATE pullrequestinfo SET updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE reponame = '{repoName}' AND pullnumber = {prnumber}";
+
+        using (var command = new NpgsqlCommand(query1, connection))
+        {
+            command.ExecuteNonQuery();
+        }
+
         connection.Close();
 
         return Ok($"Comment added to pull request #{prnumber} in repository {repoName}.");
@@ -736,6 +775,7 @@ public class GitHubController : ControllerBase
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         bool is_review = false;
+        int prnumber = 0;
         Octokit.PullRequestReviewComment? res1 = null;
         Octokit.IssueComment? res2 = null;
 
@@ -745,13 +785,14 @@ public class GitHubController : ControllerBase
         using var connection = new NpgsqlConnection(connectionString);
         connection.Open();
 
-        string select = $"SELECT is_review FROM comments WHERE commentid = {comment_id}";
+        string select = $"SELECT is_review, prnumber FROM comments WHERE commentid = {comment_id}";
 
         using var command = new NpgsqlCommand(select, connection);
         NpgsqlDataReader reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
             is_review = reader.GetBoolean(0);
+            prnumber = reader.GetInt32(1);
         }
 
         reader.Close();
@@ -777,6 +818,14 @@ public class GitHubController : ControllerBase
         {
             command2.ExecuteNonQuery();
         }
+
+        string query1 = $"UPDATE pullrequestinfo SET updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE reponame = '{repoName}' AND pullnumber = {prnumber}";
+
+        using (var command2 = new NpgsqlCommand(query1, connection))
+        {
+            command.ExecuteNonQuery();
+        }
+
         connection.Close();
 
         return (res1 == null) ? Ok(res2) : Ok(res1);
@@ -787,6 +836,7 @@ public class GitHubController : ControllerBase
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         bool is_review = false;
+        int prnumber = 0;
         Octokit.PullRequestReviewComment? res1 = null;
         Octokit.IssueComment? res2 = null;
 
@@ -796,16 +846,15 @@ public class GitHubController : ControllerBase
         using var connection = new NpgsqlConnection(connectionString);
         connection.Open();
 
-        string select = $"SELECT is_review FROM comments WHERE commentid = {comment_id}";
+        string select = $"SELECT is_review, prnumber FROM comments WHERE commentid = {comment_id}";
 
         using var command = new NpgsqlCommand(select, connection);
         NpgsqlDataReader reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
             is_review = reader.GetBoolean(0);
+            prnumber = reader.GetInt32(1);
         }
-
-        reader.Close();
         connection.Close();
 
         if (is_review)
@@ -823,6 +872,14 @@ public class GitHubController : ControllerBase
             res2 = await client.Issue.Comment.Update(owner, repoName, comment_id, new_body);
         }
 
+        connection.Open();
+        string query = $"UPDATE pullrequestinfo SET updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE reponame = '{repoName}' AND pullnumber = {prnumber}";
+        using (var command2 = new NpgsqlCommand(query, connection))
+        {
+            command2.ExecuteNonQuery();
+        }
+        connection.Close();
+
         return (res1 == null) ? Ok(res2) : Ok(res1);
     }
 
@@ -831,19 +888,21 @@ public class GitHubController : ControllerBase
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         bool is_review = false;
+        int prnumber = 0;
 
         var config = new CoreConfiguration();
         string connectionString = config.DbConnectionString;
         using var connection = new NpgsqlConnection(connectionString);
         connection.Open();
 
-        string select = $"SELECT is_review FROM comments WHERE commentid = {comment_id}";
+        string select = $"SELECT is_review, prnumber FROM comments WHERE commentid = {comment_id}";
 
         using var command = new NpgsqlCommand(select, connection);
         NpgsqlDataReader reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
             is_review = reader.GetBoolean(0);
+            prnumber = reader.GetInt32(1);
         }
 
         reader.Close();
@@ -865,6 +924,13 @@ public class GitHubController : ControllerBase
         {
             command2.ExecuteNonQuery();
         }
+
+        string query2 = $"UPDATE pullrequestinfo SET updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE reponame = '{repoName}' AND pullnumber = {prnumber}";
+        using (var command2 = new NpgsqlCommand(query2, connection))
+        {
+            command2.ExecuteNonQuery();
+        }
+
         connection.Close();
 
         return Ok($"Comment deleted.");
@@ -1141,6 +1207,12 @@ public class GitHubController : ControllerBase
         query2 = query2[..^2];
 
         using (var command = new NpgsqlCommand(query2, connection))
+        {
+            command.ExecuteNonQuery();
+        }
+
+        string query3 = $"UPDATE pullrequestinfo SET updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE reponame = '{repoName}' AND pullnumber = {prnumber}";
+        using (var command = new NpgsqlCommand(query3, connection))
         {
             command.ExecuteNonQuery();
         }
