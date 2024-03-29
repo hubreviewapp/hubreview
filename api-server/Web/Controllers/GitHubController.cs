@@ -2885,7 +2885,7 @@ public class GitHubController : ControllerBase
 
         foreach (var pull in allPRs)
         {
-            bool isReviewed = false;
+            
             var reviews = await github.PullRequest.Review.GetAll(pull.RepoOwner, pull.RepoName, (int)pull.PRNumber);
 
             foreach (var review in reviews)
@@ -2894,8 +2894,6 @@ public class GitHubController : ControllerBase
                 {
                     reviewsLastWeek.Add(review);
                     submitted++;
-                    isReviewed = true;
-                    break;
                 }
             }
         }
@@ -3058,4 +3056,93 @@ public class GitHubController : ControllerBase
             throw; // Rethrow the exception or handle it as necessary
         }
     }
+
+    [HttpGet("user/monthlysummary")]
+    public async Task<ActionResult> GetReviewsForUserInLastMonth()
+    {
+        var github = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+
+        // Get organizations for the current user
+        var organizations = await github.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        var weeks = new List<(DateTime start, DateTime end)>();
+        DateTime today = DateTime.Today;
+
+        // Calculate the start and end dates for the last 4 weeks
+        for (int i = 0; i < 4; i++)
+        {
+            DateTime startOfWeek = today.AddDays(-(int)today.DayOfWeek + 1 - (i * 7)); // Start from Monday
+            DateTime endOfWeek = startOfWeek.AddDays(6); // End on Sunday
+            weeks.Add((startOfWeek, endOfWeek));
+        }
+
+        var reviewsThisWeek = new int[] { 0, 0, 0, 0 };
+
+        List<PRInfo> allPRs = new List<PRInfo>();
+
+        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        {
+            await connection.OpenAsync();
+
+            string query = "SELECT pullnumber, reponame, repoowner FROM pullrequestinfo WHERE (repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins)) AND updatedat >= @startOfWeek AND EXISTS (SELECT 1 FROM json_array_elements(reviews) AS elem WHERE elem->>'login' = @ownerLogin)";
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@ownerLogin", userLogin);
+                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@startOfWeek", weeks[3].start);
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        PRInfo pr = new PRInfo
+                        {
+                            PRNumber = reader.GetInt32(0),
+                            RepoName = reader.GetString(1),
+                            RepoOwner = reader.GetString(2),
+                        };
+
+                        allPRs.Add(pr);
+                    }
+                }
+            }
+
+            await connection.CloseAsync();
+        }
+
+        foreach (var pull in allPRs)
+        {
+            var reviews = await github.PullRequest.Review.GetAll(pull.RepoOwner, pull.RepoName, (int)pull.PRNumber);
+
+            foreach (var review in reviews)
+            {
+                bool isMyUser = review.User.Login == userLogin;
+                if (isMyUser && review.SubmittedAt >= weeks[0].start && review.SubmittedAt <= weeks[0].end)
+                {
+                    reviewsThisWeek[0]++;
+                }
+                else if (isMyUser && review.SubmittedAt >= weeks[1].start && review.SubmittedAt <= weeks[1].end)
+                {
+                    reviewsThisWeek[1]++;
+                }
+                else if (isMyUser && review.SubmittedAt >= weeks[2].start && review.SubmittedAt <= weeks[2].end)
+                {
+                    reviewsThisWeek[2]++;
+                }
+                else if (isMyUser && review.SubmittedAt >= weeks[3].start && review.SubmittedAt <= weeks[3].end)
+                {
+                    reviewsThisWeek[3]++;
+                }
+            }
+        }
+
+        return Ok(reviewsThisWeek);
+    }
+
 }
