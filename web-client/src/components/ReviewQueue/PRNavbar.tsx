@@ -52,8 +52,7 @@ export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSe
     };
 
     getRepos();
-  }, []);  // eslint-disable-line
-
+  }, []); // eslint-disable-line
 
   const allChecked = selectedRepos.every((value) => value.selected);
   const indeterminate = selectedRepos.some((value) => value.selected) && !allChecked;
