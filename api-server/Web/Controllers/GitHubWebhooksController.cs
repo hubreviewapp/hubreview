@@ -642,7 +642,7 @@ namespace CS.Web.Controllers
                             ? $"'{{ {string.Join(",", pullRequestPayload.pull_request.assignees.Select(r => $@"""{r.login}"""))} }}'"
                             : "'{}'";
 
-                        var query = $"UPDATE pullrequestinfo SET assignees = {requestedReviewers} WHERE pullid = {pullRequestPayload.pull_request.id}";
+                        var query = $"UPDATE pullrequestinfo SET assignees = {requestedReviewers}, updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE pullid = {pullRequestPayload.pull_request.id}";
                         connection.Open();
 
                         using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
@@ -726,7 +726,7 @@ namespace CS.Web.Controllers
                     }
                     else if (pullRequestPayload.action == "closed" || pullRequestPayload.action == "reopened")
                     {
-                        var query = $"UPDATE pullrequestinfo SET state = '{pullRequestPayload.pull_request.state.ToString()}' WHERE pullid = {pullRequestPayload.pull_request.id}";
+                        var query = $"UPDATE pullrequestinfo SET state = '{pullRequestPayload.pull_request.state.ToString()}', updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE pullid = {pullRequestPayload.pull_request.id}";
                         connection.Open();
 
                         using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
@@ -738,7 +738,7 @@ namespace CS.Web.Controllers
                     }
                     else if (pullRequestPayload.action == "edited")
                     {
-                        var query = $"UPDATE pullrequestinfo SET title = '{pullRequestPayload.pull_request.title}' WHERE pullid = {pullRequestPayload.pull_request.id}";
+                        var query = $"UPDATE pullrequestinfo SET title = '{pullRequestPayload.pull_request.title}', updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE pullid = {pullRequestPayload.pull_request.id}";
                         connection.Open();
 
                         using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
@@ -784,7 +784,7 @@ namespace CS.Web.Controllers
                         }
                         var labeljson = JsonConvert.SerializeObject(labels);
 
-                        var query = $"UPDATE pullrequestinfo SET labels = '{labeljson}', priority = {priority} WHERE pullid = {pullRequestPayload.pull_request.id}";
+                        var query = $"UPDATE pullrequestinfo SET labels = '{labeljson}', priority = {priority}, updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE pullid = {pullRequestPayload.pull_request.id}";
                         connection.Open();
 
                         using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
@@ -800,7 +800,7 @@ namespace CS.Web.Controllers
                             ? $"'{{ {string.Join(",", pullRequestPayload.pull_request.requested_reviewers.Select(r => $@"""{r.login}"""))} }}'"
                             : "'{}'";
 
-                        var query = $"UPDATE pullrequestinfo SET reviewers = {requestedReviewers} WHERE pullid = {pullRequestPayload.pull_request.id}";
+                        var query = $"UPDATE pullrequestinfo SET reviewers = {requestedReviewers}, updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE pullid = {pullRequestPayload.pull_request.id}";
                         connection.Open();
 
                         using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
@@ -847,7 +847,7 @@ namespace CS.Web.Controllers
                     }
 
                     var reviewsJson = JsonConvert.SerializeObject(latestReviews);
-                    string reviewsQuery = $"UPDATE pullrequestinfo SET reviews = '{reviewsJson}' WHERE pullid = {pullRequestReviewPayload.pull_request.id}";
+                    string reviewsQuery = $"UPDATE pullrequestinfo SET reviews = '{reviewsJson}', updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE pullid = {pullRequestReviewPayload.pull_request.id}";
                     connection.Open();
                     using (var command = new NpgsqlCommand(reviewsQuery, connection))
                     {
