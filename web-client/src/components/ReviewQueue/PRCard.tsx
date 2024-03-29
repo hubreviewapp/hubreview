@@ -4,7 +4,7 @@ import LabelButton, { HubReviewLabelType } from "../LabelButton";
 import { useDisclosure } from "@mantine/hooks";
 import { IconCaretDown, IconCaretUp, IconCircleCheck, IconXboxX, IconMessage, IconFiles } from "@tabler/icons-react";
 import { PRInfo } from "../../models/PRInfo.tsx";
-import PriorityBadge, {PriorityBadgeLabel} from "../PriorityBadge";
+import PriorityBadge, { PriorityBadgeLabel } from "../PriorityBadge";
 
 export interface PullRequestCardProps {
   data: PRInfo;
