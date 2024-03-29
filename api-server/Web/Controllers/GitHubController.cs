@@ -3142,7 +3142,142 @@ public class GitHubController : ControllerBase
             }
         }
 
-        return Ok(reviewsThisWeek);
+        var requestedReviewsCount = await GetMonthlyRequestedPRs(github);
+
+        return Ok(requestedReviewsCount);
+    }
+
+    
+    public async Task<int[]> GetMonthlyRequestedPRs(GitHubClient github)
+    {
+        var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
+        var connection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
+
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+
+        List<PRInfo> allPRs = new List<PRInfo>();
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+
+        // Get organizations for the current user
+        var organizations = await github.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        var weeks = new List<(DateTime start, DateTime end)>();
+        DateTime today = DateTime.Today;
+
+        // Calculate the start and end dates for the last 4 weeks
+        for (int i = 0; i < 4; i++)
+        {
+            DateTime startOfWeek = today.AddDays(-(int)today.DayOfWeek + 1 - (i * 7)); // Start from Monday
+            DateTime endOfWeek = startOfWeek.AddDays(6); // End on Sunday
+            weeks.Add((startOfWeek, endOfWeek));
+        }
+
+        using (NpgsqlConnection conn = new NpgsqlConnection(connectionString))
+        {
+            await conn.OpenAsync();
+
+            string selects = "pullnumber, reponame, repoowner";
+            string q = "SELECT " + selects + " FROM pullrequestinfo WHERE ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) ) AND updatedat >= @lastWeek";
+            using (NpgsqlCommand command = new NpgsqlCommand(q, conn))
+            {
+                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@lastWeek", weeks[3].start);
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        PRInfo pr = new PRInfo
+                        {
+                            PRNumber = reader.GetInt32(0),
+                            RepoName = reader.GetString(1),
+                            RepoOwner = reader.GetString(2),
+                        };
+
+                        allPRs.Add(pr);
+                    }
+                }
+            }
+
+            await conn.CloseAsync();
+        }
+
+        var requestedThisWeek = new int[] { 0, 0, 0, 0 };
+
+        foreach (var pr in allPRs)
+        {
+            var query = new Query()
+            .Repository(Var("name"), Var("owner"))
+            .PullRequest(Var("prnumber"))
+            .TimelineItems(40, null, null, null, null, null, null)
+            .Nodes
+            .Select(node => node.Switch<object>(when => when
+            .ReviewRequestedEvent(y => new
+            {
+                Actor = y.Actor.Select(actor => new
+                {
+                    AvatarUrl = actor.AvatarUrl(500),
+                    Login = actor.Login,
+                })
+                .SingleOrDefault(),
+
+                RequestedReviewer = y.RequestedReviewer.Select(reviewer => new
+                {
+
+                    User = reviewer.Switch<Core.Entities.User>(whenUser => whenUser
+                            .User(user => new Core.Entities.User
+                            {
+                                AvatarUrl = user.AvatarUrl(100),
+                                Login = user.Login,
+                            })),
+                })
+                .SingleOrDefault(),
+
+                CreatedAt = y.CreatedAt,
+            })
+            )).Compile();
+
+
+            var vars = new Dictionary<string, object>
+            {
+                { "owner", pr.RepoOwner },
+                { "name", pr.RepoName },
+                { "prnumber", pr.PRNumber },
+            };
+
+            var result = await connection.Run(query, vars);
+
+
+
+            foreach (var node in result)
+            {
+                var reviewRequestedEvent = node as dynamic;
+                var requestedReviewer = reviewRequestedEvent?.RequestedReviewer;
+                var user = requestedReviewer?.User?.Login;
+                var created = reviewRequestedEvent?.CreatedAt;
+
+                bool isMyUser = user == userLogin;
+                if (isMyUser && created >= weeks[0].start && created <= weeks[0].end)
+                {
+                    requestedThisWeek[0]++;
+                } else if (isMyUser && created >= weeks[1].start && created <= weeks[1].end)
+                {
+                    requestedThisWeek[1]++;
+                } else if (isMyUser && created >= weeks[2].start && created <= weeks[2].end)
+                {
+                    requestedThisWeek[2]++;
+                } else if (isMyUser && created >= weeks[3].start && created <= weeks[3].end)
+                {
+                    requestedThisWeek[3]++;
+                }
+            }
+        }
+
+        return requestedThisWeek;
     }
 
 }
