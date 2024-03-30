@@ -1392,7 +1392,7 @@ public class GitHubController : ControllerBase
         var organizations = await userClient.Organization.GetAllForCurrent();
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
-        var result = new List<CollaboratorInfo>();
+        var result = new List<object>();
 
         var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
         foreach (var installation in installations)
@@ -1411,11 +1411,14 @@ public class GitHubController : ControllerBase
                         if (collaborator.Login == prOwner)
                             continue; // Skip the pr owner
 
-                        result.Add(new CollaboratorInfo
+                        var userLoads = await GetUserWorkload(collaborator.Login);
+                        result.Add(new
                         {
                             Id = collaborator.Id,
                             Login = collaborator.Login,
-                            AvatarUrl = collaborator.AvatarUrl
+                            AvatarUrl = collaborator.AvatarUrl,
+                            currentLoad = userLoads.currentLoad,
+                            maxLoad = userLoads.maxLoad
                         });
                     }
 
@@ -1429,6 +1432,43 @@ public class GitHubController : ControllerBase
         }
 
         return NotFound("There exists no user in session.");
+    }
+
+    [HttpGet("deneme/{userName}")]
+    public async Task<Workload> GetUserWorkload(string userName)
+    {
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        long result;
+
+        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        {
+            await connection.OpenAsync();
+
+            string query = @"
+                SELECT COALESCE(SUM(additions + deletions), 0) AS total_workload
+                FROM pullrequestinfo
+                WHERE state = 'open'
+                AND @userName = ANY(reviewers)
+            ";
+
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@userName", userName);
+
+                result = (long)await command.ExecuteScalarAsync();
+            }
+
+            await connection.CloseAsync();
+        }
+
+        var workload = new Workload
+        {
+            currentLoad = result,
+            maxLoad = 1000
+        };
+
+        return workload;
     }
 
     [HttpGet("getRepoLabels/{owner}/{repoName}")]
