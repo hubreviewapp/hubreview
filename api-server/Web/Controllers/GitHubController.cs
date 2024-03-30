@@ -1434,7 +1434,6 @@ public class GitHubController : ControllerBase
         return NotFound("There exists no user in session.");
     }
 
-    [HttpGet("deneme/{userName}")]
     public async Task<Workload> GetUserWorkload(string userName)
     {
         var config = new CoreConfiguration();
