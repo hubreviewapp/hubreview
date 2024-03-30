@@ -2885,7 +2885,7 @@ public class GitHubController : ControllerBase
 
         var allReviewsTasks = allPRs.Select(async pull =>
         {
-        
+
 
             var reviews = await github.PullRequest.Review.GetAll(pull.RepoOwner, pull.RepoName, (int)pull.PRNumber);
 
