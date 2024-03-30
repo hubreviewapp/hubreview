@@ -2883,9 +2883,10 @@ public class GitHubController : ControllerBase
         var reviewsLastWeek = new List<Octokit.PullRequestReview>();
         int submitted = 0;
 
-        foreach (var pull in allPRs)
+        var allReviewsTasks = allPRs.Select(async pull =>
         {
-            
+        
+
             var reviews = await github.PullRequest.Review.GetAll(pull.RepoOwner, pull.RepoName, (int)pull.PRNumber);
 
             foreach (var review in reviews)
@@ -2896,7 +2897,8 @@ public class GitHubController : ControllerBase
                     submitted++;
                 }
             }
-        }
+        });
+        await Task.WhenAll(allReviewsTasks);
 
 
 
@@ -2961,7 +2963,7 @@ public class GitHubController : ControllerBase
 
         int requestedPRCount = 0;
 
-        foreach (var pr in allPRs)
+        var allReviewsTasks = allPRs.Select(async pr =>
         {
             var query = new Query()
             .Repository(Var("name"), Var("owner"))
@@ -3018,7 +3020,9 @@ public class GitHubController : ControllerBase
                     requestedPRCount++;
                 }
             }
-        }
+        });
+        await Task.WhenAll(allReviewsTasks);
+
 
         return requestedPRCount;
     }
@@ -3062,6 +3066,10 @@ public class GitHubController : ControllerBase
     {
         var github = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
 
+        var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
+        var Gconnection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
+
+
         var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
         var config = new CoreConfiguration();
@@ -3083,6 +3091,9 @@ public class GitHubController : ControllerBase
         }
 
         var reviewsThisWeek = new int[] { 0, 0, 0, 0 };
+
+        var reviewsWithRequests = new int[] { 0, 0, 0, 0 };
+        var timeBetweenRequestsAndReviews = new List<TimeSpan>(new TimeSpan[4]);
 
         List<PRInfo> allPRs = new List<PRInfo>();
 
@@ -3116,7 +3127,7 @@ public class GitHubController : ControllerBase
             await connection.CloseAsync();
         }
 
-        foreach (var pull in allPRs)
+        var allReviewsTasks = allPRs.Select(async pull =>
         {
             var reviews = await github.PullRequest.Review.GetAll(pull.RepoOwner, pull.RepoName, (int)pull.PRNumber);
 
@@ -3126,28 +3137,281 @@ public class GitHubController : ControllerBase
                 if (isMyUser && review.SubmittedAt >= weeks[0].start && review.SubmittedAt <= weeks[0].end)
                 {
                     reviewsThisWeek[0]++;
+                    var query = new Query()
+                    .Repository(Var("name"), Var("owner"))
+                    .PullRequest(Var("prnumber"))
+                    .TimelineItems(40, null, null, null, null, null, null)
+                    .Nodes
+                    .Select(node => node.Switch<object>(when => when
+                    .ReviewRequestedEvent(y => new
+                    {
+                        Actor = y.Actor.Select(actor => new
+                        {
+                            AvatarUrl = actor.AvatarUrl(500),
+                            Login = actor.Login,
+                        })
+                        .SingleOrDefault(),
+
+                        RequestedReviewer = y.RequestedReviewer.Select(reviewer => new
+                        {
+
+                            User = reviewer.Switch<Core.Entities.User>(whenUser => whenUser
+                                    .User(user => new Core.Entities.User
+                                    {
+                                        AvatarUrl = user.AvatarUrl(100),
+                                        Login = user.Login,
+                                    })),
+                        })
+                        .SingleOrDefault(),
+
+                        CreatedAt = y.CreatedAt,
+                    })
+                    )).Compile();
+
+                    var vars = new Dictionary<string, object>
+                                {
+                                    { "owner", pull.RepoOwner },
+                                    { "name", pull.RepoName },
+                                    { "prnumber", pull.PRNumber },
+                                };
+
+                    var result = await Gconnection.Run(query, vars);
+
+                    foreach (var node in result.Reverse())
+                    {
+                        var reviewRequestedEvent = node as dynamic;
+                        var requestedReviewer = reviewRequestedEvent?.RequestedReviewer;
+                        var user = requestedReviewer?.User?.Login;
+                        var created = reviewRequestedEvent?.CreatedAt;
+
+                        bool isUser = user == userLogin;
+                        if (isUser && created <= review.SubmittedAt)
+                        {
+                            reviewsWithRequests[0]++;
+                            var duration = review.SubmittedAt - created;
+                            timeBetweenRequestsAndReviews[0] += duration;
+                            break;
+                        }
+                    }
                 }
                 else if (isMyUser && review.SubmittedAt >= weeks[1].start && review.SubmittedAt <= weeks[1].end)
                 {
                     reviewsThisWeek[1]++;
+
+                    var query = new Query()
+                    .Repository(Var("name"), Var("owner"))
+                    .PullRequest(Var("prnumber"))
+                    .TimelineItems(40, null, null, null, null, null, null)
+                    .Nodes
+                    .Select(node => node.Switch<object>(when => when
+                    .ReviewRequestedEvent(y => new
+                    {
+                        Actor = y.Actor.Select(actor => new
+                        {
+                            AvatarUrl = actor.AvatarUrl(500),
+                            Login = actor.Login,
+                        })
+                        .SingleOrDefault(),
+
+                        RequestedReviewer = y.RequestedReviewer.Select(reviewer => new
+                        {
+
+                            User = reviewer.Switch<Core.Entities.User>(whenUser => whenUser
+                                    .User(user => new Core.Entities.User
+                                    {
+                                        AvatarUrl = user.AvatarUrl(100),
+                                        Login = user.Login,
+                                    })),
+                        })
+                        .SingleOrDefault(),
+
+                        CreatedAt = y.CreatedAt,
+                    })
+                    )).Compile();
+
+                    var vars = new Dictionary<string, object>
+                                {
+                                    { "owner", pull.RepoOwner },
+                                    { "name", pull.RepoName },
+                                    { "prnumber", pull.PRNumber },
+                                };
+
+                    var result = await Gconnection.Run(query, vars);
+
+                    foreach (var node in result.Reverse())
+                    {
+                        var reviewRequestedEvent = node as dynamic;
+                        var requestedReviewer = reviewRequestedEvent?.RequestedReviewer;
+                        var user = requestedReviewer?.User?.Login;
+                        var created = reviewRequestedEvent?.CreatedAt;
+
+                        bool isUser = user == userLogin;
+                        if (isUser && created <= review.SubmittedAt)
+                        {
+                            reviewsWithRequests[1]++;
+                            var duration = review.SubmittedAt - created;
+                            timeBetweenRequestsAndReviews[1] += duration;
+                            break;
+                        }
+                    }
                 }
                 else if (isMyUser && review.SubmittedAt >= weeks[2].start && review.SubmittedAt <= weeks[2].end)
                 {
                     reviewsThisWeek[2]++;
+
+                    var query = new Query()
+                    .Repository(Var("name"), Var("owner"))
+                    .PullRequest(Var("prnumber"))
+                    .TimelineItems(40, null, null, null, null, null, null)
+                    .Nodes
+                    .Select(node => node.Switch<object>(when => when
+                    .ReviewRequestedEvent(y => new
+                    {
+                        Actor = y.Actor.Select(actor => new
+                        {
+                            AvatarUrl = actor.AvatarUrl(500),
+                            Login = actor.Login,
+                        })
+                        .SingleOrDefault(),
+
+                        RequestedReviewer = y.RequestedReviewer.Select(reviewer => new
+                        {
+
+                            User = reviewer.Switch<Core.Entities.User>(whenUser => whenUser
+                                    .User(user => new Core.Entities.User
+                                    {
+                                        AvatarUrl = user.AvatarUrl(100),
+                                        Login = user.Login,
+                                    })),
+                        })
+                        .SingleOrDefault(),
+
+                        CreatedAt = y.CreatedAt,
+                    })
+                    )).Compile();
+
+                    var vars = new Dictionary<string, object>
+                                {
+                                    { "owner", pull.RepoOwner },
+                                    { "name", pull.RepoName },
+                                    { "prnumber", pull.PRNumber },
+                                };
+
+                    var result = await Gconnection.Run(query, vars);
+
+                    foreach (var node in result.Reverse())
+                    {
+                        var reviewRequestedEvent = node as dynamic;
+                        var requestedReviewer = reviewRequestedEvent?.RequestedReviewer;
+                        var user = requestedReviewer?.User?.Login;
+                        var created = reviewRequestedEvent?.CreatedAt;
+
+                        bool isUser = user == userLogin;
+                        if (isUser && created <= review.SubmittedAt)
+                        {
+                            reviewsWithRequests[2]++;
+                            var duration = review.SubmittedAt - created;
+                            timeBetweenRequestsAndReviews[2] += duration;
+                            break;
+                        }
+                    }
                 }
                 else if (isMyUser && review.SubmittedAt >= weeks[3].start && review.SubmittedAt <= weeks[3].end)
                 {
                     reviewsThisWeek[3]++;
+
+                    var query = new Query()
+                    .Repository(Var("name"), Var("owner"))
+                    .PullRequest(Var("prnumber"))
+                    .TimelineItems(40, null, null, null, null, null, null)
+                    .Nodes
+                    .Select(node => node.Switch<object>(when => when
+                    .ReviewRequestedEvent(y => new
+                    {
+                        Actor = y.Actor.Select(actor => new
+                        {
+                            AvatarUrl = actor.AvatarUrl(500),
+                            Login = actor.Login,
+                        })
+                        .SingleOrDefault(),
+
+                        RequestedReviewer = y.RequestedReviewer.Select(reviewer => new
+                        {
+
+                            User = reviewer.Switch<Core.Entities.User>(whenUser => whenUser
+                                    .User(user => new Core.Entities.User
+                                    {
+                                        AvatarUrl = user.AvatarUrl(100),
+                                        Login = user.Login,
+                                    })),
+                        })
+                        .SingleOrDefault(),
+
+                        CreatedAt = y.CreatedAt,
+                    })
+                    )).Compile();
+
+                    var vars = new Dictionary<string, object>
+                                {
+                                    { "owner", pull.RepoOwner },
+                                    { "name", pull.RepoName },
+                                    { "prnumber", pull.PRNumber },
+                                };
+
+                    var result = await Gconnection.Run(query, vars);
+
+                    foreach (var node in result.Reverse())
+                    {
+                        var reviewRequestedEvent = node as dynamic;
+                        var requestedReviewer = reviewRequestedEvent?.RequestedReviewer;
+                        var user = requestedReviewer?.User?.Login;
+                        var created = reviewRequestedEvent?.CreatedAt;
+
+                        bool isUser = user == userLogin;
+                        if (isUser && created <= review.SubmittedAt)
+                        {
+                            reviewsWithRequests[3]++;
+                            var duration = review.SubmittedAt - created;
+                            timeBetweenRequestsAndReviews[3] += duration;
+                            break;
+                        }
+                    }
                 }
             }
-        }
+        });
+        await Task.WhenAll(allReviewsTasks);
 
         var requestedReviewsCount = await GetMonthlyRequestedPRs(github);
 
-        return Ok(requestedReviewsCount);
+        var reviewSpeeds = new List<TimeSpan>(new TimeSpan[4]);
+
+        var n = 0;
+        foreach (var x in reviewsWithRequests)
+        {
+            if (x != 0)
+            {
+                reviewSpeeds[n] = timeBetweenRequestsAndReviews[n] / x;
+            }
+            n++;
+        }
+
+        var finalresult = new List<object>();
+
+        for (int i = 0; i < 4; i++)
+        {
+            var weekSummary = new
+            {
+                Week = $"{weeks[i].start:yyyy-MM-dd} - {weeks[i].end:yyyy-MM-dd}",
+                Submitted = reviewsThisWeek[i],
+                Received = requestedReviewsCount[i],
+                Speed = reviewSpeeds[i]
+            };
+            finalresult.Add(weekSummary);
+        }
+
+        return Ok(finalresult);
     }
 
-    
     public async Task<int[]> GetMonthlyRequestedPRs(GitHubClient github)
     {
         var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
@@ -3208,7 +3472,8 @@ public class GitHubController : ControllerBase
 
         var requestedThisWeek = new int[] { 0, 0, 0, 0 };
 
-        foreach (var pr in allPRs)
+
+        var allReviewsTasks = allPRs.Select(async pr =>
         {
             var query = new Query()
             .Repository(Var("name"), Var("owner"))
@@ -3264,20 +3529,159 @@ public class GitHubController : ControllerBase
                 if (isMyUser && created >= weeks[0].start && created <= weeks[0].end)
                 {
                     requestedThisWeek[0]++;
-                } else if (isMyUser && created >= weeks[1].start && created <= weeks[1].end)
+                }
+                else if (isMyUser && created >= weeks[1].start && created <= weeks[1].end)
                 {
                     requestedThisWeek[1]++;
-                } else if (isMyUser && created >= weeks[2].start && created <= weeks[2].end)
+                }
+                else if (isMyUser && created >= weeks[2].start && created <= weeks[2].end)
                 {
                     requestedThisWeek[2]++;
-                } else if (isMyUser && created >= weeks[3].start && created <= weeks[3].end)
+                }
+                else if (isMyUser && created >= weeks[3].start && created <= weeks[3].end)
                 {
                     requestedThisWeek[3]++;
                 }
             }
-        }
+        });
+        await Task.WhenAll(allReviewsTasks);
 
         return requestedThisWeek;
     }
 
+    /* Saldım şimdilik
+        public async Task<int[]> GetMonthlyWaitingReviews(GitHubClient github)
+        {
+
+            List<PRInfo> allPRs = new List<PRInfo>();
+
+            var weeks = new List<(DateTime start, DateTime end)>();
+            DateTime today = DateTime.Today;
+
+            var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+            // Get organizations for the current user
+            var organizations = await github.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+            var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+            var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
+            var Gconnection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
+
+            // Calculate the start and end dates for the last 4 weeks
+            for (int i = 0; i < 4; i++)
+            {
+                DateTime startOfWeek = today.AddDays(-(int)today.DayOfWeek + 1 - (i * 7)); // Start from Monday
+                DateTime endOfWeek = startOfWeek.AddDays(6); // End on Sunday
+                weeks.Add((startOfWeek, endOfWeek));
+            }
+
+            var waitingReviewsThisWeek = new int[] { 0, 0, 0, 0 };
+
+            try
+            {
+                var config = new CoreConfiguration();
+                string connectionString = config.DbConnectionString;
+
+                using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    string query = "SELECT reponame, repoowner, pullnumber FROM pullrequestinfo WHERE state = 'open' AND @ownerLogin = ANY(reviewers)";
+
+                    using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                    {
+                        // Assuming _httpContextAccessor.HttpContext.Session.GetString("UserLogin") returns the login string
+                        command.Parameters.AddWithValue("@ownerLogin", userLogin);
+
+                        using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                        {
+                            while (await reader.ReadAsync())
+                            {
+                                PRInfo pr = new PRInfo
+                                {
+                                    PRNumber = reader.GetInt32(2),
+                                    RepoName = reader.GetString(0),
+                                    RepoOwner = reader.GetString(1),
+                                };
+
+                                allPRs.Add(pr);
+                            }
+                        }
+                        //return (int)waitingReviewsCount;
+
+
+                    }
+                }
+
+                waitingReviewsThisWeek[0] = allPRs.Count();
+
+                foreach (var pr in allPRs)
+                {
+                    var query = new Query()
+                    .Repository(Var("name"), Var("owner"))
+                    .PullRequest(Var("prnumber"))
+                    .TimelineItems(40, null, null, null, null, null, null)
+                    .Nodes
+                    .Select(node => node.Switch<object>(when => when
+                    .ReviewRequestedEvent(y => new
+                    {
+                        Actor = y.Actor.Select(actor => new
+                        {
+                            AvatarUrl = actor.AvatarUrl(500),
+                            Login = actor.Login,
+                        })
+                        .SingleOrDefault(),
+
+                        RequestedReviewer = y.RequestedReviewer.Select(reviewer => new
+                        {
+
+                            User = reviewer.Switch<Core.Entities.User>(whenUser => whenUser
+                                    .User(user => new Core.Entities.User
+                                    {
+                                        AvatarUrl = user.AvatarUrl(100),
+                                        Login = user.Login,
+                                    })),
+                        })
+                        .SingleOrDefault(),
+
+                        CreatedAt = y.CreatedAt,
+                    })
+                    )).Compile();
+
+
+                    var vars = new Dictionary<string, object>
+                    {
+                        { "owner", pr.RepoOwner },
+                        { "name", pr.RepoName },
+                        { "prnumber", pr.PRNumber },
+                    };
+
+                    var result = await Gconnection.Run(query, vars);
+
+
+
+                    foreach (var node in result)
+                    {
+                        var reviewRequestedEvent = node as dynamic;
+                        var requestedReviewer = reviewRequestedEvent?.RequestedReviewer;
+                        var user = requestedReviewer?.User?.Login;
+                        var created = reviewRequestedEvent?.CreatedAt;
+
+                        if (user == userLogin && created <= weeks[1].end)
+                        {
+                            waitingReviewsThisWeek[1]++;
+                        }
+                    }
+                }
+
+                return waitingReviewsThisWeek;
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions appropriately
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                throw; // Rethrow the exception or handle it as necessary
+            }
+        }
+    */
 }
