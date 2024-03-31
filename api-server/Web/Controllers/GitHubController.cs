@@ -3833,4 +3833,127 @@ public class GitHubController : ControllerBase
             }
         }
     */
+
+    [HttpGet("GetFilterLists")]
+    public async Task<ActionResult> GetRepositoryAssignees()
+    {
+        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
+        string? userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        var userClient = GetNewClient(access_token);
+
+        // Get organizations for the current user
+        var organizations = await userClient.Organization.GetAllForCurrent();
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
+        HashSet<string> allAssignees = new HashSet<string>();
+        HashSet<string> allLabels = new HashSet<string>();
+        HashSet<string> allAuthors = new HashSet<string>();
+        List<RepoInfo> allRepos = new List<RepoInfo>();
+
+        var config = new CoreConfiguration();
+        string connectionString = config.DbConnectionString;
+        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        {
+            await connection.OpenAsync();
+
+            string query = "SELECT id, name, ownerLogin, created_at FROM repositoryinfo WHERE ownerLogin = @ownerLogin OR ownerLogin = ANY(@organizationLogins) ORDER BY name ASC";
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        RepoInfo repo = new RepoInfo
+                        {
+                            Id = reader.GetInt64(0),
+                            Name = reader.GetString(1),
+                            OwnerLogin = reader.GetString(2),
+                        };
+                        allRepos.Add(repo);
+                    }
+                }
+            }
+
+            var installations = await _appClient.GitHubApps.GetAllInstallationsForCurrent();
+            var installationTasks = installations.Select(async installation =>
+            {
+                if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+                {
+                    var response = await _appClient.GitHubApps.CreateInstallationToken(installation.Id);
+                    var installationClient = GetNewClient(response.Token);
+
+                    foreach (var repo in allRepos)
+                    {
+                        try
+                        {
+                            var labels = await installationClient.Issue.Labels.GetAllForRepository(repo.OwnerLogin, repo.Name);
+
+                            foreach (var label in labels)
+                            {
+                                if (!label.Name.StartsWith("Priority:"))
+                                {
+                                    lock (allLabels)
+                                    {
+                                        allLabels.Add(label.Name);
+                                    }
+                                }
+                            }
+                        }
+                        catch (NotFoundException)
+                        {
+
+                        }
+                    }
+                }
+            });
+
+            await Task.WhenAll(installationTasks);
+
+
+            string query2 = "SELECT DISTINCT author FROM pullrequestinfo WHERE repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) ORDER BY author ASC";
+            using (NpgsqlCommand command = new NpgsqlCommand(query2, connection))
+            {
+                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        allAuthors.Add(reader.GetString(0));
+                    }
+                }
+            }
+
+            string query3 = "SELECT DISTINCT unnest(assignees) as assignee FROM pullrequestinfo WHERE repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) ORDER BY assignee ASC";
+            using (NpgsqlCommand command = new NpgsqlCommand(query2, connection))
+            {
+                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        allAssignees.Add(reader.GetString(0));
+                    }
+                }
+            }
+
+
+
+            await connection.CloseAsync();
+        }
+
+        allLabels = allLabels.OrderBy(label => label).ToHashSet();
+
+        return Ok(new { Authors = allAuthors, Labels = allLabels, Assignees = allAssignees });
+    }
+
+
+
 }
