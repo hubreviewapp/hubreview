@@ -32,7 +32,7 @@ function ReviewSummaryAnalytics() {
     };
 
     fetchOpenPRs().then();
-  }, []);
+  }, []); // eslint-disable-line
 
   return (
     <Paper ta="center" p="md">
