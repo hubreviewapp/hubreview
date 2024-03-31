@@ -8,6 +8,7 @@ import axios from "axios";
 import { useParams } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
 import { PullRequest } from "../pages/PRDetailsPage.tsx";
+import { useUser } from "../providers/context-utilities";
 
 interface CommentProps {
   id: number;
@@ -70,6 +71,7 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
   const { owner, repoName, prnumber } = useParams();
   const resolvedComments = comments.filter((comment) => comment.isResolved);
   const unresolvedComments = comments.filter((comment) => !comment.isResolved);
+  const userLogin = useUser().userLogin;
 
   const comments2 = resolvedComments.map((comment, index) => (
     <Accordion.Item value={index + ""} key={index}>
@@ -96,6 +98,7 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
   ));
 
   const [apiComments, setApiComments] = useState<CommentProps[] | []>([]);
+  const [filteredComments, setFilteredComments] = useState<CommentProps[] | []>([]);
 
   //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_comments")]
   const fetchPRComments = useCallback(async () => {
@@ -106,6 +109,7 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
       );
       if (res) {
         setApiComments(res.data);
+        setFilteredComments(res.data);
       }
     } catch (error) {
       console.error("Error fetching PR comments:", error);
@@ -151,15 +155,7 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
       });
   }
 
-  /*
-    [HttpPatch("pullrequest/{owner}/{repoName}/{comment_id}/updateComment")]
-    public async Task<ActionResult> UpdateComment(string owner, string repoName, int comment_id, [FromBody] string commentBody)
-    {
-        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        await client.Issue.Comment.Update(owner, repoName, comment_id, commentBody);
-        return Ok($"Comment updated.");
-    }
- */
+  //[HttpPatch("pullrequest/{owner}/{repoName}/{comment_id}/updateComment")]
   function editPRComment(commentId: number, content: string) {
     const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${commentId}/updateComment`;
 
@@ -179,6 +175,20 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
       });
   }
 
+  const handleSelect = (selected: string | null) => {
+    if (selected != null) {
+      if (selected.startsWith("All Comments")) {
+        setFilteredComments(apiComments);
+      }
+      if (selected.startsWith("My Comments")) {
+        setFilteredComments(apiComments.filter((comment) => comment.author === userLogin));
+      }
+      // resolved
+      // active
+      // TO DO, after comment resolved is done
+    }
+  };
+
   return (
     <Grid>
       <Grid.Col span={8}>
@@ -189,16 +199,16 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
             data={[
               "Show Everything (" + apiComments.length + ")",
               "All Comments (" + apiComments.length + ")",
-              "My comments (2)",
+              "My Comments (" + apiComments.filter((comment) => comment.author === userLogin).length + ")",
               "Active (3)",
               "Resolved (2)",
             ]}
             checkIconPosition="left"
-            allowDeselect={false}
+            onChange={(val) => handleSelect(val)}
           />
         </Box>
 
-        {apiComments.map((comment, index) => (
+        {filteredComments.map((comment, index) => (
           <Box key={index}>
             <Comment
               key={index}
