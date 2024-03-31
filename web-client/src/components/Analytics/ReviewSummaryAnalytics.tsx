@@ -1,13 +1,11 @@
 import { Flex, Text, Paper, rem, Title } from "@mantine/core";
 import { DonutChart } from "@mantine/charts";
 import { IconSend, IconMailbox, IconClock } from "@tabler/icons-react";
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
-
 
 //user/weeklysummary
 function ReviewSummaryAnalytics() {
-
   const [userData, setData] = useState([
     { name: "Submitted Reviews", value: 0, color: "indigo.6" },
     { name: "Received Reviews", value: 0, color: "yellow.6" },
@@ -21,10 +19,12 @@ function ReviewSummaryAnalytics() {
           withCredentials: true,
         });
         if (res) {
-          setData(userData.map((item, index) => ({
-            ...item,
-            value: res.data[index]
-          })));
+          setData(
+            userData.map((item, index) => ({
+              ...item,
+              value: res.data[index],
+            })),
+          );
         }
       } catch (error) {
         console.error("Error fetching PR info:", error);
@@ -33,7 +33,6 @@ function ReviewSummaryAnalytics() {
 
     fetchOpenPRs().then();
   }, []);
-
 
   return (
     <Paper ta="center" p="md">
@@ -48,11 +47,11 @@ function ReviewSummaryAnalytics() {
         </Text>
         <Text>
           <IconMailbox style={{ width: rem(18), height: rem(18) }} />
-          Received: {userData[1].value} {" "}
+          Received: {userData[1].value}{" "}
         </Text>
         <Text>
           <IconClock style={{ width: rem(18), height: rem(18) }} />
-          Waiting: {userData[2].value} {" "}
+          Waiting: {userData[2].value}{" "}
         </Text>
       </Flex>
       <DonutChart mt="md" data={userData} tooltipDataSource="segment" mx="auto" />
