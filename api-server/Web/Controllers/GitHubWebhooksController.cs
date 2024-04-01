@@ -850,7 +850,7 @@ namespace CS.Web.Controllers
                     var reviewsJson = JsonConvert.SerializeObject(latestReviews);
 
                     // Get requested reviewers
-                    
+
                     var reqRevs = pullRequestReviewPayload.pull_request.requested_reviewers.Any()
                             ? $"'{{ {string.Join(",", pullRequestReviewPayload.pull_request.requested_reviewers.Select(r => $@"""{r.login}"""))} }}'"
                             : "'{}'";
