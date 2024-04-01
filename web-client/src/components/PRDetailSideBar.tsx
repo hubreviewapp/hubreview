@@ -33,8 +33,8 @@ export interface Contributor {
   id: string;
   login: string;
   avatarUrl: string;
-  waiting: number;
-  capacity: number;
+  currentLoad: number;
+  maxLoad: number;
 }
 
 export interface Label {
@@ -246,10 +246,10 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees }: PRDetailSid
                 <Grid.Col span={4}>
                   <Progress.Root mt="5px" size="lg">
                     <Progress.Section
-                      color={barColor(itm.capacity, itm.waiting)}
-                      value={(itm.waiting / itm.capacity) * 100}
+                      color={barColor(itm.maxLoad, itm.currentLoad)}
+                      value={(itm.currentLoad / itm.maxLoad) * 100}
                     >
-                      <Progress.Label>{(itm.waiting / itm.capacity) * 100}%</Progress.Label>
+                      <Progress.Label>{(itm.currentLoad / itm.maxLoad) * 100}%</Progress.Label>
                     </Progress.Section>
                   </Progress.Root>
                 </Grid.Col>
