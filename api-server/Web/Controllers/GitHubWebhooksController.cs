@@ -848,7 +848,15 @@ namespace CS.Web.Controllers
                     }
 
                     var reviewsJson = JsonConvert.SerializeObject(latestReviews);
-                    string reviewsQuery = $"UPDATE pullrequestinfo SET reviews = '{reviewsJson}', updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE pullid = {pullRequestReviewPayload.pull_request.id}";
+
+                    // Get requested reviewers
+                    
+                    var reqRevs = pullRequestReviewPayload.pull_request.requested_reviewers.Any()
+                            ? $"'{{ {string.Join(",", pullRequestReviewPayload.pull_request.requested_reviewers.Select(r => $@"""{r.login}"""))} }}'"
+                            : "'{}'";
+
+                    // Update requested reviewers and reviews in the database
+                    string reviewsQuery = $"UPDATE pullrequestinfo SET reviewers = {reqRevs}, reviews = '{reviewsJson}', updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE pullid = {pullRequestReviewPayload.pull_request.id}";
                     connection.Open();
                     using (var command = new NpgsqlCommand(reviewsQuery, connection))
                     {
