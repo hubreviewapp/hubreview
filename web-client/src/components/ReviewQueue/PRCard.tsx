@@ -15,6 +15,11 @@ const formatDate = (dateString: string) => {
   const timeDifference = currentDate.getTime() - pastDate.getTime();
   const daysDifference = Math.floor(timeDifference / (1000 * 3600 * 24));
 
+  if (daysDifference == 0) {
+    return "today";
+  } else if (daysDifference == 1) {
+    return "yesterday";
+  }
   return `${daysDifference} days ago`;
 };
 function PRCard({ data: pr }: PullRequestCardProps) {
@@ -35,7 +40,7 @@ function PRCard({ data: pr }: PullRequestCardProps) {
             <Text c="dimmed">{pr.repoName}</Text>
             <Group>
               <Title order={4}>{pr.title}</Title>
-              <Text c="dimmed">Last updated {formatDate(pr.updatedAt)}</Text>
+              <Text c="dimmed">Updated {formatDate(pr.updatedAt)}</Text>
             </Group>
             <Text>
               #{pr.prNumber} opened by <Avatar src={pr.authorAvatarURL} size="xs" display="inline-block" mx={4} />{" "}
