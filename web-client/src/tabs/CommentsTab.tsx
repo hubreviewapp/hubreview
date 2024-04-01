@@ -1,7 +1,7 @@
 import Comment from "../components/Comment.tsx";
 import TextEditor from "../components/TextEditor.tsx";
 import SplitButton from "../components/SplitButton.tsx";
-import { Box, Text, Accordion, Grid, Select } from "@mantine/core";
+import { Box, Text, Accordion, Grid, Select, LoadingOverlay } from "@mantine/core";
 //import CommentList from "../components/DiffComment/CommentList";
 import PRDetailSideBar from "../components/PRDetailSideBar";
 import axios from "axios";
@@ -73,6 +73,8 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
   const unresolvedComments = comments.filter((comment) => !comment.isResolved);
   const userLogin = useUser().userLogin;
 
+  const [isLoading, setIsLoading] = useState(true);
+
   const comments2 = resolvedComments.map((comment, index) => (
     <Accordion.Item value={index + ""} key={index}>
       <Accordion.Control>
@@ -110,6 +112,7 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
       if (res) {
         setApiComments(res.data);
         setFilteredComments(res.data);
+        setIsLoading(false);
       }
     } catch (error) {
       console.error("Error fetching PR comments:", error);
@@ -122,6 +125,7 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
 
   //[HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addComment")]
   function addPRComment(content: string) {
+    setIsLoading(true);
     const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addComment`;
     axios
       .post(apiUrl, content, {
@@ -141,6 +145,7 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
 
   //[HttpDelete("pullrequest/{owner}/{repoName}/{comment_id}/deleteComment")]
   function deletePRComment(commentId: number) {
+    setIsLoading(true);
     const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${commentId}/deleteComment`;
     axios
       .delete(apiUrl, {
@@ -158,7 +163,7 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
   //[HttpPatch("pullrequest/{owner}/{repoName}/{comment_id}/updateComment")]
   function editPRComment(commentId: number, content: string) {
     const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${commentId}/updateComment`;
-
+    setIsLoading(true);
     axios
       .patch(apiUrl, content, {
         headers: {
@@ -208,22 +213,32 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
           />
         </Box>
 
-        {filteredComments.map((comment, index) => (
-          <Box key={index}>
-            <Comment
-              key={index}
-              id={comment.id}
-              author={comment.author}
-              text={comment.body}
-              date={new Date(comment.updatedAt)}
-              isResolved={false}
-              isAIGenerated={false}
-              deletePRComment={() => deletePRComment(comment.id)}
-              editPRComment={editPRComment}
+        {!isLoading &&
+          filteredComments.map((comment, index) => (
+            <Box key={index}>
+              <Comment
+                key={index}
+                id={comment.id}
+                author={comment.author}
+                text={comment.body}
+                date={new Date(comment.updatedAt)}
+                isResolved={false}
+                isAIGenerated={false}
+                deletePRComment={() => deletePRComment(comment.id)}
+                editPRComment={editPRComment}
+              />
+              <br />
+            </Box>
+          ))}
+        {isLoading && (
+          <Box pos="relative" h={"200"}>
+            <LoadingOverlay
+              visible={true}
+              overlayProps={{ radius: "sm", blur: 0 }}
+              loaderProps={{ color: "pink", type: "bars" }}
             />
-            <br />
           </Box>
-        ))}
+        )}
         <br></br>
 
         {unresolvedComments.map((comment, index) => (
