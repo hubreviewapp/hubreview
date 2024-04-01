@@ -1,8 +1,8 @@
-import { Button, Avatar, Blockquote, Box, Card, Flex, Group, Text, Title, Collapse, rem } from "@mantine/core";
+import {Tooltip, Button, Avatar, Blockquote, Box, Card, Flex, Group, Text, Title, Collapse, rem } from "@mantine/core";
 import { Link } from "react-router-dom";
 import LabelButton, { HubReviewLabelType } from "../LabelButton";
 import { useDisclosure } from "@mantine/hooks";
-import { IconCaretDown, IconCaretUp, IconCircleCheck, IconXboxX, IconMessage, IconFiles } from "@tabler/icons-react";
+import {IconMessages, IconCaretDown, IconCaretUp, IconCircleCheck, IconXboxX, IconMessage, IconFiles, IconThumbUp } from "@tabler/icons-react";
 import { PRInfo } from "../../models/PRInfo.tsx";
 import PriorityBadge, { PriorityBadgeLabel } from "../PriorityBadge";
 
@@ -27,6 +27,26 @@ function PRCard({ data: pr }: PullRequestCardProps) {
   const [opened, { toggle }] = useDisclosure(false);
   const iconDown = <IconCaretDown style={{ width: rem(22), height: rem(22) }} />;
   const iconUp = <IconCaretUp style={{ width: rem(22), height: rem(22) }} />;
+
+  function stateToMessage(state: string) {
+    if (state == "APPROVED"){
+      return (
+        <Text c="dimmed">
+          <Tooltip label="Approved">
+            <IconThumbUp color="#40B5AD" style={{ width: rem(22), height: rem(22) }} />
+          </Tooltip>
+          </Text>
+      )
+    }
+    else if(state == "COMMENTED"){
+      return (
+        <Tooltip label="Commented">
+          <IconMessage color="#40B5AD" style={{ width: rem(22), height: rem(22) }} />
+        </Tooltip>
+      )
+
+    }
+  }
 
   return (
     <Card withBorder>
@@ -61,7 +81,7 @@ function PRCard({ data: pr }: PullRequestCardProps) {
       </Link>
       <Flex justify="space-between">
         <Box my="sm">
-          <IconMessage style={{ width: rem(18), height: rem(18) }} />
+          <IconMessages style={{ width: rem(18), height: rem(18) }} />
           {pr.comments} comments, {"  "}
           <IconFiles style={{ width: rem(18), height: rem(18) }} />
           {pr.files} files
@@ -112,13 +132,16 @@ function PRCard({ data: pr }: PullRequestCardProps) {
           )}
 
           <Group>
-            {pr.reviewers.length == 0 ? (
-              <Text c="dimmed">No reviewers added.</Text>
+            {pr.reviews.length == 0 ? (
+              <Text c="dimmed">No reviews added.</Text>
             ) : (
               <Group>
-                <Text c="dimmed">Reviewers:</Text>
-                {pr.reviewers.map((r) => (
-                  <Text key={r}>{r}</Text>
+                <Text c="dimmed">Review status:</Text>
+                {pr.reviews.map((r) => (
+                  <Group key={r.login}>
+                    <Text>{r.login}:</Text>
+                    <Text c="dimmed">{stateToMessage(r.state)}</Text>
+                  </Group>
                 ))}
               </Group>
             )}
