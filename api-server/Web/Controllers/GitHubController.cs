@@ -518,7 +518,7 @@ public class GitHubController : ControllerBase
                 try
                 {
                     var pull = await installationClient.PullRequest.Get(owner, repoName, (int)prnumber);
-                    
+
                     Array checks;
                     Array reviews;
                     string[] reviewers;
@@ -550,7 +550,7 @@ public class GitHubController : ControllerBase
                                 ChecksSuccess = reader.GetInt32(3);
                                 ChecksFail = reader.GetInt32(4);
                                 reviews = JsonConvert.DeserializeObject<object[]>(reader.GetString(5));
-                                reviewers = reader.IsDBNull(6) ? new string[] { } : ((object[])reader.GetValue(6)).Select(obj => obj.ToString()).ToArray();                     
+                                reviewers = reader.IsDBNull(6) ? new string[] { } : ((object[])reader.GetValue(6)).Select(obj => obj.ToString()).ToArray();
                             }
                         }
 
