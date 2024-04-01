@@ -518,7 +518,58 @@ public class GitHubController : ControllerBase
                 try
                 {
                     var pull = await installationClient.PullRequest.Get(owner, repoName, (int)prnumber);
-                    return Ok(pull);
+                    
+                    Array checks;
+                    Array reviews;
+                    string[] reviewers;
+                    int ChecksComplete;
+                    int ChecksIncomplete;
+                    int ChecksSuccess;
+                    int ChecksFail;
+
+                    var config = new CoreConfiguration();
+                    string connectionString = config.DbConnectionString;
+                    using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+                    {
+                        await connection.OpenAsync();
+
+                        string selects = "checks, checks_complete, checks_incomplete, checks_success, checks_fail, reviews, reviewers";
+                        string query = "SELECT " + selects + " FROM pullrequestinfo WHERE reponame=@reponame AND repoowner=@owner AND pullnumber = @prnumber";// ORDER BY name ASC";
+                        using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                        {
+                            command.Parameters.AddWithValue("@reponame", repoName);
+                            command.Parameters.AddWithValue("@owner", owner);
+                            command.Parameters.AddWithValue("@prnumber", prnumber);
+
+                            using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                            {
+                                await reader.ReadAsync();
+                                checks = JsonConvert.DeserializeObject<object[]>(reader.GetString(0));
+                                ChecksComplete = reader.GetInt32(1);
+                                ChecksIncomplete = reader.GetInt32(2);
+                                ChecksSuccess = reader.GetInt32(3);
+                                ChecksFail = reader.GetInt32(4);
+                                reviews = JsonConvert.DeserializeObject<object[]>(reader.GetString(5));
+                                reviewers = reader.IsDBNull(6) ? new string[] { } : ((object[])reader.GetValue(6)).Select(obj => obj.ToString()).ToArray();                     
+                            }
+                        }
+
+                        await connection.CloseAsync();
+                    }
+
+                    var prDetails = new
+                    {
+                        Pull = pull,
+                        Checks = checks,
+                        Reviews = reviews,
+                        Reviewers = reviewers,
+                        ChecksComplete = ChecksComplete,
+                        ChecksIncomplete = ChecksIncomplete,
+                        ChecksSuccess = ChecksSuccess,
+                        ChecksFail = ChecksFail
+                    };
+
+                    return Ok(prDetails);
                 }
                 catch (NotFoundException)
                 {
