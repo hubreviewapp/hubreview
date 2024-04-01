@@ -19,50 +19,7 @@ interface CommentProps {
   association: string;
 }
 
-const comments: { author: string; text: string; date: Date; isResolved: boolean; isAIGenerated: boolean }[] = [
-  /*
-  {
-    author: "irem_aydın",
-    text:
-      "This pull request addresses a critical bug in the user authentication " +
-      "module. The issue stemmed from improper handling of user sessions, leading to unexpected logouts. The changes in this " +
-      "PR include a comprehensive fix to the session management, ensuring a seamless user experience by preventing inadvertent logouts. " +
-      "Additionally, the code has been optimized for better performance, and thorough testing, including unit and integration " +
-      "tests, has been conducted to validate the solution. Reviewers are encouraged to focus on the modifications in the " +
-      "authentication module, paying attention to code readability, maintainability, and adherence to coding standards. " +
-      "This PR is a crucial step in maintaining the reliability and stability of our application.",
-    date: new Date(2023, 4, 7),
-    isResolved: false,
-    isAIGenerated: true,
-  },
-  {
-    author: "aysekelleci",
-    text:
-      "In every project I'm using Zodios in, I'm eventually seeing more and more \"implicit any\" " +
-      "warnings which go away when restarting the TS language server in VS Code or sometimes even just saving my current file. " +
-      "Looks like TS gets confused as to what typings to pick or something like that (just like you suggested).",
-    date: new Date(2023, 4, 7),
-    isResolved: true,
-    isAIGenerated: false,
-  },
-
-  {
-    author: "ecekahraman",
-    text: "Consider choosing a more descriptive variable name in the `functionX`.",
-    date: new Date(2023, 4, 7),
-    isResolved: false,
-    isAIGenerated: false,
-  },
-
-  {
-    author: "aysekelleci",
-    text: "Think about adding unit tests for future improvements.",
-    date: new Date(2023, 4, 7),
-    isResolved: false,
-    isAIGenerated: false,
-  },
-   */
-];
+const comments: { author: string; text: string; date: Date; isResolved: boolean; isAIGenerated: boolean }[] = [];
 export interface CommentsTabProps {
   pullRequest: PullRequest;
 }
@@ -229,15 +186,16 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
               <br />
             </Box>
           ))}
-        isLoading && (
-        <Box pos="relative" h={"200"}>
-          <LoadingOverlay
-            visible={true}
-            overlayProps={{ radius: "sm", blur: 0 }}
-            loaderProps={{ color: "pink", type: "bars" }}
-          />
-        </Box>
-        )<br></br>
+        {isLoading && (
+          <Box pos="relative" h="200">
+            <LoadingOverlay
+              visible={true}
+              overlayProps={{ radius: "sm", blur: 0 }}
+              loaderProps={{ color: "pink", type: "bars" }}
+            />
+          </Box>
+        )}
+        <br></br>
         {unresolvedComments.map((comment, index) => (
           <Box key={index}>
             <Comment
