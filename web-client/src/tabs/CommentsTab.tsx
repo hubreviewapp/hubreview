@@ -212,7 +212,6 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
             onChange={(val) => handleSelect(val)}
           />
         </Box>
-
         {!isLoading &&
           filteredComments.map((comment, index) => (
             <Box key={index}>
@@ -230,17 +229,15 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
               <br />
             </Box>
           ))}
-        {isLoading && (
-          <Box pos="relative" h={"200"}>
-            <LoadingOverlay
-              visible={true}
-              overlayProps={{ radius: "sm", blur: 0 }}
-              loaderProps={{ color: "pink", type: "bars" }}
-            />
-          </Box>
-        )}
-        <br></br>
-
+        isLoading && (
+        <Box pos="relative" h={"200"}>
+          <LoadingOverlay
+            visible={true}
+            overlayProps={{ radius: "sm", blur: 0 }}
+            loaderProps={{ color: "pink", type: "bars" }}
+          />
+        </Box>
+        )<br></br>
         {unresolvedComments.map((comment, index) => (
           <Box key={index}>
             <Comment
@@ -261,7 +258,6 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
             <br />
           </Box>
         ))}
-
         <Accordion chevronPosition="right" variant="separated">
           {comments2}
         </Accordion>
