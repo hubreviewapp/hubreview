@@ -1,11 +1,10 @@
-import {Flex, Text, Paper, rem, Title, Center, Space} from "@mantine/core";
+import { Flex, Text, Paper, rem, Title, Center, Space } from "@mantine/core";
 import { DonutChart } from "@mantine/charts";
 import { IconSend, IconMailbox, IconClock } from "@tabler/icons-react";
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 
 function ReviewSummaryAnalytics() {
-
   const [userData, setData] = useState([
     { name: "Submitted Reviews", value: 0, color: "violet.6" },
     { name: "Received Reviews", value: 0, color: "blue.6" },
@@ -31,7 +30,7 @@ function ReviewSummaryAnalytics() {
       }
     };
 
-    fetchOpenPRs().then();
+    fetchWeeklySummary().then();
   }, []); // eslint-disable-line
 
   return (
@@ -43,20 +42,26 @@ function ReviewSummaryAnalytics() {
         <Center>
           <IconSend style={{ width: rem(18), height: rem(18) }} />
           Sent: {userData[0].value}
-          <Space w="md"/>
-          <Text fs="italic" c="dimmed">~reviews sent to PRs</Text>
+          <Space w="md" />
+          <Text fs="italic" c="dimmed">
+            ~reviews sent to PRs
+          </Text>
         </Center>
         <Center>
           <IconMailbox style={{ width: rem(18), height: rem(18) }} />
           Received: {userData[1].value}
-          <Space w="md"/>
-          <Text fs="italic" c="dimmed">~reviews received this week</Text>
+          <Space w="md" />
+          <Text fs="italic" c="dimmed">
+            ~reviews received this week
+          </Text>
         </Center>
         <Center>
           <IconClock style={{ width: rem(18), height: rem(18) }} />
           Waiting: {userData[2].value}
-          <Space w="md"/>
-          <Text fs="italic" c="dimmed">~Prs waiting for your review</Text>
+          <Space w="md" />
+          <Text fs="italic" c="dimmed">
+            ~Prs waiting for your review
+          </Text>
         </Center>
       </Flex>
       <DonutChart mt="md" data={userData} tooltipDataSource="segment" mx="auto" />

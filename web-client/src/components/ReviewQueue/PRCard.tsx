@@ -1,8 +1,17 @@
-import {Tooltip, Button, Avatar, Blockquote, Box, Card, Flex, Group, Text, Title, Collapse, rem } from "@mantine/core";
+import { Tooltip, Button, Avatar, Blockquote, Box, Card, Flex, Group, Text, Title, Collapse, rem } from "@mantine/core";
 import { Link } from "react-router-dom";
 import LabelButton, { HubReviewLabelType } from "../LabelButton";
 import { useDisclosure } from "@mantine/hooks";
-import {IconMessages, IconCaretDown, IconCaretUp, IconCircleCheck, IconXboxX, IconMessage, IconFiles, IconThumbUp } from "@tabler/icons-react";
+import {
+  IconMessages,
+  IconCaretDown,
+  IconCaretUp,
+  IconCircleCheck,
+  IconXboxX,
+  IconMessage,
+  IconFiles,
+  IconThumbUp,
+} from "@tabler/icons-react";
 import { PRInfo } from "../../models/PRInfo.tsx";
 import PriorityBadge, { PriorityBadgeLabel } from "../PriorityBadge";
 
@@ -27,22 +36,20 @@ function PRCard({ data: pr }: PullRequestCardProps) {
   const iconUp = <IconCaretUp style={{ width: rem(22), height: rem(22) }} />;
 
   function stateToMessage(state: string) {
-    if (state == "APPROVED"){
+    if (state == "APPROVED") {
       return (
         <Text c="dimmed">
           <Tooltip label="Approved">
             <IconThumbUp color="#40B5AD" style={{ width: rem(22), height: rem(22) }} />
           </Tooltip>
-          </Text>
-      )
-    }
-    else if(state == "COMMENTED"){
+        </Text>
+      );
+    } else if (state == "COMMENTED") {
       return (
         <Tooltip label="Commented">
           <IconMessage color="#40B5AD" style={{ width: rem(22), height: rem(22) }} />
         </Tooltip>
-      )
-
+      );
     }
   }
 
