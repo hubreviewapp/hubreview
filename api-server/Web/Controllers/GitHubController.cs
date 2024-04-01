@@ -3963,10 +3963,8 @@ public class GitHubController : ControllerBase
 
             var pullRequest = await github.PullRequest.Get(owner, repoName, prnumber);
 
-            // Merge the pull request
             await github.PullRequest.Merge(owner, repoName, prnumber, new MergePullRequest());
 
-            // Check if the branch exists before attempting to delete it
             var branchToDelete = $"refs/heads/{pullRequest.Head.Ref}";
             await github.Git.Reference.Delete(owner, repoName, branchToDelete);
             Console.WriteLine($"{owner} {repoName} {prnumber} is merged, and branch {branchToDelete} is deleted.");
@@ -3974,7 +3972,6 @@ public class GitHubController : ControllerBase
         }
         catch (Exception ex)
         {
-            // Handle exceptions appropriately
             Console.WriteLine($"An error occurred while merging the pull request: {ex.Message}");
             throw; // Rethrow the exception or handle it as necessary
         }
