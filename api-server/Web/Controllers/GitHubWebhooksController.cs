@@ -67,7 +67,6 @@ namespace CS.Web.Controllers
                     Console.WriteLine("action: " + checkRunPayload.action);
                     response = await _client.GitHubApps.CreateInstallationToken(checkRunPayload.installation.id);
                     installationClient = GetNewClient(response.Token);
-
                     if (checkRunPayload.action == "created")
                     {
                         // Get all checks for the pull request
@@ -87,7 +86,8 @@ namespace CS.Web.Controllers
                                 id = check.Id,
                                 name = check.Name,
                                 status = check.Status,
-                                conclusion = check.Conclusion
+                                conclusion = check.Conclusion,
+                                url = check.HtmlUrl
                             });
 
                         }
@@ -130,7 +130,8 @@ namespace CS.Web.Controllers
                                 id = check.Id,
                                 name = check.Name,
                                 status = check.Status,
-                                conclusion = check.Conclusion
+                                conclusion = check.Conclusion,
+                                url = check.HtmlUrl
                             });
 
                         }
