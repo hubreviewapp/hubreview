@@ -20,6 +20,11 @@ export interface Check {
   };
 }
 
+interface Review {
+  login: string;
+  state: string;
+}
+
 export interface PRInfo {
   repoOwner: string;
   id: number;
@@ -40,4 +45,5 @@ export interface PRInfo {
   checksSuccess: number;
   checksFail: number;
   reviewers: Array<string>;
+  reviews: Array<Review>;
 }
