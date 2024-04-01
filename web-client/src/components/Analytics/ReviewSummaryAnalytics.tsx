@@ -19,26 +19,26 @@ function ReviewSummaryAnalytics() {
           withCredentials: true,
         });
         if (res) {
-          setData(userData.map((item, index) => ({
-            ...item,
-            value: res.data[index]
-          })));
+          setData(
+            userData.map((item, index) => ({
+              ...item,
+              value: res.data[index],
+            })),
+          );
         }
       } catch (error) {
-        console.error("Error fetching fetchWeeklySummary:", error);
+        console.error("Error fetching PR info:", error);
       }
     };
 
-    fetchWeeklySummary().then();
-  }, []);
-
+    fetchOpenPRs().then();
+  }, []); // eslint-disable-line
 
   return (
     <Paper ta="center" p="md">
       <Title order={4} mb="sm">
         Weekly Review Summary
       </Title>
-
       <Flex justify="center" direction="column">
         <Center>
           <IconSend style={{ width: rem(18), height: rem(18) }} />
