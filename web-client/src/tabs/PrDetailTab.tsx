@@ -18,7 +18,7 @@ export default function PrDetailTab({ pull }: PRDetailTabProps) {
       <Badge leftSection={iconCheckupList} size="lg" mb={10} variant="gradient" style={{ visibility: "visible" }}>
         Checks ( {pull.checksSuccess} / {pull.checks.length} )
       </Badge>
-      <Box display={"flex"} style={{ flexWrap: "wrap" }}>
+      <Box display="flex" style={{ flexWrap: "wrap" }}>
         {checks.map((check) => (
           <Card
             key={check.id}
@@ -54,7 +54,7 @@ export default function PrDetailTab({ pull }: PRDetailTabProps) {
               <Anchor
                 href="https://mantine.dev/"
                 target="_blank"
-                c={"blue"}
+                c="blue"
                 style={{ position: "absolute", right: "15px", display: "flex" }}
               >
                 Details
