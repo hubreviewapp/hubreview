@@ -20,7 +20,7 @@ export interface Check {
   };
 }
 
-interface Review {
+export interface Review {
   login: string;
   state: string;
 }
