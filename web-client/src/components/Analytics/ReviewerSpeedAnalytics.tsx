@@ -1,24 +1,8 @@
 import { LineChart } from "@mantine/charts";
 import { Paper, Title } from "@mantine/core";
-const data = [
-  {
-    date: "Mar 22",
-    speed: 9,
-  },
-  {
-    date: "Mar 23",
-    speed: 12,
-  },
-  {
-    date: "Mar 24",
-    speed: 8,
-  },
-  {
-    date: "Mar 25",
-    speed: 9,
-  },
-];
-function ReviewerSpeedAnalytics() {
+import { ReviewLineChartProps } from "./ReviewLineChart.tsx";
+
+function ReviewerSpeedAnalytics(data: ReviewLineChartProps) {
   return (
     <Paper p="md" ta="center">
       <Title order={4} mb="sm">
@@ -26,11 +10,11 @@ function ReviewerSpeedAnalytics() {
       </Title>
       <LineChart
         h={300}
-        data={data}
+        data={data.weekData}
         dataKey="date"
-        series={[{ name: "speed", color: "pink.6" }]}
-        curveType="natural"
-        unit=" days"
+        series={[{ name: "speedInHours", color: "pink.6" }]}
+        curveType="monotone"
+        unit=" hours"
       />
     </Paper>
   );

@@ -6,8 +6,8 @@ import axios from "axios";
 
 function ReviewSummaryAnalytics() {
   const [userData, setData] = useState([
-    { name: "Submitted Reviews", value: 0, color: "violet.6" },
-    { name: "Received Reviews", value: 0, color: "blue.6" },
+    { name: "Submitted Reviews", value: 0, color: "indigo.6" },
+    { name: "Received Reviews", value: 0, color: "yellow.6" },
     { name: "Waiting for Review", value: 0, color: "teal.6" },
   ]);
 
