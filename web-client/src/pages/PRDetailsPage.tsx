@@ -35,7 +35,7 @@ export interface PullRequest {
 }
 
 export interface PRDetail {
-  pull : PullRequest;
+  pull: PullRequest;
   checks: Check[];
   reviews: Review[];
   reviewers: string[]; //duplicate I guess
@@ -127,7 +127,7 @@ function PRDetailsPage(props: PRDetailsPageProps) {
         <Box>
           {currentTab === "reviews" && <ModifiedFilesTab />}
           {currentTab === "comments" && pullRequest && <CommentsTab pullRequest={pullRequest.pull} />}
-          {currentTab === "details" && pullRequest && <PrDetailTab pull={pullRequest}/>}
+          {currentTab === "details" && pullRequest && <PrDetailTab pull={pullRequest} />}
           {currentTab === "commits" && <CommitsTab />}
         </Box>
       </Box>
