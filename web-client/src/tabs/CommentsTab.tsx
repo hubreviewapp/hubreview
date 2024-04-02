@@ -1,6 +1,5 @@
 import Comment from "../components/Comment.tsx";
 import TextEditor from "../components/TextEditor.tsx";
-import SplitButton from "../components/SplitButton.tsx";
 import { Box, Text, Accordion, Grid, Select, LoadingOverlay } from "@mantine/core";
 //import CommentList from "../components/DiffComment/CommentList";
 import PRDetailSideBar from "../components/PRDetailSideBar";
@@ -9,6 +8,7 @@ import { useParams } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
 import { PullRequest } from "../pages/PRDetailsPage.tsx";
 import { useUser } from "../providers/context-utilities";
+import MergeButton from "../components/MergeButton";
 
 interface CommentProps {
   id: number;
@@ -29,7 +29,6 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
   const resolvedComments = comments.filter((comment) => comment.isResolved);
   const unresolvedComments = comments.filter((comment) => !comment.isResolved);
   const userLogin = useUser().userLogin;
-
   const [isLoading, setIsLoading] = useState(true);
 
   const comments2 = resolvedComments.map((comment, index) => (
@@ -220,7 +219,9 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
           {comments2}
         </Accordion>
         <br />
-        <SplitButton />
+        <Box align="right">
+          <MergeButton canMerge={pullRequest?.mergeable} />
+        </Box>
         <br />
         <Box style={{ border: "2px groove gray", borderRadius: 10, padding: "10px" }}>
           <TextEditor content="" addComment={addPRComment} />
@@ -232,6 +233,7 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
             labels={pullRequest?.labels ?? []}
             addedReviewers={pullRequest?.requestedReviewers ?? []}
             addedAssignees={pullRequest?.assignees ?? []}
+            author={pullRequest?.user.login}
           />
         </Box>
       </Grid.Col>

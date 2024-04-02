@@ -31,6 +31,7 @@ export interface PullRequest {
   labels: Label[];
   requestedReviewers: Reviewer[];
   assignees: Assignee[];
+  mergeable: boolean;
 }
 
 export type PRDetailsPageTabName = "comments" | "commits" | "details" | "reviews";
@@ -45,7 +46,6 @@ function PRDetailsPage(props: PRDetailsPageProps) {
   const [pullRequest, setPullRequest] = useState<PullRequest | null>(null);
 
   const currentTab = props.tab ?? tabs[0];
-  console.log(currentTab);
 
   useEffect(() => {
     const fetchPRInfo = async () => {
