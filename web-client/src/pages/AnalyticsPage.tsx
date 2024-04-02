@@ -5,7 +5,14 @@ import ReviewSummaryAnalytics from "../components/Analytics/ReviewSummaryAnalyti
 import ReviewLineChart from "../components/Analytics/ReviewLineChart";
 import axios from "axios";
 import ReviewerSpeedAnalytics from "../components/Analytics/ReviewerSpeedAnalytics";
+import ConvertWeekInterval from "../utility/ConvertWeekInterval.ts";
 
+export interface WeekData {
+  week: string;
+  submitted: number;
+  received: number;
+  speed: string;
+}
 function AnalyticsPage() {
   const navigate = useNavigate();
   const [repoList, setRepoList] = useState<RepoListResponse>({ repoNames: [] });
@@ -42,6 +49,25 @@ function AnalyticsPage() {
     console.log(promise);
   }, []);
 
+  //user/monthlysummary
+  const [weekData, setWeekData] = useState<WeekData[]>([]);
+  useEffect(() => {
+    const getRepos = async () => {
+      try {
+        const res = await axios.get(`http://localhost:5018/api/github/user/monthlysummary`, {
+          withCredentials: true,
+        });
+        if (res.data) {
+          setWeekData(ConvertWeekInterval(res.data.reverse()));
+        }
+      } catch (error) {
+        console.error("Error fetching monthly summary", error);
+      }
+    };
+
+    getRepos();
+  }, []);
+
   return (
     <Container fluid my="md">
       <Box mb="sm">
@@ -54,7 +80,7 @@ function AnalyticsPage() {
           </Grid.Col>
           <Divider orientation="vertical" />
           <Grid.Col span={6}>
-            <ReviewLineChart />
+            <ReviewLineChart weekData={weekData} />
           </Grid.Col>
         </Grid>
         <Divider />
@@ -75,7 +101,7 @@ function AnalyticsPage() {
           </Grid.Col>
           <Divider orientation="vertical" />
           <Grid.Col span={6}>
-            <ReviewerSpeedAnalytics />
+            <ReviewerSpeedAnalytics weekData={weekData} />
           </Grid.Col>
         </Grid>
       </SimpleGrid>
