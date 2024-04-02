@@ -1,28 +1,11 @@
 import { LineChart } from "@mantine/charts";
 import { Paper, Title } from "@mantine/core";
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { WeekData } from "../../pages/AnalyticsPage.tsx";
 
-function ReviewLineChart() {
-  //user/monthlysummary
-  const [data, setData] = useState([]);
-  useEffect(() => {
-    const getRepos = async () => {
-      try {
-        const res = await axios.get(`http://localhost:5018/api/github/user/monthlysummary`, {
-          withCredentials: true,
-        });
-        if (res.data) {
-          setData(res.data);
-          console.log(res.data);
-        }
-      } catch (error) {
-        console.error("Error fetching repositories", error);
-      }
-    };
-
-    getRepos();
-  }, []);
+export interface ReviewLineChartProps {
+  weekData: WeekData[];
+}
+function ReviewLineChart(weekData: ReviewLineChartProps) {
   return (
     <Paper p="md" ta="center">
       <Title order={4} mb="sm">
@@ -30,7 +13,7 @@ function ReviewLineChart() {
       </Title>
       <LineChart
         h={300}
-        data={data}
+        data={weekData.weekData}
         dataKey="week"
         series={[
           { name: "submitted", color: "indigo.6" },
