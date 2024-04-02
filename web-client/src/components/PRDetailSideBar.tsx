@@ -57,9 +57,10 @@ export interface PRDetailSideBarProps {
   addedReviewers: Reviewer[];
   addedAssignees: Assignee[];
   labels: Label[];
+  author: string;
 }
 
-function PRDetailSideBar({ addedReviewers, labels, addedAssignees }: PRDetailSideBarProps) {
+function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRDetailSideBarProps) {
   const { owner, repoName, prnumber } = useParams();
   const iconInfo = <IconInfoCircle style={{ width: rem(18), height: rem(18) }} />;
   const [contributors, setContributors] = useState<Contributor[]>([]);
@@ -73,7 +74,7 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees }: PRDetailSid
     const fetchContributors = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5018/api/github/GetPRReviewerSuggestion/${owner}/${repoName}/${prnumber}`,
+          `http://localhost:5018/api/github/GetPRReviewerSuggestion/${owner}/${repoName}/${author}`,
           {
             withCredentials: true,
           },
@@ -87,7 +88,7 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees }: PRDetailSid
       }
     };
     fetchContributors();
-  }, [owner, prnumber, repoName]);
+  }, [author, owner, repoName]);
 
   useEffect(() => {
     if (addedReviewers.length != 0) {

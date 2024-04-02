@@ -32,6 +32,7 @@ export interface PullRequest {
   labels: Label[];
   requestedReviewers: Reviewer[];
   assignees: Assignee[];
+  mergeable: boolean;
 }
 
 export interface PRDetail {
@@ -57,7 +58,6 @@ function PRDetailsPage(props: PRDetailsPageProps) {
   const [pullRequest, setPullRequest] = useState<PRDetail | null>(null);
 
   const currentTab = props.tab ?? tabs[0];
-  console.log(currentTab);
 
   useEffect(() => {
     const fetchPRInfo = async () => {
