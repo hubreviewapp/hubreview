@@ -4,12 +4,13 @@ import CommitsTab from "../tabs/CommitsTab.tsx";
 import { Box, Badge, rem, Group, UnstyledButton } from "@mantine/core";
 import TabComp from "../components/Tab.tsx";
 import { IconGitPullRequest } from "@tabler/icons-react";
-import PrContextTab from "../tabs/PrContextTab.tsx";
+import PrDetailTab from "../tabs/PrDetailTab.tsx";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import PRSummaryBox from "../components/PRCreate/PRSummaryBox";
 import { Assignee, Label, Reviewer } from "../components/PRDetailSideBar.tsx";
+import { Check, Review } from "../models/PRInfo.tsx";
 
 export interface PullRequest {
   title: string;
@@ -33,6 +34,17 @@ export interface PullRequest {
   assignees: Assignee[];
 }
 
+export interface PRDetail {
+  pull : PullRequest;
+  checks: Check[];
+  reviews: Review[];
+  reviewers: string[]; //duplicate I guess
+  checksComplete: number;
+  checksIncomplete: number;
+  checksSuccess: number;
+  checksFail: number;
+}
+
 export type PRDetailsPageTabName = "comments" | "commits" | "details" | "reviews";
 const tabs: PRDetailsPageTabName[] = ["comments", "commits", "details", "reviews"];
 
@@ -42,7 +54,7 @@ export interface PRDetailsPageProps {
 
 function PRDetailsPage(props: PRDetailsPageProps) {
   const { owner, repoName, prnumber } = useParams();
-  const [pullRequest, setPullRequest] = useState<PullRequest | null>(null);
+  const [pullRequest, setPullRequest] = useState<PRDetail | null>(null);
 
   const currentTab = props.tab ?? tabs[0];
   console.log(currentTab);
@@ -69,42 +81,42 @@ function PRDetailsPage(props: PRDetailsPageProps) {
       <Group>
         <h2>
           {" "}
-          {pullRequest?.title ?? "Loading"}
+          {pullRequest?.pull.title ?? "Loading"}
           <span style={{ color: "#778DA9" }}> #{prnumber}</span>
         </h2>
         &ensp;&ensp;
         <Badge
           size="lg"
-          color={pullRequest?.draft ? "#778DA9" : "green"}
+          color={pullRequest?.pull.draft ? "#778DA9" : "green"}
           key={1}
           rightSection={<IconGitPullRequest style={{ width: rem(18), height: rem(18) }} />}
         >
-          {pullRequest?.draft ? "Draft" : "Open"}
+          {pullRequest?.pull.draft ? "Draft" : "Open"}
         </Badge>
       </Group>
       <Group mb="sm">
         <span style={{ color: "#778DA9" }}>Last updated </span>
         <Group>
           {" "}
-          {new Date(pullRequest?.updatedAt ?? "Loading").toDateString()}
+          {new Date(pullRequest?.pull.updatedAt ?? "Loading").toDateString()}
           <span style={{ color: "#778DA9" }}>by </span>
           <Group>
-            <UnstyledButton component="a" href={pullRequest?.user.htmlUrl} target="_blank" c="blue">
-              {pullRequest?.user.login ?? "Loading"}
+            <UnstyledButton component="a" href={pullRequest?.pull.user.htmlUrl} target="_blank" c="blue">
+              {pullRequest?.pull.user.login ?? "Loading"}
             </UnstyledButton>
           </Group>
         </Group>
         <span style={{ color: "#778DA9" }}> at project</span>
-        <UnstyledButton component="a" href={pullRequest?.base.repository.htmlUrl} target="_blank" c="blue">
+        <UnstyledButton component="a" href={pullRequest?.pull.base.repository.htmlUrl} target="_blank" c="blue">
           {repoName}
         </UnstyledButton>
       </Group>
       <Box w="50%">
         <PRSummaryBox
-          numFiles={pullRequest?.changedFiles ?? 0}
-          numCommits={pullRequest?.commits ?? 0}
-          addedLines={pullRequest?.additions ?? 0}
-          deletedLines={pullRequest?.deletions ?? 0}
+          numFiles={pullRequest?.pull.changedFiles ?? 0}
+          numCommits={pullRequest?.pull.commits ?? 0}
+          addedLines={pullRequest?.pull.additions ?? 0}
+          deletedLines={pullRequest?.pull.deletions ?? 0}
         />
       </Box>
 
@@ -114,8 +126,8 @@ function PRDetailsPage(props: PRDetailsPageProps) {
         <br />
         <Box>
           {currentTab === "reviews" && <ModifiedFilesTab />}
-          {currentTab === "comments" && pullRequest && <CommentsTab pullRequest={pullRequest} />}
-          {currentTab === "details" && <PrContextTab />}
+          {currentTab === "comments" && pullRequest && <CommentsTab pullRequest={pullRequest.pull} />}
+          {currentTab === "details" && pullRequest && <PrDetailTab pull={pullRequest}/>}
           {currentTab === "commits" && <CommitsTab />}
         </Box>
       </Box>
