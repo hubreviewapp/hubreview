@@ -1,5 +1,5 @@
 import { IconGitMerge, IconCircleCheck } from "@tabler/icons-react";
-import { rem, Button, Modal, Box } from "@mantine/core";
+import { rem, Button, Modal, Center } from "@mantine/core";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import { useDisclosure } from "@mantine/hooks";
@@ -35,9 +35,9 @@ function MergeButton(props: MergeButtonProps) {
       <Modal opened={opened} onClose={closeModal} title="Merge Successful">
         <IconCircleCheck color="teal" style={{ width: rem(20), height: rem(20), marginRight: "10px" }} />
         Pull Request is successfully merged!
-        <Box align="center" mt="md">
+        <Center mt="md">
           <Button onClick={closeModal}>Done</Button>
-        </Box>
+        </Center>
       </Modal>
       {props.canMerge ? (
         <Button leftSection={icon} color="green" onClick={handleButtonClick}>

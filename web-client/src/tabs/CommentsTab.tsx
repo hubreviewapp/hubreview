@@ -1,6 +1,6 @@
 import Comment from "../components/Comment.tsx";
 import TextEditor from "../components/TextEditor.tsx";
-import { Box, Text, Accordion, Grid, Select, LoadingOverlay } from "@mantine/core";
+import { Box, Text, Accordion, Grid, Select, LoadingOverlay, Flex } from "@mantine/core";
 //import CommentList from "../components/DiffComment/CommentList";
 import PRDetailSideBar from "../components/PRDetailSideBar";
 import axios from "axios";
@@ -219,9 +219,9 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
           {comments2}
         </Accordion>
         <br />
-        <Box align="right">
+        <Flex justify="right">
           <MergeButton canMerge={pullRequest?.mergeable} />
-        </Box>
+        </Flex>
         <br />
         <Box style={{ border: "2px groove gray", borderRadius: 10, padding: "10px" }}>
           <TextEditor content="" addComment={addPRComment} />
