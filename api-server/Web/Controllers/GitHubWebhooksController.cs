@@ -611,18 +611,18 @@ namespace CS.Web.Controllers
                                     var installationReviewsJson = JsonConvert.SerializeObject(installationLatestReviews);                                
 
 
-                                    query += $"({repository.id}, {pull.Id}, '{pull.Base.Repository.Name}', {pull.Number}, '{pull.Title}', '{pull.User.Login}', '{pull.User.AvatarUrl}', '{pull.CreatedAt.Date:yyyy-MM-dd}', '{pull.UpdatedAt.Date:yyyy-MM-dd}', {pull.Comments}, {pull.Commits}, {pull.ChangedFiles}, {pull.Additions}, {pull.Deletions}, {pull.Draft}, '{pull.State.ToString()}', {requestedReviewers}, '{labeljson}', '{pull.Url}', '{pull.Base.Repository.Owner.Login}', '{JsonConvert.SerializeObject(checksList)}', {checks_complete_count}, {checks_incomplete_count}, {checks_success_count}, {checks_fail_count}, {assignedReviewers}, '{installationReviewsJson}', {priority}), ";
+                                    query += $"({repository.id}, {pull.Id}, '{pull.Base.Repository.Name}', {pull.Number}, '{pull.Title}', '{pull.User.Login}', '{pull.User.AvatarUrl}', '{pull.CreatedAt.Date:yyyy-MM-dd}', '{pull.UpdatedAt.Date:yyyy-MM-dd}', {pull.Comments}, {pull.Commits}, {pull.ChangedFiles}, {pull.Additions}, {pull.Deletions}, {pull.Draft}, {pull.Merged}, '{pull.State.ToString()}', {requestedReviewers}, '{labeljson}', '{pull.Url}', '{pull.Base.Repository.Owner.Login}', '{JsonConvert.SerializeObject(checksList)}', {checks_complete_count}, {checks_incomplete_count}, {checks_success_count}, {checks_fail_count}, {assignedReviewers}, '{installationReviewsJson}', {priority}), ";
                                 
                                     var comments = await installationClient.Issue.Comment.GetAllForIssue(repository.id, repoPull.Number);
                                     foreach (var comm in comments)
                                     {
-                                        comm_query += $" ({comm.Id}, {repository.name}, {pull.Number}, {false}),";
+                                        comm_query += $" ({comm.Id}, '{repository.name}', {pull.Number}, {false}),";
                                     }
 
                                     var reviewcomments = await installationClient.PullRequest.ReviewComment.GetAll(repository.id, repoPull.Number);
                                     foreach (var revcomm in reviewcomments)
                                     {
-                                        comm_query += $" ({revcomm.Id}, {repository.name}, {pull.Number}, {true}),";
+                                        comm_query += $" ({revcomm.Id}, '{repository.name}', {pull.Number}, {true}),";
                                     }
                                 }
 
