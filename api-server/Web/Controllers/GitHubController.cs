@@ -520,8 +520,9 @@ public class GitHubController : ControllerBase
                     var pull = await installationClient.PullRequest.Get(owner, repoName, (int)prnumber);
 
                     Array checks;
-                    Array reviews;
+                    List<ReviewObjDB> reviews = [];
                     string[] reviewers;
+                    List<ReviewObjDB> combined_revs = [];
                     int ChecksComplete;
                     int ChecksIncomplete;
                     int ChecksSuccess;
@@ -549,7 +550,7 @@ public class GitHubController : ControllerBase
                                 ChecksIncomplete = reader.GetInt32(2);
                                 ChecksSuccess = reader.GetInt32(3);
                                 ChecksFail = reader.GetInt32(4);
-                                reviews = JsonConvert.DeserializeObject<object[]>(reader.GetString(5));
+                                reviews = JsonConvert.DeserializeObject<List<ReviewObjDB>>(reader.GetString(5));
                                 reviewers = reader.IsDBNull(6) ? new string[] { } : ((object[])reader.GetValue(6)).Select(obj => obj.ToString()).ToArray();
                             }
                         }
@@ -557,12 +558,23 @@ public class GitHubController : ControllerBase
                         await connection.CloseAsync();
                     }
 
+                    foreach (var obj in reviews)
+                    {
+                        combined_revs.Add(reviewers.Contains(obj.login) ?
+                            new ReviewObjDB
+                            {
+                                login = obj.login,
+                                state = "REQUESTED"
+                            }
+                            : obj
+                        );
+                    }
+
                     var prDetails = new
                     {
                         Pull = pull,
                         checks = checks,
-                        reviews = reviews,
-                        reviewers = reviewers,
+                        reviews = combined_revs,
                         checksComplete = ChecksComplete,
                         ChecksIncomplete = ChecksIncomplete,
                         ChecksSuccess = ChecksSuccess,
