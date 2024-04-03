@@ -470,7 +470,7 @@ namespace CS.Web.Controllers
 
                             string parameters = "(repoid, pullid, reponame, pullnumber, title, author, authoravatarurl, createdat, updatedat, comments, commits, changedfiles, additions, deletions, draft, merged, state, reviewers, labels, pullurl, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, priority)";
                             query = "INSERT INTO pullrequestinfo " + parameters + " VALUES ";
-                            //string comm_query = "INSERT INTO comments (commentid, reponame, prnumber, is_review) VALUES ";
+                            string comm_query = "INSERT INTO comments (commentid, reponame, prnumber, is_review) VALUES ";
 
                             var repoPulls = await GetRepoPullsById(repository.id, installationClient);
 
@@ -608,26 +608,35 @@ namespace CS.Web.Controllers
                                         );
                                     }
 
-                                    var installationReviewsJson = JsonConvert.SerializeObject(installationLatestReviews);
-
-
+                                    var installationReviewsJson = JsonConvert.SerializeObject(installationLatestReviews);                                
 
 
                                     query += $"({repository.id}, {pull.Id}, '{pull.Base.Repository.Name}', {pull.Number}, '{pull.Title}', '{pull.User.Login}', '{pull.User.AvatarUrl}', '{pull.CreatedAt.Date:yyyy-MM-dd}', '{pull.UpdatedAt.Date:yyyy-MM-dd}', {pull.Comments}, {pull.Commits}, {pull.ChangedFiles}, {pull.Additions}, {pull.Deletions}, {pull.Draft}, '{pull.State.ToString()}', {requestedReviewers}, '{labeljson}', '{pull.Url}', '{pull.Base.Repository.Owner.Login}', '{JsonConvert.SerializeObject(checksList)}', {checks_complete_count}, {checks_incomplete_count}, {checks_success_count}, {checks_fail_count}, {assignedReviewers}, '{installationReviewsJson}', {priority}), ";
+                                
+                                    var comments = await installationClient.Issue.Comment.GetAllForIssue(repository.id, repoPull.Number);
+                                    foreach (var comm in comments)
+                                    {
+                                        comm_query += $" ({comm.Id}, {repository.name}, {pull.Number}, {false}),";
+                                    }
+
+                                    var reviewcomments = await installationClient.PullRequest.ReviewComment.GetAll(repository.id, repoPull.Number);
+                                    foreach (var revcomm in reviewcomments)
+                                    {
+                                        comm_query += $" ({revcomm.Id}, {repository.name}, {pull.Number}, {true}),";
+                                    }
                                 }
+
                                 query = query.Substring(0, query.Length - 2);
-                                Console.WriteLine(query);
                                 using (var command = new NpgsqlCommand(query, connection))
                                 {
                                     command.ExecuteNonQuery();
                                 }
 
-                                /*comm_query = comm_query.Substring(0, comm_query.Length - 2);
-                                Console.WriteLine(comm_query);
+                                comm_query = comm_query[..^1];
                                 using (var command = new NpgsqlCommand(comm_query, connection))
                                 {
                                     command.ExecuteNonQuery();
-                                }*/
+                                }
                             }
 
                             connection.Close();
