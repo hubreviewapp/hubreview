@@ -1,4 +1,4 @@
-import { Box, Button, SimpleGrid, Grid, Paper, Title, Container, Divider, Flex } from "@mantine/core";
+import { Button, SimpleGrid, Grid, Paper, Title, Container, Divider, Flex, Center } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import ReviewSummaryAnalytics from "../components/Analytics/ReviewSummaryAnalytics";
@@ -70,9 +70,9 @@ function AnalyticsPage() {
 
   return (
     <Container fluid my="md">
-      <Box mb="sm">
+      <Center mb="sm">
         <Title order={3}>Dashboard</Title>
-      </Box>
+      </Center>
       <SimpleGrid cols={{ base: 1, sm: 1 }} spacing="md">
         <Grid gutter="md">
           <Grid.Col span={5}>
