@@ -23,11 +23,7 @@ import PriorityBadge, { PriorityBadgeLabel } from "./PriorityBadge";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import SelectLabel from "./SelectLabel";
-
-function barColor(capacity: number, waiting: number) {
-  const workload = (waiting / capacity) * 100;
-  return workload > 80 ? "red" : workload > 60 ? "orange" : workload > 40 ? "yellow" : "green";
-}
+import BarColor from "../utility/WorkloadBarColor.ts";
 
 export interface Contributor {
   id: string;
@@ -247,7 +243,7 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
                 <Grid.Col span={4}>
                   <Progress.Root mt="5px" size="lg">
                     <Progress.Section
-                      color={barColor(itm.maxLoad, itm.currentLoad)}
+                      color={BarColor(itm.maxLoad, itm.currentLoad)}
                       value={(itm.currentLoad / itm.maxLoad) * 100}
                     >
                       <Progress.Label>{(itm.currentLoad / itm.maxLoad) * 100}%</Progress.Label>

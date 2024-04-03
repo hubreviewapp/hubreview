@@ -11,7 +11,7 @@ function ReviewerSpeedAnalytics(data: ReviewLineChartProps) {
       <LineChart
         h={300}
         data={data.weekData}
-        dataKey="date"
+        dataKey="week"
         series={[{ name: "speedInHours", color: "pink.6" }]}
         curveType="monotone"
         unit=" hours"
