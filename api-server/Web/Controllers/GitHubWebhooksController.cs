@@ -488,6 +488,7 @@ namespace CS.Web.Controllers
                             string parameters = "(repoid, pullid, reponame, pullnumber, title, author, authoravatarurl, createdat, updatedat, comments, commits, changedfiles, additions, deletions, draft, merged, state, reviewers, labels, pullurl, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, priority)";
                             query = "INSERT INTO pullrequestinfo " + parameters + " VALUES ";
                             string comm_query = "INSERT INTO comments (commentid, reponame, prnumber, is_review) VALUES ";
+                            string review_head_query = "INSERT INTO reviewhead (review_id, reponame, prnumber, body, verdict, comments) VALUES";
 
                             var repoPulls = await GetRepoPullsById(repository.id, installationClient);
 
@@ -636,10 +637,19 @@ namespace CS.Web.Controllers
                                         comm_query += $" ({comm.Id}, '{repository.name}', {pull.Number}, {false}),";
                                     }
 
-                                    var reviewcomments = await installationClient.PullRequest.ReviewComment.GetAll(repository.id, repoPull.Number);
-                                    foreach (var revcomm in reviewcomments)
+                                    var reviewheads = await installationClient.PullRequest.Review.GetAll(owner, repoName, pull.Number);
+                                    foreach (var review in reviewheads)
                                     {
-                                        comm_query += $" ({revcomm.Id}, '{repository.name}', {pull.Number}, {true}),";
+                                        var published_comments = await installationClient.PullRequest.Review.GetAllComments(owner, repoName, pull.Number, review.Id);
+                                        var comment_id_list = string.Join(",", published_comments.Select(c => c.Id));
+
+                                        review_head_query += $" ({review.Id}, '{repoName}', {pull.Number}, '{review.Body}', '{review.State.StringValue}', ARRAY[{comment_id_list}]::bigint[]),";
+
+                                        foreach (var revcomm in published_comments)
+                                        {
+                                            comm_query += $" ({revcomm.Id}, '{repository.name}', {pull.Number}, {true}),";
+                                        }
+
                                     }
                                 }
 
