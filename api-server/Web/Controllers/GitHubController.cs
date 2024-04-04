@@ -2236,7 +2236,7 @@ public class GitHubController : ControllerBase
             await connection.CloseAsync();
         }
 
-        return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
+        return Ok(allPRs);
     }
 
     [HttpPost("prs/userprs/filter")]
@@ -2397,7 +2397,7 @@ public class GitHubController : ControllerBase
             await connection.CloseAsync();
         }
 
-        return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
+        return return Ok(allPRs);
     }
 
     [HttpPost("prs/waitingauthor/filter")]
@@ -2558,7 +2558,7 @@ public class GitHubController : ControllerBase
             await connection.CloseAsync();
         }
 
-        return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
+        return Ok(allPRs);
     }
     [HttpPost("prs/open/filter")]
     public async Task<ActionResult> FilterOpenPRs([FromBody] PRFilter filter)
@@ -2718,7 +2718,7 @@ public class GitHubController : ControllerBase
             await connection.CloseAsync();
         }
 
-        return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
+        return Ok(allPRs);
     }
 
     [HttpPost("prs/merged/filter")]
@@ -2879,7 +2879,7 @@ public class GitHubController : ControllerBase
             await connection.CloseAsync();
         }
 
-        return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
+        return Ok(allPRs);
     }
 
     [HttpPost("prs/closed/filter")]
@@ -3040,7 +3040,7 @@ public class GitHubController : ControllerBase
             await connection.CloseAsync();
         }
 
-        return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
+        return return Ok(allPRs);
     }
 
     [HttpPost("user/weeklysummary")]
