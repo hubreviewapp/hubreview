@@ -2086,12 +2086,12 @@ public class GitHubController : ControllerBase
         filter.assignee string
         filter.author string
         filter.repositories string[]
-        filter.FromDate string
+        filter.fromDate string
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.FromDate = "thisyear";
+        filter.fromDate = "thisyear";
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2127,9 +2127,9 @@ public class GitHubController : ControllerBase
             }
 
             // Add date filter condition based on the selected value
-            if (!string.IsNullOrEmpty(filter.FromDate))
+            if (!string.IsNullOrEmpty(filter.fromDate))
             {
-                switch (filter.FromDate.ToLower())
+                switch (filter.fromDate.ToLower())
                 {
                     case "today":
                         query += " AND createdat >= CURRENT_DATE AND createdat < CURRENT_DATE + INTERVAL '1 day'";
@@ -2245,12 +2245,12 @@ public class GitHubController : ControllerBase
         filter.assignee string
         filter.author string
         filter.repositories string[]
-        filter.FromDate string
+        filter.fromDate string
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.FromDate = "thisyear";
+        filter.fromDate = "thisyear";
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2286,9 +2286,9 @@ public class GitHubController : ControllerBase
             }
 
             // Add date filter condition based on the selected value
-            if (!string.IsNullOrEmpty(filter.FromDate))
+            if (!string.IsNullOrEmpty(filter.fromDate))
             {
-                switch (filter.FromDate.ToLower())
+                switch (filter.fromDate.ToLower())
                 {
                     case "today":
                         query += " AND createdat >= CURRENT_DATE AND createdat < CURRENT_DATE + INTERVAL '1 day'";
@@ -2404,12 +2404,12 @@ public class GitHubController : ControllerBase
         filter.assignee string
         filter.author string
         filter.repositories string[]
-        filter.FromDate string
+        filter.fromDate string
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.FromDate = "thisyear";
+        filter.fromDate = "thisyear";
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2445,9 +2445,9 @@ public class GitHubController : ControllerBase
             }
 
             // Add date filter condition based on the selected value
-            if (!string.IsNullOrEmpty(filter.FromDate))
+            if (!string.IsNullOrEmpty(filter.fromDate))
             {
-                switch (filter.FromDate.ToLower())
+                switch (filter.fromDate.ToLower())
                 {
                     case "today":
                         query += " AND createdat >= CURRENT_DATE AND createdat < CURRENT_DATE + INTERVAL '1 day'";
@@ -2562,12 +2562,12 @@ public class GitHubController : ControllerBase
         filter.assignee string
         filter.author string
         filter.repositories string[]
-        filter.FromDate string
+        filter.fromDate string
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.FromDate = "thisyear";
+        filter.fromDate = "thisyear";
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2603,9 +2603,9 @@ public class GitHubController : ControllerBase
             }
 
             // Add date filter condition based on the selected value
-            if (!string.IsNullOrEmpty(filter.FromDate))
+            if (!string.IsNullOrEmpty(filter.fromDate))
             {
-                switch (filter.FromDate.ToLower())
+                switch (filter.fromDate.ToLower())
                 {
                     case "today":
                         query += " AND createdat >= CURRENT_DATE AND createdat < CURRENT_DATE + INTERVAL '1 day'";
@@ -2721,12 +2721,12 @@ public class GitHubController : ControllerBase
         filter.assignee string
         filter.author string
         filter.repositories string[]
-        filter.FromDate string
+        filter.fromDate string
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.FromDate = "thisyear";
+        filter.fromDate = "thisyear";
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2762,9 +2762,9 @@ public class GitHubController : ControllerBase
             }
 
             // Add date filter condition based on the selected value
-            if (!string.IsNullOrEmpty(filter.FromDate))
+            if (!string.IsNullOrEmpty(filter.fromDate))
             {
-                switch (filter.FromDate.ToLower())
+                switch (filter.fromDate.ToLower())
                 {
                     case "today":
                         query += " AND createdat >= CURRENT_DATE AND createdat < CURRENT_DATE + INTERVAL '1 day'";
@@ -2880,12 +2880,12 @@ public class GitHubController : ControllerBase
         filter.assignee string
         filter.author string
         filter.repositories string[]
-        filter.FromDate string
+        filter.fromDate string
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.FromDate = "thisyear";
+        filter.fromDate = "thisyear";
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2921,9 +2921,9 @@ public class GitHubController : ControllerBase
             }
 
             // Add date filter condition based on the selected value
-            if (!string.IsNullOrEmpty(filter.FromDate))
+            if (!string.IsNullOrEmpty(filter.fromDate))
             {
-                switch (filter.FromDate.ToLower())
+                switch (filter.fromDate.ToLower())
                 {
                     case "today":
                         query += " AND createdat >= CURRENT_DATE AND createdat < CURRENT_DATE + INTERVAL '1 day'";
