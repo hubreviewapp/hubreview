@@ -2,12 +2,14 @@ import { Link, useLocation } from "react-router-dom";
 import { Container, Button, Title, Grid, Box, rem, Avatar, Space } from "@mantine/core";
 import { useState, useEffect } from "react";
 import { IconLogout } from "@tabler/icons-react";
+import { useNavigate } from "react-router-dom";
 import { useUser } from "../providers/context-utilities";
 import axios from "axios";
 
 function NavBar() {
   const location = useLocation();
   const [isActive, setIsActive] = useState(0);
+  const navigate = useNavigate();
   const iconLogout = <IconLogout style={{ width: rem(15), height: rem(15) }} />;
   const handleClick = (buttonId: number) => {
     setIsActive(buttonId);
@@ -36,6 +38,12 @@ function NavBar() {
     }
   }, [location.pathname]);
   const { userLogin, userAvatarUrl } = useUser();
+
+  useEffect(() => {
+    if (localStorage.getItem("userLogin") === null || userLogin === null) {
+      navigate("/signIn");
+    }
+  }, [navigate, userLogin]);
 
   return (
     <Box bg="#0D1B2A" p="20px">

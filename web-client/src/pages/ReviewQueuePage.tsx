@@ -3,7 +3,6 @@ import FilterInput from "../components/ReviewQueue/FilterInput";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useListState } from "@mantine/hooks";
-import { useNavigate } from "react-router-dom";
 import { PRNavbar } from "../components/ReviewQueue/PRNavbar.tsx";
 import PRCardList from "../components/ReviewQueue/PRCardList";
 import { PRInfo } from "../models/PRInfo";
@@ -77,40 +76,81 @@ export interface SelectedRepos {
  * - Prereview CI checks
  * - Estimated review load of a PR (e.g., a reapproval is likely to be low-effort)
  */
+const API = "http://localhost:5018/api/github/prs/";
 function ReviewQueuePage() {
-  const [prInfo, setPrInfo] = useState<PRInfo[]>([]);
-  const navigate = useNavigate();
+  //const [prInfo, setPrInfo] = useState<PRInfo[]>([]);
+
+  const [needsYourReviewPRs, setNeedsYourReviewPRs] = useState<PRInfo[]>([]);
+  const [waitingAuthorPRs, setWaitingAuthorPRs] = useState<PRInfo[]>([]);
+  const [yourPRs, setYourPrs] = useState<PRInfo[]>([]);
+  const [openPRs, setOpenPRs] = useState<PRInfo[]>([]);
+  //const [mergedPRs, setMergedPRs] = useState<PRInfo[]>([]);
+  //const [closedPRs, setClosedPRs] = useState<PRInfo[]>([]);
   const [activeSection, setActiveSection] = useState<string>("");
 
   const [values, handlers] = useListState<SelectedRepos>([]);
 
   useEffect(() => {
-    if (localStorage.getItem("userLogin") === null) {
-      navigate("/signIn");
-      return;
-    }
-    const fetchPRInfo = async () => {
+    const apiEnd = "needsreview";
+    const fetchNeedsYourReviewPRs = async () => {
       try {
-        const res = await axios
-          .create({
-            withCredentials: true,
-            baseURL: "http://localhost:5018/api/github",
-          })
-          .get("/prs");
+        const res = await axios.get(API + apiEnd, { withCredentials: true });
+        if (res.data != undefined) {
+          setNeedsYourReviewPRs(res.data);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchNeedsYourReviewPRs().then();
+  }, []);
 
+  useEffect(() => {
+    const apiEnd = "userprs";
+    const fetchUserPrs = async () => {
+      try {
+        const res = await axios.get(API + apiEnd, { withCredentials: true });
+        if (res.data != undefined) {
+          setYourPrs(res.data);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchUserPrs().then();
+  }, []);
+
+  useEffect(() => {
+    const apiEnd = "waitingauthor";
+    const fetchWaitingAuthor = async () => {
+      try {
+        const res = await axios.get(API + apiEnd, { withCredentials: true });
+        if (res.data != undefined) {
+          setWaitingAuthorPRs(res.data);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchWaitingAuthor().then();
+  }, []);
+
+  useEffect(() => {
+    const fetchOpenPRs = async () => {
+      try {
+        const res = await axios.get(`http://localhost:5018/api/github/prs/open`, {
+          withCredentials: true,
+        });
         if (res) {
-          setPrInfo(res.data);
-          console.log("res: ", res.data);
+          setOpenPRs(res.data);
         }
       } catch (error) {
         console.error("Error fetching PR info:", error);
-        // Retry fetching PR info after a delay
-        setTimeout(fetchPRInfo, 1000); // Retry after 3 seconds
       }
     };
 
-    fetchPRInfo();
-  }, [navigate]);
+    fetchOpenPRs().then();
+  }, []);
 
   return (
     <Grid mt="md">
@@ -128,22 +168,22 @@ function ReviewQueuePage() {
       <Grid.Col span={8} ml="md">
         <FilterInput />
         <div id="needs-your-review">
-          <PRCardList pr={prInfo} name="Needs Your Review" />
+          <PRCardList pr={needsYourReviewPRs} name="Needs Your Review" />
         </div>
         <div id="your-prs">
-          <PRCardList pr={[]} name="Your PRs" />
+          <PRCardList pr={yourPRs} name="Your PRs" />
         </div>
         <div id="waiting-for-author">
-          <PRCardList pr={[]} name="Waiting for author" />
+          <PRCardList pr={waitingAuthorPRs} name="Waiting for author" />
         </div>
         <div id="all-open-prs">
-          <PRCardList pr={prInfo} name="All Open PRs" />
+          <PRCardList pr={openPRs} name="All Open PRs" />
         </div>
         <div id="merged">
           <PRCardList pr={[]} name="Merged" />
         </div>
         <div id="closed">
-          <PRCardList pr={prInfo} name="Closed" />
+          <PRCardList pr={[]} name="Closed" />
         </div>
         <Center>
           <Link to="/createPR">

@@ -13,6 +13,8 @@ import ReviewQueuePage from "./pages/ReviewQueuePage.tsx";
 import UserProvider from "./providers/UserProvider.tsx";
 import NoRenderOnPath from "./utility/NoRenderOnPath";
 import "@mantine/tiptap/styles.css";
+import "@mantine/charts/styles.css";
+import "./styles/filter.css";
 
 function App() {
   return (
@@ -42,7 +44,12 @@ function App() {
         </NoRenderOnPath>
         <Routes>
           <Route path="/" element={<ReviewQueuePage />} />
-          <Route path="/pulls/pullrequest/:owner/:repoName/:prnumber" element={<PRDetailsPage />} />
+          <Route path="/pulls/pullrequest/:owner/:repoName/:prnumber">
+            <Route path="reviews" element={<PRDetailsPage tab="reviews" />} />
+            <Route path="commits" element={<PRDetailsPage tab="commits" />} />
+            <Route path="details" element={<PRDetailsPage tab="details" />} />
+            <Route path="" element={<PRDetailsPage />} />
+          </Route>
           <Route path="/repositories" element={<RepositoriesPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/createPR" element={<PRCreationPage />} />

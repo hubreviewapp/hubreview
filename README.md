@@ -11,3 +11,5 @@ ulan rate limiti aştık
 alperin hesabıııı
 nolur ol artık ağlıycam
 check control
+TODO
+allam sana geliyorum
