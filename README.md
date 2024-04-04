@@ -19,3 +19,4 @@ fix check control 2
 fix check control 3
 fix check control 4
 fix check control 5
+check control 3 DID I FIX THE MATH
