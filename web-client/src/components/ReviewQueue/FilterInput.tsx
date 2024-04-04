@@ -7,7 +7,9 @@ import {
   IconChartArrows,
   IconSortDescending,
 } from "@tabler/icons-react";
-import { useState } from "react";
+import {useEffect, useState} from "react";
+import axios from "axios";
+import { FilterList } from "../../pages/ReviewQueuePage.tsx"
 
 /**
  * This component should allow easy manipulation of filters in a keyboard-oriented flow.
@@ -15,13 +17,36 @@ import { useState } from "react";
  */
 
 export interface FilterInputProps {
-  authors?: string[];
-  labels?: string[];
-  assignees?: string[];
+  filterList: FilterList
+  setFilterList: (filterList: FilterList) => void;
 }
-function FilterInput() {
-  const [filterValues, setFilterValues] = useState(["review-requested:@me", "sort-by:priority:desc"]);
-  const labels = ["bug", "enhancement", "question", "suggestion"];
+function FilterInput({filterList, setFilterList} : FilterInputProps) {
+  const [filterValues, setFilterValues] = useState(["review-requested:@me", "sort-by:priority:desc"]);;
+
+  const [assignees, setAssignees] = useState<string[]>([]);
+  const [authors, setAuthors] = useState<string[]>([]);
+  const [labels, setLabels] = useState<string[]>([]);
+
+
+  useEffect(() => {
+    const API = "http://localhost:5018/api/github/";
+    const apiEnd = "GetFilterLists";
+
+    const fetchGetFilterLists = async () => {
+      try {
+        const res = await axios.get(API + apiEnd, { withCredentials: true });
+        if (res.data != undefined) {
+          console.log(res.data)
+          setAuthors(res.data.authors);
+          setAssignees(res.data.assignees)
+          setLabels(res.data.labels)
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchGetFilterLists().then();
+  }, []);
 
   return (
     <>
@@ -30,8 +55,10 @@ function FilterInput() {
           radius="xl"
           placeholder="Author"
           leftSection={<IconUser width={rem(15)} />}
-          data={["aysekelleci", "irem_aydın", "ecekahraman"]}
+          data={authors}
           searchable
+          onChange={(val) => setFilterList({
+            ...filterList, author: val})}
         />
 
         <MultiSelect
@@ -56,7 +83,10 @@ function FilterInput() {
           radius="xl"
           placeholder="Assignee"
           leftSection={<IconUser width={rem(15)} />}
-          data={["aysekelleci", "irem_aydın", "ecekahraman"]}
+          data={assignees}
+          onChange={(val) => setFilterList({
+            ...filterList, assignee: val})}
+
         />
 
         <Select

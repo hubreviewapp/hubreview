@@ -1127,23 +1127,23 @@ public class GitHubController : ControllerBase
     /*[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_reviews")]
     public async Task<ActionResult> getReviewsOnPR(string owner, string repoName, int prnumber)
     {
-        
+
         List<long> id_list = [];
-        
+
         var config = new CoreConfiguration();
         string connectionString = config.DbConnectionString;
         using var connection = new NpgsqlConnection(connectionString);
         connection.Open();
 
         string select = $"SELECT review_id FROM reviewhead WHERE reponame = '{repoName}' AND prnumber = {prnumber}";
-        
+
         using var command = new NpgsqlCommand(select, connection);
         NpgsqlDataReader reader = await command.ExecuteReaderAsync();
         while ( await reader.ReadAsync() )
         {
             id_list.Add(reader.GetInt64(0));
         }
-        
+
         reader.Close();
         connection.Close();
 
@@ -2016,9 +2016,8 @@ public class GitHubController : ControllerBase
         return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
     }
 
-    [HttpGet("prs/needsreview/filter")]
-    public async Task<ActionResult> FilterNeedsYourReviewPRs([FromQuery] PRFilter filter)
-
+    [HttpGet("prs/needsreview/filter/{author}")]
+    public async Task<ActionResult> FilterNeedsYourReviewPRs([FromQuery] PRFilter filter, string author, string assignee, string fromDate)
     {
         /*
         filter.Assignee string
@@ -2029,7 +2028,7 @@ public class GitHubController : ControllerBase
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.Author = "Ece-Kahraman";
+        filter.Author = author;
         filter.FromDate = "thisyear";
         filter.Priority = "3";
 
@@ -2112,7 +2111,7 @@ public class GitHubController : ControllerBase
             if (filter.Labels != null && filter.Labels.Length > 0)
             {
                 query += " AND labels @> @labels";
-            }            
+            }
              */
 
 
@@ -2133,7 +2132,7 @@ public class GitHubController : ControllerBase
                 if (filter.Labels != null && filter.Labels.Length > 0)
                 {
                     command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.Labels));
-                } 
+                }
                 */
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
@@ -2273,7 +2272,7 @@ public class GitHubController : ControllerBase
             if (filter.Labels != null && filter.Labels.Length > 0)
             {
                 query += " AND labels @> @labels";
-            }            
+            }
              */
 
 
@@ -2294,7 +2293,7 @@ public class GitHubController : ControllerBase
                 if (filter.Labels != null && filter.Labels.Length > 0)
                 {
                     command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.Labels));
-                } 
+                }
                 */
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
@@ -2434,7 +2433,7 @@ public class GitHubController : ControllerBase
             if (filter.Labels != null && filter.Labels.Length > 0)
             {
                 query += " AND labels @> @labels";
-            }            
+            }
              */
 
 
@@ -2455,7 +2454,7 @@ public class GitHubController : ControllerBase
                 if (filter.Labels != null && filter.Labels.Length > 0)
                 {
                     command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.Labels));
-                } 
+                }
                 */
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
@@ -2511,7 +2510,7 @@ public class GitHubController : ControllerBase
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.Author = "Ece-Kahraman";
+        filter.Author = null;
         filter.FromDate = "thisyear";
         filter.Priority = "3";
 
@@ -2594,7 +2593,7 @@ public class GitHubController : ControllerBase
             if (filter.Labels != null && filter.Labels.Length > 0)
             {
                 query += " AND labels @> @labels";
-            }            
+            }
              */
 
 
@@ -2615,7 +2614,7 @@ public class GitHubController : ControllerBase
                 if (filter.Labels != null && filter.Labels.Length > 0)
                 {
                     command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.Labels));
-                } 
+                }
                 */
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
@@ -2755,7 +2754,7 @@ public class GitHubController : ControllerBase
             if (filter.Labels != null && filter.Labels.Length > 0)
             {
                 query += " AND labels @> @labels";
-            }            
+            }
              */
 
 
@@ -2776,7 +2775,7 @@ public class GitHubController : ControllerBase
                 if (filter.Labels != null && filter.Labels.Length > 0)
                 {
                     command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.Labels));
-                } 
+                }
                 */
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
@@ -2916,7 +2915,7 @@ public class GitHubController : ControllerBase
             if (filter.Labels != null && filter.Labels.Length > 0)
             {
                 query += " AND labels @> @labels";
-            }            
+            }
              */
 
 
@@ -2937,7 +2936,7 @@ public class GitHubController : ControllerBase
                 if (filter.Labels != null && filter.Labels.Length > 0)
                 {
                     command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.Labels));
-                } 
+                }
                 */
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
