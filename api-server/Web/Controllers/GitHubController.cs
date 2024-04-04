@@ -2090,7 +2090,6 @@ public class GitHubController : ControllerBase
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
-        Console.WriteLine(filter.author);
         filter.Repositories = ["hubreviewapp.github.io"];
         filter.FromDate = "thisyear";
         filter.Priority = "3";
@@ -2252,7 +2251,6 @@ public class GitHubController : ControllerBase
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.author = "Ece-Kahraman";
         filter.FromDate = "thisyear";
         filter.Priority = "3";
 
@@ -2413,7 +2411,6 @@ public class GitHubController : ControllerBase
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.author = "Ece-Kahraman";
         filter.FromDate = "thisyear";
         filter.Priority = "3";
 
@@ -2573,7 +2570,6 @@ public class GitHubController : ControllerBase
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.author = null;
         filter.FromDate = "thisyear";
         filter.Priority = "3";
 
@@ -2734,7 +2730,6 @@ public class GitHubController : ControllerBase
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.author = "Ece-Kahraman";
         filter.FromDate = "thisyear";
         filter.Priority = "3";
 
@@ -2895,7 +2890,6 @@ public class GitHubController : ControllerBase
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.author = "Ece-Kahraman";
         filter.FromDate = "thisyear";
         filter.Priority = "3";
 
