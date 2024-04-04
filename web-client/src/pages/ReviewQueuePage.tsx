@@ -65,10 +65,17 @@ export interface SelectedRepos {
   selected: boolean;
 }
 
+export interface FilterList {
+  author: string | null;
+  assignee: string | null;
+  labels: string[];
+  priority: string | null;
+}
+
+
 const API = "http://localhost:5018/api/github/prs/";
 function ReviewQueuePage() {
   //const [prInfo, setPrInfo] = useState<PRInfo[]>([]);
-
   const [needsYourReviewPRs, setNeedsYourReviewPRs] = useState<PRInfo[]>([]);
   const [waitingAuthorPRs, setWaitingAuthorPRs] = useState<PRInfo[]>([]);
   const [yourPRs, setYourPrs] = useState<PRInfo[]>([]);
@@ -76,6 +83,15 @@ function ReviewQueuePage() {
   const [mergedPRs, setMergedPRs] = useState<PRInfo[]>([]);
   const [closedPRs, setClosedPRs] = useState<PRInfo[]>([]);
   const [activeSection, setActiveSection] = useState<string>("");
+
+  //filter options
+
+  const [filterList, setFilterList] = useState<FilterList>({
+    author: "",
+    assignee: null,
+    labels: [],
+    priority: null,
+  });
 
   const [values, handlers] = useListState<SelectedRepos>([]);
 
@@ -116,7 +132,7 @@ function ReviewQueuePage() {
     fetchMerged().then();
   }, [mergedLimit]);
   useEffect(() => {
-    const apiEnd = "needsreview";
+    const apiEnd = `needsreview/${filterList.author}`;
     const fetchNeedsYourReviewPRs = async () => {
       try {
         const res = await axios.get(API + apiEnd, { withCredentials: true });
@@ -128,7 +144,7 @@ function ReviewQueuePage() {
       }
     };
     fetchNeedsYourReviewPRs().then();
-  }, []);
+  }, [filterList]);
 
   useEffect(() => {
     const apiEnd = "userprs";
@@ -163,7 +179,7 @@ function ReviewQueuePage() {
   useEffect(() => {
     const fetchOpenPRs = async () => {
       try {
-        const res = await axios.get(`http://localhost:5018/api/github/prs/open`, {
+        const res = await axios.get(`http://localhost:5018/api/github/prs/open/filter`, {
           withCredentials: true,
         });
         if (res) {
@@ -175,7 +191,7 @@ function ReviewQueuePage() {
     };
 
     fetchOpenPRs().then();
-  }, []);
+  }, [filterList]);
 
   return (
     <Grid mt="md">
@@ -191,7 +207,7 @@ function ReviewQueuePage() {
       </Grid.Col>
 
       <Grid.Col span={8} ml="md">
-        <FilterInput />
+        <FilterInput filterList={filterList} setFilterList={setFilterList} />
         <div id="needs-your-review">
           <PRCardList pr={needsYourReviewPRs} name="Needs Your Review" />
         </div>
