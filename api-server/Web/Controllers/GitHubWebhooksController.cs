@@ -392,7 +392,7 @@ namespace CS.Web.Controllers
                                         var published_comments = await installationClient.PullRequest.Review.GetAllComments(owner, repoName, pull.Number, review.Id);
                                         var comment_id_list = string.Join(",", published_comments.Select(c => c.Id));
 
-                                        review_head_query += $" ({review.Id}, '{repoName}', {pull.Number}, '{review.Body}', '{review.State.StringValue}', ARRAY[{comment_id_list}]::bigint[]),";
+                                        review_head_query += $" ({review.Id}, '{repoName}', {pull.Number}, '{review.Body.Replace("'", "''")}', '{review.State.StringValue}', ARRAY[{comment_id_list}]::bigint[]),";
 
                                         foreach (var revcomm in published_comments)
                                         {
@@ -683,7 +683,7 @@ namespace CS.Web.Controllers
                                         var published_comments = await installationClient.PullRequest.Review.GetAllComments(owner, repoName, pull.Number, review.Id);
                                         var comment_id_list = string.Join(",", published_comments.Select(c => c.Id));
 
-                                        review_head_query += $" ({review.Id}, '{repoName}', {pull.Number}, '{review.Body}', '{review.State.StringValue}', ARRAY[{comment_id_list}]::bigint[]),";
+                                        review_head_query += $" ({review.Id}, '{repoName}', {pull.Number}, '{review.Body.Replace("'", "''")}', '{review.State.StringValue}', ARRAY[{comment_id_list}]::bigint[]),";
 
                                         foreach (var revcomm in published_comments)
                                         {
