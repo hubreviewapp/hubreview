@@ -72,7 +72,6 @@ export interface FilterList {
   priority: string | null;
 }
 
-
 const API = "http://localhost:5018/api/github/prs/";
 function ReviewQueuePage() {
   //const [prInfo, setPrInfo] = useState<PRInfo[]>([]);
