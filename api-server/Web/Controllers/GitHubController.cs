@@ -2091,7 +2091,6 @@ public class GitHubController : ControllerBase
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.fromDate = "thisyear";
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2250,7 +2249,6 @@ public class GitHubController : ControllerBase
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.fromDate = "thisyear";
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2409,7 +2407,6 @@ public class GitHubController : ControllerBase
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.fromDate = "thisyear";
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2567,7 +2564,6 @@ public class GitHubController : ControllerBase
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.fromDate = "thisyear";
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2726,7 +2722,6 @@ public class GitHubController : ControllerBase
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.fromDate = "thisyear";
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2885,7 +2880,6 @@ public class GitHubController : ControllerBase
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.fromDate = "thisyear";
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
