@@ -80,6 +80,29 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
           placeholder="Priority"
           leftSection={<IconChartArrows width={rem(15)} />}
           data={["Critical", "High", "Medium", "Low"]}
+          onChange={(val) => {
+            let priorityValue;
+            switch (val) {
+              case "Critical":
+                priorityValue = "4";
+                break;
+              case "High":
+                priorityValue = "3";
+                break;
+              case "Medium":
+                priorityValue = "2";
+                break;
+              case "Low":
+                priorityValue = "1";
+                break;
+              default:
+                priorityValue = null;
+            }
+            setFilterList({
+              ...filterList,
+              priority: priorityValue,
+            });
+          }}
         />
 
         <Select
@@ -100,6 +123,12 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
           placeholder="Date"
           leftSection={<IconCalendarTime width={rem(15)} />}
           data={["Today", "This week", "This Month", "This year"]}
+          onChange={(val) =>
+            setFilterList({
+              ...filterList,
+              fromDate: val?.toLowerCase().replace(/\s/g, ''),
+            })
+          }
         />
 
         <Select
@@ -107,6 +136,12 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
           placeholder="Sort"
           leftSection={<IconSortDescending width={rem(15)} />}
           data={["Newest", "Oldest", "Priority", "Recently updated"]}
+          onChange={(val) =>
+            setFilterList({
+              ...filterList,
+              orderBy: val?.toLowerCase().replace(/\s/g, ''),
+            })
+          }
         />
       </Flex>
 

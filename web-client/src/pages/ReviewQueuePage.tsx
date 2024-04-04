@@ -70,6 +70,9 @@ export interface FilterList {
   assignee: string | null;
   labels: string[];
   priority: string | null;
+  fromDate: string | null | undefined;
+  orderBy: string | null | undefined;
+  repositories: string[];
 }
 
 /**
@@ -94,22 +97,39 @@ function ReviewQueuePage() {
   //const [closedPRs, setClosedPRs] = useState<PRInfo[]>([]);
   const [activeSection, setActiveSection] = useState<string>("");
 
-  //filter options
+  const [values, handlers] = useListState<SelectedRepos>([]);
 
+  //filter options
   const [filterList, setFilterList] = useState<FilterList>({
     author: "",
     assignee: null,
     labels: [],
     priority: null,
+    fromDate: null,
+    orderBy: "priority",
+    repositories: []
   });
 
-  const [values, handlers] = useListState<SelectedRepos>([]);
+  useEffect(() => {
+    const selectedRepositories = values
+      .filter(repo => repo.selected)
+      .map(repo => repo.name);
+    setFilterList(prevFilterList => ({
+      ...prevFilterList,
+      repositories: selectedRepositories
+    }));
+  }, [values]);
 
   useEffect(() => {
-    const apiEnd = `needsreview/${filterList.author}`;
+    const apiEnd = `needsreview/filter`;
     const fetchNeedsYourReviewPRs = async () => {
       try {
-        const res = await axios.get(API + apiEnd, { withCredentials: true });
+        const res = await axios.post(API + apiEnd, filterList, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+          baseURL: "http://localhost:5018/api/github",});
         if (res.data != undefined) {
           setNeedsYourReviewPRs(res.data);
         }
@@ -121,10 +141,15 @@ function ReviewQueuePage() {
   }, [filterList]);
 
   useEffect(() => {
-    const apiEnd = "userprs";
+    const apiEnd = "userprs/filter";
     const fetchUserPrs = async () => {
       try {
-        const res = await axios.get(API + apiEnd, { withCredentials: true });
+        const res = await axios.post(API + apiEnd, filterList, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+          baseURL: "http://localhost:5018/api/github",});
         if (res.data != undefined) {
           setYourPrs(res.data);
         }
@@ -133,13 +158,18 @@ function ReviewQueuePage() {
       }
     };
     fetchUserPrs().then();
-  }, []);
+  }, [filterList]);
 
   useEffect(() => {
-    const apiEnd = "waitingauthor";
+    const apiEnd = "waitingauthor/filter";
     const fetchWaitingAuthor = async () => {
       try {
-        const res = await axios.get(API + apiEnd, { withCredentials: true });
+        const res = await axios.post(API + apiEnd, filterList, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+          baseURL: "http://localhost:5018/api/github",});
         if (res.data != undefined) {
           setWaitingAuthorPRs(res.data);
         }
@@ -148,15 +178,19 @@ function ReviewQueuePage() {
       }
     };
     fetchWaitingAuthor().then();
-  }, []);
+  }, [filterList]);
 
   useEffect(() => {
+    const apiEnd = "open/filter";
     const fetchOpenPRs = async () => {
       try {
-        const res = await axios.get(`http://localhost:5018/api/github/prs/open/filter`, {
+        const res = await axios.post(API + apiEnd, filterList, {
+          headers: {
+            "Content-Type": "application/json",
+          },
           withCredentials: true,
-        });
-        if (res) {
+          baseURL: "http://localhost:5018/api/github",});
+        if (res.data != undefined) {
           setOpenPRs(res.data);
         }
       } catch (error) {
