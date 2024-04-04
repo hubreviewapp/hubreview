@@ -13,3 +13,4 @@ nolur ol artık ağlıycam
 check control
 TODO
 allam sana geliyorum
+check control 2
