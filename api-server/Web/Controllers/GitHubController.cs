@@ -2092,7 +2092,6 @@ public class GitHubController : ControllerBase
         */
         filter.Repositories = ["hubreviewapp.github.io"];
         filter.FromDate = "thisyear";
-        filter.Priority = "3";
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2122,9 +2121,9 @@ public class GitHubController : ControllerBase
                 query += " AND @assignee = ANY(assignees)";
             }
             query += " AND reponame = ANY(@repositories)";
-            if (!string.IsNullOrEmpty(filter.Priority))
+            if (!string.IsNullOrEmpty(filter.priority))
             {
-                query += " AND priority = " + filter.Priority;
+                query += " AND priority = " + filter.priority;
             }
 
             // Add date filter condition based on the selected value
@@ -2252,7 +2251,6 @@ public class GitHubController : ControllerBase
         */
         filter.Repositories = ["hubreviewapp.github.io"];
         filter.FromDate = "thisyear";
-        filter.Priority = "3";
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2282,9 +2280,9 @@ public class GitHubController : ControllerBase
                 query += " AND @assignee = ANY(assignees)";
             }
             query += " AND reponame = ANY(@repositories)";
-            if (!string.IsNullOrEmpty(filter.Priority))
+            if (!string.IsNullOrEmpty(filter.priority))
             {
-                query += " AND priority = " + filter.Priority;
+                query += " AND priority = " + filter.priority;
             }
 
             // Add date filter condition based on the selected value
@@ -2412,7 +2410,6 @@ public class GitHubController : ControllerBase
         */
         filter.Repositories = ["hubreviewapp.github.io"];
         filter.FromDate = "thisyear";
-        filter.Priority = "3";
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2442,9 +2439,9 @@ public class GitHubController : ControllerBase
                 query += " AND @assignee = ANY(assignees)";
             }
             query += " AND reponame = ANY(@repositories)";
-            if (!string.IsNullOrEmpty(filter.Priority))
+            if (!string.IsNullOrEmpty(filter.priority))
             {
-                query += " AND priority = " + filter.Priority;
+                query += " AND priority = " + filter.priority;
             }
 
             // Add date filter condition based on the selected value
@@ -2571,7 +2568,6 @@ public class GitHubController : ControllerBase
         */
         filter.Repositories = ["hubreviewapp.github.io"];
         filter.FromDate = "thisyear";
-        filter.Priority = "3";
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2601,9 +2597,9 @@ public class GitHubController : ControllerBase
                 query += " AND @assignee = ANY(assignees)";
             }
             query += " AND reponame = ANY(@repositories)";
-            if (!string.IsNullOrEmpty(filter.Priority))
+            if (!string.IsNullOrEmpty(filter.priority))
             {
-                query += " AND priority = " + filter.Priority;
+                query += " AND priority = " + filter.priority;
             }
 
             // Add date filter condition based on the selected value
@@ -2731,7 +2727,6 @@ public class GitHubController : ControllerBase
         */
         filter.Repositories = ["hubreviewapp.github.io"];
         filter.FromDate = "thisyear";
-        filter.Priority = "3";
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2761,9 +2756,9 @@ public class GitHubController : ControllerBase
                 query += " AND @assignee = ANY(assignees)";
             }
             query += " AND reponame = ANY(@repositories)";
-            if (!string.IsNullOrEmpty(filter.Priority))
+            if (!string.IsNullOrEmpty(filter.priority))
             {
-                query += " AND priority = " + filter.Priority;
+                query += " AND priority = " + filter.priority;
             }
 
             // Add date filter condition based on the selected value
@@ -2891,7 +2886,6 @@ public class GitHubController : ControllerBase
         */
         filter.Repositories = ["hubreviewapp.github.io"];
         filter.FromDate = "thisyear";
-        filter.Priority = "3";
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2921,9 +2915,9 @@ public class GitHubController : ControllerBase
                 query += " AND @assignee = ANY(assignees)";
             }
             query += " AND reponame = ANY(@repositories)";
-            if (!string.IsNullOrEmpty(filter.Priority))
+            if (!string.IsNullOrEmpty(filter.priority))
             {
-                query += " AND priority = " + filter.Priority;
+                query += " AND priority = " + filter.priority;
             }
 
             // Add date filter condition based on the selected value
