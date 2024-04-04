@@ -66,10 +66,10 @@ export interface SelectedRepos {
 }
 
 export interface FilterList {
-  author: string|null;
-  assignee: string|null;
+  author: string | null;
+  assignee: string | null;
   labels: string[];
-  priority: string|null;
+  priority: string | null;
 }
 
 /**
@@ -97,7 +97,11 @@ function ReviewQueuePage() {
   //filter options
 
   const [filterList, setFilterList] = useState<FilterList>({
-    author:"", assignee:null, labels:[], priority:null})
+    author: "",
+    assignee: null,
+    labels: [],
+    priority: null,
+  });
 
   const [values, handlers] = useListState<SelectedRepos>([]);
 
@@ -177,7 +181,7 @@ function ReviewQueuePage() {
       </Grid.Col>
 
       <Grid.Col span={8} ml="md">
-        <FilterInput filterList={filterList} setFilterList={setFilterList}/>
+        <FilterInput filterList={filterList} setFilterList={setFilterList} />
         <div id="needs-your-review">
           <PRCardList pr={needsYourReviewPRs} name="Needs Your Review" />
         </div>
