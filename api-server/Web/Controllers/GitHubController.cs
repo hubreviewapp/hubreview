@@ -2080,7 +2080,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpPost("prs/needsreview/filter")]
-    public async Task<ActionResult> FilterNeedsYourReviewPRs([FromQuery] PRFilter filter)
+    public async Task<ActionResult> FilterNeedsYourReviewPRs([FromBody] PRFilter filter)
     {
         /*
         filter.Assignee string
@@ -2090,6 +2090,7 @@ public class GitHubController : ControllerBase
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
+        Console.WriteLine(filter.Author);
         filter.Repositories = ["hubreviewapp.github.io"];
         filter.FromDate = "thisyear";
         filter.Priority = "3";
@@ -2238,8 +2239,8 @@ public class GitHubController : ControllerBase
         return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
     }
 
-    [HttpGet("prs/userprs/filter")]
-    public async Task<ActionResult> FilterUserPRs([FromQuery] PRFilter filter)
+    [HttpPost("prs/userprs/filter")]
+    public async Task<ActionResult> FilterUserPRs([FromBody] PRFilter filter)
 
     {
         /*
@@ -2399,8 +2400,8 @@ public class GitHubController : ControllerBase
         return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
     }
 
-    [HttpGet("prs/waitingauthor/filter")]
-    public async Task<ActionResult> FilterWaitingAuthors([FromQuery] PRFilter filter)
+    [HttpPost("prs/waitingauthor/filter")]
+    public async Task<ActionResult> FilterWaitingAuthors([FromBody] PRFilter filter)
 
     {
         /*
@@ -2559,8 +2560,8 @@ public class GitHubController : ControllerBase
 
         return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
     }
-    [HttpGet("prs/open/filter")]
-    public async Task<ActionResult> FilterOpenPRs([FromQuery] PRFilter filter)
+    [HttpPost("prs/open/filter")]
+    public async Task<ActionResult> FilterOpenPRs([FromBody] PRFilter filter)
 
     {
         /*
@@ -2720,8 +2721,8 @@ public class GitHubController : ControllerBase
         return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
     }
 
-    [HttpGet("prs/merged/filter")]
-    public async Task<ActionResult> FilterMergedPRs([FromQuery] PRFilter filter)
+    [HttpPost("prs/merged/filter")]
+    public async Task<ActionResult> FilterMergedPRs([FromBody] PRFilter filter)
 
     {
         /*
@@ -2881,8 +2882,8 @@ public class GitHubController : ControllerBase
         return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
     }
 
-    [HttpGet("prs/closed/filter")]
-    public async Task<ActionResult> FilterClosedPRs([FromQuery] PRFilter filter)
+    [HttpPost("prs/closed/filter")]
+    public async Task<ActionResult> FilterClosedPRs([FromBody] PRFilter filter)
 
     {
         /*
@@ -3042,7 +3043,7 @@ public class GitHubController : ControllerBase
         return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
     }
 
-    [HttpGet("user/weeklysummary")]
+    [HttpPost("user/weeklysummary")]
     public async Task<ActionResult> GetReviewsForUserInLastWeek()
     {
         var github = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
