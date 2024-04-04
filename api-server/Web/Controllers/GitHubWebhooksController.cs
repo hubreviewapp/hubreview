@@ -69,6 +69,26 @@ namespace CS.Web.Controllers
                     installationClient = GetNewClient(response.Token);
                     if (checkRunPayload.action == "created")
                     {
+                        int checks_complete = 0;
+                        int checks_success = 0;
+                        int checks_fail = 0;
+                        string sel_query = $"SELECT checks_complete, checks_success, checks_fail FROM pullrequestinfo WHERE repoid = {checkRunPayload.repository.id} AND pullid = {checkRunPayload.check_run.pull_requests[0].id}";
+                        connection.Open();
+                        using (var command = new NpgsqlCommand(sel_query, connection))
+                        {
+                            using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                            {
+                                while (await reader.ReadAsync())
+                                {
+                                    checks_complete = reader.GetInt16(0);
+                                    checks_success = reader.GetInt16(1);
+                                    checks_fail = reader.GetInt16(2);
+
+                                }
+                            }
+                        }
+                        connection.Close();
+
                         // Get all checks for the pull request
                         var checks = await installationClient.Check.Run.GetAllForCheckSuite(
                             checkRunPayload.repository.owner.login,
@@ -93,7 +113,6 @@ namespace CS.Web.Controllers
                         }
 
                         string query = $"UPDATE pullrequestinfo SET checks = '{JsonConvert.SerializeObject(checksList)}' WHERE repoid = {checkRunPayload.repository.id} AND pullid = {checkRunPayload.check_run.pull_requests[0].id}";
-                        Console.WriteLine(query);
                         connection.Open();
                         using (var command = new NpgsqlCommand(query, connection))
                         {
@@ -101,8 +120,12 @@ namespace CS.Web.Controllers
                         }
                         connection.Close();
 
-                        string query2 = $"UPDATE pullrequestinfo SET checks_incomplete = checks_incomplete + 1 WHERE repoid = {checkRunPayload.repository.id} AND pullid = {checkRunPayload.check_run.pull_requests[0].id}";
-                        Console.WriteLine(query2);
+                        string complete = (checks_complete <= 0) ? "" : " checks_complete = checks_complete - 1,";
+                        string success = (checks_complete == 0) ? "" : " checks_success = 0,";
+                        string fail = (checks_fail == 0) ? "" : " checks_fail = 0,";
+
+                        string query2 = $"UPDATE pullrequestinfo SET{complete}{success}{fail} checks_incomplete = checks_incomplete + 1  WHERE repoid = {checkRunPayload.repository.id} AND pullid = {checkRunPayload.check_run.pull_requests[0].id}";
+                        Console.WriteLine("check action: created \n" + query2);
                         connection.Open();
                         using (var command = new NpgsqlCommand(query2, connection))
                         {
@@ -113,6 +136,23 @@ namespace CS.Web.Controllers
                     }
                     else if (checkRunPayload.action == "completed")
                     {
+                        int checks_complete = 0;
+                        int checks_incomplete = 0;
+                        string sel_query = $"SELECT checks_complete, checks_incomplete FROM pullrequestinfo WHERE repoid = {checkRunPayload.repository.id} AND pullid = {checkRunPayload.check_run.pull_requests[0].id}";
+                        connection.Open();
+                        using (var command = new NpgsqlCommand(sel_query, connection))
+                        {
+                            using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                            {
+                                while (await reader.ReadAsync())
+                                {
+                                    checks_complete = reader.GetInt16(0);
+                                    checks_incomplete = reader.GetInt16(1);
+                                }
+                            }
+                        }
+                        connection.Close();
+
                         // Get all checks for the pull request
                         var checks = await installationClient.Check.Run.GetAllForCheckSuite(
                             checkRunPayload.repository.owner.login,
@@ -137,7 +177,7 @@ namespace CS.Web.Controllers
                         }
 
                         string set_checks = $"checks = '{JsonConvert.SerializeObject(checksList)}'";
-                        string set_checks_incomplete = "checks_incomplete = checks_incomplete - 1";
+                        string set_checks_incomplete = (checks_incomplete <= 0) ? "" : " checks_incomplete = checks_incomplete - 1,";
                         string set_checks_complete = "checks_complete = checks_complete + 1";
                         string set_checks_conclusion = "";
 
@@ -152,7 +192,8 @@ namespace CS.Web.Controllers
 
                         string where = $"repoid = {checkRunPayload.repository.id} AND pullid = {checkRunPayload.check_run.pull_requests[0].id}";
 
-                        string query = $"UPDATE pullrequestinfo SET {set_checks}, {set_checks_incomplete}, {set_checks_complete}, {set_checks_conclusion} WHERE {where}";
+                        string query = $"UPDATE pullrequestinfo SET {set_checks},{set_checks_incomplete} {set_checks_complete}, {set_checks_conclusion} WHERE {where}";
+                        Console.WriteLine($"check action: completed \n SET{set_checks_incomplete} {set_checks_complete}, {set_checks_conclusion}");
 
                         connection.Open();
                         using (var command = new NpgsqlCommand(query, connection))
@@ -163,7 +204,6 @@ namespace CS.Web.Controllers
 
                     }
 
-                    //TO DO
                     break;
                 case "installation": // DONE
                     //InstallationPayload
