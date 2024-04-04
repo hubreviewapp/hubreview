@@ -16,3 +16,4 @@ allam sana geliyorum
 check control 2
 fix check control 1
 fix check control 2
+fix check control 3
