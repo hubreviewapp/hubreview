@@ -2148,9 +2148,9 @@ public class GitHubController : ControllerBase
                 }
             }
 
-            if (!string.IsNullOrEmpty(filter.OrderBy))
+            if (!string.IsNullOrEmpty(filter.orderBy))
             {
-                switch (filter.OrderBy.ToLower())
+                switch (filter.orderBy.ToLower())
                 {
                     case "newest":
                         query += " ORDER BY createdat DESC";
@@ -2306,9 +2306,9 @@ public class GitHubController : ControllerBase
                 }
             }
 
-            if (!string.IsNullOrEmpty(filter.OrderBy))
+            if (!string.IsNullOrEmpty(filter.orderBy))
             {
-                switch (filter.OrderBy.ToLower())
+                switch (filter.orderBy.ToLower())
                 {
                     case "newest":
                         query += " ORDER BY createdat DESC";
@@ -2464,9 +2464,9 @@ public class GitHubController : ControllerBase
                 }
             }
 
-            if (!string.IsNullOrEmpty(filter.OrderBy))
+            if (!string.IsNullOrEmpty(filter.orderBy))
             {
-                switch (filter.OrderBy.ToLower())
+                switch (filter.orderBy.ToLower())
                 {
                     case "newest":
                         query += " ORDER BY createdat DESC";
@@ -2621,9 +2621,9 @@ public class GitHubController : ControllerBase
                 }
             }
 
-            if (!string.IsNullOrEmpty(filter.OrderBy))
+            if (!string.IsNullOrEmpty(filter.orderBy))
             {
-                switch (filter.OrderBy.ToLower())
+                switch (filter.orderBy.ToLower())
                 {
                     case "newest":
                         query += " ORDER BY createdat DESC";
@@ -2779,9 +2779,9 @@ public class GitHubController : ControllerBase
                 }
             }
 
-            if (!string.IsNullOrEmpty(filter.OrderBy))
+            if (!string.IsNullOrEmpty(filter.orderBy))
             {
-                switch (filter.OrderBy.ToLower())
+                switch (filter.orderBy.ToLower())
                 {
                     case "newest":
                         query += " ORDER BY createdat DESC";
@@ -2937,9 +2937,9 @@ public class GitHubController : ControllerBase
                 }
             }
 
-            if (!string.IsNullOrEmpty(filter.OrderBy))
+            if (!string.IsNullOrEmpty(filter.orderBy))
             {
-                switch (filter.OrderBy.ToLower())
+                switch (filter.orderBy.ToLower())
                 {
                     case "newest":
                         query += " ORDER BY createdat DESC";
