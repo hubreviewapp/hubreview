@@ -2083,7 +2083,7 @@ public class GitHubController : ControllerBase
     public async Task<ActionResult> FilterNeedsYourReviewPRs([FromBody] PRFilter filter)
     {
         /*
-        filter.Assignee string
+        filter.assignee string
         filter.author string
         filter.repositories string[]
         filter.FromDate string
@@ -2117,7 +2117,7 @@ public class GitHubController : ControllerBase
             {
                 query += " AND author = @author";
             }
-            if (!string.IsNullOrEmpty(filter.Assignee))
+            if (!string.IsNullOrEmpty(filter.assignee))
             {
                 query += " AND @assignee = ANY(assignees)";
             }
@@ -2185,9 +2185,9 @@ public class GitHubController : ControllerBase
                 {
                     command.Parameters.AddWithValue("@author", filter.author);
                 }
-                if (!string.IsNullOrEmpty(filter.Assignee))
+                if (!string.IsNullOrEmpty(filter.assignee))
                 {
-                    command.Parameters.AddWithValue("@assignee", filter.Assignee);
+                    command.Parameters.AddWithValue("@assignee", filter.assignee);
                 }
                 command.Parameters.AddWithValue("@repositories", filter.Repositories);
                 /*
@@ -2243,7 +2243,7 @@ public class GitHubController : ControllerBase
 
     {
         /*
-        filter.Assignee string
+        filter.assignee string
         filter.author string
         filter.repositories string[]
         filter.FromDate string
@@ -2277,7 +2277,7 @@ public class GitHubController : ControllerBase
             {
                 query += " AND author = @author";
             }
-            if (!string.IsNullOrEmpty(filter.Assignee))
+            if (!string.IsNullOrEmpty(filter.assignee))
             {
                 query += " AND @assignee = ANY(assignees)";
             }
@@ -2345,9 +2345,9 @@ public class GitHubController : ControllerBase
                 {
                     command.Parameters.AddWithValue("@author", filter.author);
                 }
-                if (!string.IsNullOrEmpty(filter.Assignee))
+                if (!string.IsNullOrEmpty(filter.assignee))
                 {
-                    command.Parameters.AddWithValue("@assignee", filter.Assignee);
+                    command.Parameters.AddWithValue("@assignee", filter.assignee);
                 }
                 command.Parameters.AddWithValue("@repositories", filter.Repositories);
                 /*
@@ -2403,7 +2403,7 @@ public class GitHubController : ControllerBase
 
     {
         /*
-        filter.Assignee string
+        filter.assignee string
         filter.author string
         filter.repositories string[]
         filter.FromDate string
@@ -2437,7 +2437,7 @@ public class GitHubController : ControllerBase
             {
                 query += " AND author = @author";
             }
-            if (!string.IsNullOrEmpty(filter.Assignee))
+            if (!string.IsNullOrEmpty(filter.assignee))
             {
                 query += " AND @assignee = ANY(assignees)";
             }
@@ -2505,9 +2505,9 @@ public class GitHubController : ControllerBase
                 {
                     command.Parameters.AddWithValue("@author", filter.author);
                 }
-                if (!string.IsNullOrEmpty(filter.Assignee))
+                if (!string.IsNullOrEmpty(filter.assignee))
                 {
-                    command.Parameters.AddWithValue("@assignee", filter.Assignee);
+                    command.Parameters.AddWithValue("@assignee", filter.assignee);
                 }
                 command.Parameters.AddWithValue("@repositories", filter.Repositories);
                 /*
@@ -2562,7 +2562,7 @@ public class GitHubController : ControllerBase
 
     {
         /*
-        filter.Assignee string
+        filter.assignee string
         filter.author string
         filter.repositories string[]
         filter.FromDate string
@@ -2596,7 +2596,7 @@ public class GitHubController : ControllerBase
             {
                 query += " AND author = @author";
             }
-            if (!string.IsNullOrEmpty(filter.Assignee))
+            if (!string.IsNullOrEmpty(filter.assignee))
             {
                 query += " AND @assignee = ANY(assignees)";
             }
@@ -2664,9 +2664,9 @@ public class GitHubController : ControllerBase
                 {
                     command.Parameters.AddWithValue("@author", filter.author);
                 }
-                if (!string.IsNullOrEmpty(filter.Assignee))
+                if (!string.IsNullOrEmpty(filter.assignee))
                 {
-                    command.Parameters.AddWithValue("@assignee", filter.Assignee);
+                    command.Parameters.AddWithValue("@assignee", filter.assignee);
                 }
                 command.Parameters.AddWithValue("@repositories", filter.Repositories);
                 /*
@@ -2722,7 +2722,7 @@ public class GitHubController : ControllerBase
 
     {
         /*
-        filter.Assignee string
+        filter.assignee string
         filter.author string
         filter.repositories string[]
         filter.FromDate string
@@ -2756,7 +2756,7 @@ public class GitHubController : ControllerBase
             {
                 query += " AND author = @author";
             }
-            if (!string.IsNullOrEmpty(filter.Assignee))
+            if (!string.IsNullOrEmpty(filter.assignee))
             {
                 query += " AND @assignee = ANY(assignees)";
             }
@@ -2824,9 +2824,9 @@ public class GitHubController : ControllerBase
                 {
                     command.Parameters.AddWithValue("@author", filter.author);
                 }
-                if (!string.IsNullOrEmpty(filter.Assignee))
+                if (!string.IsNullOrEmpty(filter.assignee))
                 {
-                    command.Parameters.AddWithValue("@assignee", filter.Assignee);
+                    command.Parameters.AddWithValue("@assignee", filter.assignee);
                 }
                 command.Parameters.AddWithValue("@repositories", filter.Repositories);
                 /*
@@ -2882,7 +2882,7 @@ public class GitHubController : ControllerBase
 
     {
         /*
-        filter.Assignee string
+        filter.assignee string
         filter.author string
         filter.repositories string[]
         filter.FromDate string
@@ -2916,7 +2916,7 @@ public class GitHubController : ControllerBase
             {
                 query += " AND author = @author";
             }
-            if (!string.IsNullOrEmpty(filter.Assignee))
+            if (!string.IsNullOrEmpty(filter.assignee))
             {
                 query += " AND @assignee = ANY(assignees)";
             }
@@ -2984,9 +2984,9 @@ public class GitHubController : ControllerBase
                 {
                     command.Parameters.AddWithValue("@author", filter.author);
                 }
-                if (!string.IsNullOrEmpty(filter.Assignee))
+                if (!string.IsNullOrEmpty(filter.assignee))
                 {
-                    command.Parameters.AddWithValue("@assignee", filter.Assignee);
+                    command.Parameters.AddWithValue("@assignee", filter.assignee);
                 }
                 command.Parameters.AddWithValue("@repositories", filter.Repositories);
                 /*
