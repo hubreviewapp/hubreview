@@ -2397,7 +2397,7 @@ public class GitHubController : ControllerBase
             await connection.CloseAsync();
         }
 
-        return return Ok(allPRs);
+        return Ok(allPRs);
     }
 
     [HttpPost("prs/waitingauthor/filter")]
@@ -3040,7 +3040,7 @@ public class GitHubController : ControllerBase
             await connection.CloseAsync();
         }
 
-        return return Ok(allPRs);
+        return Ok(allPRs);
     }
 
     [HttpPost("user/weeklysummary")]
