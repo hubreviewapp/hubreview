@@ -65,17 +65,6 @@ export interface SelectedRepos {
   selected: boolean;
 }
 
-/**
- * Here is a preliminary, non-exhaustive list of things that should be displayed on this page:
- * - Author-assigned urgency and contextual comment (i.e., more useful metadata)
- * - Type of review requested (Domain, Engineering Excellence, Custom, ...)
- * - File grouping
- * - DiffComment-specific reviewing
- * - Time since last activity (waiting duration)
- * - Overview of existing review comments
- * - Prereview CI checks
- * - Estimated review load of a PR (e.g., a reapproval is likely to be low-effort)
- */
 const API = "http://localhost:5018/api/github/prs/";
 function ReviewQueuePage() {
   //const [prInfo, setPrInfo] = useState<PRInfo[]>([]);
@@ -84,12 +73,48 @@ function ReviewQueuePage() {
   const [waitingAuthorPRs, setWaitingAuthorPRs] = useState<PRInfo[]>([]);
   const [yourPRs, setYourPrs] = useState<PRInfo[]>([]);
   const [openPRs, setOpenPRs] = useState<PRInfo[]>([]);
-  //const [mergedPRs, setMergedPRs] = useState<PRInfo[]>([]);
-  //const [closedPRs, setClosedPRs] = useState<PRInfo[]>([]);
+  const [mergedPRs, setMergedPRs] = useState<PRInfo[]>([]);
+  const [closedPRs, setClosedPRs] = useState<PRInfo[]>([]);
   const [activeSection, setActiveSection] = useState<string>("");
 
   const [values, handlers] = useListState<SelectedRepos>([]);
 
+  const [closedLimit, setClosedLimit] = useState(10);
+  const [mergedLimit, setMergedLimits] = useState(10);
+  const [closedMax, setClosedMax] = useState(0);
+  const [mergedMax, setMergedMax] = useState(0);
+
+  useEffect(() => {
+    const apiEnd = "closed";
+    const fetchClosed = async () => {
+      try {
+        const res = await axios.get(API + apiEnd, { withCredentials: true });
+        if (res.data != undefined) {
+          setClosedMax(res.data.length);
+          setClosedPRs(res.data.slice(0, closedLimit));
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchClosed().then();
+  }, [closedLimit]);
+
+  useEffect(() => {
+    const apiEnd = "merged";
+    const fetchMerged = async () => {
+      try {
+        const res = await axios.get(API + apiEnd, { withCredentials: true });
+        if (res.data != undefined) {
+          setMergedMax(res.data.length);
+          setMergedPRs(res.data.slice(0, mergedLimit));
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchMerged().then();
+  }, [mergedLimit]);
   useEffect(() => {
     const apiEnd = "needsreview";
     const fetchNeedsYourReviewPRs = async () => {
@@ -180,10 +205,32 @@ function ReviewQueuePage() {
           <PRCardList pr={openPRs} name="All Open PRs" />
         </div>
         <div id="merged">
-          <PRCardList pr={[]} name="Merged" />
+          <PRCardList pr={mergedPRs} name="Merged" />
+          <Center>
+            <Button
+              my="md"
+              variant="outline"
+              color="indigo"
+              disabled={mergedMax <= mergedLimit}
+              onClick={() => setMergedLimits(closedLimit + 10)}
+            >
+              Load More Merged PRs
+            </Button>
+          </Center>
         </div>
         <div id="closed">
-          <PRCardList pr={[]} name="Closed" />
+          <PRCardList pr={closedPRs} name="Closed" />
+          <Center>
+            <Button
+              my="md"
+              variant="outline"
+              color="indigo"
+              disabled={closedMax <= closedLimit}
+              onClick={() => setClosedLimit(closedLimit + 10)}
+            >
+              Load More Closed PRs
+            </Button>
+          </Center>
         </div>
         <Center>
           <Link to="/createPR">

@@ -9,7 +9,7 @@ export interface PRCardListProps {
 
 function PRCardList({ pr, name }: PRCardListProps) {
   return (
-    <Paper my="sm" withBorder>
+    <Paper mt="sm" withBorder>
       <Group>
         <Text m="sm" c="cyan">
           {name} ({pr.length})
