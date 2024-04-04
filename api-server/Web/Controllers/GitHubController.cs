@@ -2084,13 +2084,13 @@ public class GitHubController : ControllerBase
     {
         /*
         filter.Assignee string
-        filter.Author string
+        filter.author string
         filter.repositories string[]
         filter.FromDate string
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
-        Console.WriteLine(filter.Author);
+        Console.WriteLine(filter.author);
         filter.Repositories = ["hubreviewapp.github.io"];
         filter.FromDate = "thisyear";
         filter.Priority = "3";
@@ -2114,7 +2114,7 @@ public class GitHubController : ControllerBase
             string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
 
             string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'open' AND @ownerLogin = ANY(reviewers)";
-            if (!string.IsNullOrEmpty(filter.Author))
+            if (!string.IsNullOrEmpty(filter.author))
             {
                 query += " AND author = @author";
             }
@@ -2182,9 +2182,9 @@ public class GitHubController : ControllerBase
             {
                 command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
                 command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
-                if (!string.IsNullOrEmpty(filter.Author))
+                if (!string.IsNullOrEmpty(filter.author))
                 {
-                    command.Parameters.AddWithValue("@author", filter.Author);
+                    command.Parameters.AddWithValue("@author", filter.author);
                 }
                 if (!string.IsNullOrEmpty(filter.Assignee))
                 {
@@ -2245,14 +2245,14 @@ public class GitHubController : ControllerBase
     {
         /*
         filter.Assignee string
-        filter.Author string
+        filter.author string
         filter.repositories string[]
         filter.FromDate string
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.Author = "Ece-Kahraman";
+        filter.author = "Ece-Kahraman";
         filter.FromDate = "thisyear";
         filter.Priority = "3";
 
@@ -2275,7 +2275,7 @@ public class GitHubController : ControllerBase
             string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
 
             string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'open' AND author = @ownerLogin";
-            if (!string.IsNullOrEmpty(filter.Author))
+            if (!string.IsNullOrEmpty(filter.author))
             {
                 query += " AND author = @author";
             }
@@ -2343,9 +2343,9 @@ public class GitHubController : ControllerBase
             {
                 command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
                 command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
-                if (!string.IsNullOrEmpty(filter.Author))
+                if (!string.IsNullOrEmpty(filter.author))
                 {
-                    command.Parameters.AddWithValue("@author", filter.Author);
+                    command.Parameters.AddWithValue("@author", filter.author);
                 }
                 if (!string.IsNullOrEmpty(filter.Assignee))
                 {
@@ -2406,14 +2406,14 @@ public class GitHubController : ControllerBase
     {
         /*
         filter.Assignee string
-        filter.Author string
+        filter.author string
         filter.repositories string[]
         filter.FromDate string
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.Author = "Ece-Kahraman";
+        filter.author = "Ece-Kahraman";
         filter.FromDate = "thisyear";
         filter.Priority = "3";
 
@@ -2436,7 +2436,7 @@ public class GitHubController : ControllerBase
             string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
 
             string query = "SELECT " + selects + " FROM pullrequestinfo WHERE ( @ownerLogin != ANY(reviewers) AND EXISTS ( SELECT 1 FROM json_array_elements(reviews) AS review WHERE review->>'login' = @ownerLogin) ) AND state='open' AND @ownerLogin != author AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
-            if (!string.IsNullOrEmpty(filter.Author))
+            if (!string.IsNullOrEmpty(filter.author))
             {
                 query += " AND author = @author";
             }
@@ -2504,9 +2504,9 @@ public class GitHubController : ControllerBase
             {
                 command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
                 command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
-                if (!string.IsNullOrEmpty(filter.Author))
+                if (!string.IsNullOrEmpty(filter.author))
                 {
-                    command.Parameters.AddWithValue("@author", filter.Author);
+                    command.Parameters.AddWithValue("@author", filter.author);
                 }
                 if (!string.IsNullOrEmpty(filter.Assignee))
                 {
@@ -2566,14 +2566,14 @@ public class GitHubController : ControllerBase
     {
         /*
         filter.Assignee string
-        filter.Author string
+        filter.author string
         filter.repositories string[]
         filter.FromDate string
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.Author = null;
+        filter.author = null;
         filter.FromDate = "thisyear";
         filter.Priority = "3";
 
@@ -2596,7 +2596,7 @@ public class GitHubController : ControllerBase
             string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
 
             string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'open' AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
-            if (!string.IsNullOrEmpty(filter.Author))
+            if (!string.IsNullOrEmpty(filter.author))
             {
                 query += " AND author = @author";
             }
@@ -2664,9 +2664,9 @@ public class GitHubController : ControllerBase
             {
                 command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
                 command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
-                if (!string.IsNullOrEmpty(filter.Author))
+                if (!string.IsNullOrEmpty(filter.author))
                 {
-                    command.Parameters.AddWithValue("@author", filter.Author);
+                    command.Parameters.AddWithValue("@author", filter.author);
                 }
                 if (!string.IsNullOrEmpty(filter.Assignee))
                 {
@@ -2727,14 +2727,14 @@ public class GitHubController : ControllerBase
     {
         /*
         filter.Assignee string
-        filter.Author string
+        filter.author string
         filter.repositories string[]
         filter.FromDate string
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.Author = "Ece-Kahraman";
+        filter.author = "Ece-Kahraman";
         filter.FromDate = "thisyear";
         filter.Priority = "3";
 
@@ -2757,7 +2757,7 @@ public class GitHubController : ControllerBase
             string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
 
             string query = "SELECT " + selects + " FROM pullrequestinfo WHERE merged = true AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
-            if (!string.IsNullOrEmpty(filter.Author))
+            if (!string.IsNullOrEmpty(filter.author))
             {
                 query += " AND author = @author";
             }
@@ -2825,9 +2825,9 @@ public class GitHubController : ControllerBase
             {
                 command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
                 command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
-                if (!string.IsNullOrEmpty(filter.Author))
+                if (!string.IsNullOrEmpty(filter.author))
                 {
-                    command.Parameters.AddWithValue("@author", filter.Author);
+                    command.Parameters.AddWithValue("@author", filter.author);
                 }
                 if (!string.IsNullOrEmpty(filter.Assignee))
                 {
@@ -2888,14 +2888,14 @@ public class GitHubController : ControllerBase
     {
         /*
         filter.Assignee string
-        filter.Author string
+        filter.author string
         filter.repositories string[]
         filter.FromDate string
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.Author = "Ece-Kahraman";
+        filter.author = "Ece-Kahraman";
         filter.FromDate = "thisyear";
         filter.Priority = "3";
 
@@ -2918,7 +2918,7 @@ public class GitHubController : ControllerBase
             string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
 
             string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'closed' AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
-            if (!string.IsNullOrEmpty(filter.Author))
+            if (!string.IsNullOrEmpty(filter.author))
             {
                 query += " AND author = @author";
             }
@@ -2986,9 +2986,9 @@ public class GitHubController : ControllerBase
             {
                 command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
                 command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
-                if (!string.IsNullOrEmpty(filter.Author))
+                if (!string.IsNullOrEmpty(filter.author))
                 {
-                    command.Parameters.AddWithValue("@author", filter.Author);
+                    command.Parameters.AddWithValue("@author", filter.author);
                 }
                 if (!string.IsNullOrEmpty(filter.Assignee))
                 {

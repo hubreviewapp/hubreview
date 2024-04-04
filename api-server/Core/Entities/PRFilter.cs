@@ -1,6 +1,6 @@
 public class PRFilter
 {
-    public string? Author { get; set; }
+    public string? author { get; set; }
     public string[]? Labels { get; set; }
     public string? Priority { get; set; }
     public string? Assignee { get; set; }
