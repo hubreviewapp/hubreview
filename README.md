@@ -10,3 +10,4 @@ bu son mu yoksa
 ulan rate limiti aştık
 alperin hesabıııı
 nolur ol artık ağlıycam
+check control
