@@ -67,9 +67,28 @@ namespace CS.Web.Controllers
                     Console.WriteLine("action: " + checkRunPayload.action);
                     response = await _client.GitHubApps.CreateInstallationToken(checkRunPayload.installation.id);
                     installationClient = GetNewClient(response.Token);
-
                     if (checkRunPayload.action == "created")
                     {
+                        int checks_complete = 0;
+                        int checks_success = 0;
+                        int checks_fail = 0;
+                        string sel_query = $"SELECT checks_complete, checks_success, checks_fail FROM pullrequestinfo WHERE repoid = {checkRunPayload.repository.id} AND pullid = {checkRunPayload.check_run.pull_requests[0].id}";
+                        connection.Open();
+                        using (var command = new NpgsqlCommand(sel_query, connection))
+                        {
+                            using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                            {
+                                while (await reader.ReadAsync())
+                                {
+                                    checks_complete = reader.GetInt16(0);
+                                    checks_success = reader.GetInt16(1);
+                                    checks_fail = reader.GetInt16(2);
+
+                                }
+                            }
+                        }
+                        connection.Close();
+
                         // Get all checks for the pull request
                         var checks = await installationClient.Check.Run.GetAllForCheckSuite(
                             checkRunPayload.repository.owner.login,
@@ -87,13 +106,13 @@ namespace CS.Web.Controllers
                                 id = check.Id,
                                 name = check.Name,
                                 status = check.Status,
-                                conclusion = check.Conclusion
+                                conclusion = check.Conclusion,
+                                url = check.HtmlUrl
                             });
 
                         }
 
                         string query = $"UPDATE pullrequestinfo SET checks = '{JsonConvert.SerializeObject(checksList)}' WHERE repoid = {checkRunPayload.repository.id} AND pullid = {checkRunPayload.check_run.pull_requests[0].id}";
-                        Console.WriteLine(query);
                         connection.Open();
                         using (var command = new NpgsqlCommand(query, connection))
                         {
@@ -101,8 +120,12 @@ namespace CS.Web.Controllers
                         }
                         connection.Close();
 
-                        string query2 = $"UPDATE pullrequestinfo SET checks_incomplete = checks_incomplete + 1 WHERE repoid = {checkRunPayload.repository.id} AND pullid = {checkRunPayload.check_run.pull_requests[0].id}";
-                        Console.WriteLine(query2);
+                        string complete = (checks_complete <= 0) ? "" : " checks_complete = checks_complete - 1,";
+                        string success = (checks_complete == 0) ? "" : " checks_success = 0,";
+                        string fail = (checks_fail == 0) ? "" : " checks_fail = 0,";
+
+                        string query2 = $"UPDATE pullrequestinfo SET{complete}{success}{fail} checks_incomplete = checks_incomplete + 1  WHERE repoid = {checkRunPayload.repository.id} AND pullid = {checkRunPayload.check_run.pull_requests[0].id}";
+                        Console.WriteLine("check action: created \n" + query2);
                         connection.Open();
                         using (var command = new NpgsqlCommand(query2, connection))
                         {
@@ -113,6 +136,23 @@ namespace CS.Web.Controllers
                     }
                     else if (checkRunPayload.action == "completed")
                     {
+                        int checks_complete = 0;
+                        int checks_incomplete = 0;
+                        string sel_query = $"SELECT checks_complete, checks_incomplete FROM pullrequestinfo WHERE repoid = {checkRunPayload.repository.id} AND pullid = {checkRunPayload.check_run.pull_requests[0].id}";
+                        connection.Open();
+                        using (var command = new NpgsqlCommand(sel_query, connection))
+                        {
+                            using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                            {
+                                while (await reader.ReadAsync())
+                                {
+                                    checks_complete = reader.GetInt16(0);
+                                    checks_incomplete = reader.GetInt16(1);
+                                }
+                            }
+                        }
+                        connection.Close();
+
                         // Get all checks for the pull request
                         var checks = await installationClient.Check.Run.GetAllForCheckSuite(
                             checkRunPayload.repository.owner.login,
@@ -130,13 +170,14 @@ namespace CS.Web.Controllers
                                 id = check.Id,
                                 name = check.Name,
                                 status = check.Status,
-                                conclusion = check.Conclusion
+                                conclusion = check.Conclusion,
+                                url = check.HtmlUrl
                             });
 
                         }
 
                         string set_checks = $"checks = '{JsonConvert.SerializeObject(checksList)}'";
-                        string set_checks_incomplete = "checks_incomplete = checks_incomplete - 1";
+                        string set_checks_incomplete = (checks_incomplete <= 0) ? "" : " checks_incomplete = checks_incomplete - 1,";
                         string set_checks_complete = "checks_complete = checks_complete + 1";
                         string set_checks_conclusion = "";
 
@@ -151,7 +192,8 @@ namespace CS.Web.Controllers
 
                         string where = $"repoid = {checkRunPayload.repository.id} AND pullid = {checkRunPayload.check_run.pull_requests[0].id}";
 
-                        string query = $"UPDATE pullrequestinfo SET {set_checks}, {set_checks_incomplete}, {set_checks_complete}, {set_checks_conclusion} WHERE {where}";
+                        string query = $"UPDATE pullrequestinfo SET {set_checks},{set_checks_incomplete} {set_checks_complete}, {set_checks_conclusion} WHERE {where}";
+                        Console.WriteLine($"check action: completed \n SET{set_checks_incomplete} {set_checks_complete}, {set_checks_conclusion}");
 
                         connection.Open();
                         using (var command = new NpgsqlCommand(query, connection))
@@ -162,7 +204,6 @@ namespace CS.Web.Controllers
 
                     }
 
-                    //TO DO
                     break;
                 case "installation": // DONE
                     //InstallationPayload
@@ -187,17 +228,13 @@ namespace CS.Web.Controllers
 
                             connection.Open();
 
-                            string query = "INSERT INTO repositoryinfo (id, node_id, name, ownerLogin, created_at) VALUES (@id, @node_id, @repoName, @owner, @created_at)";
+                            string query = $"INSERT INTO repositoryinfo (id, node_id, name, ownerLogin, created_at) VALUES ({id}, '{node_id}', '{repoName}', '{owner}', '{repo.CreatedAt.Date:yyyy-MM-dd}')";
+                            string comm_query = "INSERT INTO comments (commentid, reponame, prnumber, is_review) VALUES";
+                            string review_head_query = "INSERT INTO reviewhead (review_id, reponame, prnumber, body, verdict, comments) VALUES";
 
                             // GetRepository by id lazım...
                             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
                             {
-                                command.Parameters.AddWithValue("@id", repository.id);
-                                command.Parameters.AddWithValue("@node_id", repository.node_id);
-                                command.Parameters.AddWithValue("@owner", owner);
-                                command.Parameters.AddWithValue("@repoName", repoName);
-                                command.Parameters.AddWithValue("@created_at", repo.CreatedAt.Date.ToString("yyyy-MM-dd"));
-
                                 command.ExecuteNonQuery();
                             }
 
@@ -341,10 +378,44 @@ namespace CS.Web.Controllers
                                     var installationReviewsJson = JsonConvert.SerializeObject(installationLatestReviews);
 
 
-                                    query += $"({repository.id}, {pull.Id}, '{pull.Base.Repository.Name}', {pull.Number}, '{pull.Title}', '{pull.User.Login}', '{pull.User.AvatarUrl}', '{pull.CreatedAt.Date:YYYY-MM-DD}', '{pull.UpdatedAt.Date:YYYY-MM-DD}', {pull.Comments}, {pull.Commits}, {pull.ChangedFiles}, {pull.Additions}, {pull.Deletions}, {pull.Draft}, '{pull.State.ToString()}', {requestedReviewers}, '{labeljson}', '{pull.Url}', '{pull.Base.Repository.Owner.Login}', '{JsonConvert.SerializeObject(checksList)}', {checks_complete_count}, {checks_incomplete_count}, {checks_success_count}, {checks_fail_count}, {assignedReviewers}, '{installationReviewsJson}', {priority}), ";
+                                    query += $"({repository.id}, {pull.Id}, '{pull.Base.Repository.Name}', {pull.Number}, '{pull.Title}', '{pull.User.Login}', '{pull.User.AvatarUrl}', '{pull.CreatedAt.Date:yyyy-MM-dd}', '{pull.UpdatedAt.Date:yyyy-MM-dd}', {pull.Comments}, {pull.Commits}, {pull.ChangedFiles}, {pull.Additions}, {pull.Deletions}, {pull.Draft}, {pull.Merged}, '{pull.State.StringValue}', {requestedReviewers}, '{labeljson}', '{pull.Url}', '{pull.Base.Repository.Owner.Login}', '{JsonConvert.SerializeObject(checksList)}', {checks_complete_count}, {checks_incomplete_count}, {checks_success_count}, {checks_fail_count}, {assignedReviewers}, '{installationReviewsJson}', {priority}), ";
+
+                                    var comments = await installationClient.Issue.Comment.GetAllForIssue(repository.id, repoPull.Number);
+                                    foreach (var comm in comments)
+                                    {
+                                        comm_query += $" ({comm.Id}, '{repository.name}', {pull.Number}, {false}),";
+                                    }
+
+                                    var reviewheads = await installationClient.PullRequest.Review.GetAll(owner, repoName, pull.Number);
+                                    foreach (var review in reviewheads)
+                                    {
+                                        var published_comments = await installationClient.PullRequest.Review.GetAllComments(owner, repoName, pull.Number, review.Id);
+                                        var comment_id_list = string.Join(",", published_comments.Select(c => c.Id));
+
+                                        review_head_query += $" ({review.Id}, '{repoName}', {pull.Number}, '{review.Body.Replace("'", "''")}', '{review.State.StringValue}', ARRAY[{comment_id_list}]::bigint[]),";
+
+                                        foreach (var revcomm in published_comments)
+                                        {
+                                            comm_query += $" ({revcomm.Id}, '{repository.name}', {pull.Number}, {true}),";
+                                        }
+
+                                    }
+
                                 }
-                                query = query.Substring(0, query.Length - 2);
+                                query = query[..^2];
                                 using (var command = new NpgsqlCommand(query, connection))
+                                {
+                                    command.ExecuteNonQuery();
+                                }
+
+                                review_head_query = review_head_query[..^1];
+                                using (var command = new NpgsqlCommand(review_head_query, connection))
+                                {
+                                    command.ExecuteNonQuery();
+                                }
+
+                                comm_query = comm_query[..^1];
+                                using (var command = new NpgsqlCommand(comm_query, connection))
                                 {
                                     command.ExecuteNonQuery();
                                 }
@@ -367,6 +438,8 @@ namespace CS.Web.Controllers
 
                             string query1 = "DELETE FROM repositoryinfo WHERE id = @id";
                             string query2 = "DELETE FROM pullrequestinfo WHERE repoid = @id";
+                            string query3 = $"DELETE FROM comments WHERE reponame = '{repository.name}'";
+                            string query4 = $"DELETE FROM reviewhead WHERE reponame = '{repository.name}'";
 
 
                             // GetRepository by id lazım...
@@ -384,11 +457,21 @@ namespace CS.Web.Controllers
                                 command.ExecuteNonQuery();
                             }
 
+                            using (NpgsqlCommand command = new NpgsqlCommand(query3, connection))
+                            {
+                                command.ExecuteNonQuery();
+                            }
+
+                            using (NpgsqlCommand command = new NpgsqlCommand(query4, connection))
+                            {
+                                command.ExecuteNonQuery();
+                            }
+
                             if (installationPayload.installation.account.type == "User")
                             {
-                                string query3 = "DELETE FROM userinfo WHERE userid = @userid";
+                                string query5 = "DELETE FROM userinfo WHERE userid = @userid";
 
-                                using (NpgsqlCommand command = new NpgsqlCommand(query3, connection))
+                                using (NpgsqlCommand command = new NpgsqlCommand(query5, connection))
                                 {
                                     command.Parameters.AddWithValue("@userid", installationPayload.installation.account.id);
 
@@ -443,7 +526,9 @@ namespace CS.Web.Controllers
                             }
 
                             string parameters = "(repoid, pullid, reponame, pullnumber, title, author, authoravatarurl, createdat, updatedat, comments, commits, changedfiles, additions, deletions, draft, merged, state, reviewers, labels, pullurl, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, priority)";
-                            query = "INSERT INTO pullrequestinfo " + parameters + " VALUES "; //+ at_parameters;
+                            query = "INSERT INTO pullrequestinfo " + parameters + " VALUES ";
+                            string comm_query = "INSERT INTO comments (commentid, reponame, prnumber, is_review) VALUES ";
+                            string review_head_query = "INSERT INTO reviewhead (review_id, reponame, prnumber, body, verdict, comments) VALUES";
 
                             var repoPulls = await GetRepoPullsById(repository.id, installationClient);
 
@@ -584,12 +669,38 @@ namespace CS.Web.Controllers
                                     var installationReviewsJson = JsonConvert.SerializeObject(installationLatestReviews);
 
 
+                                    query += $"({repository.id}, {pull.Id}, '{pull.Base.Repository.Name}', {pull.Number}, '{pull.Title}', '{pull.User.Login}', '{pull.User.AvatarUrl}', '{pull.CreatedAt.Date:yyyy-MM-dd}', '{pull.UpdatedAt.Date:yyyy-MM-dd}', {pull.Comments}, {pull.Commits}, {pull.ChangedFiles}, {pull.Additions}, {pull.Deletions}, {pull.Draft}, {pull.Merged}, '{pull.State.StringValue}', {requestedReviewers}, '{labeljson}', '{pull.Url}', '{pull.Base.Repository.Owner.Login}', '{JsonConvert.SerializeObject(checksList)}', {checks_complete_count}, {checks_incomplete_count}, {checks_success_count}, {checks_fail_count}, {assignedReviewers}, '{installationReviewsJson}', {priority}), ";
 
+                                    var comments = await installationClient.Issue.Comment.GetAllForIssue(repository.id, repoPull.Number);
+                                    foreach (var comm in comments)
+                                    {
+                                        comm_query += $" ({comm.Id}, '{repository.name}', {pull.Number}, {false}),";
+                                    }
 
-                                    query += $"({repository.id}, {pull.Id}, '{pull.Base.Repository.Name}', {pull.Number}, '{pull.Title}', '{pull.User.Login}', '{pull.User.AvatarUrl}', '{pull.CreatedAt.Date:yyyy-MM-dd}', '{pull.UpdatedAt.Date:yyyy-MM-dd}', {pull.Comments}, {pull.Commits}, {pull.ChangedFiles}, {pull.Additions}, {pull.Deletions}, {pull.Draft}, '{pull.State.ToString()}', {requestedReviewers}, '{labeljson}', '{pull.Url}', '{pull.Base.Repository.Owner.Login}', '{JsonConvert.SerializeObject(checksList)}', {checks_complete_count}, {checks_incomplete_count}, {checks_success_count}, {checks_fail_count}, {assignedReviewers}, '{installationReviewsJson}', {priority}), ";
+                                    var reviewheads = await installationClient.PullRequest.Review.GetAll(owner, repoName, pull.Number);
+                                    foreach (var review in reviewheads)
+                                    {
+                                        var published_comments = await installationClient.PullRequest.Review.GetAllComments(owner, repoName, pull.Number, review.Id);
+                                        var comment_id_list = string.Join(",", published_comments.Select(c => c.Id));
+
+                                        review_head_query += $" ({review.Id}, '{repoName}', {pull.Number}, '{review.Body.Replace("'", "''")}', '{review.State.StringValue}', ARRAY[{comment_id_list}]::bigint[]),";
+
+                                        foreach (var revcomm in published_comments)
+                                        {
+                                            comm_query += $" ({revcomm.Id}, '{repository.name}', {pull.Number}, {true}),";
+                                        }
+
+                                    }
                                 }
+
                                 query = query.Substring(0, query.Length - 2);
                                 using (var command = new NpgsqlCommand(query, connection))
+                                {
+                                    command.ExecuteNonQuery();
+                                }
+
+                                comm_query = comm_query[..^1];
+                                using (var command = new NpgsqlCommand(comm_query, connection))
                                 {
                                     command.ExecuteNonQuery();
                                 }
@@ -611,6 +722,8 @@ namespace CS.Web.Controllers
 
                             string query1 = "DELETE FROM repositoryinfo WHERE id = @id";
                             string query2 = "DELETE FROM pullrequestinfo WHERE repoid = @id";
+                            string query3 = $"DELETE FROM comments WHERE reponame = '{repository.name}'";
+                            string query4 = $"DELETE FROM reviewhead WHERE reponame = '{repository.name}'";
 
                             // GetRepository by id lazım...
                             using (NpgsqlCommand command = new NpgsqlCommand(query1, connection))
@@ -624,6 +737,16 @@ namespace CS.Web.Controllers
                             {
                                 command.Parameters.AddWithValue("@id", repository.id);
 
+                                command.ExecuteNonQuery();
+                            }
+
+                            using (NpgsqlCommand command = new NpgsqlCommand(query3, connection))
+                            {
+                                command.ExecuteNonQuery();
+                            }
+
+                            using (NpgsqlCommand command = new NpgsqlCommand(query4, connection))
+                            {
                                 command.ExecuteNonQuery();
                             }
 
@@ -847,7 +970,15 @@ namespace CS.Web.Controllers
                     }
 
                     var reviewsJson = JsonConvert.SerializeObject(latestReviews);
-                    string reviewsQuery = $"UPDATE pullrequestinfo SET reviews = '{reviewsJson}', updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE pullid = {pullRequestReviewPayload.pull_request.id}";
+
+                    // Get requested reviewers
+
+                    var reqRevs = pullRequestReviewPayload.pull_request.requested_reviewers.Any()
+                            ? $"'{{ {string.Join(",", pullRequestReviewPayload.pull_request.requested_reviewers.Select(r => $@"""{r.login}"""))} }}'"
+                            : "'{}'";
+
+                    // Update requested reviewers and reviews in the database
+                    string reviewsQuery = $"UPDATE pullrequestinfo SET reviewers = {reqRevs}, reviews = '{reviewsJson}', updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE pullid = {pullRequestReviewPayload.pull_request.id}";
                     connection.Open();
                     using (var command = new NpgsqlCommand(reviewsQuery, connection))
                     {
