@@ -2079,9 +2079,8 @@ public class GitHubController : ControllerBase
         return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
     }
 
-    [HttpGet("prs/needsreview/filter")]
-    public async Task<ActionResult> FilterNeedsYourReviewPRs([FromQuery] PRFilter filter)
-
+    [HttpGet("prs/needsreview/filter/{author}")]
+    public async Task<ActionResult> FilterNeedsYourReviewPRs([FromQuery] PRFilter filter, string author, string assignee, string fromDate)
     {
         /*
         filter.Assignee string
@@ -2092,7 +2091,7 @@ public class GitHubController : ControllerBase
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.Author = "Ece-Kahraman";
+        filter.Author = author;
         filter.FromDate = "thisyear";
         filter.Priority = "3";
 
@@ -2574,7 +2573,7 @@ public class GitHubController : ControllerBase
 
         */
         filter.Repositories = ["hubreviewapp.github.io"];
-        filter.Author = "Ece-Kahraman";
+        filter.Author = null;
         filter.FromDate = "thisyear";
         filter.Priority = "3";
 
