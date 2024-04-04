@@ -518,7 +518,70 @@ public class GitHubController : ControllerBase
                 try
                 {
                     var pull = await installationClient.PullRequest.Get(owner, repoName, (int)prnumber);
-                    return Ok(pull);
+
+                    Array checks;
+                    List<ReviewObjDB> reviews = [];
+                    string[] reviewers;
+                    List<ReviewObjDB> combined_revs = [];
+                    int ChecksComplete;
+                    int ChecksIncomplete;
+                    int ChecksSuccess;
+                    int ChecksFail;
+
+                    var config = new CoreConfiguration();
+                    string connectionString = config.DbConnectionString;
+                    using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+                    {
+                        await connection.OpenAsync();
+
+                        string selects = "checks, checks_complete, checks_incomplete, checks_success, checks_fail, reviews, reviewers";
+                        string query = "SELECT " + selects + " FROM pullrequestinfo WHERE reponame=@reponame AND repoowner=@owner AND pullnumber = @prnumber";// ORDER BY name ASC";
+                        using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                        {
+                            command.Parameters.AddWithValue("@reponame", repoName);
+                            command.Parameters.AddWithValue("@owner", owner);
+                            command.Parameters.AddWithValue("@prnumber", prnumber);
+
+                            using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                            {
+                                await reader.ReadAsync();
+                                checks = JsonConvert.DeserializeObject<object[]>(reader.GetString(0));
+                                ChecksComplete = reader.GetInt32(1);
+                                ChecksIncomplete = reader.GetInt32(2);
+                                ChecksSuccess = reader.GetInt32(3);
+                                ChecksFail = reader.GetInt32(4);
+                                reviews = JsonConvert.DeserializeObject<List<ReviewObjDB>>(reader.GetString(5));
+                                reviewers = reader.IsDBNull(6) ? new string[] { } : ((object[])reader.GetValue(6)).Select(obj => obj.ToString()).ToArray();
+                            }
+                        }
+
+                        await connection.CloseAsync();
+                    }
+
+                    foreach (var obj in reviews)
+                    {
+                        combined_revs.Add(reviewers.Contains(obj.login) ?
+                            new ReviewObjDB
+                            {
+                                login = obj.login,
+                                state = "REQUESTED"
+                            }
+                            : obj
+                        );
+                    }
+
+                    var prDetails = new
+                    {
+                        Pull = pull,
+                        checks = checks,
+                        reviews = combined_revs,
+                        checksComplete = ChecksComplete,
+                        ChecksIncomplete = ChecksIncomplete,
+                        ChecksSuccess = ChecksSuccess,
+                        ChecksFail = ChecksFail
+                    };
+
+                    return Ok(prDetails);
                 }
                 catch (NotFoundException)
                 {
@@ -3953,6 +4016,28 @@ public class GitHubController : ControllerBase
         return Ok(new { Authors = allAuthors, Labels = allLabels, Assignees = allAssignees });
     }
 
+    [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/merge")]
+    public async Task<ActionResult> MergePullRequest(string owner, string repoName, int prnumber)
+    {
+        try
+        {
+            var github = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+
+            var pullRequest = await github.PullRequest.Get(owner, repoName, prnumber);
+
+            await github.PullRequest.Merge(owner, repoName, prnumber, new MergePullRequest());
+
+            var branchToDelete = $"refs/heads/{pullRequest.Head.Ref}";
+            await github.Git.Reference.Delete(owner, repoName, branchToDelete);
+            Console.WriteLine($"{owner} {repoName} {prnumber} is merged, and branch {branchToDelete} is deleted.");
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred while merging the pull request: {ex.Message}");
+            throw; // Rethrow the exception or handle it as necessary
+        }
+    }
 
 
 }

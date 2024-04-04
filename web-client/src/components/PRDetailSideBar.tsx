@@ -23,18 +23,14 @@ import PriorityBadge, { PriorityBadgeLabel } from "./PriorityBadge";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import SelectLabel from "./SelectLabel";
-
-function barColor(capacity: number, waiting: number) {
-  const workload = (waiting / capacity) * 100;
-  return workload > 80 ? "red" : workload > 60 ? "orange" : workload > 40 ? "yellow" : "green";
-}
+import BarColor from "../utility/WorkloadBarColor.ts";
 
 export interface Contributor {
   id: string;
   login: string;
   avatarUrl: string;
-  waiting: number;
-  capacity: number;
+  currentLoad: number;
+  maxLoad: number;
 }
 
 export interface Label {
@@ -57,9 +53,10 @@ export interface PRDetailSideBarProps {
   addedReviewers: Reviewer[];
   addedAssignees: Assignee[];
   labels: Label[];
+  author: string;
 }
 
-function PRDetailSideBar({ addedReviewers, labels, addedAssignees }: PRDetailSideBarProps) {
+function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRDetailSideBarProps) {
   const { owner, repoName, prnumber } = useParams();
   const iconInfo = <IconInfoCircle style={{ width: rem(18), height: rem(18) }} />;
   const [contributors, setContributors] = useState<Contributor[]>([]);
@@ -73,7 +70,7 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees }: PRDetailSid
     const fetchContributors = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5018/api/github/GetPRReviewerSuggestion/${owner}/${repoName}/${prnumber}`,
+          `http://localhost:5018/api/github/GetPRReviewerSuggestion/${owner}/${repoName}/${author}`,
           {
             withCredentials: true,
           },
@@ -87,7 +84,7 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees }: PRDetailSid
       }
     };
     fetchContributors();
-  }, [owner, prnumber, repoName]);
+  }, [author, owner, repoName]);
 
   useEffect(() => {
     if (addedReviewers.length != 0) {
@@ -246,10 +243,10 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees }: PRDetailSid
                 <Grid.Col span={4}>
                   <Progress.Root mt="5px" size="lg">
                     <Progress.Section
-                      color={barColor(itm.capacity, itm.waiting)}
-                      value={(itm.waiting / itm.capacity) * 100}
+                      color={BarColor(itm.maxLoad, itm.currentLoad)}
+                      value={(itm.currentLoad / itm.maxLoad) * 100}
                     >
-                      <Progress.Label>{(itm.waiting / itm.capacity) * 100}%</Progress.Label>
+                      <Progress.Label>{(itm.currentLoad / itm.maxLoad) * 100}%</Progress.Label>
                     </Progress.Section>
                   </Progress.Root>
                 </Grid.Col>

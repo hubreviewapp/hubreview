@@ -2,7 +2,7 @@ import { Text, Avatar, Group, Select, Box, rem, Badge } from "@mantine/core";
 import { Combobox, useCombobox, Input, Button } from "@mantine/core";
 import classes from "../styles/comment.module.css";
 import UserLogo from "../assets/icons/user.png";
-import { IconDots, IconSparkles, IconBrandSlack } from "@tabler/icons-react";
+import { IconDots, IconSparkles } from "@tabler/icons-react";
 import Markdown from "react-markdown";
 import { useState } from "react";
 import convertHtmlToMarkdown from "../utility/convertHtmlToMarkdown";
@@ -133,10 +133,6 @@ export function Comment({
                   placeholder="Reply"
                 />
                 <Button> Submit </Button>
-
-                <Button variant="default" style={{ marginLeft: 10 }}>
-                  <IconBrandSlack />
-                </Button>
               </Box>
             </>
           )}
