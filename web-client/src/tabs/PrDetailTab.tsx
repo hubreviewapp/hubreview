@@ -32,7 +32,7 @@ export default function PrDetailTab({ pull }: PRDetailTabProps) {
             style={{ marginBottom: "20px", marginRight: "20px" }}
           >
             <Group>
-              <Text fw={500} size="lg" mt="md">
+              <Text fw={500} size="lg" mt="md" style={{ marginBottom: "10px" }}>
                 {check.name}
               </Text>
 

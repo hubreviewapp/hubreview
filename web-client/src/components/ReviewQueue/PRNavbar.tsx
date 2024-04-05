@@ -44,7 +44,7 @@ export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSe
 
         const updatedRepos = res.data.repoNames.map((value: Repository) => ({
           name: value.name.toString(),
-          selected: false,
+          selected: true,
         }));
 
         setSelectedRepos.setState(updatedRepos);
