@@ -2103,6 +2103,10 @@ public class GitHubController : ControllerBase
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
+        if (filter.repositories == null)
+        {
+            filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
+        }
 
         using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
         {
@@ -2124,7 +2128,19 @@ public class GitHubController : ControllerBase
             {
                 query += " AND priority = " + filter.priority;
             }
-
+            if (filter.labels != null && filter.labels.Length > 0)
+            {
+                query += " AND EXISTS (SELECT 1 FROM json_array_elements(labels) AS label WHERE label->>'name' IN (";
+                for (int i = 0; i < filter.labels.Length; i++)
+                {
+                    query += "@label" + i;
+                    if (i < filter.labels.Length - 1)
+                    {
+                        query += ", ";
+                    }
+                }
+                query += "))";
+            }
             // Add date filter condition based on the selected value
             if (!string.IsNullOrEmpty(filter.fromDate))
             {
@@ -2167,12 +2183,6 @@ public class GitHubController : ControllerBase
                         // Add more cases for other sorting options
                 }
             }
-            /*
-            if (filter.Labels != null && filter.Labels.Length > 0)
-            {
-                query += " AND labels @> @labels";
-            }
-             */
 
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
@@ -2188,10 +2198,18 @@ public class GitHubController : ControllerBase
                     command.Parameters.AddWithValue("@assignee", filter.assignee);
                 }
                 command.Parameters.AddWithValue("@repositories", filter.repositories);
-                /*
-                if (filter.Labels != null && filter.Labels.Length > 0)
+                if (filter.labels != null && filter.labels.Length > 0)
                 {
-                    command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.Labels));
+                    for (int i = 0; i < filter.labels.Length; i++)
+                    {
+                        command.Parameters.AddWithValue("@label" + i, filter.labels[i]);
+                    }
+                }
+
+                /*
+                if (filter.labels != null && filter.labels.Length > 0)
+                {
+                    command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.labels));
                 }
                 */
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
@@ -2261,6 +2279,10 @@ public class GitHubController : ControllerBase
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
+        if (filter.repositories == null)
+        {
+            filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
+        }
 
         using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
         {
@@ -2282,7 +2304,19 @@ public class GitHubController : ControllerBase
             {
                 query += " AND priority = " + filter.priority;
             }
-
+                        if (filter.labels != null && filter.labels.Length > 0)
+            {
+                query += " AND EXISTS (SELECT 1 FROM json_array_elements(labels) AS label WHERE label->>'name' IN (";
+                for (int i = 0; i < filter.labels.Length; i++)
+                {
+                    query += "@label" + i;
+                    if (i < filter.labels.Length - 1)
+                    {
+                        query += ", ";
+                    }
+                }
+                query += "))";
+            }
             // Add date filter condition based on the selected value
             if (!string.IsNullOrEmpty(filter.fromDate))
             {
@@ -2326,7 +2360,7 @@ public class GitHubController : ControllerBase
                 }
             }
             /*
-            if (filter.Labels != null && filter.Labels.Length > 0)
+            if (filter.labels != null && filter.labels.Length > 0)
             {
                 query += " AND labels @> @labels";
             }
@@ -2346,10 +2380,18 @@ public class GitHubController : ControllerBase
                     command.Parameters.AddWithValue("@assignee", filter.assignee);
                 }
                 command.Parameters.AddWithValue("@repositories", filter.repositories);
-                /*
-                if (filter.Labels != null && filter.Labels.Length > 0)
+                if (filter.labels != null && filter.labels.Length > 0)
                 {
-                    command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.Labels));
+                    for (int i = 0; i < filter.labels.Length; i++)
+                    {
+                        command.Parameters.AddWithValue("@label" + i, filter.labels[i]);
+                    }
+                }
+
+                /*
+                if (filter.labels != null && filter.labels.Length > 0)
+                {
+                    command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.labels));
                 }
                 */
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
@@ -2419,6 +2461,10 @@ public class GitHubController : ControllerBase
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
+        if (filter.repositories == null)
+        {
+            filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
+        }
 
         using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
         {
@@ -2440,7 +2486,19 @@ public class GitHubController : ControllerBase
             {
                 query += " AND priority = " + filter.priority;
             }
-
+            if (filter.labels != null && filter.labels.Length > 0)
+            {
+                query += " AND EXISTS (SELECT 1 FROM json_array_elements(labels) AS label WHERE label->>'name' IN (";
+                for (int i = 0; i < filter.labels.Length; i++)
+                {
+                    query += "@label" + i;
+                    if (i < filter.labels.Length - 1)
+                    {
+                        query += ", ";
+                    }
+                }
+                query += "))";
+            }
             // Add date filter condition based on the selected value
             if (!string.IsNullOrEmpty(filter.fromDate))
             {
@@ -2484,7 +2542,7 @@ public class GitHubController : ControllerBase
                 }
             }
             /*
-            if (filter.Labels != null && filter.Labels.Length > 0)
+            if (filter.labels != null && filter.labels.Length > 0)
             {
                 query += " AND labels @> @labels";
             }
@@ -2504,10 +2562,18 @@ public class GitHubController : ControllerBase
                     command.Parameters.AddWithValue("@assignee", filter.assignee);
                 }
                 command.Parameters.AddWithValue("@repositories", filter.repositories);
-                /*
-                if (filter.Labels != null && filter.Labels.Length > 0)
+                if (filter.labels != null && filter.labels.Length > 0)
                 {
-                    command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.Labels));
+                    for (int i = 0; i < filter.labels.Length; i++)
+                    {
+                        command.Parameters.AddWithValue("@label" + i, filter.labels[i]);
+                    }
+                }
+
+                /*
+                if (filter.labels != null && filter.labels.Length > 0)
+                {
+                    command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.labels));
                 }
                 */
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
@@ -2576,6 +2642,10 @@ public class GitHubController : ControllerBase
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
+        if (filter.repositories == null)
+        {
+            filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
+        }
 
         using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
         {
@@ -2598,6 +2668,19 @@ public class GitHubController : ControllerBase
                 query += " AND priority = " + filter.priority;
             }
 
+            if (filter.labels != null && filter.labels.Length > 0)
+            {
+                query += " AND EXISTS (SELECT 1 FROM json_array_elements(labels) AS label WHERE label->>'name' IN (";
+                for (int i = 0; i < filter.labels.Length; i++)
+                {
+                    query += "@label" + i;
+                    if (i < filter.labels.Length - 1)
+                    {
+                        query += ", ";
+                    }
+                }
+                query += "))";
+            }
             // Add date filter condition based on the selected value
             if (!string.IsNullOrEmpty(filter.fromDate))
             {
@@ -2641,7 +2724,7 @@ public class GitHubController : ControllerBase
                 }
             }
             /*
-            if (filter.Labels != null && filter.Labels.Length > 0)
+            if (filter.labels != null && filter.labels.Length > 0)
             {
                 query += " AND labels @> @labels";
             }
@@ -2661,12 +2744,14 @@ public class GitHubController : ControllerBase
                     command.Parameters.AddWithValue("@assignee", filter.assignee);
                 }
                 command.Parameters.AddWithValue("@repositories", filter.repositories);
-                /*
-                if (filter.Labels != null && filter.Labels.Length > 0)
+                if (filter.labels != null && filter.labels.Length > 0)
                 {
-                    command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.Labels));
+                    for (int i = 0; i < filter.labels.Length; i++)
+                    {
+                        command.Parameters.AddWithValue("@label" + i, filter.labels[i]);
+                    }
                 }
-                */
+
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
                     while (await reader.ReadAsync())
@@ -2734,6 +2819,10 @@ public class GitHubController : ControllerBase
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
+        if (filter.repositories == null)
+        {
+            filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
+        }
 
         using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
         {
@@ -2755,7 +2844,19 @@ public class GitHubController : ControllerBase
             {
                 query += " AND priority = " + filter.priority;
             }
-
+            if (filter.labels != null && filter.labels.Length > 0)
+            {
+                query += " AND EXISTS (SELECT 1 FROM json_array_elements(labels) AS label WHERE label->>'name' IN (";
+                for (int i = 0; i < filter.labels.Length; i++)
+                {
+                    query += "@label" + i;
+                    if (i < filter.labels.Length - 1)
+                    {
+                        query += ", ";
+                    }
+                }
+                query += "))";
+            }
             // Add date filter condition based on the selected value
             if (!string.IsNullOrEmpty(filter.fromDate))
             {
@@ -2799,7 +2900,7 @@ public class GitHubController : ControllerBase
                 }
             }
             /*
-            if (filter.Labels != null && filter.Labels.Length > 0)
+            if (filter.labels != null && filter.labels.Length > 0)
             {
                 query += " AND labels @> @labels";
             }
@@ -2819,10 +2920,18 @@ public class GitHubController : ControllerBase
                     command.Parameters.AddWithValue("@assignee", filter.assignee);
                 }
                 command.Parameters.AddWithValue("@repositories", filter.repositories);
-                /*
-                if (filter.Labels != null && filter.Labels.Length > 0)
+                if (filter.labels != null && filter.labels.Length > 0)
                 {
-                    command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.Labels));
+                    for (int i = 0; i < filter.labels.Length; i++)
+                    {
+                        command.Parameters.AddWithValue("@label" + i, filter.labels[i]);
+                    }
+                }
+
+                /*
+                if (filter.labels != null && filter.labels.Length > 0)
+                {
+                    command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.labels));
                 }
                 */
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
@@ -2892,6 +3001,10 @@ public class GitHubController : ControllerBase
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
+        if (filter.repositories == null)
+        {
+            filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
+        }
 
         using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
         {
@@ -2913,7 +3026,19 @@ public class GitHubController : ControllerBase
             {
                 query += " AND priority = " + filter.priority;
             }
-
+            if (filter.labels != null && filter.labels.Length > 0)
+            {
+                query += " AND EXISTS (SELECT 1 FROM json_array_elements(labels) AS label WHERE label->>'name' IN (";
+                for (int i = 0; i < filter.labels.Length; i++)
+                {
+                    query += "@label" + i;
+                    if (i < filter.labels.Length - 1)
+                    {
+                        query += ", ";
+                    }
+                }
+                query += "))";
+            }
             // Add date filter condition based on the selected value
             if (!string.IsNullOrEmpty(filter.fromDate))
             {
@@ -2957,7 +3082,7 @@ public class GitHubController : ControllerBase
                 }
             }
             /*
-            if (filter.Labels != null && filter.Labels.Length > 0)
+            if (filter.labels != null && filter.labels.Length > 0)
             {
                 query += " AND labels @> @labels";
             }
@@ -2977,10 +3102,18 @@ public class GitHubController : ControllerBase
                     command.Parameters.AddWithValue("@assignee", filter.assignee);
                 }
                 command.Parameters.AddWithValue("@repositories", filter.repositories);
-                /*
-                if (filter.Labels != null && filter.Labels.Length > 0)
+                if (filter.labels != null && filter.labels.Length > 0)
                 {
-                    command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.Labels));
+                    for (int i = 0; i < filter.labels.Length; i++)
+                    {
+                        command.Parameters.AddWithValue("@label" + i, filter.labels[i]);
+                    }
+                }
+
+                /*
+                if (filter.labels != null && filter.labels.Length > 0)
+                {
+                    command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.labels));
                 }
                 */
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
