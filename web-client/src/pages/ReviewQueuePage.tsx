@@ -107,16 +107,14 @@ function ReviewQueuePage() {
     priority: null,
     fromDate: null,
     orderBy: "priority",
-    repositories: []
+    repositories: [],
   });
 
   useEffect(() => {
-    const selectedRepositories = values
-      .filter(repo => repo.selected)
-      .map(repo => repo.name);
-    setFilterList(prevFilterList => ({
+    const selectedRepositories = values.filter((repo) => repo.selected).map((repo) => repo.name);
+    setFilterList((prevFilterList) => ({
       ...prevFilterList,
-      repositories: selectedRepositories
+      repositories: selectedRepositories,
     }));
   }, [values]);
 
@@ -129,7 +127,8 @@ function ReviewQueuePage() {
             "Content-Type": "application/json",
           },
           withCredentials: true,
-          baseURL: "http://localhost:5018/api/github",});
+          baseURL: "http://localhost:5018/api/github",
+        });
         if (res.data != undefined) {
           setNeedsYourReviewPRs(res.data);
         }
@@ -149,7 +148,8 @@ function ReviewQueuePage() {
             "Content-Type": "application/json",
           },
           withCredentials: true,
-          baseURL: "http://localhost:5018/api/github",});
+          baseURL: "http://localhost:5018/api/github",
+        });
         if (res.data != undefined) {
           setYourPrs(res.data);
         }
@@ -169,7 +169,8 @@ function ReviewQueuePage() {
             "Content-Type": "application/json",
           },
           withCredentials: true,
-          baseURL: "http://localhost:5018/api/github",});
+          baseURL: "http://localhost:5018/api/github",
+        });
         if (res.data != undefined) {
           setWaitingAuthorPRs(res.data);
         }
@@ -189,7 +190,8 @@ function ReviewQueuePage() {
             "Content-Type": "application/json",
           },
           withCredentials: true,
-          baseURL: "http://localhost:5018/api/github",});
+          baseURL: "http://localhost:5018/api/github",
+        });
         if (res.data != undefined) {
           setOpenPRs(res.data);
         }

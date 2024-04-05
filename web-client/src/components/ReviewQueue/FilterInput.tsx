@@ -73,6 +73,12 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
           clearable
           className="hide-pills"
           maxDropdownHeight={150}
+          onChange={(val) => {
+            setFilterList({
+              ...filterList,
+              labels: val,
+            });
+          }}
         />
 
         <Select
@@ -126,7 +132,7 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
           onChange={(val) =>
             setFilterList({
               ...filterList,
-              fromDate: val?.toLowerCase().replace(/\s/g, ''),
+              fromDate: val?.toLowerCase().replace(/\s/g, ""),
             })
           }
         />
@@ -139,7 +145,7 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
           onChange={(val) =>
             setFilterList({
               ...filterList,
-              orderBy: val?.toLowerCase().replace(/\s/g, ''),
+              orderBy: val?.toLowerCase().replace(/\s/g, ""),
             })
           }
         />
