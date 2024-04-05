@@ -7,5 +7,5 @@ public class PRFilter
     public string? fromDate { get; set; }
     public string? orderBy { get; set; }
     public string? state { get; set; }
-    public string[]? Repositories { get; set; }
+    public string[]? repositories { get; set; }
 }

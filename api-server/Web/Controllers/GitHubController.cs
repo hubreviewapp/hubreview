@@ -2090,7 +2090,7 @@ public class GitHubController : ControllerBase
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
-        filter.Repositories = ["hubreviewapp.github.io"];
+        
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2187,7 +2187,7 @@ public class GitHubController : ControllerBase
                 {
                     command.Parameters.AddWithValue("@assignee", filter.assignee);
                 }
-                command.Parameters.AddWithValue("@repositories", filter.Repositories);
+                command.Parameters.AddWithValue("@repositories", filter.repositories);
                 /*
                 if (filter.Labels != null && filter.Labels.Length > 0)
                 {
@@ -2248,7 +2248,7 @@ public class GitHubController : ControllerBase
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
-        filter.Repositories = ["hubreviewapp.github.io"];
+        
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2345,7 +2345,7 @@ public class GitHubController : ControllerBase
                 {
                     command.Parameters.AddWithValue("@assignee", filter.assignee);
                 }
-                command.Parameters.AddWithValue("@repositories", filter.Repositories);
+                command.Parameters.AddWithValue("@repositories", filter.repositories);
                 /*
                 if (filter.Labels != null && filter.Labels.Length > 0)
                 {
@@ -2406,7 +2406,7 @@ public class GitHubController : ControllerBase
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
-        filter.Repositories = ["hubreviewapp.github.io"];
+        
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2503,7 +2503,7 @@ public class GitHubController : ControllerBase
                 {
                     command.Parameters.AddWithValue("@assignee", filter.assignee);
                 }
-                command.Parameters.AddWithValue("@repositories", filter.Repositories);
+                command.Parameters.AddWithValue("@repositories", filter.repositories);
                 /*
                 if (filter.Labels != null && filter.Labels.Length > 0)
                 {
@@ -2563,7 +2563,7 @@ public class GitHubController : ControllerBase
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
-        filter.Repositories = ["hubreviewapp.github.io"];
+        
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2660,7 +2660,7 @@ public class GitHubController : ControllerBase
                 {
                     command.Parameters.AddWithValue("@assignee", filter.assignee);
                 }
-                command.Parameters.AddWithValue("@repositories", filter.Repositories);
+                command.Parameters.AddWithValue("@repositories", filter.repositories);
                 /*
                 if (filter.Labels != null && filter.Labels.Length > 0)
                 {
@@ -2721,7 +2721,7 @@ public class GitHubController : ControllerBase
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
-        filter.Repositories = ["hubreviewapp.github.io"];
+        
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2818,7 +2818,7 @@ public class GitHubController : ControllerBase
                 {
                     command.Parameters.AddWithValue("@assignee", filter.assignee);
                 }
-                command.Parameters.AddWithValue("@repositories", filter.Repositories);
+                command.Parameters.AddWithValue("@repositories", filter.repositories);
                 /*
                 if (filter.Labels != null && filter.Labels.Length > 0)
                 {
@@ -2879,7 +2879,7 @@ public class GitHubController : ControllerBase
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
-        filter.Repositories = ["hubreviewapp.github.io"];
+        
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2976,7 +2976,7 @@ public class GitHubController : ControllerBase
                 {
                     command.Parameters.AddWithValue("@assignee", filter.assignee);
                 }
-                command.Parameters.AddWithValue("@repositories", filter.Repositories);
+                command.Parameters.AddWithValue("@repositories", filter.repositories);
                 /*
                 if (filter.Labels != null && filter.Labels.Length > 0)
                 {
