@@ -66,6 +66,7 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
   const [query, setQuery] = useState("");
   const filtered = contributors.filter((item) => item.login.toLowerCase().includes(query.toLowerCase()));
 
+  console.log("rex", addedReviewers);
   useEffect(() => {
     const fetchContributors = async () => {
       try {
