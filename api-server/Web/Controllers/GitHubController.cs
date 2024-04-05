@@ -2090,7 +2090,7 @@ public class GitHubController : ControllerBase
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
-        
+
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2266,7 +2266,7 @@ public class GitHubController : ControllerBase
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
-        
+
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2304,7 +2304,7 @@ public class GitHubController : ControllerBase
             {
                 query += " AND priority = " + filter.priority;
             }
-                        if (filter.labels != null && filter.labels.Length > 0)
+            if (filter.labels != null && filter.labels.Length > 0)
             {
                 query += " AND EXISTS (SELECT 1 FROM json_array_elements(labels) AS label WHERE label->>'name' IN (";
                 for (int i = 0; i < filter.labels.Length; i++)
@@ -2448,7 +2448,7 @@ public class GitHubController : ControllerBase
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
-        
+
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2629,7 +2629,7 @@ public class GitHubController : ControllerBase
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
-        
+
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2806,7 +2806,7 @@ public class GitHubController : ControllerBase
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
-        
+
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
@@ -2988,7 +2988,7 @@ public class GitHubController : ControllerBase
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
-        
+
 
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
