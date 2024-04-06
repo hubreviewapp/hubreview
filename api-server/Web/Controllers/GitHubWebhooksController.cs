@@ -336,7 +336,8 @@ namespace CS.Web.Controllers
                                                 id = check.Id,
                                                 name = check.Name,
                                                 status = check.Status,
-                                                conclusion = check.Conclusion
+                                                conclusion = check.Conclusion,
+                                                url = check.HtmlUrl
                                             });
 
                                         }
@@ -627,7 +628,8 @@ namespace CS.Web.Controllers
                                                 id = check.Id,
                                                 name = check.Name,
                                                 status = check.Status,
-                                                conclusion = check.Conclusion
+                                                conclusion = check.Conclusion,
+                                                url = check.HtmlUrl
                                             });
 
                                         }
