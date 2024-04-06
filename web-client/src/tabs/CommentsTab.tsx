@@ -185,6 +185,13 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
               <br />
             </Box>
           ))}
+        {filteredComments.length == 0 ? (
+          <Text size="lg" c="dimmed">
+            There are currently no comments to display
+          </Text>
+        ) : (
+          <div />
+        )}
         {isLoading && (
           <Box pos="relative" h="200">
             <LoadingOverlay
