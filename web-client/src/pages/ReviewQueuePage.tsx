@@ -70,6 +70,9 @@ export interface FilterList {
   assignee: string | null;
   labels: string[];
   priority: string | null;
+  fromDate: string | null | undefined;
+  orderBy: string | null | undefined;
+  repositories: string[];
 }
 
 const API = "http://localhost:5018/api/github/prs/";
@@ -83,16 +86,31 @@ function ReviewQueuePage() {
   const [closedPRs, setClosedPRs] = useState<PRInfo[]>([]);
   const [activeSection, setActiveSection] = useState<string>("");
 
-  //filter options
+  const [values, handlers] = useListState<SelectedRepos>([]);
 
+  //filter options
   const [filterList, setFilterList] = useState<FilterList>({
     author: "",
     assignee: null,
     labels: [],
     priority: null,
+    fromDate: null,
+    orderBy: "priority",
+    repositories: [],
   });
 
-  const [values, handlers] = useListState<SelectedRepos>([]);
+  useEffect(() => {
+    const selectedRepositories = values.filter((repo) => repo.selected).map((repo) => repo.name);
+    setFilterList((prevFilterList) => ({
+      ...prevFilterList,
+      repositories: selectedRepositories,
+    }));
+  }, [values]);
+
+  const [closedLimit, setClosedLimit] = useState(10);
+  const [mergedLimit, setMergedLimits] = useState(10);
+  const [closedMax, setClosedMax] = useState(0);
+  const [mergedMax, setMergedMax] = useState(0);
 
   const [closedLimit, setClosedLimit] = useState(10);
   const [mergedLimit, setMergedLimits] = useState(10);
@@ -131,10 +149,47 @@ function ReviewQueuePage() {
     fetchMerged().then();
   }, [mergedLimit]);
   useEffect(() => {
-    const apiEnd = `needsreview/${filterList.author}`;
-    const fetchNeedsYourReviewPRs = async () => {
+    const apiEnd = "closed";
+    const fetchClosed = async () => {
       try {
         const res = await axios.get(API + apiEnd, { withCredentials: true });
+        if (res.data != undefined) {
+          setClosedMax(res.data.length);
+          setClosedPRs(res.data.slice(0, closedLimit));
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchClosed().then();
+  }, [closedLimit]);
+
+  useEffect(() => {
+    const apiEnd = "merged";
+    const fetchMerged = async () => {
+      try {
+        const res = await axios.get(API + apiEnd, { withCredentials: true });
+        if (res.data != undefined) {
+          setMergedMax(res.data.length);
+          setMergedPRs(res.data.slice(0, mergedLimit));
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchMerged().then();
+  }, [mergedLimit]);
+  useEffect(() => {
+    const apiEnd = `needsreview/filter`;
+    const fetchNeedsYourReviewPRs = async () => {
+      try {
+        const res = await axios.post(API + apiEnd, filterList, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+          baseURL: "http://localhost:5018/api/github",
+        });
         if (res.data != undefined) {
           setNeedsYourReviewPRs(res.data);
         }
@@ -146,10 +201,16 @@ function ReviewQueuePage() {
   }, [filterList]);
 
   useEffect(() => {
-    const apiEnd = "userprs";
+    const apiEnd = "userprs/filter";
     const fetchUserPrs = async () => {
       try {
-        const res = await axios.get(API + apiEnd, { withCredentials: true });
+        const res = await axios.post(API + apiEnd, filterList, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+          baseURL: "http://localhost:5018/api/github",
+        });
         if (res.data != undefined) {
           setYourPrs(res.data);
         }
@@ -158,13 +219,19 @@ function ReviewQueuePage() {
       }
     };
     fetchUserPrs().then();
-  }, []);
+  }, [filterList]);
 
   useEffect(() => {
-    const apiEnd = "waitingauthor";
+    const apiEnd = "waitingauthor/filter";
     const fetchWaitingAuthor = async () => {
       try {
-        const res = await axios.get(API + apiEnd, { withCredentials: true });
+        const res = await axios.post(API + apiEnd, filterList, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+          baseURL: "http://localhost:5018/api/github",
+        });
         if (res.data != undefined) {
           setWaitingAuthorPRs(res.data);
         }
@@ -173,15 +240,20 @@ function ReviewQueuePage() {
       }
     };
     fetchWaitingAuthor().then();
-  }, []);
+  }, [filterList]);
 
   useEffect(() => {
+    const apiEnd = "open/filter";
     const fetchOpenPRs = async () => {
       try {
-        const res = await axios.get(`http://localhost:5018/api/github/prs/open/filter`, {
+        const res = await axios.post(API + apiEnd, filterList, {
+          headers: {
+            "Content-Type": "application/json",
+          },
           withCredentials: true,
+          baseURL: "http://localhost:5018/api/github",
         });
-        if (res) {
+        if (res.data != undefined) {
           setOpenPRs(res.data);
         }
       } catch (error) {

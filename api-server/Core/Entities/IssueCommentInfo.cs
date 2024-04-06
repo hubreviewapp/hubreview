@@ -4,6 +4,7 @@ namespace CS.Core.Entities
     {
         public long id { get; set; }
         public string? author { get; set; }
+        public string? avatar { get; set; }
         public string? body { get; set; }
         public string? label { get; set; }
         public string? decoration { get; set; }
