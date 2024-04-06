@@ -1039,6 +1039,7 @@ public class GitHubController : ControllerBase
                             {
                                 id = comm.Id,
                                 author = comm.User.Login,
+                                avatar = comm.User.AvatarUrl,
                                 body = comm.Body,
                                 label = null,
                                 decoration = null,
@@ -1065,10 +1066,11 @@ public class GitHubController : ControllerBase
                                 {
                                     id = comm.Id,
                                     author = comm.User.Login,
+                                    avatar = comm.User.AvatarUrl,
                                     body = parsed_message,
-                                    label = reader.GetString(0),
-                                    decoration = reader.GetString(1),
-                                    status = reader.GetString(2),
+                                    label = reader.IsDBNull(0) ? null : reader.GetString(0),
+                                    decoration = reader.IsDBNull(1) ? null : reader.GetString(1),
+                                    status = reader.IsDBNull(2) ? null : reader.GetString(2),
                                     createdAt = comm.CreatedAt,
                                     updatedAt = comm.UpdatedAt,
                                     association = comm.AuthorAssociation.StringValue
