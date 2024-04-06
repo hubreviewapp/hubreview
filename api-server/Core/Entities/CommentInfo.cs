@@ -9,7 +9,7 @@ namespace CS.Core.Entities
         public string? created_at { get; set; }
         public string? diff_hunk { get; set; }
         public string? html_url { get; set; }
-        public int id { get; set; }
+        public long id { get; set; }
         public int in_reply_to_id { get; set; }
         public int? line { get; set; }
         public string? node_id { get; set; }
@@ -19,7 +19,7 @@ namespace CS.Core.Entities
         public int? original_start_line { get; set; }
         public string? path { get; set; }
         public int? position { get; set; }
-        public int? pull_request_review_id { get; set; }
+        public long pull_request_review_id { get; set; }
         public string? pull_request_url { get; set; }
         public string? side { get; set; }
         public int? start_line { get; set; }

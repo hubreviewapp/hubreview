@@ -409,6 +409,7 @@ namespace CS.Web.Controllers
                                 }
 
                                 review_head_query = review_head_query[..^1];
+                                Console.WriteLine(review_head_query);
                                 using (var command = new NpgsqlCommand(review_head_query, connection))
                                 {
                                     command.ExecuteNonQuery();
@@ -1002,7 +1003,6 @@ namespace CS.Web.Controllers
                     var pullRequestReviewCommentPayload = JsonConvert.DeserializeObject<PullRequestReviewCommentPayload>(requestBody);
                     if (pullRequestReviewCommentPayload.action == "created")
                     {
-
                         Console.WriteLine($"PR review comment {pullRequestReviewCommentPayload.comment.id} created\n {pullRequestReviewCommentPayload.comment.pull_request_review_id}");
                     }
                     else if (pullRequestReviewCommentPayload.action == "edited")
@@ -1018,7 +1018,30 @@ namespace CS.Web.Controllers
                     Console.WriteLine("Commit comment");
                     break;
                 case "issue_comment":
-                    Console.WriteLine("Issue comment");
+                    var issueCommentPayload = JsonConvert.DeserializeObject<Core.Entities.Payloads.IssueCommentPayload>(requestBody);
+                    if(issueCommentPayload.action == "created")
+                    {
+                        string query = $"INSERT INTO comments (commentid, reponame, prnumber, is_review) VALUES ({issueCommentPayload.comment.id}, '{issueCommentPayload.repository.name}', {issueCommentPayload.issue.number}, {false})";
+                        connection.Open();
+                        using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+                        connection.Close();
+
+                        Console.WriteLine("issue comment created");
+                    }
+                    else if ( issueCommentPayload.action == "deleted" )
+                    {
+                        string query = $"DELETE FROM comments WHERE commentid = {issueCommentPayload.comment.id}";
+                        connection.Open();
+                        using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+                        connection.Close();
+                        Console.WriteLine("issue comment deleted");
+                    }
                     break;
             }
 
