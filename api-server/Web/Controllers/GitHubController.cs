@@ -1286,6 +1286,19 @@ public class GitHubController : ControllerBase
         return Ok($"Review added to pull request #{prnumber} in repository {repoName}.");
     }
 
+    [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addRevReply")]
+    public async Task<ActionResult> addRevReply(string owner, string repoName, int prnumber, [FromBody] CreateRevReplyRequestModel req)
+    {
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        
+        string new_body = "<!--Using HubReview-->" + req.body;
+        var reply = new PullRequestReviewCommentReplyCreate( new_body, req.reply_to_id );
+
+        var result = await client.PullRequest.ReviewComment.CreateReply(owner, repoName, prnumber, reply);
+
+        return Ok(result);
+    }
+
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_commits")]
     public async Task<ActionResult> getCommits(string owner, string repoName, int prnumber)
     {
