@@ -118,7 +118,7 @@ function PRCard({ data: pr }: PullRequestCardProps) {
                 Checks: {pr.checksSuccess} passed, {pr.checksFail} failed
               </Text>
               {pr.checks
-                .filter((c) => c.conclusion.StringValue == "failure")
+                .filter((c) => c.conclusion?.StringValue == "failure")
                 .map((c) => (
                   <Group key={c.id}>
                     <Text color="red">{c.name}</Text>
@@ -126,7 +126,7 @@ function PRCard({ data: pr }: PullRequestCardProps) {
                   </Group>
                 ))}
               {pr.checks
-                .filter((c) => c.conclusion.StringValue == "success")
+                .filter((c) => c.conclusion?.StringValue == "success")
                 .map((c) => (
                   <Group key={c.id}>
                     <Text color="green">{c.name}</Text>
