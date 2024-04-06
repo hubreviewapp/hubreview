@@ -1292,9 +1292,9 @@ public class GitHubController : ControllerBase
     public async Task<ActionResult> addRevReply(string owner, string repoName, int prnumber, [FromBody] CreateReplyRequestModel req)
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        
+
         string new_body = $"<!--Using HubReview-->{req.body}";
-        var reply = new PullRequestReviewCommentReplyCreate( new_body, req.reply_to_id );
+        var reply = new PullRequestReviewCommentReplyCreate(new_body, req.reply_to_id);
         var result = await client.PullRequest.ReviewComment.CreateReply(owner, repoName, prnumber, reply);
 
         return Ok(result);
