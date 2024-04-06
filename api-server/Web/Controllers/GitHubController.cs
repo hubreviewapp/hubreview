@@ -3016,7 +3016,7 @@ public class GitHubController : ControllerBase
 
             string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
 
-            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'closed' AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
+            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'closed' AND merged = false AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
             if (!string.IsNullOrEmpty(filter.author))
             {
                 query += " AND author = @author";
