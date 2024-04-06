@@ -107,10 +107,6 @@ function ReviewQueuePage() {
     }));
   }, [values]);
 
-  const [closedLimit, setClosedLimit] = useState(10);
-  const [mergedLimit, setMergedLimits] = useState(10);
-  const [closedMax, setClosedMax] = useState(0);
-  const [mergedMax, setMergedMax] = useState(0);
 
   const [closedLimit, setClosedLimit] = useState(10);
   const [mergedLimit, setMergedLimits] = useState(10);
