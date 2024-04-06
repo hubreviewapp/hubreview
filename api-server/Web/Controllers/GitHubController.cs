@@ -3735,14 +3735,19 @@ public class GitHubController : ControllerBase
 
         var requestedReviewsCount = await GetMonthlyRequestedPRs(github);
 
-        var reviewSpeeds = new List<TimeSpan>(new TimeSpan[4]);
+        var reviewSpeeds = new List<string>();
 
         var n = 0;
         foreach (var x in reviewsWithRequests)
         {
             if (x != 0)
             {
-                reviewSpeeds[n] = timeBetweenRequestsAndReviews[n] / x;
+                var duration = timeBetweenRequestsAndReviews[n] / x;
+                reviewSpeeds.Add(duration.ToString(@"dd\.hh\:mm"));
+            }
+            else
+            {
+                reviewSpeeds.Add("0.00:00");
             }
             n++;
         }
