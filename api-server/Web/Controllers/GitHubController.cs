@@ -3162,7 +3162,7 @@ public class GitHubController : ControllerBase
         return Ok(allPRs);
     }
 
-    [HttpPost("user/weeklysummary")]
+    [HttpGet("user/weeklysummary")]
     public async Task<ActionResult> GetReviewsForUserInLastWeek()
     {
         var github = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
