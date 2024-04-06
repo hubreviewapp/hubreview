@@ -1288,6 +1288,30 @@ public class GitHubController : ControllerBase
         return Ok($"Review added to pull request #{prnumber} in repository {repoName}.");
     }
 
+    [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addRevReply")]
+    public async Task<ActionResult> addRevReply(string owner, string repoName, int prnumber, [FromBody] CreateReplyRequestModel req)
+    {
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+
+        string new_body = $"<!--Using HubReview-->{req.body}";
+        var reply = new PullRequestReviewCommentReplyCreate(new_body, req.reply_to_id);
+        var result = await client.PullRequest.ReviewComment.CreateReply(owner, repoName, prnumber, reply);
+
+        return Ok(result);
+    }
+
+    [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addCommentReply")]
+    public async Task<ActionResult> addCommentReply(string owner, string repoName, int prnumber, [FromBody] CreateReplyRequestModel req)
+    {
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+
+        var replied_to = await client.Issue.Comment.Get(owner, repoName, req.reply_to_id);
+        string decorated_body = $"<!--Using HubReview-->\n> {replied_to.Body.Remove(0, 22)}\n> {replied_to.HtmlUrl} \n\n{req.body}";
+        var comment = await client.Issue.Comment.Create(owner, repoName, prnumber, decorated_body);
+
+        return Ok(comment);
+    }
+
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_commits")]
     public async Task<ActionResult> getCommits(string owner, string repoName, int prnumber)
     {
