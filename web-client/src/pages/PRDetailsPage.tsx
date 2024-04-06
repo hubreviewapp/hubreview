@@ -33,6 +33,8 @@ export interface PullRequest {
   requestedReviewers: Reviewer[];
   assignees: Assignee[];
   mergeable: boolean;
+  merged: boolean;
+  closedAt: string;
 }
 
 export interface PRDetail {
@@ -67,7 +69,7 @@ function PRDetailsPage(props: PRDetailsPageProps) {
         });
         if (res) {
           setPullRequest(res.data);
-          console.log("fff", res.data);
+          console.log("pr data", res.data);
         }
       } catch (error) {
         console.error("Error fetching PR info:", error);
@@ -87,11 +89,11 @@ function PRDetailsPage(props: PRDetailsPageProps) {
         &ensp;&ensp;
         <Badge
           size="lg"
-          color={pullRequest?.pull.draft ? "#778DA9" : "green"}
+          color={pullRequest?.pull.closedAt != null ? "#778DA9" : pullRequest?.pull.merged ? "purple" : "green"}
           key={1}
           rightSection={<IconGitPullRequest style={{ width: rem(18), height: rem(18) }} />}
         >
-          {pullRequest?.pull.draft ? "Draft" : "Open"}
+          {pullRequest?.pull.closedAt != null ? "Closed" : pullRequest?.pull.merged ? "Merged" : "Open"}
         </Badge>
       </Group>
       <Group mb="sm">
