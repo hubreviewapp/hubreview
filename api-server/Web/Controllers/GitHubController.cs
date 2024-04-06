@@ -1367,6 +1367,7 @@ public class GitHubController : ControllerBase
                             title = message[0],
                             description = message[1],
                             author = commit.Author.Login,
+                            avatar_url = commit.Author.AvatarUrl,
                             githubLink = link + commit.Sha,
                             sha = commit.Sha
                         };
@@ -1379,6 +1380,7 @@ public class GitHubController : ControllerBase
                             title = commit.Commit.Message,
                             description = null,
                             author = commit.Author.Login,
+                            avatar_url = commit.Author.AvatarUrl,
                             githubLink = link + commit.Sha,
                             sha = commit.Sha
                         };
@@ -2856,7 +2858,7 @@ public class GitHubController : ControllerBase
 
             string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
 
-            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE merged = true AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
+            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'closed' AND merged = true AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
             if (!string.IsNullOrEmpty(filter.author))
             {
                 query += " AND author = @author";
@@ -3038,7 +3040,7 @@ public class GitHubController : ControllerBase
 
             string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
 
-            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'closed' AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
+            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'closed' AND merged = false AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
             if (!string.IsNullOrEmpty(filter.author))
             {
                 query += " AND author = @author";
@@ -3184,7 +3186,7 @@ public class GitHubController : ControllerBase
         return Ok(allPRs);
     }
 
-    [HttpPost("user/weeklysummary")]
+    [HttpGet("user/weeklysummary")]
     public async Task<ActionResult> GetReviewsForUserInLastWeek()
     {
         var github = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
@@ -4179,6 +4181,5 @@ public class GitHubController : ControllerBase
             throw; // Rethrow the exception or handle it as necessary
         }
     }
-
 
 }
