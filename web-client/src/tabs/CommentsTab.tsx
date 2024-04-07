@@ -43,8 +43,8 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
           text={comment.text}
           date={comment.date}
           isResolved={comment.isResolved}
-          status={""}
-          avatar={""}
+          status=""
+          avatar=""
           deletePRComment={() => {
             return;
           }}
@@ -218,8 +218,8 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
               date={comment.date}
               isResolved={false}
               isAIGenerated={false}
-              status={""}
-              avatar={""}
+              status=""
+              avatar=""
               deletePRComment={() => {
                 return;
               }}
