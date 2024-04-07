@@ -505,7 +505,7 @@ public class GitHubController : ControllerBase
         var jwtToken = generator.CreateEncodedJwtToken();
         var appClient = _getGitHubClient(jwtToken);
 
-        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+        var userLogin = "Ece-Kahraman";//_httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
         var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
         foreach (var installation in installations)
@@ -560,14 +560,29 @@ public class GitHubController : ControllerBase
 
                     foreach (var obj in reviews)
                     {
-                        combined_revs.Add(reviewers.Contains(obj.login) ?
-                            new ReviewObjDB
+                        var user = await installationClient.User.Get(obj.login);
+                        combined_revs.Add( new ReviewObjDB
+                        {
+                            login = obj.login,
+                            state = obj.state,
+                            avatar = user.AvatarUrl
+                        });
+                    }
+
+                    string[] logins = reviews.Select(obj => obj.login).ToArray();
+
+                    foreach (var name in reviewers)
+                    {
+                        if (!logins.Contains(name))
+                        {
+                            var user = await installationClient.User.Get(name);
+                            combined_revs.Add( new ReviewObjDB
                             {
-                                login = obj.login,
-                                state = "REQUESTED"
-                            }
-                            : obj
-                        );
+                                login = name,
+                                state = "PENDING",
+                                avatar = user.AvatarUrl
+                            });
+                        }
                     }
 
                     var prDetails = new
