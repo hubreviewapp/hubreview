@@ -4,5 +4,6 @@ namespace CS.Core.Entities
     {
         public string? login { get; set; }
         public string? state { get; set; }
+        public string? avatar { get; set; }
     }
 }

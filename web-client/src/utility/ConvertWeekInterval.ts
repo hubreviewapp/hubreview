@@ -27,13 +27,13 @@ function ConvertWeekInterval(data: WeekData[]) {
     const endMonth = monthNames[endDate.getMonth()];
     const endDay = endDate.getDate();
 
-    // Convert speed to total hours
-    const speedParts = item.speed.split(":");
-    const days = parseInt(speedParts[0]);
-    const hours = parseInt(speedParts[1]);
-    const minutes = parseInt(speedParts[2]);
-    let totalHours = days * 24 + hours + minutes / 60;
-    totalHours = parseFloat(totalHours.toFixed(2));
+    const [daysString, time] = item.speed.split(".");
+    const days = parseInt(daysString);
+    const [hours, minutes] = time.split(":").map(parseFloat);
+
+    // Calculate total hours
+    const totalHours = days * 24 + hours + (minutes / 60).toFixed(2);
+
     return {
       ...item,
       week: `${startMonth} ${startDay} - ${endMonth} ${endDay}`,
