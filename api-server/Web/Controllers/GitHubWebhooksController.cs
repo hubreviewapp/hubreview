@@ -1008,7 +1008,7 @@ namespace CS.Web.Controllers
                         var comment = pullRequestReviewCommentPayload.comment;
                         List<long> comment_ids = [];
                         int row_exists = 0;
-                        
+
                         string query = $"INSERT INTO comments (commentid, reponame, prnumber, is_review) VALUES ({comment.id}, '{pullRequestReviewCommentPayload.repository.name}', {pullRequestReviewCommentPayload.pull_request.number}, {true})";
                         connection.Open();
 
@@ -1032,7 +1032,7 @@ namespace CS.Web.Controllers
                             }
                         }
 
-                        if ( row_exists == 0  )
+                        if (row_exists == 0)
                         {
                             Console.WriteLine("in if");
                             comment_ids.Add(comment.id);
@@ -1079,7 +1079,7 @@ namespace CS.Web.Controllers
 
                         string del_comment = $"DELETE FROM comments WHERE commentid = {pullRequestReviewCommentPayload.comment.id}";
                         string sel_comm_array = $"SELECT comments FROM reviewhead WHERE review_id = {pullRequestReviewCommentPayload.comment.pull_request_review_id}";
-                        
+
                         connection.Open();
 
                         using (var command = new NpgsqlCommand(del_comment, connection))
@@ -1100,7 +1100,7 @@ namespace CS.Web.Controllers
 
                         Console.WriteLine("comment_ids count: " + comment_ids.Count);
 
-                        if ( comment_ids.Count <= 1 )
+                        if (comment_ids.Count <= 1)
                         {
                             string del_review = $"DELETE FROM reviewhead WHERE review_id = {pullRequestReviewCommentPayload.comment.pull_request_review_id}";
                             using (var command = new NpgsqlCommand(del_review, connection))
@@ -1126,7 +1126,7 @@ namespace CS.Web.Controllers
                     break;
                 case "issue_comment":
                     var issueCommentPayload = JsonConvert.DeserializeObject<Core.Entities.Payloads.IssueCommentPayload>(requestBody);
-                    if(issueCommentPayload.action == "created")
+                    if (issueCommentPayload.action == "created")
                     {
                         string query = $"INSERT INTO comments (commentid, reponame, prnumber, is_review) VALUES ({issueCommentPayload.comment.id}, '{issueCommentPayload.repository.name}', {issueCommentPayload.issue.number}, {false})";
                         connection.Open();
@@ -1138,7 +1138,7 @@ namespace CS.Web.Controllers
 
                         Console.WriteLine("issue comment created");
                     }
-                    else if ( issueCommentPayload.action == "deleted" )
+                    else if (issueCommentPayload.action == "deleted")
                     {
                         string query = $"DELETE FROM comments WHERE commentid = {issueCommentPayload.comment.id}";
                         connection.Open();
