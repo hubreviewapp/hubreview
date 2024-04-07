@@ -505,7 +505,7 @@ public class GitHubController : ControllerBase
         var jwtToken = generator.CreateEncodedJwtToken();
         var appClient = _getGitHubClient(jwtToken);
 
-        var userLogin = "Ece-Kahraman";//_httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
         var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
         foreach (var installation in installations)
