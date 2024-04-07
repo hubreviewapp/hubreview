@@ -116,7 +116,7 @@ function ReviewQueuePage() {
     const apiEnd = "closed/filter";
     const fetchClosed = async () => {
       try {
-        const res =  await axios.post(API + apiEnd, filterList, {
+        const res = await axios.post(API + apiEnd, filterList, {
           headers: {
             "Content-Type": "application/json",
           },

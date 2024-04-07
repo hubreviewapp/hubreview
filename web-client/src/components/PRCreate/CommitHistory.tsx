@@ -16,7 +16,7 @@ export interface Commit2 {
   author: string;
   description: string;
   githubLink: string;
-  avatarUrl:string;
+  avatarUrl: string;
 }
 
 //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_commits")]

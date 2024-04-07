@@ -1,11 +1,5 @@
 import { rem, Flex, MultiSelect, Select } from "@mantine/core";
-import {
-  IconUser,
-  IconTag,
-  IconCalendarTime,
-  IconChartArrows,
-  IconSortDescending,
-} from "@tabler/icons-react";
+import { IconUser, IconTag, IconCalendarTime, IconChartArrows, IconSortDescending } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { FilterList } from "../../pages/ReviewQueuePage.tsx";
@@ -162,7 +156,6 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
         w="100%"
       />
       */}
-
     </>
   );
 }

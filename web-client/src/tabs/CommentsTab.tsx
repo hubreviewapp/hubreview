@@ -17,8 +17,8 @@ interface CommentProps {
   createdAt: string;
   updatedAt: string;
   association: string;
-  status: string
-  avatar: string
+  status: string;
+  avatar: string;
 }
 
 const comments: { author: string; text: string; date: Date; isResolved: boolean; isAIGenerated: boolean }[] = [];
