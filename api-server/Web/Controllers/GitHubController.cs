@@ -4238,8 +4238,9 @@ public class GitHubController : ControllerBase
 
     [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addAssignees")]
     public async Task<ActionResult> AddAssigneesToPR(string owner, string repoName, long prnumber, [FromBody] AssigneesRequest assigneesRequest)
-    {   
-        try{
+    {
+        try
+        {
             HttpClient _client = new HttpClient();
             _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken")}");
             _client.BaseAddress = new Uri("https://api.github.com/");
@@ -4253,17 +4254,20 @@ public class GitHubController : ControllerBase
             if (!response.IsSuccessStatusCode)
             {
                 throw new Exception($"Failed to add assignees. Status code: {response.StatusCode}");
-            } 
-        } catch(Exception e){
+            }
+        }
+        catch (Exception e)
+        {
             return Ok("Assignee(s) could not be added.");
         }
         return Ok("Assignee(s) are added.");
     }
-    
+
     [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/removeAssignees")]
     public async Task<ActionResult> RemoveAssigneesFromPR(string owner, string repoName, long prnumber, [FromBody] AssigneesRequest assigneesRequest)
-    {   
-        try{
+    {
+        try
+        {
             HttpClient _client = new HttpClient();
             _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken")}");
             _client.DefaultRequestHeaders.Add("User-Agent", "YourAppName");
@@ -4283,8 +4287,10 @@ public class GitHubController : ControllerBase
             if (!response.IsSuccessStatusCode)
             {
                 throw new Exception($"Failed to remove assignees. Status code: {response.StatusCode}");
-            } 
-        } catch(Exception e){
+            }
+        }
+        catch (Exception e)
+        {
             return Ok("Assignee(s) could not be removed.");
         }
         return Ok("Assignee(s) are removed.");
