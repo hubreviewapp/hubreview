@@ -52,12 +52,12 @@ export function Comment({
           setIsEditActive(true);
         }
         if (item === "Copy Link") {
-          const linkToCopy = "github.com"
-          navigator.clipboard.writeText(linkToCopy)
-            .then(() => {
-            })
+          const linkToCopy = "github.com";
+          navigator.clipboard
+            .writeText(linkToCopy)
+            .then(() => {})
             .catch((error) => {
-              console.error('Error copying link:', error);
+              console.error("Error copying link:", error);
             });
         }
       }}
