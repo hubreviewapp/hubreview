@@ -410,6 +410,7 @@ namespace CS.Web.Controllers
                                 }
 
                                 review_head_query = review_head_query[..^1];
+                                Console.WriteLine(review_head_query);
                                 using (var command = new NpgsqlCommand(review_head_query, connection))
                                 {
                                     command.ExecuteNonQuery();
@@ -1004,23 +1005,150 @@ namespace CS.Web.Controllers
                     var pullRequestReviewCommentPayload = JsonConvert.DeserializeObject<PullRequestReviewCommentPayload>(requestBody);
                     if (pullRequestReviewCommentPayload.action == "created")
                     {
+                        var comment = pullRequestReviewCommentPayload.comment;
+                        List<long> comment_ids = [];
+                        int row_exists = 0;
 
-                        Console.WriteLine($"PR review comment {pullRequestReviewCommentPayload.comment.id} created\n {pullRequestReviewCommentPayload.comment.pull_request_review_id}");
-                    }
-                    else if (pullRequestReviewCommentPayload.action == "edited")
-                    {
-                        Console.WriteLine($"PR review comment {pullRequestReviewCommentPayload.comment.id} edited\n {pullRequestReviewCommentPayload.comment.pull_request_review_id}");
+                        string query = $"INSERT INTO comments (commentid, reponame, prnumber, is_review) VALUES ({comment.id}, '{pullRequestReviewCommentPayload.repository.name}', {pullRequestReviewCommentPayload.pull_request.number}, {true})";
+                        connection.Open();
+
+                        using (var command = new NpgsqlCommand(query, connection))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+
+
+                        string sel_query = $"SELECT COUNT(*) FROM reviewhead WHERE review_id = {comment.pull_request_review_id}";
+
+
+                        using (var command = new NpgsqlCommand(sel_query, connection))
+                        {
+                            using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                            {
+                                while (await reader.ReadAsync())
+                                {
+                                    row_exists = reader.GetInt16(0);
+                                }
+                            }
+                        }
+
+                        if (row_exists == 0)
+                        {
+                            Console.WriteLine("in if");
+                            comment_ids.Add(comment.id);
+                            string new_query = $"INSERT INTO reviewhead (review_id, reponame, prnumber, comments) VALUES ({comment.pull_request_review_id}, '{pullRequestReviewCommentPayload.repository.name}', {pullRequestReviewCommentPayload.pull_request.number}, @comments)";
+                            using (var command = new NpgsqlCommand(new_query, connection))
+                            {
+                                command.Parameters.AddWithValue("@comments", comment_ids.ToArray());
+                                command.ExecuteNonQuery();
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("in else");
+                            string new_query = $"SELECT comments FROM reviewhead WHERE review_id = {comment.pull_request_review_id}";
+                            using (var command = new NpgsqlCommand(new_query, connection))
+                            {
+                                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                                {
+                                    while (await reader.ReadAsync())
+                                    {
+                                        comment_ids = reader.GetFieldValue<List<long>>(0);
+                                    }
+                                }
+                            }
+
+                            comment_ids.Add(comment.id);
+
+                            string update = $"UPDATE reviewhead SET comments = @commentIds WHERE review_id = {comment.pull_request_review_id}";
+                            using (var command = new NpgsqlCommand(update, connection))
+                            {
+                                command.Parameters.AddWithValue("@commentIds", comment_ids.ToArray());
+                                command.ExecuteNonQuery();
+                            }
+
+                        }
+
+                        connection.Close();
+
+                        Console.WriteLine($"PR review comment {pullRequestReviewCommentPayload.comment.id} is created with review {pullRequestReviewCommentPayload.comment.pull_request_review_id}");
                     }
                     else if (pullRequestReviewCommentPayload.action == "deleted")
                     {
-                        Console.WriteLine($"PR review comment {pullRequestReviewCommentPayload.comment.id} deleted\n {pullRequestReviewCommentPayload.comment.pull_request_review_id}");
+                        List<long> comment_ids = [];
+
+                        string del_comment = $"DELETE FROM comments WHERE commentid = {pullRequestReviewCommentPayload.comment.id}";
+                        string sel_comm_array = $"SELECT comments FROM reviewhead WHERE review_id = {pullRequestReviewCommentPayload.comment.pull_request_review_id}";
+
+                        connection.Open();
+
+                        using (var command = new NpgsqlCommand(del_comment, connection))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+
+                        using (var command = new NpgsqlCommand(sel_comm_array, connection))
+                        {
+                            using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                            {
+                                while (await reader.ReadAsync())
+                                {
+                                    comment_ids = reader.GetFieldValue<List<long>>(0);
+                                }
+                            }
+                        }
+
+                        Console.WriteLine("comment_ids count: " + comment_ids.Count);
+
+                        if (comment_ids.Count <= 1)
+                        {
+                            string del_review = $"DELETE FROM reviewhead WHERE review_id = {pullRequestReviewCommentPayload.comment.pull_request_review_id}";
+                            using (var command = new NpgsqlCommand(del_review, connection))
+                            {
+                                command.ExecuteNonQuery();
+                            }
+                        }
+                        else
+                        {
+                            comment_ids.Remove(pullRequestReviewCommentPayload.comment.id);
+                            string update_review = $"UPDATE reviewhead SET comments = @commentsArray WHERE review_id = {pullRequestReviewCommentPayload.comment.pull_request_review_id}";
+                            using (var command = new NpgsqlCommand(update_review, connection))
+                            {
+                                command.Parameters.AddWithValue("@commentsArray", comment_ids.ToArray());
+                                command.ExecuteNonQuery();
+                            }
+                        }
+
+                        connection.Close();
+
+                        Console.WriteLine($"PR review comment {pullRequestReviewCommentPayload.comment.id} is deleted from review {pullRequestReviewCommentPayload.comment.pull_request_review_id}");
                     }
                     break;
-                case "commit_comment":
-                    Console.WriteLine("Commit comment");
-                    break;
                 case "issue_comment":
-                    Console.WriteLine("Issue comment");
+                    var issueCommentPayload = JsonConvert.DeserializeObject<Core.Entities.Payloads.IssueCommentPayload>(requestBody);
+                    if (issueCommentPayload.action == "created")
+                    {
+                        string query = $"INSERT INTO comments (commentid, reponame, prnumber, is_review) VALUES ({issueCommentPayload.comment.id}, '{issueCommentPayload.repository.name}', {issueCommentPayload.issue.number}, {false})";
+                        connection.Open();
+                        using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+                        connection.Close();
+
+                        Console.WriteLine("issue comment created");
+                    }
+                    else if (issueCommentPayload.action == "deleted")
+                    {
+                        string query = $"DELETE FROM comments WHERE commentid = {issueCommentPayload.comment.id}";
+                        connection.Open();
+                        using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+                        connection.Close();
+                        Console.WriteLine("issue comment deleted");
+                    }
                     break;
             }
 
