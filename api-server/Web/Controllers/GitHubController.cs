@@ -868,6 +868,15 @@ public class GitHubController : ControllerBase
             var comment = await client.PullRequest.ReviewComment.GetComment(owner, repoName, comment_id);
             string new_body = $"<!--Using HubReview-->**{status}** {comment.Body[comment.Body.IndexOf('\n')..]}";
             res1 = await client.PullRequest.ReviewComment.Edit(owner, repoName, comment_id, new PullRequestReviewCommentEdit(new_body));
+
+            /*if (status == "RESOLVED")
+            {
+                var arg = new ResolveReviewThreadInput
+                {
+                    ThreadId = comment.
+                    ClientMutationId = "hubreviewapp"
+                };
+            }*/
         }
         else
         {
