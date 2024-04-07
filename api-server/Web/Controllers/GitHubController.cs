@@ -1046,7 +1046,8 @@ public class GitHubController : ControllerBase
                                 status = null,
                                 createdAt = comm.CreatedAt,
                                 updatedAt = comm.UpdatedAt,
-                                association = comm.AuthorAssociation.StringValue
+                                association = comm.AuthorAssociation.StringValue,
+                                url = comm.HtmlUrl
                             };
 
                             result.Add(commentObj);
@@ -1073,7 +1074,8 @@ public class GitHubController : ControllerBase
                                     status = reader.IsDBNull(2) ? null : reader.GetString(2),
                                     createdAt = comm.CreatedAt,
                                     updatedAt = comm.UpdatedAt,
-                                    association = comm.AuthorAssociation.StringValue
+                                    association = comm.AuthorAssociation.StringValue,
+                                    url = comm.HtmlUrl
                                 };
 
                                 result.Add(commentObj);
