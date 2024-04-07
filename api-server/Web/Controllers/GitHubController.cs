@@ -561,7 +561,7 @@ public class GitHubController : ControllerBase
                     foreach (var obj in reviews)
                     {
                         var user = await installationClient.User.Get(obj.login);
-                        combined_revs.Add( new ReviewObjDB
+                        combined_revs.Add(new ReviewObjDB
                         {
                             login = obj.login,
                             state = obj.state,
@@ -576,7 +576,7 @@ public class GitHubController : ControllerBase
                         if (!logins.Contains(name))
                         {
                             var user = await installationClient.User.Get(name);
-                            combined_revs.Add( new ReviewObjDB
+                            combined_revs.Add(new ReviewObjDB
                             {
                                 login = name,
                                 state = "PENDING",
