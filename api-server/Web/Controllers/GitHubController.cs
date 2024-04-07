@@ -842,6 +842,8 @@ public class GitHubController : ControllerBase
         Octokit.PullRequestReviewComment? res1 = null;
         Octokit.IssueComment? res2 = null;
 
+        var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
+        var graphqlconnection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
 
         var config = new CoreConfiguration();
         string connectionString = config.DbConnectionString;
@@ -872,6 +874,40 @@ public class GitHubController : ControllerBase
             var comment = await client.Issue.Comment.Get(owner, repoName, comment_id);
             string new_body = $"<!--Using HubReview-->**{status}**: {comment.Body[(comment.Body.IndexOf(':') + 2)..]}";
             res2 = await client.Issue.Comment.Update(owner, repoName, comment_id, new_body);
+
+            if (status == "RESOLVED")
+            {
+                var arg = new MinimizeCommentInput
+                {
+                    SubjectId = new ID(res2.NodeId),
+                    Classifier = ReportedContentClassifiers.Resolved,
+                    ClientMutationId = "hubreviewapp"
+                };
+
+                var mutation = new Mutation()
+                                .MinimizeComment(arg)
+                                .Select(x => new { x.MinimizedComment.IsMinimized });
+
+                await graphqlconnection.Run(mutation);
+
+            }
+
+            if (status == "ACTIVE")
+            {
+                var arg = new UnminimizeCommentInput
+                {
+                    SubjectId = new ID(res2.NodeId),
+                    ClientMutationId = "hubreviewapp"
+                };
+
+                var mutation = new Mutation()
+                                .UnminimizeComment(arg)
+                                .Select(x => new { x.UnminimizedComment.IsMinimized });
+
+                await graphqlconnection.Run(mutation);
+
+            }
+
         }
 
         connection.Open();
