@@ -1296,7 +1296,7 @@ public class GitHubController : ControllerBase
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
 
         string new_body = $"<!--Using HubReview-->{req.body}";
-        var reply = new PullRequestReviewCommentReplyCreate(new_body, req.reply_to_id);
+        var reply = new PullRequestReviewCommentReplyCreate(new_body, req.replyToId);
         var result = await client.PullRequest.ReviewComment.CreateReply(owner, repoName, prnumber, reply);
 
         return Ok(result);
@@ -1307,7 +1307,7 @@ public class GitHubController : ControllerBase
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
 
-        var replied_to = await client.Issue.Comment.Get(owner, repoName, req.reply_to_id);
+        var replied_to = await client.Issue.Comment.Get(owner, repoName, req.replyToId);
         string decorated_body = $"<!--Using HubReview-->\n> {replied_to.Body.Remove(0, 22)}\n> {replied_to.HtmlUrl} \n\n{req.body}";
         var comment = await client.Issue.Comment.Create(owner, repoName, prnumber, decorated_body);
 
