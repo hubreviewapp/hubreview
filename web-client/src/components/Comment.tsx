@@ -1,7 +1,6 @@
 import { Text, Avatar, Group, Select, Box, rem, Badge } from "@mantine/core";
 import { Combobox, useCombobox, Input, Button } from "@mantine/core";
 import classes from "../styles/comment.module.css";
-import UserLogo from "../assets/icons/user.png";
 import { IconDots, IconSparkles } from "@tabler/icons-react";
 import Markdown from "react-markdown";
 import { useState } from "react";
@@ -17,6 +16,8 @@ interface CommentProps {
   isAIGenerated?: boolean;
   deletePRComment: (id: number) => void;
   editPRComment: (id: number, body: string) => void;
+  status: string;
+  avatar: string;
 }
 
 export function Comment({
@@ -28,8 +29,9 @@ export function Comment({
   isAIGenerated,
   deletePRComment,
   editPRComment,
+  avatar,
 }: CommentProps) {
-  const settings = ["Copy Link", "Quote Reply", "Edit", "Delete", "Reply", "Reference in new issue"];
+  const settings = ["Copy Link", "Edit", "Delete", "Reply"];
   const [, setSelectedItem] = useState<string | null>(null);
   const [isEditActive, setIsEditActive] = useState<boolean>(false);
   const combobox = useCombobox({
@@ -48,6 +50,15 @@ export function Comment({
         }
         if (item === "Edit") {
           setIsEditActive(true);
+        }
+        if (item === "Copy Link") {
+          const linkToCopy = "github.com";
+          navigator.clipboard
+            .writeText(linkToCopy)
+            .then(() => {})
+            .catch((error) => {
+              console.error("Error copying link:", error);
+            });
         }
       }}
     >
@@ -73,7 +84,7 @@ export function Comment({
           }}
         >
           <Group>
-            <Avatar src={UserLogo} alt="author" radius="xl" />
+            <Avatar src={avatar} alt="author" radius="xl" />
             <Box display="flex">
               <Box>
                 <Text fz="md"> {author}</Text>

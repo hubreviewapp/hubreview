@@ -1,6 +1,5 @@
 import { Avatar, Box, Group, Paper, rem, Title, Text, Divider, Flex, UnstyledButton, Loader } from "@mantine/core";
 import { IconGitCommit } from "@tabler/icons-react";
-import UserLogo from "../../assets/icons/user5.png";
 import GitHubLogo from "../../assets/icons/github-mark-white.png";
 import { useEffect, useState } from "react";
 import axios from "axios";
@@ -16,6 +15,7 @@ export interface Commit2 {
   author: string;
   description: string;
   githubLink: string;
+  avatarUrl: string;
 }
 
 //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_commits")]
@@ -62,7 +62,7 @@ function CommitHistory() {
                         {commit.title}
                       </Title>
                       <Group>
-                        <Avatar src={UserLogo} size="sm" />
+                        <Avatar src={commit.avatarUrl} size="sm" />
                         {commit.author}
                         <Text c="dimmed">committed on {itm.date}</Text>
                       </Group>
