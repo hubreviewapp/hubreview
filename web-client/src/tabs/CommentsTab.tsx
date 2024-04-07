@@ -24,6 +24,7 @@ interface CommentProps {
   association: string;
   status: string;
   avatar: string;
+  url: string;
 }
 
 const comments: { author: string; text: string; date: Date; isResolved: boolean; isAIGenerated: boolean }[] = [];
@@ -50,6 +51,7 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
           isResolved={comment.isResolved}
           status=""
           avatar=""
+          url=""
           deletePRComment={() => {
             return;
           }}
@@ -174,6 +176,12 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
       if (selected.startsWith("My Comments")) {
         setFilteredComments(apiComments.filter((comment) => comment.author === userLogin));
       }
+      if (selected.startsWith("Active")) {
+        setFilteredComments(apiComments.filter((comment) => comment.status === null));
+      }
+      if (selected.startsWith("Resolved")) {
+        setFilteredComments(apiComments.filter((comment) => comment.status != null));
+      }
       // resolved
       // active
       // TO DO, after comment resolved is done
@@ -191,8 +199,8 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
               "Show Everything (" + apiComments.length + ")",
               "All Comments (" + apiComments.length + ")",
               "My Comments (" + apiComments.filter((comment) => comment.author === userLogin).length + ")",
-              "Active (3)",
-              "Resolved (2)",
+              "Active (" + apiComments.filter((comment) => comment.status === null).length + ")",
+              "Resolved (" + apiComments.filter((comment) => comment.status != null).length + ")",
             ]}
             checkIconPosition="left"
             onChange={(val) => handleSelect(val)}
@@ -214,6 +222,7 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
                 replyComment={replyComment}
                 status={comment.status}
                 avatar={comment.avatar}
+                url={comment.url}
               />
               <br />
             </Box>
@@ -247,6 +256,7 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
               isAIGenerated={false}
               status=""
               avatar=""
+              url=""
               deletePRComment={() => {
                 return;
               }}
