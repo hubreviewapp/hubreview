@@ -16,6 +16,7 @@ interface CommentProps {
   isAIGenerated?: boolean;
   deletePRComment: (id: number) => void;
   editPRComment: (id: number, body: string) => void;
+  replyComment: (id: number, body: string) => void;
   status: string;
   avatar: string;
 }
@@ -30,6 +31,7 @@ export function Comment({
   deletePRComment,
   editPRComment,
   avatar,
+  replyComment,
 }: CommentProps) {
   const settings = ["Copy Link", "Edit", "Delete", "Reply"];
   const [, setSelectedItem] = useState<string | null>(null);
@@ -39,6 +41,7 @@ export function Comment({
   });
 
   const iconSparkles = <IconSparkles style={{ width: rem(22), height: rem(22) }} />;
+  const [replyValue, setReplyValue] = useState("");
 
   const options = settings.map((item) => (
     <Combobox.Option
@@ -142,8 +145,9 @@ export function Comment({
                   radius="xl"
                   style={{ marginTop: "5px", marginBottom: "5px", marginRight: "5px", flex: 0.9 }}
                   placeholder="Reply"
+                  onChange={(e) => setReplyValue(e.target.value)}
                 />
-                <Button> Submit </Button>
+                <Button onClick={() => replyComment(id, replyValue)}>Submit </Button>
               </Box>
             </>
           )}
