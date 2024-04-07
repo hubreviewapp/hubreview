@@ -18,6 +18,7 @@ interface CommentProps {
   updatedAt: string;
   association: string;
   status: string
+  avatar: string
 }
 
 const comments: { author: string; text: string; date: Date; isResolved: boolean; isAIGenerated: boolean }[] = [];
@@ -43,6 +44,7 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
           date={comment.date}
           isResolved={comment.isResolved}
           status={""}
+          avatar={""}
           deletePRComment={() => {
             return;
           }}
@@ -183,7 +185,8 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
                 isAIGenerated={false}
                 deletePRComment={() => deletePRComment(comment.id)}
                 editPRComment={editPRComment}
-                status={""}
+                status={comment.status}
+                avatar={comment.avatar}
               />
               <br />
             </Box>
@@ -216,6 +219,7 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
               isResolved={false}
               isAIGenerated={false}
               status={""}
+              avatar={""}
               deletePRComment={() => {
                 return;
               }}

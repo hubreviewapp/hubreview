@@ -1,7 +1,6 @@
 import { Text, Avatar, Group, Select, Box, rem, Badge } from "@mantine/core";
 import { Combobox, useCombobox, Input, Button } from "@mantine/core";
 import classes from "../styles/comment.module.css";
-import UserLogo from "../assets/icons/user.png";
 import { IconDots, IconSparkles } from "@tabler/icons-react";
 import Markdown from "react-markdown";
 import { useState } from "react";
@@ -18,6 +17,7 @@ interface CommentProps {
   deletePRComment: (id: number) => void;
   editPRComment: (id: number, body: string) => void;
   status: string;
+  avatar: string;
 }
 
 export function Comment({
@@ -29,6 +29,7 @@ export function Comment({
   isAIGenerated,
   deletePRComment,
   editPRComment,
+  avatar,
 }: CommentProps) {
   const settings = ["Copy Link", "Edit", "Delete", "Reply"];
   const [, setSelectedItem] = useState<string | null>(null);
@@ -74,7 +75,7 @@ export function Comment({
           }}
         >
           <Group>
-            <Avatar src={UserLogo} alt="author" radius="xl" />
+            <Avatar src={avatar} alt="author" radius="xl" />
             <Box display="flex">
               <Box>
                 <Text fz="md"> {author}</Text>

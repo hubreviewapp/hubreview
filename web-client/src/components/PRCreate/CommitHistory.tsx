@@ -16,6 +16,7 @@ export interface Commit2 {
   author: string;
   description: string;
   githubLink: string;
+  avatarUrl:string;
 }
 
 //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_commits")]
@@ -62,7 +63,7 @@ function CommitHistory() {
                         {commit.title}
                       </Title>
                       <Group>
-                        <Avatar src={UserLogo} size="sm" />
+                        <Avatar src={commit.avatarUrl} size="sm" />
                         {commit.author}
                         <Text c="dimmed">committed on {itm.date}</Text>
                       </Group>

@@ -1367,7 +1367,7 @@ public class GitHubController : ControllerBase
                             title = message[0],
                             description = message[1],
                             author = commit.Author.Login,
-                            avatar_url = commit.Author.AvatarUrl,
+                            avatarUrl = commit.Author.AvatarUrl,
                             githubLink = link + commit.Sha,
                             sha = commit.Sha
                         };
@@ -1380,7 +1380,7 @@ public class GitHubController : ControllerBase
                             title = commit.Commit.Message,
                             description = null,
                             author = commit.Author.Login,
-                            avatar_url = commit.Author.AvatarUrl,
+                            avatarUrl = commit.Author.AvatarUrl,
                             githubLink = link + commit.Sha,
                             sha = commit.Sha
                         };
