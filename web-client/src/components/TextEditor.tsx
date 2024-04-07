@@ -49,7 +49,6 @@ function TextEditor({ content, addComment, setIsEditActive, editComment, comment
       setIsEditActive(false);
     }
   }
-
   return (
     <Box style={{ position: "relative", width: "100%" }}>
       <RichTextEditor editor={editor} my="sm">
@@ -104,7 +103,13 @@ function TextEditor({ content, addComment, setIsEditActive, editComment, comment
       {isAddComment && (
         <>
           <Box style={{ position: "absolute", right: 0, top: "100%" }}>
-            <Button size="md" color="green" top={20} onClick={() => handleAddComment()}>
+            <Button
+              size="md"
+              color="green"
+              top={20}
+              onClick={() => handleAddComment()}
+              disabled={editorContent == "" || editorContent == "<p></p>"}
+            >
               Comment
             </Button>
           </Box>
