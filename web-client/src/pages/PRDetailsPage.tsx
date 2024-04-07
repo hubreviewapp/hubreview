@@ -30,7 +30,7 @@ export interface PullRequest {
     };
   };
   labels: Label[];
-  requestedReviewers: Reviewer[];
+  reviews: Reviewer[];
   assignees: Assignee[];
   mergeable: boolean;
 }
@@ -126,7 +126,9 @@ function PRDetailsPage(props: PRDetailsPageProps) {
         <br />
         <Box>
           {currentTab === "reviews" && <ModifiedFilesTab />}
-          {currentTab === "comments" && pullRequest && <CommentsTab pullRequest={pullRequest.pull} />}
+          {currentTab === "comments" && pullRequest && (
+            <CommentsTab pullRequest={pullRequest.pull} reviews={pullRequest.reviews} />
+          )}
           {currentTab === "details" && pullRequest && <PrDetailTab pull={pullRequest} />}
           {currentTab === "commits" && <CommitsTab />}
         </Box>

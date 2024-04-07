@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from "react";
 import { PullRequest } from "../pages/PRDetailsPage.tsx";
 import { useUser } from "../providers/context-utilities";
 import MergeButton from "../components/MergeButton";
+import { Review } from "../models/PRInfo.tsx";
 
 interface CreateReplyRequestModel {
   body: string;
@@ -30,9 +31,10 @@ interface CommentProps {
 const comments: { author: string; text: string; date: Date; isResolved: boolean; isAIGenerated: boolean }[] = [];
 export interface CommentsTabProps {
   pullRequest: PullRequest;
+  reviews: Review[];
 }
 //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_comments")]
-function CommentsTab({ pullRequest }: CommentsTabProps) {
+function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
   const { owner, repoName, prnumber } = useParams();
   const resolvedComments = comments.filter((comment) => comment.isResolved);
   const unresolvedComments = comments.filter((comment) => !comment.isResolved);
@@ -286,7 +288,7 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
         <Box m="md">
           <PRDetailSideBar
             labels={pullRequest?.labels ?? []}
-            addedReviewers={pullRequest?.requestedReviewers ?? []}
+            addedReviewers={reviews ?? []}
             addedAssignees={pullRequest?.assignees ?? []}
             author={pullRequest?.user.login}
           />
