@@ -9,7 +9,6 @@ import {
   Text,
   Tooltip,
   Badge,
-  Flex,
   Avatar,
   ScrollArea,
   TextInput,
@@ -17,7 +16,15 @@ import {
   Select,
   CloseButton,
 } from "@mantine/core";
-import { IconInfoCircle, IconCirclePlus, IconCheck, IconXboxX } from "@tabler/icons-react";
+import {
+  IconInfoCircle,
+  IconCirclePlus,
+  IconCheck,
+  IconXboxX,
+  IconThumbUp,
+  IconMessage,
+  IconHourglassHigh,
+} from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import PriorityBadge, { PriorityBadgeLabel } from "./PriorityBadge";
 import { useParams } from "react-router-dom";
@@ -38,9 +45,9 @@ export interface Label {
 }
 
 export interface Reviewer {
-  id: string;
   login: string;
-  avatarUrl: string;
+  state: string;
+  avatar: string;
 }
 
 export interface Assignee {
@@ -125,8 +132,13 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
   };
 
   // [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/request_review")]
-  function handleAddReviewer(reviewer: Reviewer) {
-    setAddedReviewer([reviewer, ...addedReviewer]);
+  function handleAddReviewer(reviewer: Contributor) {
+    const newReviewer = {
+      login: reviewer.login,
+      state: "PENDING",
+      avatar: reviewer.avatarUrl,
+    };
+    setAddedReviewer([newReviewer, ...addedReviewer]);
     const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/request_review`;
     axios
       .post(apiUrl, [reviewer.login], {
@@ -172,7 +184,29 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
         console.log(error);
       });
   }
-
+  function stateToMessage(state: string) {
+    if (state == "APPROVED") {
+      return (
+        <Text c="dimmed">
+          <Tooltip label="Approved">
+            <IconThumbUp color="#40B5AD" style={{ width: rem(22), height: rem(22) }} />
+          </Tooltip>
+        </Text>
+      );
+    } else if (state == "COMMENTED") {
+      return (
+        <Tooltip label="Commented">
+          <IconMessage color="#40B5AD" style={{ width: rem(22), height: rem(22) }} />
+        </Tooltip>
+      );
+    } else if (state == "PENDING") {
+      return (
+        <Tooltip label="Pending">
+          <IconHourglassHigh color="#40B5AD" style={{ width: rem(22), height: rem(22) }} />
+        </Tooltip>
+      );
+    }
+  }
   return (
     <Box w="300px">
       <Paper p="sm" withBorder>
@@ -186,16 +220,23 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
                 <Text c="dimmed">No reviewer added</Text>
               ) : (
                 addedReviewer.map((reviewer) => (
-                  <Flex justify="space-between" key={reviewer.id} mb="sm">
-                    <Group>
-                      <Avatar src={reviewer.avatarUrl} size="sm" />
+                  <Grid key={reviewer.login} mb="sm">
+                    <Grid.Col span={2}>
+                      <Avatar src={reviewer.avatar} size="sm" />
+                    </Grid.Col>
+                    <Grid.Col span={7}>
                       <Text size="sm"> {reviewer.login} </Text>
-                    </Group>
-                    <CloseButton
-                      onClick={() => deleteReviewer(reviewer.login)}
-                      icon={<IconXboxX color="red" size={18} stroke={1.5} />}
-                    />
-                  </Flex>
+                    </Grid.Col>
+                    <Grid.Col span={2}>{stateToMessage(reviewer.state)}</Grid.Col>
+                    <Grid.Col span={1}>
+                      <Tooltip label="Delete">
+                        <CloseButton
+                          onClick={() => deleteReviewer(reviewer.login)}
+                          icon={<IconXboxX color="gray" size={18} stroke={1.5} />}
+                        />
+                      </Tooltip>
+                    </Grid.Col>
+                  </Grid>
                 ))
               )}
             </Grid.Col>
@@ -252,7 +293,7 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
                   </Progress.Root>
                 </Grid.Col>
                 <Grid.Col span={1}>
-                  {addedReviewer.find((itm2) => itm.id == itm2.id) == undefined ? (
+                  {addedReviewer.find((itm2) => itm.login == itm2.login) == undefined ? (
                     <UnstyledButton onClick={() => handleAddReviewer(itm)} style={{ fontSize: "12px" }}>
                       <IconCirclePlus size={18} stroke={1.5} />
                     </UnstyledButton>
