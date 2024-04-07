@@ -1,6 +1,5 @@
-import { TagsInput, rem, Flex, MultiSelect, Select } from "@mantine/core";
+import { rem, Flex, MultiSelect, Select } from "@mantine/core";
 import {
-  IconSearch,
   IconUser,
   IconTag,
   IconCalendarTime,
@@ -21,8 +20,7 @@ export interface FilterInputProps {
   setFilterList: (filterList: FilterList) => void;
 }
 function FilterInput({ filterList, setFilterList }: FilterInputProps) {
-  const [filterValues, setFilterValues] = useState(["review-requested:@me", "sort-by:priority:desc"]);
-
+  //const [filterValues, setFilterValues] = useState(["review-requested:@me", "sort-by:priority:desc"]);
   const [assignees, setAssignees] = useState<string[]>([]);
   const [authors, setAuthors] = useState<string[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
@@ -85,7 +83,7 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
           radius="xl"
           placeholder="Priority"
           leftSection={<IconChartArrows width={rem(15)} />}
-          data={["Critical", "High", "Medium", "Low"]}
+          data={["Critical", "High", "Medium", "Low", "Not specified"]}
           onChange={(val) => {
             let priorityValue;
             switch (val) {
@@ -100,6 +98,9 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
                 break;
               case "Low":
                 priorityValue = "1";
+                break;
+              case "Not specified":
+                priorityValue = "0";
                 break;
               default:
                 priorityValue = null;
@@ -151,6 +152,7 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
         />
       </Flex>
 
+      {/*
       <TagsInput
         value={filterValues}
         onChange={setFilterValues}
@@ -159,6 +161,8 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
         placeholder="Tags"
         w="100%"
       />
+      */}
+
     </>
   );
 }

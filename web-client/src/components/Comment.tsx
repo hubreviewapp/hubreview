@@ -17,6 +17,7 @@ interface CommentProps {
   isAIGenerated?: boolean;
   deletePRComment: (id: number) => void;
   editPRComment: (id: number, body: string) => void;
+  status: string;
 }
 
 export function Comment({
@@ -29,7 +30,7 @@ export function Comment({
   deletePRComment,
   editPRComment,
 }: CommentProps) {
-  const settings = ["Copy Link", "Quote Reply", "Edit", "Delete", "Reply", "Reference in new issue"];
+  const settings = ["Copy Link", "Edit", "Delete", "Reply"];
   const [, setSelectedItem] = useState<string | null>(null);
   const [isEditActive, setIsEditActive] = useState<boolean>(false);
   const combobox = useCombobox({
