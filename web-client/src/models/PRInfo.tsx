@@ -18,6 +18,7 @@ export interface Check {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     StringValue: string;
   };
+  url?: string
 }
 
 export interface Review {

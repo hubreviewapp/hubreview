@@ -1,6 +1,5 @@
 import { Avatar, Box, Group, Paper, rem, Title, Text, Divider, Flex, UnstyledButton, Loader } from "@mantine/core";
 import { IconGitCommit } from "@tabler/icons-react";
-import UserLogo from "../../assets/icons/user5.png";
 import GitHubLogo from "../../assets/icons/github-mark-white.png";
 import { useEffect, useState } from "react";
 import axios from "axios";

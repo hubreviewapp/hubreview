@@ -25,7 +25,7 @@ export default function PrDetailTab({ pull }: PRDetailTabProps) {
             shadow="sm"
             component="a"
             padding="sm"
-            href="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+            href={check?.url}
             target="_blank"
             withBorder
             w="30%"
@@ -37,13 +37,13 @@ export default function PrDetailTab({ pull }: PRDetailTabProps) {
               </Text>
 
               <Text fw={500} size="lg" mt="md">
-                {check.conclusion.StringValue === "success" && (
+                {check.conclusion?.StringValue === "success" && (
                   <IconCircleCheck
                     color="green"
                     style={{ width: rem(22), height: rem(22), color: "green", marginLeft: "auto" }}
                   />
                 )}
-                {check.conclusion.StringValue === "failure" && (
+                {check.conclusion?.StringValue === "failure" && (
                   <IconXboxX
                     color="red"
                     style={{ width: rem(22), height: rem(22), color: "red", marginLeft: "auto" }}
@@ -52,7 +52,7 @@ export default function PrDetailTab({ pull }: PRDetailTabProps) {
               </Text>
 
               <Anchor
-                href="https://mantine.dev/"
+                href={check?.url}
                 target="_blank"
                 c="blue"
                 style={{ position: "absolute", right: "15px", display: "flex" }}
