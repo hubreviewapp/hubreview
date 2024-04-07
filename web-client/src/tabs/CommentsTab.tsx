@@ -57,7 +57,7 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
             return;
           }}
           replyComment={() => {
-          return;
+            return;
           }}
         />
       </Accordion.Control>
@@ -149,9 +149,9 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
   }
 
   //[HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addCommentReply")]
-  function replyComment(id:number, body: string) {
+  function replyComment(id: number, body: string) {
     setIsLoading(true);
-    const data : CreateReplyRequestModel = {replyToId: id, body:body}
+    const data: CreateReplyRequestModel = { replyToId: id, body: body };
     const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addCommentReply`;
     axios
       .post(apiUrl, data, {
