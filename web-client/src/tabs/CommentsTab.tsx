@@ -10,6 +10,11 @@ import { PullRequest } from "../pages/PRDetailsPage.tsx";
 import { useUser } from "../providers/context-utilities";
 import MergeButton from "../components/MergeButton";
 
+interface CreateReplyRequestModel {
+  body: string;
+  replyToId: number;
+}
+
 interface CommentProps {
   id: number;
   author: string;
@@ -50,6 +55,9 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
           }}
           editPRComment={() => {
             return;
+          }}
+          replyComment={() => {
+          return;
           }}
         />
       </Accordion.Control>
@@ -140,6 +148,24 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
       });
   }
 
+  //[HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addCommentReply")]
+  function replyComment(id:number, body: string) {
+    setIsLoading(true);
+    const data : CreateReplyRequestModel = {replyToId: id, body:body}
+    const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addCommentReply`;
+    axios
+      .post(apiUrl, data, {
+        withCredentials: true,
+        baseURL: "http://localhost:5018/api/github",
+      })
+      .then(function () {
+        fetchPRComments();
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  }
+
   const handleSelect = (selected: string | null) => {
     if (selected != null) {
       if (selected.startsWith("All Comments")) {
@@ -185,6 +211,7 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
                 isAIGenerated={false}
                 deletePRComment={() => deletePRComment(comment.id)}
                 editPRComment={editPRComment}
+                replyComment={replyComment}
                 status={comment.status}
                 avatar={comment.avatar}
               />
@@ -224,6 +251,9 @@ function CommentsTab({ pullRequest }: CommentsTabProps) {
                 return;
               }}
               editPRComment={() => {
+                return;
+              }}
+              replyComment={() => {
                 return;
               }}
             />
