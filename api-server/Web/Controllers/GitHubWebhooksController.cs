@@ -1071,12 +1071,57 @@ namespace CS.Web.Controllers
 
                         connection.Close();
 
-                        Console.WriteLine($"PR review comment {pullRequestReviewCommentPayload.comment.id} created\n {pullRequestReviewCommentPayload.comment.pull_request_review_id}");
+                        Console.WriteLine($"PR review comment {pullRequestReviewCommentPayload.comment.id} is created with review {pullRequestReviewCommentPayload.comment.pull_request_review_id}");
                     }
                     else if (pullRequestReviewCommentPayload.action == "deleted")
                     {
+                        List<long> comment_ids = [];
+
+                        string del_comment = $"DELETE FROM comments WHERE commentid = {pullRequestReviewCommentPayload.comment.id}";
+                        string sel_comm_array = $"SELECT comments FROM reviewhead WHERE review_id = {pullRequestReviewCommentPayload.comment.pull_request_review_id}";
                         
-                        Console.WriteLine($"PR review comment {pullRequestReviewCommentPayload.comment.id} deleted\n {pullRequestReviewCommentPayload.comment.pull_request_review_id}");
+                        connection.Open();
+
+                        using (var command = new NpgsqlCommand(del_comment, connection))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+
+                        using (var command = new NpgsqlCommand(sel_comm_array, connection))
+                        {
+                            using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                            {
+                                while (await reader.ReadAsync())
+                                {
+                                    comment_ids = reader.GetFieldValue<List<long>>(0);
+                                }
+                            }
+                        }
+
+                        Console.WriteLine("comment_ids count: " + comment_ids.Count);
+
+                        if ( comment_ids.Count <= 1 )
+                        {
+                            string del_review = $"DELETE FROM reviewhead WHERE review_id = {pullRequestReviewCommentPayload.comment.pull_request_review_id}";
+                            using (var command = new NpgsqlCommand(del_review, connection))
+                            {
+                                command.ExecuteNonQuery();
+                            }
+                        }
+                        else
+                        {
+                            comment_ids.Remove(pullRequestReviewCommentPayload.comment.id);
+                            string update_review = $"UPDATE reviewhead SET comments = @commentsArray WHERE review_id = {pullRequestReviewCommentPayload.comment.pull_request_review_id}";
+                            using (var command = new NpgsqlCommand(update_review, connection))
+                            {
+                                command.Parameters.AddWithValue("@commentsArray", comment_ids.ToArray());
+                                command.ExecuteNonQuery();
+                            }
+                        }
+
+                        connection.Close();
+
+                        Console.WriteLine($"PR review comment {pullRequestReviewCommentPayload.comment.id} is deleted from review {pullRequestReviewCommentPayload.comment.pull_request_review_id}");
                     }
                     break;
                 case "issue_comment":
