@@ -113,10 +113,16 @@ function ReviewQueuePage() {
   const [mergedMax, setMergedMax] = useState(0);
 
   useEffect(() => {
-    const apiEnd = "closed";
+    const apiEnd = "closed/filter";
     const fetchClosed = async () => {
       try {
-        const res = await axios.get(API + apiEnd, { withCredentials: true });
+        const res =  await axios.post(API + apiEnd, filterList, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+          baseURL: "http://localhost:5018/api/github",
+        });
         if (res.data != undefined) {
           setClosedMax(res.data.length);
           setClosedPRs(res.data.slice(0, closedLimit));
@@ -126,13 +132,19 @@ function ReviewQueuePage() {
       }
     };
     fetchClosed().then();
-  }, [closedLimit]);
+  }, [closedLimit, filterList]);
 
   useEffect(() => {
-    const apiEnd = "merged";
+    const apiEnd = "merged/filter";
     const fetchMerged = async () => {
       try {
-        const res = await axios.get(API + apiEnd, { withCredentials: true });
+        const res = await axios.post(API + apiEnd, filterList, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+          baseURL: "http://localhost:5018/api/github",
+        });
         if (res.data != undefined) {
           setMergedMax(res.data.length);
           setMergedPRs(res.data.slice(0, mergedLimit));
@@ -142,7 +154,7 @@ function ReviewQueuePage() {
       }
     };
     fetchMerged().then();
-  }, [mergedLimit]);
+  }, [mergedLimit, filterList]);
   useEffect(() => {
     const apiEnd = `needsreview/filter`;
     const fetchNeedsYourReviewPRs = async () => {
