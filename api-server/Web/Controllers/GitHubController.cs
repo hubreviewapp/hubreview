@@ -4236,4 +4236,58 @@ public class GitHubController : ControllerBase
         }
     }
 
+    [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addAssignees")]
+    public async Task<ActionResult> AddAssigneesToPR(string owner, string repoName, long prnumber, [FromBody] AssigneesRequest assigneesRequest)
+    {   
+        try{
+            HttpClient _client = new HttpClient();
+            _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken")}");
+            _client.BaseAddress = new Uri("https://api.github.com/");
+            _client.DefaultRequestHeaders.Add("User-Agent", "YourAppName");
+
+            var assigneesJson = "[" + string.Join(",", assigneesRequest.assignees.ConvertAll(a => $"\"{a}\"")) + "]";
+            var content = new StringContent($"{{\"assignees\": {assigneesJson}}}", Encoding.UTF8, "application/json");
+
+            var response = await _client.PostAsync($"repos/{owner}/{repoName}/issues/{prnumber}/assignees", content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Failed to add assignees. Status code: {response.StatusCode}");
+            } 
+        } catch(Exception e){
+            return Ok("Assignee(s) could not be added.");
+        }
+        return Ok("Assignee(s) are added.");
+    }
+    
+    [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/removeAssignees")]
+    public async Task<ActionResult> RemoveAssigneesFromPR(string owner, string repoName, long prnumber, [FromBody] AssigneesRequest assigneesRequest)
+    {   
+        try{
+            HttpClient _client = new HttpClient();
+            _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken")}");
+            _client.DefaultRequestHeaders.Add("User-Agent", "YourAppName");
+
+            var assigneesJson = "[" + string.Join(",", assigneesRequest.assignees.ConvertAll(a => $"\"{a}\"")) + "]";
+            var content = new StringContent($"{{\"assignees\": {assigneesJson}}}", Encoding.UTF8, "application/json");
+
+            HttpRequestMessage request = new HttpRequestMessage
+            {
+                Method = HttpMethod.Delete,
+                RequestUri = new Uri($"https://api.github.com/repos/{owner}/{repoName}/issues/{prnumber}/assignees"),
+                Content = content
+            };
+
+            var response = await _client.SendAsync(request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Failed to remove assignees. Status code: {response.StatusCode}");
+            } 
+        } catch(Exception e){
+            return Ok("Assignee(s) could not be removed.");
+        }
+        return Ok("Assignee(s) are removed.");
+    }
+
 }
