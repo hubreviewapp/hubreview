@@ -19,6 +19,7 @@ interface CommentProps {
   replyComment: (id: number, body: string) => void;
   status: string;
   avatar: string;
+  url: string;
 }
 
 export function Comment({
@@ -31,9 +32,10 @@ export function Comment({
   deletePRComment,
   editPRComment,
   avatar,
+  url,
   replyComment,
 }: CommentProps) {
-  const settings = ["Copy Link", "Edit", "Delete", "Reply"];
+  const settings = ["Copy Link", "Edit", "Delete", "Quote Reply"];
   const [, setSelectedItem] = useState<string | null>(null);
   const [isEditActive, setIsEditActive] = useState<boolean>(false);
   const combobox = useCombobox({
@@ -55,9 +57,8 @@ export function Comment({
           setIsEditActive(true);
         }
         if (item === "Copy Link") {
-          const linkToCopy = "github.com";
           navigator.clipboard
-            .writeText(linkToCopy)
+            .writeText(url)
             .then(() => {})
             .catch((error) => {
               console.error("Error copying link:", error);
