@@ -12,6 +12,7 @@ namespace CS.Core.Entities
         public DateTimeOffset? createdAt { get; set; }
         public DateTimeOffset? updatedAt { get; set; }
         public string? association { get; set; }
+        public string? url { get; set; }
 
     }
 }
