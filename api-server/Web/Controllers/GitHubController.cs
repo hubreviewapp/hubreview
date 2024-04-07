@@ -1307,7 +1307,7 @@ public class GitHubController : ControllerBase
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
 
-        var replied_to = await client.Issue.Comment.Get(owner, repoName, req.reply_to_id);
+        var replied_to = await client.Issue.Comment.Get(owner, repoName, req.replyToId);
 
         string decorated_body = replied_to.Body.Contains("<!--Using HubReview-->") ? $"<!--Using HubReview-->\n> {replied_to.Body.Remove(0, 22)}\n> {replied_to.HtmlUrl} \n\n{req.body}" : $"<!--Using HubReview-->\n> {replied_to.Body}\n> {replied_to.HtmlUrl} \n\n{req.body}";
 
