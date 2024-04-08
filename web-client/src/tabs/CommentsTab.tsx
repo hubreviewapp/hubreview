@@ -64,6 +64,9 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
           replyComment={() => {
             return;
           }}
+          updatePRCommentStatus={() => {
+            return;
+          }}
         />
       </Accordion.Control>
       <Accordion.Panel>
@@ -146,6 +149,27 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
       });
   }
 
+  //[HttpPatch("pullrequest/{owner}/{repoName}/{comment_id}/updateCommentStatus")]
+  function updatePRCommentStatus(commentId: number, content: string | null) {
+    if (content === null) {
+      return;
+    }
+    setIsLoading(true);
+    axios
+      .patch(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${commentId}/updateCommentStatus`, content, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        withCredentials: true,
+      })
+      .then(function () {
+        fetchPRComments();
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  }
+
   //[HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addCommentReply")]
   function replyComment(id: number, body: string) {
     setIsLoading(true);
@@ -171,10 +195,26 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
         setFilteredComments(apiComments.filter((comment) => comment.author === userLogin));
       }
       if (selected.startsWith("Active")) {
-        setFilteredComments(apiComments.filter((comment) => comment.status === null));
+        setFilteredComments(
+          apiComments.filter(
+            (comment) =>
+              comment.status === null ||
+              comment.status === "Active" ||
+              comment.status === "ACTIVE" ||
+              comment.status === "Pending",
+          ),
+        );
       }
       if (selected.startsWith("Resolved")) {
-        setFilteredComments(apiComments.filter((comment) => comment.status != null));
+        setFilteredComments(
+          apiComments.filter(
+            (comment) =>
+              comment.status === "Resolved" ||
+              comment.status === "Outdated" ||
+              comment.status === "Closed" ||
+              comment.status === "Duplicate",
+          ),
+        );
       }
       // resolved
       // active
@@ -193,8 +233,24 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
               "Show Everything (" + apiComments.length + ")",
               "All Comments (" + apiComments.length + ")",
               "My Comments (" + apiComments.filter((comment) => comment.author === userLogin).length + ")",
-              "Active (" + apiComments.filter((comment) => comment.status === null).length + ")",
-              "Resolved (" + apiComments.filter((comment) => comment.status != null).length + ")",
+              "Active (" +
+                apiComments.filter(
+                  (comment) =>
+                    comment.status === null ||
+                    comment.status === "Active" ||
+                    comment.status === "ACTIVE" ||
+                    comment.status === "Pending",
+                ).length +
+                ")",
+              "Resolved (" +
+                apiComments.filter(
+                  (comment) =>
+                    comment.status === "Resolved" ||
+                    comment.status === "Outdated" ||
+                    comment.status === "Closed" ||
+                    comment.status === "Duplicate",
+                ).length +
+                ")",
             ]}
             checkIconPosition="left"
             onChange={(val) => handleSelect(val)}
@@ -217,6 +273,7 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
                 status={comment.status}
                 avatar={comment.avatar}
                 url={comment.url}
+                updatePRCommentStatus={updatePRCommentStatus}
               />
               <br />
             </Box>
@@ -258,6 +315,9 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
                 return;
               }}
               replyComment={() => {
+                return;
+              }}
+              updatePRCommentStatus={() => {
                 return;
               }}
             />
