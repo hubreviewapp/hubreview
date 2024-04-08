@@ -45,7 +45,7 @@ public class GitHubController : ControllerBase
     private GitHubJwtFactory _getGitHubJwtGenerator()
     {
         return new GitHubJwtFactory(
-            new FilePrivateKeySource("../../api-server/private-key.pem"),
+            new FilePrivateKeySource("../private-key.pem"),
             new GitHubJwtFactoryOptions
             {
                 AppIntegrationId = _coreConfiguration.AppId, // The GitHub App Id

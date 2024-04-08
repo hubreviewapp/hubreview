@@ -25,7 +25,7 @@ namespace CS.Web.Controllers
         public GitHubWebhooksController()
         {
             GitHubJwtFactory generator = new GitHubJwtFactory(
-                    new FilePrivateKeySource("../../api-server/private-key.pem"),
+                    new FilePrivateKeySource("../private-key.pem"),
                     new GitHubJwtFactoryOptions
                     {
                         AppIntegrationId = 812902,
