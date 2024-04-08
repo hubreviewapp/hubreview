@@ -22,7 +22,9 @@ namespace CS.Web.Controllers
     {
         private readonly GitHubClient _client;
 
-        public GitHubWebhooksController()
+        private readonly CoreConfiguration _coreConfiguration;
+
+        public GitHubWebhooksController(CoreConfiguration coreConfiguration)
         {
             GitHubJwtFactory generator = new GitHubJwtFactory(
                     new FilePrivateKeySource("../private-key.pem"),
@@ -37,11 +39,13 @@ namespace CS.Web.Controllers
             {
                 Credentials = new Credentials(jwtToken, AuthenticationType.Bearer)
             };
+            _coreConfiguration = coreConfiguration;
         }
 
         [HttpPost]
         public async Task<IActionResult> Webhook()
         {
+            Console.WriteLine("aaaaaaaaaaa");
             string requestBody;
             using (var reader = new StreamReader(Request.Body, Encoding.UTF8))
             {
@@ -50,10 +54,7 @@ namespace CS.Web.Controllers
 
             var eventType = Request.Headers["X-GitHub-Event"];
 
-            var config = new CoreConfiguration();
-            string connectionString = config.DbConnectionString;
-
-            using var connection = new NpgsqlConnection(connectionString);
+            using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
 
             AccessToken response;
             GitHubClient installationClient;
