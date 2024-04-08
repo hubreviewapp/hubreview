@@ -233,6 +233,20 @@ function ModifiedFilesTab() {
   });
 
   useEffect(() => {
+    // FIXME: temporary hack
+    const mapCommentState = (state: string): ReviewVerdict => {
+      switch (state) {
+        case "COMMENTED":
+          return "comment";
+        case "APPROVED":
+          return "approve";
+        case "CHANGES_REQUESTED":
+          return "reject";
+        default:
+          throw Error(`Unexpected comment state: "${state}"`);
+      }
+    };
+
     if (reviewsQueryStatus === "success" && reviewData) {
       setMainComments(
         reviewData
@@ -241,7 +255,7 @@ function ModifiedFilesTab() {
             const mainComment = r.mainComment;
             return {
               content: mainComment.body,
-              verdict: mainComment.state.stringValue as ReviewVerdict,
+              verdict: mapCommentState(mainComment.state.stringValue),
               author: {
                 login: mainComment.user.login,
                 avatarUrl: mainComment.user.avatarUrl,
