@@ -135,8 +135,8 @@ public class GitHubController : ControllerBase
 
             if (!doesExist)
             {
-                string parameters = "(userid, login, fullname, email, avatarurl, profileurl, organizations, workload, token)";
-                string at_parameters = "(@userid, @login, @fullname, @email, @avatarurl, @profileurl, @organizations, @workload, @token)";
+                string parameters = "(userid, login, email, avatarurl, profileurl, organizations, workload, token)";
+                string at_parameters = "(@userid, @login, @email, @avatarurl, @profileurl, @organizations, @workload, @token)";
                 string query = "INSERT INTO userinfo " + parameters + " VALUES " + at_parameters;
 
                 connection.Open();
@@ -145,7 +145,6 @@ public class GitHubController : ControllerBase
                 {
                     command2.Parameters.AddWithValue("@userid", user.Id);
                     command2.Parameters.AddWithValue("@login", user.Login);
-                    command2.Parameters.AddWithValue("@fullname", user.Name);
                     if (user.Email != null)
                     {
                         command2.Parameters.AddWithValue("@email", user.Email);
@@ -179,7 +178,6 @@ public class GitHubController : ControllerBase
                     UPDATE userinfo
                     SET email = @email,
                         login = @login,
-                        fullname = @fullname,
                         profileurl = @profileurl,
                         organizations = @organizations,
                         token = @token
@@ -191,7 +189,6 @@ public class GitHubController : ControllerBase
                 {
                     command2.Parameters.AddWithValue("@userid", user.Id);
                     command2.Parameters.AddWithValue("@login", user.Login);
-                    command2.Parameters.AddWithValue("@fullname", user.Name);
                     if (user.Email != null)
                     {
                         command2.Parameters.AddWithValue("@email", user.Email);
