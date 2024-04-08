@@ -13,165 +13,14 @@ import {
   Paper,
   Avatar,
   Badge,
+  Loader,
 } from "@mantine/core";
 import FileDiffView from "../components/ReviewsTab/FileDiffView";
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import UserLogo from "../assets/icons/user.png";
 import { DiffLine, DiffLineType, DiffMarker, FileDiff } from "../utility/diff-types";
-
-const mockFileRawDiff1 = `
-@@ -12,9 +12,10 @@
-     <link rel="preconnect" href="https://fonts.googleapis.com" />
-     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-     <link
--  rel="stylesheet"
--  href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap"
--/>
-+      rel="stylesheet"
-+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap"
-+    />
-+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
-   </head>
-   <body>
-     <div id="root"></div>
-`;
-
-const mockFileRawDiff2 = `
-@@ -26,6 +26,7 @@
-     "@tanstack/react-query-devtools": "^5.12.2",
-     "axios": "^1.6.2",
-     "dayjs": "^1.11.10",
-+    "highlight.js": "^11.9.0",
-     "react": "^18.2.0",
-     "react-dom": "^18.2.0",
-     "react-router-dom": "^6.20.1",
-@@ -46,6 +47,7 @@
-     "postcss-preset-mantine": "^1.11.0",
-     "postcss-simple-vars": "^7.0.1",
-     "prettier": "^3.1.0",
-+    "react-rte": "^0.16.5",
-     "rimraf": "^5.0.5",
-     "sass": "^1.69.5",
-     "typescript": "^5.2.2",
-`;
-
-const mockFileRawDiff3 =
-  `
-@@ -1,7 +1,8 @@
- import Comment from "../components/Comment.tsx";
- import TextEditor from "../components/TextEditor.tsx";
--import {Container, Box, Accordion, Text} from "@mantine/core";
- import SplitButton from "../components/SplitButton.tsx";
-+import { Container, Box, Text, Grid, Accordion } from "@mantine/core";
-+import PRDetailSideBar from "../components/PRDetailSideBar.tsx";
-` +
-  " " +
-  `
- const comments = [
-   {
-@@ -45,12 +46,12 @@ function CommentsTab() {
-   const unresolvedComments = comments.filter(comment => !comment.isResolved);
-` +
-  " " +
-  `
-   const comments2 = resolvedComments.map((comment, index) => (
--    <Accordion.Item value={index+''} key={index}>
-+    <Accordion.Item value={index + ''} key={index}>
-       <Accordion.Control>
-         <Comment
-           key={index}
-           id={index}
--          author= {comment.author}
-+          author={comment.author}
-           text={comment.text}
-           date={comment.date}
-           isResolved={comment.isResolved}
-@@ -63,37 +64,44 @@ function CommentsTab() {
-   ));
-` +
-  " " +
-  `
-   return (
--    <Container>
--      {unresolvedComments.map((comment, index) => (
--        <Box key={index} >
--          <Comment
--            key={index}
--            id={index}
--            author= {comment.author}
--            text={comment.text}
--            date={comment.date}
--            isResolved={comment.isResolved}
--            isAIGenerated={comment.isAIGenerated}
--          ></Comment>
--          <br></br>
--        </Box>
--      ))}
--      <Accordion chevronPosition="right" variant="separated" >
--        {comments2}
--      </Accordion>
-+    <Grid>
-+      <Grid.Col span={8}>
-+        <Container>
-+          {unresolvedComments.map((comment, index) => (
-+            <Box key={index} >
-+              <Comment
-+                key={index}
-+                id={index}
-+                author={comment.author}
-+                text={comment.text}
-+                date={comment.date}
-+                isResolved={comment.isResolved}
-+                isAIGenerated={comment.isAIGenerated}
-+              ></Comment>
-+              <br></br>
-+            </Box>
-+          ))}
-+          <Accordion chevronPosition="right" variant="separated" >
-+            {comments2}
-+          </Accordion>
-` +
-  " " +
-  `
--      <br></br>
-+          <br></br>
-` +
-  " " +
-  `
-+          <SplitButton></SplitButton>
-+          <br></br>
-` +
-  " " +
-  `
--      <SplitButton></SplitButton>
--      <br></br>
-+          <Box style={{ border: "2px groove gray", borderRadius: 10, padding: "10px" }}>
-+            <TextEditor></TextEditor>
-+          </Box>
-` +
-  " " +
-  `
--      <Box style={{ border: "2px groove gray", borderRadius: 10, padding:"10px" }}>
--        <TextEditor></TextEditor>
--      </Box>
-+          <Box style={{ height: 100 }}></Box>
-+        </Container>
-+      </Grid.Col>
-` +
-  " " +
-  `
--      <Box style={{height:100}}></Box>
--    </Container>
-+      <Grid.Col span={3}>
-+        <PRDetailSideBar />
-+      </Grid.Col>
-+    </Grid>
-   );
- }
-` +
-  " " +
-  `
-`;
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useParams } from "react-router-dom";
 
 const parseDiffMarker = (markerLine: string): DiffMarker => {
   const match = /^@@ -(\d*),(\d*) \+(\d*),(\d*) @@(.*)$/.exec(markerLine);
@@ -191,8 +40,8 @@ const parseDiffMarker = (markerLine: string): DiffMarker => {
   };
 };
 
-const parseRawDiff = (fileName: string, rawDiff: string): FileDiff => {
-  const trimmedRawDiff = rawDiff.trim();
+const parseRawDiff = (getAllPatchesResponse: GetAllPatchesResponse): FileDiff => {
+  const trimmedRawDiff = getAllPatchesResponse.content.trim();
   const rawDiffLines = trimmedRawDiff.split("\n");
 
   const nextLineNumbers = {
@@ -242,20 +91,65 @@ const parseRawDiff = (fileName: string, rawDiff: string): FileDiff => {
   });
 
   return {
-    fileName,
+    fileName: getAllPatchesResponse.name,
+    sha: getAllPatchesResponse.sha,
+    status: getAllPatchesResponse.status,
     diffstat: {
-      additions: diffLines.reduce((acc, cur) => acc + (cur.type === DiffLineType.Addition ? 1 : 0), 0),
-      deletions: diffLines.reduce((acc, cur) => acc + (cur.type === DiffLineType.Deletion ? 1 : 0), 0),
+      additions: getAllPatchesResponse.adds,
+      deletions: getAllPatchesResponse.dels,
     },
     lines: diffLines,
   };
 };
 
-const mockFileDiffs: FileDiff[] = [
-  parseRawDiff("web-client/index.html", mockFileRawDiff1),
-  parseRawDiff("web-client/package.json", mockFileRawDiff2),
-  parseRawDiff("web-client/src/tabs/CommentsTab.tsx", mockFileRawDiff3),
-];
+export type GetAllPatchesResponse = {
+  name: string;
+  sha: string;
+  status: string;
+  adds: number;
+  dels: number;
+  changes: number;
+  content: string;
+};
+
+export type ReviewResponseTemp = {
+  mainComment: {
+    state: {
+      stringValue: string;
+    };
+    user: {
+      login: string;
+      avatarUrl?: string;
+    };
+    body: string;
+    submittedAt: string;
+  };
+  childComments: {
+    id: number;
+    nodeId: string;
+    inReplyToId?: number;
+    path: string;
+    position: number;
+    user: {
+      login: string;
+      avatarUrl?: string;
+    };
+    createdAt: string;
+    body: string;
+  }[];
+};
+
+export type CreateReviewRequest = {
+  body: string;
+  verdict: ReviewVerdict;
+  comments: {
+    message: string;
+    filename: string;
+    position: number;
+    label: string;
+    decoration: string;
+  }[];
+};
 
 export type ReviewCommentDecoration = "non-blocking" | "blocking" | "if-minor";
 export interface ReviewComment {
@@ -266,15 +160,30 @@ export interface ReviewComment {
   label: string;
   decoration: ReviewCommentDecoration;
   content: string;
+  createdAt: string;
+  author: {
+    login: string;
+    avatarUrl?: string;
+  };
+  id?: number;
+  nodeId?: string;
+  inReplyToId?: number;
 }
 
 export type ReviewVerdict = "comment" | "approve" | "reject";
 export interface ReviewMainComment {
   verdict: ReviewVerdict;
   content: string;
+  author: {
+    login: string;
+    avatarUrl?: string;
+  };
+  submittedAt: string;
 }
 
 function ModifiedFilesTab() {
+  const { owner, repoName, prnumber } = useParams();
+
   const [hasStartedReview, setHasStartedReview] = useState(false);
   const [isSubmitReviewEditorOpen, setIsSubmitReviewEditorOpen] = useState(false);
 
@@ -286,11 +195,142 @@ function ModifiedFilesTab() {
   const [comments, setComments] = useState<ReviewComment[]>([]);
   const [mainComments, setMainComments] = useState<ReviewMainComment[]>([]);
 
-  const submitPendingComments = () => {
-    setComments([...comments, ...pendingComments]);
-    setPendingComments([]);
+  const onAddPendingComment = useCallback(
+    (comment: ReviewComment) => {
+      setPendingComments([...pendingComments, comment]);
+    },
+    [pendingComments, setPendingComments],
+  );
 
-    setMainComments([...mainComments, { verdict: reviewVerdict, content: editorContent }]);
+  const { data: diffData, isLoading: diffsAreLoading } = useQuery({
+    queryKey: [`reviews-diffs-${owner}-${repoName}-${prnumber}`],
+    queryFn: () =>
+      fetch(`http://localhost:5018/api/github/pullrequests/${owner}/${repoName}/${prnumber}/files`, {
+        credentials: "include",
+      }).then((r) => r.json()),
+    retry: false,
+  });
+
+  const {
+    data: reviewData,
+    isLoading: reviewsAreLoading,
+    status: reviewsQueryStatus,
+    refetch: refetchReviewData,
+  } = useQuery({
+    queryKey: [`reviews-${owner}-${repoName}-${prnumber}`],
+    queryFn: () =>
+      fetch(`http://localhost:5018/api/github/pullrequests/${owner}/${repoName}/${prnumber}/reviews`, {
+        credentials: "include",
+      }).then(async (r) => (await r.json()) as ReviewResponseTemp[]),
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (reviewsQueryStatus === "success" && reviewData) {
+      setMainComments(
+        reviewData
+          .filter((r) => !(r.childComments.length === 1 && r.childComments[0].inReplyToId))
+          .map((r): ReviewMainComment => {
+            const mainComment = r.mainComment;
+            return {
+              content: mainComment.body,
+              verdict: mainComment.state.stringValue as ReviewVerdict,
+              author: {
+                login: mainComment.user.login,
+                avatarUrl: mainComment.user.avatarUrl,
+              },
+              submittedAt: mainComment.submittedAt,
+            };
+          }),
+      );
+
+      setComments(
+        reviewData
+          .map((r): ReviewComment[] => {
+            const comments = r.childComments;
+
+            // FIXME: this can be done much better
+            const parseConventionalComment = (body: string) => {
+              const match = body.match(/^<.--Using HubReview-->\n(\w*)\((\S*)\): (.*)/) || [null, null, null, null];
+              return {
+                label: match[1] ?? "None",
+                decoration: match[2] ?? "non-blocking",
+                content: match[3] ?? body.replace("<!--Using HubReview--> ", ""),
+              };
+            };
+
+            return comments.map((c): ReviewComment => {
+              const conventionalComment = parseConventionalComment(c.body);
+              return {
+                content: conventionalComment.content,
+                key: {
+                  fileName: c.path,
+                  absoluteLineNumber: c.position,
+                },
+                label: conventionalComment.label,
+                decoration: conventionalComment.decoration as ReviewCommentDecoration,
+                createdAt: c.createdAt,
+                author: {
+                  login: c.user.login,
+                  avatarUrl: c.user.avatarUrl,
+                },
+                id: c.id,
+                nodeId: c.nodeId,
+                inReplyToId: c.inReplyToId,
+              };
+            });
+          })
+          .flat(),
+      );
+    }
+  }, [reviewData, reviewsQueryStatus, setMainComments, setComments]);
+
+  const fileDiffs: FileDiff[] = useMemo(
+    () => diffData?.map((o: GetAllPatchesResponse) => parseRawDiff(o)) ?? [],
+    [diffData],
+  );
+
+  const fileDiffViews = useMemo(() => {
+    return fileDiffs.map((f) => (
+      <FileDiffView
+        key={f.fileName}
+        fileDiff={f}
+        comments={comments.filter((c) => c.key.fileName === f.fileName)}
+        pendingComments={pendingComments.filter((c) => c.key.fileName === f.fileName)}
+        hasStartedReview={hasStartedReview}
+        onAddPendingComment={onAddPendingComment}
+        onReplyCreated={refetchReviewData}
+      />
+    ));
+  }, [fileDiffs, comments, pendingComments, hasStartedReview, onAddPendingComment, refetchReviewData]);
+
+  const createReviewMutation = useMutation({
+    mutationFn: (req: { req: CreateReviewRequest }) =>
+      fetch(`http://localhost:5018/api/github/pullrequests/${owner}/${repoName}/${prnumber}/reviews`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(req.req),
+      }),
+  });
+
+  const submitPendingComments = async () => {
+    await createReviewMutation.mutateAsync({
+      req: {
+        body: editorContent,
+        verdict: reviewVerdict,
+        comments: pendingComments.map((c) => ({
+          position: c.key.absoluteLineNumber,
+          filename: c.key.fileName,
+          message: c.content,
+          label: c.label,
+          decoration: c.decoration,
+        })),
+      },
+    });
+
     setReviewVerdict("comment");
     setEditorContent("");
     if (reviewEditorRef.current)
@@ -298,13 +338,21 @@ function ModifiedFilesTab() {
       // even though the state is definitely set to an empty string already.
       reviewEditorRef.current.value = "";
 
+    setPendingComments([]);
     setHasStartedReview(false);
     setIsSubmitReviewEditorOpen(false);
+
+    await refetchReviewData();
   };
 
-  const onAddPendingComment = (comment: ReviewComment) => {
-    setPendingComments([...pendingComments, comment]);
-  };
+  const isLoading = diffsAreLoading || reviewsAreLoading || createReviewMutation.isPending;
+  if (isLoading) {
+    return (
+      <Box w="90%">
+        <Loader color="blue" />
+      </Box>
+    );
+  }
 
   return (
     <Box w="90%">
@@ -358,11 +406,11 @@ function ModifiedFilesTab() {
       {mainComments.map((c, i) => (
         <Paper key={i} withBorder radius="md" shadow="lg" my="sm" p="sm">
           <Group>
-            <Avatar src={UserLogo} alt="Jacob Warnhalter" radius="xl" />
+            <Avatar src={c.author.avatarUrl ?? UserLogo} radius="xl" />
             <div>
-              <Text fz="sm">AUTHOR</Text>
+              <Text fz="sm">{c.author?.login ?? "--"}</Text>
               <Text fz="xs" c="dimmed">
-                {new Date(2023, 4, 7).toLocaleString("en-US", {
+                {new Date(c.submittedAt).toLocaleString("en-US", {
                   day: "numeric",
                   month: "long",
                   year: "numeric",
@@ -378,18 +426,10 @@ function ModifiedFilesTab() {
           <Text py="sm">{c.content}</Text>
         </Paper>
       ))}
+      {mainComments.length === 0 && <Text>No reviews have been made yet</Text>}
 
       <Title order={4}>Modified Files</Title>
-      {mockFileDiffs.map((f) => (
-        <FileDiffView
-          key={f.fileName}
-          fileDiff={f}
-          comments={comments.filter((c) => c.key.fileName === f.fileName)}
-          pendingComments={pendingComments.filter((c) => c.key.fileName === f.fileName)}
-          hasStartedReview={hasStartedReview}
-          onAddPendingComment={onAddPendingComment}
-        />
-      ))}
+      {fileDiffViews}
     </Box>
   );
 }

@@ -28,6 +28,8 @@ export type DiffLine = {
 
 export type FileDiff = {
   fileName: string;
+  sha: string;
+  status: string;
   diffstat: {
     additions: number;
     deletions: number;

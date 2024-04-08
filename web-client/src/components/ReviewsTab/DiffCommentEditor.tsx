@@ -70,6 +70,10 @@ function DiffCommentEditor({ onAdd, onCancel }: DiffCommentEditorProps) {
       label: commentLabel,
       decoration: decorationType,
       content: editorContent,
+      createdAt: new Date().toString(),
+      author: {
+        login: "",
+      },
     });
   };
 

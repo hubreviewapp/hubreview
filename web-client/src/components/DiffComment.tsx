@@ -3,14 +3,18 @@ import classes from "../styles/comment.module.css";
 import UserLogo from "../assets/icons/user.png";
 import { ReviewComment } from "../tabs/ModifiedFilesTab";
 import { useEffect, useRef, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { useParams } from "react-router-dom";
 
 export interface DiffCommentProps {
   comment: ReviewComment;
+  replies: ReviewComment[];
   isPending: boolean;
+  onReplyCreated: () => void;
 }
 
-function DiffComment({ comment, isPending }: DiffCommentProps) {
-  const [replies, setReplies] = useState<string[]>([]);
+function DiffComment({ comment, replies, isPending, onReplyCreated }: DiffCommentProps) {
+  const { owner, repoName, prnumber } = useParams();
 
   const [isReplyEditorFocused, setIsReplyEditorFocused] = useState(false);
   const [replyEditorContent, setReplyEditorContent] = useState("");
@@ -23,8 +27,27 @@ function DiffComment({ comment, isPending }: DiffCommentProps) {
     setIsReplyEditorFocused(false);
   };
 
-  const handleReplyEditorSubmit = () => {
-    setReplies([...replies, replyEditorContent]);
+  const createReplyMutation = useMutation({
+    mutationFn: () =>
+      fetch(
+        `http://localhost:5018/api/github/pullrequests/${owner}/${repoName}/${prnumber}/reviews/comments/${comment.id}/replies`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            body: replyEditorContent,
+          }),
+        },
+      ),
+  });
+
+  const handleReplyEditorSubmit = async () => {
+    await createReplyMutation.mutateAsync();
+    onReplyCreated();
+
     setReplyEditorContent("");
     setIsReplyEditorFocused(false);
   };
@@ -37,9 +60,27 @@ function DiffComment({ comment, isPending }: DiffCommentProps) {
     }
   }, [isReplyEditorFocused]);
 
+  const toggleResolutionMutation = useMutation({
+    mutationFn: (commentNodeId: string) =>
+      fetch(
+        `http://localhost:5018/api/github/pullrequests/${owner}/${repoName}/${prnumber}/reviews/comments/${commentNodeId}/toggleResolution`,
+        {
+          method: "POST",
+          credentials: "include",
+        },
+      ),
+  });
+
+  // FIXME: this needs to be part of the `comment` object, but that requires significant backend changes
+  const [isResolved, setIsResolved] = useState(false);
+
+  const handleToggleResolution = async () => {
+    await toggleResolutionMutation.mutateAsync(comment.nodeId as string);
+    setIsResolved(!isResolved);
+  };
+
   return (
     <Paper withBorder radius="md" className={classes.comment} shadow="lg">
-      <Divider my={9} />
       <Group>
         <Badge size="md" color="#888" key={1} mb={4}>
           {comment.label}
@@ -56,11 +97,11 @@ function DiffComment({ comment, isPending }: DiffCommentProps) {
         )}
       </Group>
       <Group>
-        <Avatar src={UserLogo} alt="Jacob Warnhalter" radius="xl" />
+        <Avatar src={comment.author.avatarUrl ?? UserLogo} alt="Jacob Warnhalter" radius="xl" />
         <div>
-          <Text fz="sm">AUTHOR</Text>
+          <Text fz="sm">{comment.author?.login ?? "--"}</Text>
           <Text fz="xs" c="dimmed">
-            {new Date(2023, 4, 7).toLocaleString("en-US", {
+            {new Date(comment.createdAt).toLocaleString("en-US", {
               day: "numeric",
               month: "long",
               year: "numeric",
@@ -76,11 +117,11 @@ function DiffComment({ comment, isPending }: DiffCommentProps) {
           <Box key={i}>
             <Divider mb="sm" />
             <Group>
-              <Avatar src={UserLogo} alt="Jacob Warnhalter" radius="xl" />
+              <Avatar src={r.author.avatarUrl ?? UserLogo} radius="xl" />
               <div>
-                <Text fz="sm">AUTHOR</Text>
+                <Text fz="sm">{r.author.login}</Text>
                 <Text fz="xs" c="dimmed">
-                  {new Date(2023, 4, 7).toLocaleString("en-US", {
+                  {new Date(r.createdAt).toLocaleString("en-US", {
                     day: "numeric",
                     month: "long",
                     year: "numeric",
@@ -89,35 +130,48 @@ function DiffComment({ comment, isPending }: DiffCommentProps) {
                 </Text>
               </div>
             </Group>
-            <Text py="sm">{r}</Text>
+            <Text py="sm">{r.content}</Text>
           </Box>
         ))}
 
-      <Textarea
-        ref={replyEditorRef}
-        rows={isReplyEditorFocused ? undefined : 1}
-        minRows={isReplyEditorFocused ? 3 : undefined}
-        autosize={isReplyEditorFocused}
-        onClick={onReplyEditorFocus}
-        placeholder="Reply..."
-        value={replyEditorContent}
-        onChange={(e) => setReplyEditorContent(e.currentTarget.value)}
-      />
-      {isReplyEditorFocused && (
-        <Group>
-          <Button onClick={onReplyEditorBlur}>Cancel</Button>
-          <Button disabled={replyEditorContent.length === 0} onClick={handleReplyEditorSubmit}>
-            Add comment
-          </Button>
-        </Group>
+      {!isPending && (
+        <>
+          <Textarea
+            ref={replyEditorRef}
+            rows={isReplyEditorFocused ? undefined : 1}
+            minRows={isReplyEditorFocused ? 3 : undefined}
+            autosize={isReplyEditorFocused}
+            onClick={onReplyEditorFocus}
+            placeholder="Reply..."
+            value={replyEditorContent}
+            onChange={(e) => setReplyEditorContent(e.currentTarget.value)}
+          />
+          {isReplyEditorFocused && (
+            <Group>
+              <Button onClick={onReplyEditorBlur}>Cancel</Button>
+              <Button
+                disabled={replyEditorContent.length === 0}
+                onClick={handleReplyEditorSubmit}
+                loading={createReplyMutation.isPending}
+              >
+                Add comment
+              </Button>
+            </Group>
+          )}
+        </>
       )}
 
       {!isPending && (
         <>
           <Divider my={10} />
           <Group justify="start" mt={5}>
-            <Button size="sm" color="green">
-              Resolve comment
+            <Button
+              size="sm"
+              color="green"
+              onClick={handleToggleResolution}
+              loading={toggleResolutionMutation.isPending}
+            >
+              {isResolved ? "Unresolve" : "Resolve"} comment
             </Button>
             {/*
         <Text c="gray" size="sm">
