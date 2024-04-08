@@ -1,6 +1,7 @@
 import { useState, useEffect, ReactNode } from "react";
 import UserContext, { User } from "./contexts.tsx"; // Assuming you have defined the User interface
 import axios from "axios";
+import { BASE_URL } from "../env.ts";
 
 interface UserProviderProps {
   children: ReactNode;
@@ -21,7 +22,7 @@ function UserProvider({ children }: UserProviderProps) {
       const res = await axios
         .create({
           withCredentials: true,
-          baseURL: "http://localhost:5018/api/github",
+          baseURL: `${BASE_URL}/api/github`,
         })
         .get("getUserInfo");
       if (res) {

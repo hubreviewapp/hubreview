@@ -17,6 +17,7 @@ import { IconCirclePlus, IconSearch } from "@tabler/icons-react";
 import { useState, useEffect } from "react";
 import { Repository } from "../models/Repository";
 import axios from "axios";
+import { BASE_URL, GITHUB_APP_NAME } from "../env";
 
 function RepositoriesPage() {
   const iconPlus = <IconCirclePlus style={{ width: rem(22), height: rem(22) }} />;
@@ -31,7 +32,7 @@ function RepositoriesPage() {
     const getRepos = async () => {
       const axiosInstance = axios.create({
         withCredentials: true,
-        baseURL: "http://localhost:5018/api/github",
+        baseURL: `${BASE_URL}/api/github`,
       });
 
       const res = await axiosInstance.get("/getRepository");
@@ -46,7 +47,7 @@ function RepositoriesPage() {
 
   function selectRepositories() {
     console.log("Button clicked");
-    window.location.assign("https://github.com/apps/hubreviewapp/installations/new");
+    window.location.assign(`https://github.com/apps/${GITHUB_APP_NAME}/installations/new`);
   }
 
   async function getPulls(id: number) {
@@ -54,7 +55,7 @@ function RepositoriesPage() {
     await axios
       .create({
         withCredentials: true,
-        baseURL: "http://localhost:5018/api/github",
+        baseURL: `${BASE_URL}/api/github`,
       })
       .get(`/getRepository/${id}`);
   }

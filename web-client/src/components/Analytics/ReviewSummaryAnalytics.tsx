@@ -3,6 +3,7 @@ import { DonutChart } from "@mantine/charts";
 import { IconSend, IconMailbox, IconClock } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { BASE_URL } from "../../env";
 
 function ReviewSummaryAnalytics() {
   const [userData, setData] = useState([
@@ -14,7 +15,7 @@ function ReviewSummaryAnalytics() {
   useEffect(() => {
     const fetchWeeklySummary = async () => {
       try {
-        const res = await axios.get(`http://localhost:5018/api/github/user/weeklysummary`, {
+        const res = await axios.get(`${BASE_URL}/api/github/user/weeklysummary`, {
           withCredentials: true,
         });
         if (res) {

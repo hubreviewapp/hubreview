@@ -2,14 +2,13 @@ import { Grid, Box, Text, Card, Button, Stack, Group, Image, Title } from "@mant
 import GitHubLogo from "../assets/icons/github-mark-white.png";
 import SignIn from "../assets/icons/signin.png";
 import axios from "axios";
-
-const CLIENT_ID = "64318456282bb1488063";
+import { BASE_URL, GITHUB_APP_CLIENT_ID } from "../env";
 
 function SignInPage() {
   async function loginWithGithub() {
     const axiosInstance = axios.create({
       withCredentials: true,
-      baseURL: "http://localhost:5018/api/github",
+      baseURL: `${BASE_URL}/api/github`,
     });
 
     try {
@@ -21,7 +20,9 @@ function SignInPage() {
     }
 
     window.location.assign(
-      "https://github.com/login/oauth/authorize?client_id=" + CLIENT_ID + "&scope=user,repo,admin:org",
+      // Note: This shouldn't be necessary since the apps have one callback URI each...
+      // but leaving it here: `redirect_uri=${GITHUB_OAUTH_REDIRECT_URI}`
+      `https://github.com/login/oauth/authorize?client_id=${GITHUB_APP_CLIENT_ID}&scope=user,repo,admin:org`,
     );
   }
 

@@ -5,6 +5,7 @@ import { ReviewComment } from "../tabs/ModifiedFilesTab";
 import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
+import { BASE_URL } from "../env";
 
 export interface DiffCommentProps {
   comment: ReviewComment;
@@ -30,7 +31,7 @@ function DiffComment({ comment, replies, isPending, onReplyCreated }: DiffCommen
   const createReplyMutation = useMutation({
     mutationFn: () =>
       fetch(
-        `http://localhost:5018/api/github/pullrequests/${owner}/${repoName}/${prnumber}/reviews/comments/${comment.id}/replies`,
+        `${BASE_URL}/api/github/pullrequests/${owner}/${repoName}/${prnumber}/reviews/comments/${comment.id}/replies`,
         {
           method: "POST",
           credentials: "include",
@@ -63,7 +64,7 @@ function DiffComment({ comment, replies, isPending, onReplyCreated }: DiffCommen
   const toggleResolutionMutation = useMutation({
     mutationFn: (commentNodeId: string) =>
       fetch(
-        `http://localhost:5018/api/github/pullrequests/${owner}/${repoName}/${prnumber}/reviews/comments/${commentNodeId}/toggleResolution`,
+        `${BASE_URL}/api/github/pullrequests/${owner}/${repoName}/${prnumber}/reviews/comments/${commentNodeId}/toggleResolution`,
         {
           method: "POST",
           credentials: "include",

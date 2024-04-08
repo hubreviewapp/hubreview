@@ -3,6 +3,7 @@ import { IconUser, IconTag, IconCalendarTime, IconChartArrows, IconSortDescendin
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { FilterList } from "../../pages/ReviewQueuePage.tsx";
+import { BASE_URL } from "../../env.ts";
 
 /**
  * This component should allow easy manipulation of filters in a keyboard-oriented flow.
@@ -20,12 +21,9 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
   const [labels, setLabels] = useState<string[]>([]);
 
   useEffect(() => {
-    const API = "http://localhost:5018/api/github/";
-    const apiEnd = "GetFilterLists";
-
     const fetchGetFilterLists = async () => {
       try {
-        const res = await axios.get(API + apiEnd, { withCredentials: true });
+        const res = await axios.get(`${BASE_URL}/api/github/GetFilterLists`, { withCredentials: true });
         if (res.data != undefined) {
           console.log(res.data);
           setAuthors(res.data.authors);
