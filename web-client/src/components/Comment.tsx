@@ -16,6 +16,7 @@ interface CommentProps {
   isAIGenerated?: boolean;
   deletePRComment: (id: number) => void;
   editPRComment: (id: number, body: string) => void;
+  updatePRCommentStatus: (id: number, status: string | null) => void;
   replyComment: (id: number, body: string) => void;
   status: string;
   avatar: string;
@@ -33,7 +34,9 @@ export function Comment({
   editPRComment,
   avatar,
   url,
+  status,
   replyComment,
+  updatePRCommentStatus,
 }: CommentProps) {
   const settings = ["Copy Link", "Edit", "Delete", "Quote Reply"];
   const [, setSelectedItem] = useState<string | null>(null);
@@ -104,12 +107,14 @@ export function Comment({
               </Box>
               <Box style={{ position: "absolute", right: "5px", display: "flex" }}>
                 <Select
+                  key={id}
                   placeholder="Mark as resolved"
                   //active , pending  --> active
                   // closed --> spam, abuse, off topic
                   data={["Active", "Pending", "Closed", "Outdated", "Resolved", "Duplicate"]}
+                  onChange={(val) => updatePRCommentStatus(id, val)}
                   checkIconPosition="left"
-                  defaultValue={isResolved ? "Resolved" : undefined}
+                  defaultValue={status ? status : null}
                   //defaultValue="Open"
                   allowDeselect={false}
                 />
