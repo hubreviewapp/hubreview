@@ -25,8 +25,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: postgres
+      POSTGRES_USER: hubreview
       POSTGRES_PASSWORD: hubreview
+      POSTGRES_DB: hubreview
     volumes:
       - hubreview-compose-postgres:/var/lib/postgresql/data
 

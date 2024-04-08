@@ -30,6 +30,7 @@ export interface DiffLineNonMarkerViewProps {
   pendingComments: ReviewComment[];
   hasStartedReview: boolean;
   onAddPendingComment: (partialComment: Omit<ReviewComment, "key">) => void;
+  onReplyCreated: () => void;
 }
 
 function DiffLineNonMarkerView({
@@ -38,6 +39,7 @@ function DiffLineNonMarkerView({
   pendingComments,
   hasStartedReview,
   onAddPendingComment,
+  onReplyCreated,
 }: DiffLineNonMarkerViewProps) {
   const { hovered, ref } = useHover();
   const [addingComment, setAddingComment] = useState(false);
@@ -114,11 +116,19 @@ function DiffLineNonMarkerView({
 
       {/* FIXME: keys should be IDs */}
       {pendingComments.map((c, i) => (
-        <DiffComment key={i} comment={c} isPending={true} />
+        <DiffComment key={i} comment={c} replies={[]} isPending={true} onReplyCreated={() => {}} />
       ))}
-      {comments.map((c, i) => (
-        <DiffComment key={i} comment={c} isPending={false} />
-      ))}
+      {comments
+        .filter((c) => !c.inReplyToId)
+        .map((c, i) => (
+          <DiffComment
+            key={i}
+            comment={c}
+            replies={comments.filter((c2) => c2.inReplyToId && c2.inReplyToId === c.id)}
+            isPending={false}
+            onReplyCreated={onReplyCreated}
+          />
+        ))}
     </Box>
   );
 }
@@ -129,6 +139,7 @@ export interface DiffLineViewProps {
   pendingComments: ReviewComment[];
   hasStartedReview: boolean;
   onAddPendingComment: (partialComment: Omit<ReviewComment, "key">) => void;
+  onReplyCreated: () => void;
 }
 
 function DiffLineView({
@@ -137,6 +148,7 @@ function DiffLineView({
   pendingComments,
   hasStartedReview,
   onAddPendingComment,
+  onReplyCreated,
 }: DiffLineViewProps) {
   if (l.type === DiffLineType.Marker) {
     return <DiffLineMarkerView diffLine={l} />;
@@ -148,6 +160,7 @@ function DiffLineView({
         pendingComments={pendingComments}
         hasStartedReview={hasStartedReview}
         onAddPendingComment={onAddPendingComment}
+        onReplyCreated={onReplyCreated}
       />
     );
   } else {
@@ -161,6 +174,7 @@ export interface FileDiffViewProps {
   pendingComments: ReviewComment[];
   hasStartedReview: boolean;
   onAddPendingComment: (comment: ReviewComment) => void;
+  onReplyCreated: () => void;
 }
 
 function FileDiffView({
@@ -169,6 +183,7 @@ function FileDiffView({
   pendingComments,
   hasStartedReview,
   onAddPendingComment,
+  onReplyCreated,
 }: FileDiffViewProps) {
   return (
     <Box mb="md" style={{ border: "1px solid gray", borderRadius: "5px", fontSize: "12px" }} p="sm">
@@ -194,8 +209,13 @@ function FileDiffView({
               label: partialComment.label,
               decoration: partialComment.decoration,
               content: partialComment.content,
+              createdAt: new Date().toString(),
+              author: {
+                login: "",
+              },
             });
           }}
+          onReplyCreated={onReplyCreated}
         />
       ))}
     </Box>

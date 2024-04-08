@@ -1103,7 +1103,6 @@ public class GitHubController : ControllerBase
                                 body = comm.Body,
                                 label = null,
                                 decoration = null,
-                                status = null,
                                 createdAt = comm.CreatedAt,
                                 updatedAt = comm.UpdatedAt,
                                 association = comm.AuthorAssociation.StringValue,
@@ -1156,210 +1155,58 @@ public class GitHubController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_review_comments")]
-    public async Task<ActionResult> getRevCommentsOnPR(string owner, string repoName, int prnumber)
+    [HttpGet("pullrequests/{owner}/{repoName}/{prnumber}/reviews")]
+    public async Task<ActionResult> GetPullRequestReviews(string owner, string repoName, int prnumber)
     {
-        var appClient = GetNewClient();
         var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
-        // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent();
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+        var reviews = await userClient.PullRequest.Review.GetAll(owner, repoName, prnumber);
+        var reviewComments = await userClient.PullRequest.ReviewComment.GetAll(owner, repoName, prnumber);
+        var reviewCommentDict = reviewComments.GroupBy(rc => (long)rc.PullRequestReviewId).ToDictionary(g => g.Key, g => g.ToList());
 
-        var result = new List<IssueCommentInfo>([]);
-        var processedCommentIds = new HashSet<long>();
-
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
-        using var connection = new NpgsqlConnection(connectionString);
-
-        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
-        foreach (var installation in installations)
-        {
-            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+        var reviewsWithComments = reviews.Select(review =>
+            new
             {
-                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
-                var installationClient = GetNewClient(response.Token);
-
-                var reviews = await installationClient.PullRequest.ReviewComment.GetAll(owner, repoName, prnumber);
-
-                foreach (var rev in reviews)
-                {
-                    // Check if the comment ID has already been processed
-                    if (!processedCommentIds.Contains(rev.Id))
-                    {
-
-                        if (!rev.Body.Contains("<!--Using HubReview-->"))
-                        {
-                            var commentObj = new IssueCommentInfo
-                            {
-                                id = rev.Id,
-                                author = rev.User.Login,
-                                body = rev.Body,
-                                label = null,
-                                decoration = null,
-                                status = null,
-                                createdAt = rev.CreatedAt,
-                                updatedAt = rev.UpdatedAt,
-                                association = rev.AuthorAssociation.StringValue
-                            };
-
-                            result.Add(commentObj);
-                        }
-                        else
-                        {
-                            int index = rev.Body.IndexOf(':');
-                            string parsed_message = rev.Body[(index + 2)..];
-
-                            await connection.OpenAsync();
-                            string query = $"SELECT label, decoration, status FROM comments WHERE commentid = {rev.Id}";
-                            var command = new NpgsqlCommand(query, connection);
-                            NpgsqlDataReader reader = await command.ExecuteReaderAsync();
-                            while (await reader.ReadAsync())
-                            {
-                                var commentObj = new IssueCommentInfo
-                                {
-                                    id = rev.Id,
-                                    author = rev.User.Login,
-                                    body = parsed_message,
-                                    label = reader.GetString(0),
-                                    decoration = reader.GetString(1),
-                                    status = reader.GetString(2),
-                                    createdAt = rev.CreatedAt,
-                                    updatedAt = rev.UpdatedAt,
-                                    association = rev.AuthorAssociation.StringValue
-                                };
-
-                                result.Add(commentObj);
-                            }
-
-                            await connection.CloseAsync();
-                        }
-
-
-
-                        // Add the comment ID to the set of processed IDs
-                        processedCommentIds.Add(rev.Id);
-
-                    }
-
-                }
+                mainComment = review,
+                childComments = reviewCommentDict.TryGetValue(review.Id, out var reviewComments) ? reviewComments : []
             }
-        }
+        );
 
-        return Ok(result);
+        return Ok(reviewsWithComments);
     }
 
-    /*[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_reviews")]
-    public async Task<ActionResult> getReviewsOnPR(string owner, string repoName, int prnumber)
+    [HttpPost("pullrequests/{owner}/{repoName}/{prnumber}/reviews")]
+    public async Task<ActionResult> CreatePullRequestReview(string owner, string repoName, int prnumber, [FromBody] CreateReviewRequestModel req)
     {
-
-        List<long> id_list = [];
-
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
-        using var connection = new NpgsqlConnection(connectionString);
-        connection.Open();
-
-        string select = $"SELECT review_id FROM reviewhead WHERE reponame = '{repoName}' AND prnumber = {prnumber}";
-
-        using var command = new NpgsqlCommand(select, connection);
-        NpgsqlDataReader reader = await command.ExecuteReaderAsync();
-        while ( await reader.ReadAsync() )
-        {
-            id_list.Add(reader.GetInt64(0));
-        }
-
-        reader.Close();
-        connection.Close();
-
-        string select2 = $"SELECT (body, verdict, comments) FROM reviewhead WHERE review"
-
-        return Ok(id_list);
-    }*/
-
-    [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/{sha}/addRevComment")]
-    public async Task<ActionResult> AddRevCommentToPR(string owner, string repoName, int prnumber, string sha, [FromBody] CreateReviewRequestModel req)
-    {
-        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
 
         var rev = new PullRequestReviewCreate()
         {
-            CommitId = sha,
+            //CommitId = sha, // TODO: Ideally this'd be used, but it's not straightforward to pull PR files with commit ID attached... Maybe GraphQL needed?
             Body = req.body,
-            Event = (req.verdict != "APPROVE") ? ((req.verdict != "REQUEST CHANGES") ? Octokit.PullRequestReviewEvent.Comment : Octokit.PullRequestReviewEvent.RequestChanges) : Octokit.PullRequestReviewEvent.Approve,
-            Comments = []
+            Event = req.verdict switch
+            {
+                "approve" => Octokit.PullRequestReviewEvent.Approve,
+                "reject" => Octokit.PullRequestReviewEvent.RequestChanges,
+                "comment" => Octokit.PullRequestReviewEvent.Comment,
+                _ => throw new ArgumentOutOfRangeException(nameof(req.verdict), $"Can't map '{req.verdict}'")
+            },
+            Comments = req.comments?.Select(comment =>
+            {
+                var conventionalBody = $"<!--Using HubReview-->\n{comment.label?.ToLower()}({comment.decoration}): {comment.message}";
+                var draft = new Octokit.DraftPullRequestReviewComment(conventionalBody, comment.filename, comment.position);
+                return draft;
+            }).ToList() ?? [],
         };
 
-        if (req.comments.Length != 0)
-        {
-            foreach (var comment in req.comments)
-            {
-                var decorated_body = $"<!--Using HubReview-->\nACTIVE {comment.label} ({comment.decoration}): {comment.message}";
-                var draft = new Octokit.DraftPullRequestReviewComment(decorated_body, comment.filename, comment.position);
-                rev.Comments.Add(draft);
-            }
-        }
-
-        var review = await client.PullRequest.Review.Create(owner, repoName, prnumber, rev);
+        var review = await userClient.PullRequest.Review.Create(owner, repoName, prnumber, rev);
 
         if (review == null)
         {
-            return NotFound("Review can not be created.");
+            return Problem("Review can not be created.");
         }
-
-        var published_comments = await client.PullRequest.Review.GetAllComments(owner, repoName, prnumber, review.Id);
-        var comment_id_list = string.Join(",", published_comments.Select(c => c.Id));
-
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
-        using var connection = new NpgsqlConnection(connectionString);
-        connection.Open();
-
-        string query1 = $"INSERT INTO reviewhead (review_id, reponame, prnumber, body, verdict, comments) VALUES ({review.Id}, '{repoName}', {prnumber}, '{req.body}', '{req.verdict}', ARRAY[{comment_id_list}])";
-
-        using (var command = new NpgsqlCommand(query1, connection))
-        {
-            command.ExecuteNonQuery();
-        }
-
-        string query2 = "INSERT INTO comments (commentid, reponame, prnumber, is_review, label, decoration, status) VALUES ";
-
-        for (int i = 0; i < published_comments.Count; i++)
-        {
-            query2 += $"({published_comments[i].Id}, '{repoName}', {prnumber}, {true}, '{req.comments[i].label}', '{req.comments[i].decoration}', 'ACTIVE'), ";
-        }
-
-        query2 = query2[..^2];
-
-        using (var command = new NpgsqlCommand(query2, connection))
-        {
-            command.ExecuteNonQuery();
-        }
-
-        string query3 = $"UPDATE pullrequestinfo SET updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE reponame = '{repoName}' AND pullnumber = {prnumber}";
-        using (var command = new NpgsqlCommand(query3, connection))
-        {
-            command.ExecuteNonQuery();
-        }
-
-        connection.Close();
-
 
         return Ok($"Review added to pull request #{prnumber} in repository {repoName}.");
-    }
-
-    [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addRevReply")]
-    public async Task<ActionResult> addRevReply(string owner, string repoName, int prnumber, [FromBody] CreateReplyRequestModel req)
-    {
-        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-
-        string new_body = $"<!--Using HubReview-->{req.body}";
-        var reply = new PullRequestReviewCommentReplyCreate(new_body, req.replyToId);
-        var result = await client.PullRequest.ReviewComment.CreateReply(owner, repoName, prnumber, reply);
-
-        return Ok(result);
     }
 
     [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addCommentReply")]
@@ -1374,6 +1221,70 @@ public class GitHubController : ControllerBase
         var comment = await client.Issue.Comment.Create(owner, repoName, prnumber, decorated_body);
 
         return Ok(comment);
+    }
+
+    [HttpPost("pullrequests/{owner}/{repoName}/{prNumber}/reviews/comments/{topCommentId}/replies")]
+    public async Task<ActionResult> ReplyToPullRequestThread(string owner, string repoName, int prNumber, int topCommentId, [FromBody] CreateReviewThreadReplyRequestModel req)
+    {
+        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+
+        var response = await userClient.PullRequest.ReviewComment.CreateReply(owner, repoName, prNumber, new PullRequestReviewCommentReplyCreate(req.body, topCommentId));
+
+        return Ok(response);
+    }
+
+    [HttpPost("pullrequests/{owner}/{repoName}/{prNumber}/reviews/comments/{commentNodeId}/toggleResolution")]
+    public async Task<ActionResult> TogglePullRequestReviewCommentResolution(string owner, string repoName, int prNumber, string commentNodeId)
+    {
+        var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
+        var connection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
+
+        var query = new Query()
+            .Repository(Var("repoName"), Var("owner"))
+            .PullRequest(Var("prNumber"))
+            .ReviewThreads(first: 50)
+            .Nodes
+            .Select(rt => new
+            {
+                rt.Id,
+                rt.IsResolved,
+                TopCommentId = rt.Comments(1, null, null, null, null).Nodes.Select(c => c.Id).ToList().Single(),
+            })
+            .Compile();
+
+        var reviewThreads = await connection.Run(query, new Dictionary<string, object>
+        {
+            { "owner", owner },
+            { "repoName", repoName },
+            { "prNumber", prNumber },
+        });
+
+        var thread = reviewThreads.Where(rt => rt.TopCommentId.Value == commentNodeId).Single();
+
+        if (thread.IsResolved)
+        {
+            var mutation = new Mutation()
+                .UnresolveReviewThread(new UnresolveReviewThreadInput()
+                {
+                    ClientMutationId = "hubreviewapp",
+                    ThreadId = thread.Id,
+                })
+                .Select(p => p.ClientMutationId);
+            var result = await connection.Run(mutation);
+        }
+        else
+        {
+            var mutation = new Mutation()
+                .ResolveReviewThread(new ResolveReviewThreadInput()
+                {
+                    ClientMutationId = "hubreviewapp",
+                    ThreadId = thread.Id,
+                })
+                .Select(p => p.ClientMutationId);
+            var result = await connection.Run(mutation);
+        }
+
+        return Ok();
     }
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_commits")]
@@ -1501,39 +1412,24 @@ public class GitHubController : ControllerBase
         return NotFound("not found");
     }
 
-    [HttpGet("commit/{owner}/{repoName}/{prnumber}/get_all_patches")]
+    [HttpGet("pullrequests/{owner}/{repoName}/{prnumber}/files")]
     public async Task<ActionResult> getAllPatches(string owner, string repoName, int prnumber)
     {
-        var appClient = GetNewClient();
         var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
-        var result = new List<object>([]);
 
-        // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent();
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
-        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
-        foreach (var installation in installations)
+        var files = await userClient.PullRequest.Files(owner, repoName, prnumber);
+        var result = files.Select(file => new
         {
-            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
-            {
-                var files = await userClient.PullRequest.Files(owner, repoName, prnumber);
-                result.AddRange(files.Select(file => new
-                {
-                    name = file.FileName,
-                    status = file.Status,
-                    sha = file.Sha,
-                    adds = file.Additions,
-                    dels = file.Deletions,
-                    changes = file.Changes,
-                    content = file.Patch
-                }));
+            name = file.FileName,
+            status = file.Status,
+            sha = file.Sha,
+            adds = file.Additions,
+            dels = file.Deletions,
+            changes = file.Changes,
+            content = file.Patch
+        });
 
-                return Ok(result);
-            }
-        }
-        return NotFound("not found");
+        return Ok(result);
     }
 
     [HttpGet("getPRReviewerSuggestion/{owner}/{repoName}/{prOwner}")]
