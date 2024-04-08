@@ -73,7 +73,6 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
   const [query, setQuery] = useState("");
   const filtered = contributors.filter((item) => item.login.toLowerCase().includes(query.toLowerCase()));
 
-  console.log("rex", addedReviewers);
   useEffect(() => {
     const fetchContributors = async () => {
       try {
@@ -283,14 +282,17 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
                   </Group>
                 </Grid.Col>
                 <Grid.Col span={4}>
-                  <Progress.Root mt="5px" size="lg">
-                    <Progress.Section
-                      color={BarColor(itm.maxLoad, itm.currentLoad)}
-                      value={(itm.currentLoad / itm.maxLoad) * 100}
-                    >
-                      <Progress.Label>{(itm.currentLoad / itm.maxLoad) * 100}%</Progress.Label>
-                    </Progress.Section>
-                  </Progress.Root>
+                  <Tooltip label={Math.ceil((itm.currentLoad / itm.maxLoad) * 100) + "%"}>
+                    <Progress.Root mt="5px" size="lg">
+                      <Progress.Section
+                        animated
+                        color={BarColor(itm.maxLoad, itm.currentLoad)}
+                        value={Math.ceil((itm.currentLoad / itm.maxLoad) * 100)}
+                      >
+                        <Progress.Label>{Math.ceil((itm.currentLoad / itm.maxLoad) * 100)}%</Progress.Label>
+                      </Progress.Section>
+                    </Progress.Root>
+                  </Tooltip>
                 </Grid.Col>
                 <Grid.Col span={1}>
                   {addedReviewer.find((itm2) => itm.login == itm2.login) == undefined ? (
