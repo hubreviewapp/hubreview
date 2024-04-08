@@ -3233,7 +3233,7 @@ public class GitHubController : ControllerBase
             var query = new Query()
             .Repository(Var("name"), Var("owner"))
             .PullRequest(Var("prnumber"))
-            .TimelineItems(40, null, null, null, null, null, null)
+            .TimelineItems(null, null, 250, null, null, null, null)
             .Nodes
             .Select(node => node.Switch<object>(when => when
             .ReviewRequestedEvent(y => new
@@ -3740,7 +3740,7 @@ public class GitHubController : ControllerBase
             var query = new Query()
             .Repository(Var("name"), Var("owner"))
             .PullRequest(Var("prnumber"))
-            .TimelineItems(40, null, null, null, null, null, null)
+            .TimelineItems(null, null, 250, null, null, null, null)
             .Nodes
             .Select(node => node.Switch<object>(when => when
             .ReviewRequestedEvent(y => new

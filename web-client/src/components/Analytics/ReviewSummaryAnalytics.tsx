@@ -53,7 +53,7 @@ function ReviewSummaryAnalytics() {
           Received: {userData[1].value}
           <Space w="md" />
           <Text fs="italic" c="dimmed">
-            ~reviews received this week
+            ~requests received this week
           </Text>
         </Center>
         <Center>
@@ -61,7 +61,7 @@ function ReviewSummaryAnalytics() {
           Waiting: {userData[2].value}
           <Space w="md" />
           <Text fs="italic" c="dimmed">
-            ~Prs waiting for your review
+            ~PRs waiting for your review
           </Text>
         </Center>
       </Flex>
