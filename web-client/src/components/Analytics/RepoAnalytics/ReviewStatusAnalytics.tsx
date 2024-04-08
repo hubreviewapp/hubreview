@@ -20,7 +20,7 @@ function ReviewStatusAnalytics() {
           { name: "commented", color: "violet.6" },
           { name: "pending", color: "blue.6" },
           { name: "approved", color: "teal.6" },
-          { name: "change Requested", color: "pink.6" },
+          { name: "changeRequested", color: "pink.6" },
         ]}
         tickLine="y"
       />
