@@ -499,10 +499,17 @@ public class GitHubController : ControllerBase
 
         var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
+        var client = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+
+        // Get organizations for the current user
+        var organizations = await client.Organization.GetAllForCurrent();
+
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+
         var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
         foreach (var installation in installations)
         {
-            if (installation.Account.Login == userLogin)
+            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
             {
                 var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
                 var installationClient = _getGitHubClient(response.Token);
