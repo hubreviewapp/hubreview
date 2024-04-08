@@ -1,5 +1,5 @@
 import { Button, SimpleGrid, Grid, Paper, Title, Container, Divider, Flex, Center } from "@mantine/core";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import ReviewSummaryAnalytics from "../components/Analytics/ReviewSummaryAnalytics";
 import ReviewLineChart from "../components/Analytics/ReviewLineChart";
@@ -93,9 +93,11 @@ function AnalyticsPage() {
               </Title>
               <Flex direction="column" justify="center" align="center">
                 {repoList.repoNames.map((r: Repo) => (
-                  <Button key={r.id} mb="sm" w="50%" variant="outline" color="blue">
-                    {r.name}
-                  </Button>
+                  <Link to={`${r.name}`} key={r.id} style={{ textDecoration: "none" }}>
+                    <Button mb="sm" variant="outline" color="blue">
+                      {r.name}
+                    </Button>
+                  </Link>
                 ))}
               </Flex>
             </Paper>

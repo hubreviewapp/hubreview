@@ -16,6 +16,7 @@ import "@mantine/tiptap/styles.css";
 import "@mantine/charts/styles.css";
 import "./styles/filter.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import RepoAnalyticsPage from "./pages/RepoAnalyticsPage.tsx";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -63,6 +64,7 @@ function App() {
             </Route>
             <Route path="/repositories" element={<RepositoriesPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
+            <Route path="/analytics/:repoName" element={<RepoAnalyticsPage />} />
             <Route path="/createPR" element={<PRCreationPage />} />
             <Route path="/signIn" element={<SignInPage />} />
             <Route path="/pulls/create" element={<PRDetailsPage />} />
