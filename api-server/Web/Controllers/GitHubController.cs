@@ -555,28 +555,28 @@ public class GitHubController : ControllerBase
                         await connection.CloseAsync();
                     }
 
-                    foreach (var obj in reviews)
+                    foreach (var obj in reviewers)
                     {
-                        var user = await installationClient.User.Get(obj.login);
+                        var user = await installationClient.User.Get(obj);
                         combined_revs.Add(new ReviewObjDB
                         {
-                            login = obj.login,
-                            state = obj.state,
+                            login = obj,
+                            state = "PENDING",
                             avatar = user.AvatarUrl
                         });
                     }
 
                     string[] logins = reviews.Select(obj => obj.login).ToArray();
 
-                    foreach (var name in reviewers)
+                    foreach (var name in reviews)
                     {
-                        if (!logins.Contains(name))
+                        if (!logins.Contains(name.login))
                         {
-                            var user = await installationClient.User.Get(name);
+                            var user = await installationClient.User.Get(name.login);
                             combined_revs.Add(new ReviewObjDB
                             {
-                                login = name,
-                                state = "PENDING",
+                                login = name.login,
+                                state = name.state,
                                 avatar = user.AvatarUrl
                             });
                         }
@@ -3233,7 +3233,7 @@ public class GitHubController : ControllerBase
             var query = new Query()
             .Repository(Var("name"), Var("owner"))
             .PullRequest(Var("prnumber"))
-            .TimelineItems(40, null, null, null, null, null, null)
+            .TimelineItems(null, null, 250, null, null, null, null)
             .Nodes
             .Select(node => node.Switch<object>(when => when
             .ReviewRequestedEvent(y => new
@@ -3399,7 +3399,7 @@ public class GitHubController : ControllerBase
                     var query = new Query()
                     .Repository(Var("name"), Var("owner"))
                     .PullRequest(Var("prnumber"))
-                    .TimelineItems(40, null, null, null, null, null, null)
+                    .TimelineItems(null, null, 250, null, null, null, null)
                     .Nodes
                     .Select(node => node.Switch<object>(when => when
                     .ReviewRequestedEvent(y => new
@@ -3460,7 +3460,7 @@ public class GitHubController : ControllerBase
                     var query = new Query()
                     .Repository(Var("name"), Var("owner"))
                     .PullRequest(Var("prnumber"))
-                    .TimelineItems(40, null, null, null, null, null, null)
+                    .TimelineItems(null, null, 250, null, null, null, null)
                     .Nodes
                     .Select(node => node.Switch<object>(when => when
                     .ReviewRequestedEvent(y => new
@@ -3521,7 +3521,7 @@ public class GitHubController : ControllerBase
                     var query = new Query()
                     .Repository(Var("name"), Var("owner"))
                     .PullRequest(Var("prnumber"))
-                    .TimelineItems(40, null, null, null, null, null, null)
+                    .TimelineItems(null, null, 250, null, null, null, null)
                     .Nodes
                     .Select(node => node.Switch<object>(when => when
                     .ReviewRequestedEvent(y => new
@@ -3582,7 +3582,7 @@ public class GitHubController : ControllerBase
                     var query = new Query()
                     .Repository(Var("name"), Var("owner"))
                     .PullRequest(Var("prnumber"))
-                    .TimelineItems(40, null, null, null, null, null, null)
+                    .TimelineItems(null, null, 250, null, null, null, null)
                     .Nodes
                     .Select(node => node.Switch<object>(when => when
                     .ReviewRequestedEvent(y => new
@@ -3740,7 +3740,7 @@ public class GitHubController : ControllerBase
             var query = new Query()
             .Repository(Var("name"), Var("owner"))
             .PullRequest(Var("prnumber"))
-            .TimelineItems(40, null, null, null, null, null, null)
+            .TimelineItems(null, null, 250, null, null, null, null)
             .Nodes
             .Select(node => node.Switch<object>(when => when
             .ReviewRequestedEvent(y => new
