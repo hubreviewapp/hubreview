@@ -87,6 +87,12 @@ const parseRawDiff = (getAllPatchesResponse: GetAllPatchesResponse): FileDiff =>
           after: nextLineNumbers.after++,
         },
       };
+    } else if (l[0] === "\\") {
+      return {
+        type: DiffLineType.NoNewlineAtEOF,
+        content: "No newline",
+        lineNumber: {},
+      };
     }
     throw Error("Unexpected line in diff");
   });

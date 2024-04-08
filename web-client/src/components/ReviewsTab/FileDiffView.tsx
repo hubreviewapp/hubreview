@@ -152,7 +152,12 @@ function DiffLineView({
 }: DiffLineViewProps) {
   if (l.type === DiffLineType.Marker) {
     return <DiffLineMarkerView diffLine={l} />;
-  } else if (l.type === DiffLineType.Context || l.type === DiffLineType.Addition || l.type === DiffLineType.Deletion) {
+  } else if (
+    l.type === DiffLineType.Context ||
+    l.type === DiffLineType.Addition ||
+    l.type === DiffLineType.Deletion ||
+    l.type === DiffLineType.NoNewlineAtEOF
+  ) {
     return (
       <DiffLineNonMarkerView
         diffLine={l}

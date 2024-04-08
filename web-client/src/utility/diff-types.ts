@@ -3,6 +3,7 @@ export enum DiffLineType {
   Deletion,
   Context,
   Marker,
+  NoNewlineAtEOF,
 }
 
 export type DiffMarker = {
