@@ -1,17 +1,14 @@
 services:
-  # TODO:
-  #apiserver:
-  #image: apiserver
-  #build:
-  #context: ..
-  #dockerfile: docker/api-server.Dockerfile
-  #ports:
-  #- "9000:9000"
-  #depends_on:
-  #- postgresdb
+  apiserver:
+    build:
+      context: ..
+      dockerfile: docker/api-server.Dockerfile
+    ports:
+      - "5018:8080"
+    depends_on:
+      - postgresdb
 
   webclient:
-    image: webclient
     build:
       context: ..
       dockerfile: docker/web-client.Dockerfile
