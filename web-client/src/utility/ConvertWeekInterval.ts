@@ -32,7 +32,7 @@ function ConvertWeekInterval(data: WeekData[]) {
     const [hours, minutes] = time.split(":").map(parseFloat);
 
     // Calculate total hours
-    const totalHours = days * 24 + hours + (minutes / 60).toFixed(2);
+    const totalHours = (days * 24 + hours + minutes / 60).toFixed(2);
 
     return {
       ...item,
