@@ -11,6 +11,7 @@ import { useParams } from "react-router-dom";
 import PRSummaryBox from "../components/PRCreate/PRSummaryBox";
 import { Assignee, Label, Reviewer } from "../components/PRDetailSideBar.tsx";
 import { Check, Review } from "../models/PRInfo.tsx";
+import { BASE_URL } from "../env.ts";
 
 export interface PullRequest {
   title: string;
@@ -62,7 +63,7 @@ function PRDetailsPage(props: PRDetailsPageProps) {
   useEffect(() => {
     const fetchPRInfo = async () => {
       try {
-        const res = await axios.get(`http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}`, {
+        const res = await axios.get(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}`, {
           withCredentials: true,
         });
         if (res) {

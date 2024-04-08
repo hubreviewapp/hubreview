@@ -3,6 +3,7 @@ import { PillsInput, Pill, Combobox, CheckIcon, Group, useCombobox, Badge } from
 import LabelButton, { HubReviewLabelType } from "./LabelButton";
 import axios from "axios";
 import { useParams } from "react-router-dom";
+import { BASE_URL } from "../env";
 
 const hubReviewLabels = [
   { name: "bug", color: "d73a4a", key: "bug" },
@@ -34,13 +35,10 @@ function SelectLabel({ githubAddedLabels }: SelectLabelProps) {
         : [...current, { name: val, key: val, color: "ffffff" }],
     );
 
-    const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addLabel`;
     axios
-      .post(apiUrl, [val], {
+      .post(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addLabel`, [val], {
         withCredentials: true,
-        baseURL: "http://localhost:5018/api/github",
       })
-      .then(function () {})
       .catch(function (error) {
         console.log(error);
       });
@@ -50,13 +48,10 @@ function SelectLabel({ githubAddedLabels }: SelectLabelProps) {
     setValue((current) => current.filter((v) => v.name !== val));
     // [HttpDelete("pullrequest/{owner}/{repoName}/{prnumber}/{labelName}")]
 
-    const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/${val}`;
     axios
-      .delete(apiUrl, {
+      .delete(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/${val}`, {
         withCredentials: true,
-        baseURL: "http://localhost:5018/api/github",
       })
-      .then(function () {})
       .catch(function (error) {
         console.log(error);
       });

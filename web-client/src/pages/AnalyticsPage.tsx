@@ -6,6 +6,7 @@ import ReviewLineChart from "../components/Analytics/ReviewLineChart";
 import axios from "axios";
 import ReviewerSpeedAnalytics from "../components/Analytics/ReviewerSpeedAnalytics";
 import ConvertWeekInterval from "../utility/ConvertWeekInterval.ts";
+import { BASE_URL } from "../env.ts";
 
 export interface WeekData {
   week: string;
@@ -34,7 +35,7 @@ function AnalyticsPage() {
   useEffect(() => {
     const getRepos = async () => {
       try {
-        const res = await axios.get(`http://localhost:5018/api/github/getRepository`, {
+        const res = await axios.get(`${BASE_URL}/api/github/getRepository`, {
           withCredentials: true,
         });
         if (res.data) {
@@ -54,7 +55,7 @@ function AnalyticsPage() {
   useEffect(() => {
     const getRepos = async () => {
       try {
-        const res = await axios.get(`http://localhost:5018/api/github/user/monthlysummary`, {
+        const res = await axios.get(`${BASE_URL}/api/github/user/monthlysummary`, {
           withCredentials: true,
         });
         if (res.data) {

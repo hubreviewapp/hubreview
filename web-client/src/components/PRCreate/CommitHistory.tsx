@@ -4,6 +4,7 @@ import GitHubLogo from "../../assets/icons/github-mark-white.png";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
+import { BASE_URL } from "../../env";
 
 export interface Commit {
   date: string;
@@ -27,7 +28,7 @@ function CommitHistory() {
   useEffect(() => {
     const fetchCommitInfo = async () => {
       try {
-        const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/get_commits`;
+        const apiUrl = `${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/get_commits`;
         const res = await axios.get(apiUrl, {
           withCredentials: true,
         });

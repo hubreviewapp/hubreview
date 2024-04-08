@@ -7,6 +7,7 @@ import { PRNavbar } from "../components/ReviewQueue/PRNavbar.tsx";
 import PRCardList from "../components/ReviewQueue/PRCardList";
 import { PRInfo } from "../models/PRInfo";
 import axios from "axios";
+import { BASE_URL } from "../env.ts";
 
 export interface RequestedReviewer {
   reviewerType: "USER" | "TEAM";
@@ -75,7 +76,7 @@ export interface FilterList {
   repositories: string[];
 }
 
-const API = "http://localhost:5018/api/github/prs/";
+const API = `${BASE_URL}/api/github/prs`;
 function ReviewQueuePage() {
   //const [prInfo, setPrInfo] = useState<PRInfo[]>([]);
   const [needsYourReviewPRs, setNeedsYourReviewPRs] = useState<PRInfo[]>([]);
@@ -113,15 +114,13 @@ function ReviewQueuePage() {
   const [mergedMax, setMergedMax] = useState(0);
 
   useEffect(() => {
-    const apiEnd = "closed/filter";
     const fetchClosed = async () => {
       try {
-        const res = await axios.post(API + apiEnd, filterList, {
+        const res = await axios.post(`${API}/closed/filter`, filterList, {
           headers: {
             "Content-Type": "application/json",
           },
           withCredentials: true,
-          baseURL: "http://localhost:5018/api/github",
         });
         if (res.data != undefined) {
           setClosedMax(res.data.length);
@@ -135,15 +134,13 @@ function ReviewQueuePage() {
   }, [closedLimit, filterList]);
 
   useEffect(() => {
-    const apiEnd = "merged/filter";
     const fetchMerged = async () => {
       try {
-        const res = await axios.post(API + apiEnd, filterList, {
+        const res = await axios.post(`${API}/merged/filter`, filterList, {
           headers: {
             "Content-Type": "application/json",
           },
           withCredentials: true,
-          baseURL: "http://localhost:5018/api/github",
         });
         if (res.data != undefined) {
           setMergedMax(res.data.length);
@@ -156,15 +153,13 @@ function ReviewQueuePage() {
     fetchMerged().then();
   }, [mergedLimit, filterList]);
   useEffect(() => {
-    const apiEnd = `needsreview/filter`;
     const fetchNeedsYourReviewPRs = async () => {
       try {
-        const res = await axios.post(API + apiEnd, filterList, {
+        const res = await axios.post(`${API}/needsreview/filter`, filterList, {
           headers: {
             "Content-Type": "application/json",
           },
           withCredentials: true,
-          baseURL: "http://localhost:5018/api/github",
         });
         if (res.data != undefined) {
           setNeedsYourReviewPRs(res.data);
@@ -177,15 +172,13 @@ function ReviewQueuePage() {
   }, [filterList]);
 
   useEffect(() => {
-    const apiEnd = "userprs/filter";
     const fetchUserPrs = async () => {
       try {
-        const res = await axios.post(API + apiEnd, filterList, {
+        const res = await axios.post(`${API}/userprs/filter`, filterList, {
           headers: {
             "Content-Type": "application/json",
           },
           withCredentials: true,
-          baseURL: "http://localhost:5018/api/github",
         });
         if (res.data != undefined) {
           setYourPrs(res.data);
@@ -198,15 +191,13 @@ function ReviewQueuePage() {
   }, [filterList]);
 
   useEffect(() => {
-    const apiEnd = "waitingauthor/filter";
     const fetchWaitingAuthor = async () => {
       try {
-        const res = await axios.post(API + apiEnd, filterList, {
+        const res = await axios.post(`${API}/waitingauthor/filter`, filterList, {
           headers: {
             "Content-Type": "application/json",
           },
           withCredentials: true,
-          baseURL: "http://localhost:5018/api/github",
         });
         if (res.data != undefined) {
           setWaitingAuthorPRs(res.data);
@@ -219,15 +210,13 @@ function ReviewQueuePage() {
   }, [filterList]);
 
   useEffect(() => {
-    const apiEnd = "open/filter";
     const fetchOpenPRs = async () => {
       try {
-        const res = await axios.post(API + apiEnd, filterList, {
+        const res = await axios.post(`${API}/open/filter`, filterList, {
           headers: {
             "Content-Type": "application/json",
           },
           withCredentials: true,
-          baseURL: "http://localhost:5018/api/github",
         });
         if (res.data != undefined) {
           setOpenPRs(res.data);

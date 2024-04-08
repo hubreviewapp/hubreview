@@ -5,6 +5,7 @@ import { IconLogout } from "@tabler/icons-react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../providers/context-utilities";
 import axios from "axios";
+import { BASE_URL } from "../env";
 
 function NavBar() {
   const location = useLocation();
@@ -15,7 +16,7 @@ function NavBar() {
     setIsActive(buttonId);
     if (buttonId == 0) {
       localStorage.clear();
-      axios.get("http://localhost:5018/api/github/logoutUser");
+      axios.get(`${BASE_URL}/api/github/logoutUser`);
     }
   };
 

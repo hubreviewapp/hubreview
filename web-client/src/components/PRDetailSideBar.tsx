@@ -31,6 +31,7 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import SelectLabel from "./SelectLabel";
 import BarColor from "../utility/WorkloadBarColor.ts";
+import { BASE_URL } from "../env.ts";
 
 export interface Contributor {
   id: string;
@@ -76,12 +77,9 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
   useEffect(() => {
     const fetchContributors = async () => {
       try {
-        const res = await axios.get(
-          `http://localhost:5018/api/github/GetPRReviewerSuggestion/${owner}/${repoName}/${author}`,
-          {
-            withCredentials: true,
-          },
-        );
+        const res = await axios.get(`${BASE_URL}/api/github/GetPRReviewerSuggestion/${owner}/${repoName}/${author}`, {
+          withCredentials: true,
+        });
 
         if (res.data) {
           setContributors(res.data);
@@ -117,12 +115,10 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
 
   //HttpDelete("pullrequest/{owner}/{repoName}/{prnumber}/remove_reviewer/{reviewer}")]
   const deleteReviewer = (reviewer: string) => {
-    const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/remove_reviewer/${reviewer}`;
     setAddedReviewer(addedReviewer.filter((item) => item.login.toString() != reviewer));
     axios
-      .delete(apiUrl, {
+      .delete(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/remove_reviewer/${reviewer}`, {
         withCredentials: true,
-        baseURL: "http://localhost:5018/api/github",
       })
       .then(function () {})
       .catch(function (error) {
@@ -138,11 +134,9 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
       avatar: reviewer.avatarUrl,
     };
     setAddedReviewer([newReviewer, ...addedReviewer]);
-    const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/request_review`;
     axios
-      .post(apiUrl, [reviewer.login], {
+      .post(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/request_review`, [reviewer.login], {
         withCredentials: true,
-        baseURL: "http://localhost:5018/api/github",
       })
       .then(function () {})
       .catch(function (error) {
@@ -154,14 +148,15 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
     // delete the priority label
     if (value == null) {
       if (priority) {
-        const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/${"Priority: ".concat(
-          priority.toString(),
-        )}`;
         axios
-          .delete(apiUrl, {
-            withCredentials: true,
-            baseURL: "http://localhost:5018/api/github",
-          })
+          .delete(
+            `${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/${"Priority: ".concat(
+              priority.toString(),
+            )}`,
+            {
+              withCredentials: true,
+            },
+          )
           .then(function () {})
           .catch(function (error) {
             console.log(error);
@@ -172,12 +167,14 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
       return;
     }
     setPriority(value);
-    const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addLabel`;
     axios
-      .post(apiUrl, ["Priority: ".concat(value.toString())], {
-        withCredentials: true,
-        baseURL: "http://localhost:5018/api/github",
-      })
+      .post(
+        `${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addLabel`,
+        ["Priority: ".concat(value.toString())],
+        {
+          withCredentials: true,
+        },
+      )
       .then(function () {})
       .catch(function (error) {
         console.log(error);

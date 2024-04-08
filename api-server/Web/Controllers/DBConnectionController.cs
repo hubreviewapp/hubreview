@@ -1,7 +1,6 @@
 using System.Web;
 using CS.Core.Configuration;
 using CS.Core.Entities;
-using DotEnv.Core;
 using GitHubJwt;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

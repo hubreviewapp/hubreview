@@ -53,5 +53,11 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(coreConfiguration);
         return coreConfiguration;
     }
+
+    public static CoreConfiguration AddCoreConfigurationInstance(this IServiceCollection services, CoreConfiguration configuration)
+    {
+        services.AddSingleton(configuration);
+        return configuration;
+    }
 }
 

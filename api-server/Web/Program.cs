@@ -1,5 +1,5 @@
 using CS.Core;
-using DotEnv.Core;
+using CS.Core.Configuration;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -7,7 +7,7 @@ using Microsoft.OpenApi.Models;
 using NodaTime;
 using NodaTime.Serialization.JsonNet;
 
-var envVars = new EnvLoader().AddEnvFile("../api-server/.env").Load();
+DotNetEnv.Env.Load("../.env");
 
 /*
  *
@@ -21,7 +21,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("_allowedOrigins", policy =>
     {
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins("http://localhost:5173", "https://hubreview.app")
             .AllowAnyMethod()
             .AllowAnyHeader()
             .AllowCredentials(); // Only if you need credentials (cookies, HTTP authentication) to be sent
@@ -68,8 +68,14 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         };
     });
 
-builder.Configuration.AddCoreConfiguration();
-var coreConfiguration = builder.Services.AddCoreConfigurationInstance(builder.Configuration);
+//builder.Configuration.AddCoreConfiguration();
+var coreConfiguration = builder.Services.AddCoreConfigurationInstance(new CoreConfiguration()
+{
+    AppId = DotNetEnv.Env.GetInt("APP_ID"),
+    ClientId = DotNetEnv.Env.GetString("CLIENT_ID"),
+    ClientSecret = DotNetEnv.Env.GetString("CLIENT_SECRET"),
+    DbConnectionString = DotNetEnv.Env.GetString("DB_CONNECTION_STRING"),
+});
 builder.Services.AddCoreProjectServices(coreConfiguration);
 
 builder.Services.AddEndpointsApiExplorer();
@@ -83,8 +89,6 @@ builder.Services.AddSwaggerGen(c =>
 });
 builder.Services.AddSwaggerGenNewtonsoftSupport();
 builder.Services.AddHttpClient();
-
-builder.Services.AddSingleton<IEnvReader, EnvReader>();
 
 /*
  *

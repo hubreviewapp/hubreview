@@ -10,6 +10,7 @@ import { PullRequest } from "../pages/PRDetailsPage.tsx";
 import { useUser } from "../providers/context-utilities";
 import MergeButton from "../components/MergeButton";
 import { Review } from "../models/PRInfo.tsx";
+import { BASE_URL } from "../env.ts";
 
 interface CreateReplyRequestModel {
   body: string;
@@ -77,10 +78,9 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
   //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_comments")]
   const fetchPRComments = useCallback(async () => {
     try {
-      const res = await axios.get(
-        `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/get_comments`,
-        { withCredentials: true },
-      );
+      const res = await axios.get(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/get_comments`, {
+        withCredentials: true,
+      });
       if (res) {
         setApiComments(res.data);
         setFilteredComments(res.data);
@@ -98,14 +98,12 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
   //[HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addComment")]
   function addPRComment(content: string) {
     setIsLoading(true);
-    const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addComment`;
     axios
-      .post(apiUrl, content, {
+      .post(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addComment`, content, {
         headers: {
           "Content-Type": "application/json",
         },
         withCredentials: true,
-        baseURL: "http://localhost:5018/api/github",
       })
       .then(function () {
         fetchPRComments();
@@ -118,11 +116,9 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
   //[HttpDelete("pullrequest/{owner}/{repoName}/{comment_id}/deleteComment")]
   function deletePRComment(commentId: number) {
     setIsLoading(true);
-    const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${commentId}/deleteComment`;
     axios
-      .delete(apiUrl, {
+      .delete(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${commentId}/deleteComment`, {
         withCredentials: true,
-        baseURL: "http://localhost:5018/api/github",
       })
       .then(function () {
         fetchPRComments();
@@ -134,15 +130,13 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
 
   //[HttpPatch("pullrequest/{owner}/{repoName}/{comment_id}/updateComment")]
   function editPRComment(commentId: number, content: string) {
-    const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${commentId}/updateComment`;
     setIsLoading(true);
     axios
-      .patch(apiUrl, content, {
+      .patch(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${commentId}/updateComment`, content, {
         headers: {
           "Content-Type": "application/json",
         },
         withCredentials: true,
-        baseURL: "http://localhost:5018/api/github",
       })
       .then(function () {
         fetchPRComments();
@@ -156,11 +150,9 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
   function replyComment(id: number, body: string) {
     setIsLoading(true);
     const data: CreateReplyRequestModel = { replyToId: id, body: body };
-    const apiUrl = `http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addCommentReply`;
     axios
-      .post(apiUrl, data, {
+      .post(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addCommentReply`, data, {
         withCredentials: true,
-        baseURL: "http://localhost:5018/api/github",
       })
       .then(function () {
         fetchPRComments();

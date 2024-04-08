@@ -21,6 +21,7 @@ import UserLogo from "../assets/icons/user.png";
 import { DiffLine, DiffLineType, DiffMarker, FileDiff } from "../utility/diff-types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
+import { BASE_URL } from "../env";
 
 const parseDiffMarker = (markerLine: string): DiffMarker => {
   const match = /^@@ -(\d*),(\d*) \+(\d*),(\d*) @@(.*)$/.exec(markerLine);
@@ -205,7 +206,7 @@ function ModifiedFilesTab() {
   const { data: diffData, isLoading: diffsAreLoading } = useQuery({
     queryKey: [`reviews-diffs-${owner}-${repoName}-${prnumber}`],
     queryFn: () =>
-      fetch(`http://localhost:5018/api/github/pullrequests/${owner}/${repoName}/${prnumber}/files`, {
+      fetch(`${BASE_URL}/api/github/pullrequests/${owner}/${repoName}/${prnumber}/files`, {
         credentials: "include",
       }).then((r) => r.json()),
     retry: false,
@@ -219,7 +220,7 @@ function ModifiedFilesTab() {
   } = useQuery({
     queryKey: [`reviews-${owner}-${repoName}-${prnumber}`],
     queryFn: () =>
-      fetch(`http://localhost:5018/api/github/pullrequests/${owner}/${repoName}/${prnumber}/reviews`, {
+      fetch(`${BASE_URL}/api/github/pullrequests/${owner}/${repoName}/${prnumber}/reviews`, {
         credentials: "include",
       }).then(async (r) => (await r.json()) as ReviewResponseTemp[]),
     retry: false,
@@ -306,7 +307,7 @@ function ModifiedFilesTab() {
 
   const createReviewMutation = useMutation({
     mutationFn: (req: { req: CreateReviewRequest }) =>
-      fetch(`http://localhost:5018/api/github/pullrequests/${owner}/${repoName}/${prnumber}/reviews`, {
+      fetch(`${BASE_URL}/api/github/pullrequests/${owner}/${repoName}/${prnumber}/reviews`, {
         method: "POST",
         credentials: "include",
         headers: {

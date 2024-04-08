@@ -3,6 +3,7 @@ import { rem, Button, Modal, Center } from "@mantine/core";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import { useDisclosure } from "@mantine/hooks";
+import { BASE_URL } from "../env";
 
 //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/merge")]
 
@@ -19,7 +20,7 @@ function MergeButton(props: MergeButtonProps) {
   };
   const handleButtonClick = async () => {
     try {
-      await axios.get(`http://localhost:5018/api/github/pullrequest/${owner}/${repoName}/${prnumber}/merge`, {
+      await axios.get(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/merge`, {
         withCredentials: true,
       });
       open();

@@ -8,6 +8,7 @@ import { Checkbox } from "@mantine/core";
 import { Link } from "react-scroll";
 import { UseListStateHandlers } from "@mantine/hooks";
 import { SelectedRepos } from "../../pages/ReviewQueuePage.tsx";
+import { BASE_URL } from "../../env.ts";
 
 const data = [
   { link: "", label: "New PRs", icon: IconBellRinging },
@@ -35,7 +36,7 @@ export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSe
     const getRepos = async () => {
       const axiosInstance = axios.create({
         withCredentials: true,
-        baseURL: "http://localhost:5018/api/github",
+        baseURL: `${BASE_URL}/api/github`,
       });
 
       const res = await axiosInstance.get("/getRepository");

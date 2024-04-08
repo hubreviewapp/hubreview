@@ -7,7 +7,6 @@ using System.Web;
 using CS.Core.Configuration;
 using CS.Core.Entities;
 using CS.Core.Entities.Payloads;
-using DotEnv.Core;
 using GitHubJwt;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -26,7 +25,7 @@ namespace CS.Web.Controllers
         public GitHubWebhooksController()
         {
             GitHubJwtFactory generator = new GitHubJwtFactory(
-                    new FilePrivateKeySource("../../api-server/hubreviewapp.2024-02-02.private-key.pem"),
+                    new FilePrivateKeySource("../../api-server/private-key.pem"),
                     new GitHubJwtFactoryOptions
                     {
                         AppIntegrationId = 812902,

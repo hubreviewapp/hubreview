@@ -5,7 +5,6 @@ using System.Web;
 using CS.Core.Configuration;
 using CS.Core.Entities;
 using CS.Web.Models.Api.Request;
-using DotEnv.Core;
 using GitHubJwt;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -20,8 +19,6 @@ using Octokit.GraphQL.Model;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using static Octokit.GraphQL.Variable;
 
-
-
 namespace CS.Web.Controllers;
 
 [Route("api/github")]
@@ -31,7 +28,8 @@ public class GitHubController : ControllerBase
 {
 
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly IEnvReader _reader;
+    private readonly CoreConfiguration _coreConfiguration;
+    private readonly IWebHostEnvironment _environment;
     private GitHubClient _appClient;
 
     public object[]? Reviews { get; private set; }
@@ -47,11 +45,11 @@ public class GitHubController : ControllerBase
     private GitHubJwtFactory _getGitHubJwtGenerator()
     {
         return new GitHubJwtFactory(
-            new FilePrivateKeySource(_reader["PK_RELATIVE_PATH"]),
+            new FilePrivateKeySource("../../api-server/private-key.pem"),
             new GitHubJwtFactoryOptions
             {
-                AppIntegrationId = _reader.GetIntValue("APP_ID"), // The GitHub App Id
-                ExpirationSeconds = _reader.GetIntValue("EXP_TIME") // 10 minutes is the maximum time allowed
+                AppIntegrationId = _coreConfiguration.AppId, // The GitHub App Id
+                ExpirationSeconds = (int)TimeSpan.FromMinutes(5).TotalSeconds // 10 minutes is the maximum time allowed
             }
         );
     }
@@ -82,19 +80,18 @@ public class GitHubController : ControllerBase
     }
 
     [ActivatorUtilitiesConstructor]
-    public GitHubController(IHttpContextAccessor httpContextAccessor, IEnvReader reader)
+    public GitHubController(IHttpContextAccessor httpContextAccessor, CoreConfiguration coreConfiguration, IWebHostEnvironment environment)
     {
         _httpContextAccessor = httpContextAccessor;
-        _reader = reader;
+        _coreConfiguration = coreConfiguration;
         _appClient = GetNewClient();
+        _environment = environment;
     }
 
     [HttpGet("acquireToken")]
     public async Task<ActionResult> acquireToken(string code)
     {
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
-        using var connection = new NpgsqlConnection(connectionString);
+        using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
 
         connection.Open();
 
@@ -103,10 +100,9 @@ public class GitHubController : ControllerBase
         {
             var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
             {
-                {"client_id", _reader["CLIENT_ID"]},
-                {"client_secret", _reader["CLIENT_SECRET"]},
+                {"client_id", _coreConfiguration.ClientId},
+                {"client_secret", _coreConfiguration.ClientSecret},
                 {"code", code},
-                {"redirect_uri", _reader["ACQUIRE_TOKEN_REDIRECT_URI"]},
             });
 
             var tokenResponse = await httpClient.PostAsync("https://github.com/login/oauth/access_token", tokenRequest);
@@ -218,7 +214,7 @@ public class GitHubController : ControllerBase
             _httpContextAccessor?.HttpContext?.Session.SetString("UserName", user.Name);
             _httpContextAccessor?.HttpContext?.Session.SetString("AccessToken", access_token);
 
-            return Redirect($"http://localhost:5173");
+            return Redirect(_environment.IsProduction() ? "https://hubreview.app" : "http://localhost:5173");
         }
     }
 
@@ -301,9 +297,7 @@ public class GitHubController : ControllerBase
 
 
         List<RepoInfo> allRepos = new List<RepoInfo>();
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
-        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await connection.OpenAsync();
 
@@ -453,9 +447,7 @@ public class GitHubController : ControllerBase
 
 
         List<PRInfo> allPRs = new List<PRInfo>();
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
-        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await connection.OpenAsync();
 
@@ -528,9 +520,7 @@ public class GitHubController : ControllerBase
                     int ChecksSuccess;
                     int ChecksFail;
 
-                    var config = new CoreConfiguration();
-                    string connectionString = config.DbConnectionString;
-                    using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+                    using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
                     {
                         await connection.OpenAsync();
 
@@ -737,9 +727,7 @@ public class GitHubController : ControllerBase
                     var reviewRequest = new PullRequestReviewRequest(reviewers, null);
                     var pull = await client.PullRequest.ReviewRequest.Create(owner, repoName, (int)prnumber, reviewRequest);
 
-                    var config = new CoreConfiguration();
-                    string connectionString = config.DbConnectionString;
-                    using var connection = new NpgsqlConnection(connectionString);
+                    using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
                     connection.Open();
 
                     string query = $"UPDATE pullrequestinfo SET updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE reponame = '{repoName}' AND pullnumber = {prnumber}";
@@ -792,9 +780,7 @@ public class GitHubController : ControllerBase
                     var reviewRequest = new PullRequestReviewRequest(arr, null);
                     await client.PullRequest.ReviewRequest.Delete(owner, repoName, (int)prnumber, reviewRequest);
 
-                    var config = new CoreConfiguration();
-                    string connectionString = config.DbConnectionString;
-                    using var connection = new NpgsqlConnection(connectionString);
+                    using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
                     connection.Open();
 
                     string query = $"UPDATE pullrequestinfo SET updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE reponame = '{repoName}' AND pullnumber = {prnumber}";
@@ -825,9 +811,7 @@ public class GitHubController : ControllerBase
         string decorated_body = $"<!--Using HubReview-->**ACTIVE**: {commentBody}";
         var comment = await client.Issue.Comment.Create(owner, repoName, prnumber, decorated_body);
 
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
-        using var connection = new NpgsqlConnection(connectionString);
+        using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
         connection.Open();
 
         string query = $"INSERT INTO comments VALUES ({comment.Id}, '{repoName}', {prnumber}, {false}, '', '', 'ACTIVE')";
@@ -860,9 +844,7 @@ public class GitHubController : ControllerBase
         var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
         var graphqlconnection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
 
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
-        using var connection = new NpgsqlConnection(connectionString);
+        using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
         connection.Open();
 
         string select = $"SELECT is_review, prnumber FROM comments WHERE commentid = {comment_id}";
@@ -964,9 +946,7 @@ public class GitHubController : ControllerBase
         Octokit.IssueComment? res2 = null;
 
 
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
-        using var connection = new NpgsqlConnection(connectionString);
+        using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
         connection.Open();
 
         string select = $"SELECT is_review, prnumber FROM comments WHERE commentid = {comment_id}";
@@ -1013,9 +993,7 @@ public class GitHubController : ControllerBase
         bool is_review = false;
         int prnumber = 0;
 
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
-        using var connection = new NpgsqlConnection(connectionString);
+        using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
         connection.Open();
 
         string select = $"SELECT is_review, prnumber FROM comments WHERE commentid = {comment_id}";
@@ -1073,9 +1051,7 @@ public class GitHubController : ControllerBase
         var result = new List<IssueCommentInfo>([]);
         var processedCommentIds = new HashSet<long>();
 
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
-        using var connection = new NpgsqlConnection(connectionString);
+        using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
 
         var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
         foreach (var installation in installations)
@@ -1487,11 +1463,9 @@ public class GitHubController : ControllerBase
 
     public async Task<Workload> GetUserWorkload(string userName)
     {
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
         long result;
 
-        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await connection.OpenAsync();
 
@@ -1679,9 +1653,7 @@ public class GitHubController : ControllerBase
     {
 
         List<PRInfo> allPRs = new List<PRInfo>();
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
-        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await connection.OpenAsync();
 
@@ -1738,9 +1710,7 @@ public class GitHubController : ControllerBase
     {
 
         List<PRInfo> allPRs = new List<PRInfo>();
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
-        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await connection.OpenAsync();
 
@@ -1800,15 +1770,12 @@ public class GitHubController : ControllerBase
         var userClient = GetNewClient(access_token);
 
         List<PRInfo> allPRs = new List<PRInfo>();
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
 
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
-
-        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await connection.OpenAsync();
 
@@ -1868,15 +1835,12 @@ public class GitHubController : ControllerBase
         var userClient = GetNewClient(access_token);
 
         List<PRInfo> allPRs = new List<PRInfo>();
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
 
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
-
-        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await connection.OpenAsync();
 
@@ -1937,15 +1901,13 @@ public class GitHubController : ControllerBase
         var userClient = GetNewClient(access_token);
 
         List<PRInfo> allPRs = new List<PRInfo>();
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
 
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
 
-        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await connection.OpenAsync();
 
@@ -2006,15 +1968,13 @@ public class GitHubController : ControllerBase
         var userClient = GetNewClient(access_token);
 
         List<PRInfo> allPRs = new List<PRInfo>();
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
 
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
 
-        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await connection.OpenAsync();
 
@@ -2084,8 +2044,6 @@ public class GitHubController : ControllerBase
         var userClient = GetNewClient(access_token);
 
         List<PRInfo> allPRs = new List<PRInfo>();
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
 
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
@@ -2096,7 +2054,7 @@ public class GitHubController : ControllerBase
             filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
         }
 
-        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await connection.OpenAsync();
 
@@ -2260,8 +2218,6 @@ public class GitHubController : ControllerBase
         var userClient = GetNewClient(access_token);
 
         List<PRInfo> allPRs = new List<PRInfo>();
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
 
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
@@ -2272,7 +2228,7 @@ public class GitHubController : ControllerBase
             filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
         }
 
-        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await connection.OpenAsync();
 
@@ -2442,8 +2398,6 @@ public class GitHubController : ControllerBase
         var userClient = GetNewClient(access_token);
 
         List<PRInfo> allPRs = new List<PRInfo>();
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
 
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
@@ -2454,7 +2408,7 @@ public class GitHubController : ControllerBase
             filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
         }
 
-        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await connection.OpenAsync();
 
@@ -2623,8 +2577,6 @@ public class GitHubController : ControllerBase
         var userClient = GetNewClient(access_token);
 
         List<PRInfo> allPRs = new List<PRInfo>();
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
 
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
@@ -2635,7 +2587,7 @@ public class GitHubController : ControllerBase
             filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
         }
 
-        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await connection.OpenAsync();
 
@@ -2800,8 +2752,6 @@ public class GitHubController : ControllerBase
         var userClient = GetNewClient(access_token);
 
         List<PRInfo> allPRs = new List<PRInfo>();
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
 
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
@@ -2812,7 +2762,7 @@ public class GitHubController : ControllerBase
             filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
         }
 
-        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await connection.OpenAsync();
 
@@ -2982,8 +2932,6 @@ public class GitHubController : ControllerBase
         var userClient = GetNewClient(access_token);
 
         List<PRInfo> allPRs = new List<PRInfo>();
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
 
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
@@ -2994,7 +2942,7 @@ public class GitHubController : ControllerBase
             filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
         }
 
-        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await connection.OpenAsync();
 
@@ -3154,8 +3102,6 @@ public class GitHubController : ControllerBase
         var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
         List<PRInfo> allPRs = new List<PRInfo>();
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
 
         // Get organizations for the current user
         var organizations = await github.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
@@ -3163,7 +3109,7 @@ public class GitHubController : ControllerBase
 
         var lastWeek = DateTime.Today.AddDays(-7);
 
-        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await connection.OpenAsync();
 
@@ -3235,8 +3181,6 @@ public class GitHubController : ControllerBase
 
 
         List<PRInfo> allPRs = new List<PRInfo>();
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
 
         // Get organizations for the current user
         var organizations = await github.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
@@ -3244,7 +3188,7 @@ public class GitHubController : ControllerBase
 
         var lastWeek = DateTime.Today.AddDays(-7);
 
-        using (NpgsqlConnection conn = new NpgsqlConnection(connectionString))
+        using (NpgsqlConnection conn = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await conn.OpenAsync();
 
@@ -3346,10 +3290,7 @@ public class GitHubController : ControllerBase
 
         try
         {
-            var config = new CoreConfiguration();
-            string connectionString = config.DbConnectionString;
-
-            using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+            using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
             {
                 await connection.OpenAsync();
 
@@ -3386,9 +3327,6 @@ public class GitHubController : ControllerBase
 
         var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
-
         // Get organizations for the current user
         var organizations = await github.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
@@ -3411,7 +3349,7 @@ public class GitHubController : ControllerBase
 
         List<PRInfo> allPRs = new List<PRInfo>();
 
-        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await connection.OpenAsync();
 
@@ -3740,8 +3678,6 @@ public class GitHubController : ControllerBase
 
 
         List<PRInfo> allPRs = new List<PRInfo>();
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
 
         // Get organizations for the current user
         var organizations = await github.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
@@ -3758,7 +3694,7 @@ public class GitHubController : ControllerBase
             weeks.Add((startOfWeek, endOfWeek));
         }
 
-        using (NpgsqlConnection conn = new NpgsqlConnection(connectionString))
+        using (NpgsqlConnection conn = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await conn.OpenAsync();
 
@@ -3898,10 +3834,7 @@ public class GitHubController : ControllerBase
 
             try
             {
-                var config = new CoreConfiguration();
-                string connectionString = config.DbConnectionString;
-
-                using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+                using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
                 {
                     await connection.OpenAsync();
 
@@ -4021,9 +3954,7 @@ public class GitHubController : ControllerBase
         HashSet<string> allAuthors = new HashSet<string>();
         List<RepoInfo> allRepos = new List<RepoInfo>();
 
-        var config = new CoreConfiguration();
-        string connectionString = config.DbConnectionString;
-        using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await connection.OpenAsync();
 
