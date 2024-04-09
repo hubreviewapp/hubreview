@@ -11,6 +11,8 @@ import {
   IconMessage,
   IconFiles,
   IconThumbUp,
+  IconFilePencil,
+  IconHourglassHigh,
 } from "@tabler/icons-react";
 import { PRInfo } from "../../models/PRInfo.tsx";
 import PriorityBadge, { PriorityBadgeLabel } from "../PriorityBadge";
@@ -48,6 +50,18 @@ function PRCard({ data: pr }: PullRequestCardProps) {
       return (
         <Tooltip label="Commented">
           <IconMessage color="#40B5AD" style={{ width: rem(22), height: rem(22) }} />
+        </Tooltip>
+      );
+    } else if (state == "CHANGES_REQUESTED") {
+      return (
+        <Tooltip label="Changes requested">
+          <IconFilePencil color="#40B5AD" style={{ width: rem(22), height: rem(22) }} />
+        </Tooltip>
+      );
+    } else if (state == "PENDING") {
+      return (
+        <Tooltip label="Pending">
+          <IconHourglassHigh color="#40B5AD" style={{ width: rem(22), height: rem(22) }} />
         </Tooltip>
       );
     }
@@ -121,7 +135,7 @@ function PRCard({ data: pr }: PullRequestCardProps) {
                 .filter((c) => c.conclusion?.StringValue == "failure")
                 .map((c) => (
                   <Group key={c.id}>
-                    <Text color="red">{c.name}</Text>
+                    <Text c="red">{c.name}</Text>
                     <IconXboxX color="red" style={{ width: rem(22), height: rem(22), color: "red" }} />
                   </Group>
                 ))}
@@ -129,7 +143,7 @@ function PRCard({ data: pr }: PullRequestCardProps) {
                 .filter((c) => c.conclusion?.StringValue == "success")
                 .map((c) => (
                   <Group key={c.id}>
-                    <Text color="green">{c.name}</Text>
+                    <Text c="green">{c.name}</Text>
                     <IconCircleCheck color="green" style={{ width: rem(22), height: rem(22), color: "green" }} />
                   </Group>
                 ))}
@@ -145,7 +159,7 @@ function PRCard({ data: pr }: PullRequestCardProps) {
                 {pr.reviews.map((r) => (
                   <Group key={r.login}>
                     <Text>{r.login}:</Text>
-                    <Text c="dimmed">{stateToMessage(r.state)}</Text>
+                    {stateToMessage(r.state)}
                   </Group>
                 ))}
               </Group>

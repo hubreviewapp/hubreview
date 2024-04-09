@@ -24,6 +24,7 @@ import {
   IconThumbUp,
   IconMessage,
   IconHourglassHigh,
+  IconFilePencil,
 } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import PriorityBadge, { PriorityBadgeLabel } from "./PriorityBadge";
@@ -199,6 +200,12 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
       return (
         <Tooltip label="Pending">
           <IconHourglassHigh color="#40B5AD" style={{ width: rem(22), height: rem(22) }} />
+        </Tooltip>
+      );
+    } else if (state == "CHANGES_REQUESTED") {
+      return (
+        <Tooltip label="Changes requested">
+          <IconFilePencil color="#40B5AD" style={{ width: rem(22), height: rem(22) }} />
         </Tooltip>
       );
     }
