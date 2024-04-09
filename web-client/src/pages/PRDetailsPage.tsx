@@ -34,6 +34,8 @@ export interface PullRequest {
   reviews: Reviewer[];
   assignees: Assignee[];
   mergeable: boolean;
+  merged: boolean;
+  closedAt: string;
 }
 
 export interface PRDetail {
@@ -88,11 +90,11 @@ function PRDetailsPage(props: PRDetailsPageProps) {
         &ensp;&ensp;
         <Badge
           size="lg"
-          color={pullRequest?.pull.draft ? "#778DA9" : "green"}
+          color={pullRequest?.pull.merged ? "purple" : pullRequest?.pull.closedAt != null ? "#778DA9" : "green"}
           key={1}
           rightSection={<IconGitPullRequest style={{ width: rem(18), height: rem(18) }} />}
         >
-          {pullRequest?.pull.draft ? "Draft" : "Open"}
+          {pullRequest?.pull.merged ? "Merged" : pullRequest?.pull.closedAt != null ? "Closed" : "Open"}
         </Badge>
       </Group>
       <Group mb="sm">
