@@ -188,6 +188,9 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
 
   const handleSelect = (selected: string | null) => {
     if (selected != null) {
+      if (selected.startsWith("Show Everything")) {
+        setFilteredComments(apiComments);
+      }
       if (selected.startsWith("All Comments")) {
         setFilteredComments(apiComments);
       }
