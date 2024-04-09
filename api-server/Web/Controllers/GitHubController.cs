@@ -562,12 +562,11 @@ public class GitHubController : ControllerBase
                             avatar = user.AvatarUrl
                         });
                     }
-
-                    string[] logins = reviews.Select(obj => obj.login).ToArray();
+                    
 
                     foreach (var name in reviews)
                     {
-                        if (!logins.Contains(name.login))
+                        if (!reviewers.Contains(name.login))
                         {
                             var user = await installationClient.User.Get(name.login);
                             combined_revs.Add(new ReviewObjDB
@@ -2047,7 +2046,7 @@ public class GitHubController : ControllerBase
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
 
-        List<PRInfo> allPRs = new List<PRInfo>();
+        List<object> allPRs = [];
 
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
@@ -2166,7 +2165,35 @@ public class GitHubController : ControllerBase
                 {
                     while (await reader.ReadAsync())
                     {
-                        PRInfo pr = new PRInfo
+                        List<ReviewObjDB> combined_revs = [];
+                        var reviews = JsonConvert.DeserializeObject<ReviewObjDB[]>(reader.GetString(20));
+                        var reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray();
+
+                        foreach (var obj in reviewers)
+                        {
+                            var user = await userClient.User.Get(obj);
+                            combined_revs.Add(new ReviewObjDB
+                            {
+                                login = obj,
+                                state = "PENDING",
+                                avatar = user.AvatarUrl
+                            });
+                        }
+
+                        foreach (var name in reviews)
+                        {
+                            if (!reviewers.Contains(name.login))
+                            {
+                                var user = await userClient.User.Get(name.login);
+                                combined_revs.Add(new ReviewObjDB
+                                {
+                                    login = name.login,
+                                    state = name.state,
+                                    avatar = user.AvatarUrl
+                                });
+                            }
+                        }
+                        var pr = new
                         {
                             Id = reader.GetInt64(0),
                             Title = reader.GetString(1),
@@ -2188,9 +2215,7 @@ public class GitHubController : ControllerBase
                             ChecksSuccess = reader.GetInt32(17),
                             ChecksFail = reader.GetInt32(18),
                             Assignees = reader.IsDBNull(19) ? new string[] { } : ((object[])reader.GetValue(19)).Select(obj => obj.ToString()).ToArray(),
-                            Reviews = JsonConvert.DeserializeObject<object[]>(reader.GetString(20)),
-                            Reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray()
-
+                            Reviews = combined_revs
                         };
 
                         allPRs.Add(pr);
@@ -2221,7 +2246,7 @@ public class GitHubController : ControllerBase
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
 
-        List<PRInfo> allPRs = new List<PRInfo>();
+        List<object> allPRs = [];
 
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
@@ -2346,7 +2371,36 @@ public class GitHubController : ControllerBase
                 {
                     while (await reader.ReadAsync())
                     {
-                        PRInfo pr = new PRInfo
+                        List<ReviewObjDB> combined_revs = [];
+                        var reviews = JsonConvert.DeserializeObject<ReviewObjDB[]>(reader.GetString(20));
+                        var reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray();
+
+                        foreach (var obj in reviewers)
+                        {
+                            var user = await userClient.User.Get(obj);
+                            combined_revs.Add(new ReviewObjDB
+                            {
+                                login = obj,
+                                state = "PENDING",
+                                avatar = user.AvatarUrl
+                            });
+                        }
+
+                        foreach (var name in reviews)
+                        {
+                            if (!reviewers.Contains(name.login))
+                            {
+                                var user = await userClient.User.Get(name.login);
+                                combined_revs.Add(new ReviewObjDB
+                                {
+                                    login = name.login,
+                                    state = name.state,
+                                    avatar = user.AvatarUrl
+                                });
+                            }
+                        }
+                        
+                        var pr = new
                         {
                             Id = reader.GetInt64(0),
                             Title = reader.GetString(1),
@@ -2368,10 +2422,9 @@ public class GitHubController : ControllerBase
                             ChecksSuccess = reader.GetInt32(17),
                             ChecksFail = reader.GetInt32(18),
                             Assignees = reader.IsDBNull(19) ? new string[] { } : ((object[])reader.GetValue(19)).Select(obj => obj.ToString()).ToArray(),
-                            Reviews = JsonConvert.DeserializeObject<object[]>(reader.GetString(20)),
-                            Reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray()
-
+                            Reviews = combined_revs
                         };
+
 
                         allPRs.Add(pr);
                     }
@@ -2401,7 +2454,7 @@ public class GitHubController : ControllerBase
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
 
-        List<PRInfo> allPRs = new List<PRInfo>();
+        List<object> allPRs = new List<object>();
 
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
@@ -2526,7 +2579,36 @@ public class GitHubController : ControllerBase
                 {
                     while (await reader.ReadAsync())
                     {
-                        PRInfo pr = new PRInfo
+                        List<ReviewObjDB> combined_revs = [];
+                        var reviews = JsonConvert.DeserializeObject<ReviewObjDB[]>(reader.GetString(20));
+                        var reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray();
+
+                        foreach (var obj in reviewers)
+                        {
+                            var user = await userClient.User.Get(obj);
+                            combined_revs.Add(new ReviewObjDB
+                            {
+                                login = obj,
+                                state = "PENDING",
+                                avatar = user.AvatarUrl
+                            });
+                        }
+
+                        foreach (var name in reviews)
+                        {
+                            if (!reviewers.Contains(name.login))
+                            {
+                                var user = await userClient.User.Get(name.login);
+                                combined_revs.Add(new ReviewObjDB
+                                {
+                                    login = name.login,
+                                    state = name.state,
+                                    avatar = user.AvatarUrl
+                                });
+                            }
+                        }
+                        
+                        var pr = new
                         {
                             Id = reader.GetInt64(0),
                             Title = reader.GetString(1),
@@ -2548,10 +2630,9 @@ public class GitHubController : ControllerBase
                             ChecksSuccess = reader.GetInt32(17),
                             ChecksFail = reader.GetInt32(18),
                             Assignees = reader.IsDBNull(19) ? new string[] { } : ((object[])reader.GetValue(19)).Select(obj => obj.ToString()).ToArray(),
-                            Reviews = JsonConvert.DeserializeObject<object[]>(reader.GetString(20)),
-                            Reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray()
-
+                            Reviews = combined_revs
                         };
+
 
                         allPRs.Add(pr);
                     }
@@ -2580,7 +2661,7 @@ public class GitHubController : ControllerBase
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
 
-        List<PRInfo> allPRs = new List<PRInfo>();
+        List<object> allPRs = [];
 
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
@@ -2700,7 +2781,36 @@ public class GitHubController : ControllerBase
                 {
                     while (await reader.ReadAsync())
                     {
-                        PRInfo pr = new PRInfo
+                        List<ReviewObjDB> combined_revs = [];
+                        var reviews = JsonConvert.DeserializeObject<ReviewObjDB[]>(reader.GetString(20));
+                        var reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray();
+
+                        foreach (var obj in reviewers)
+                        {
+                            var user = await userClient.User.Get(obj);
+                            combined_revs.Add(new ReviewObjDB
+                            {
+                                login = obj,
+                                state = "PENDING",
+                                avatar = user.AvatarUrl
+                            });
+                        }
+
+                        foreach (var name in reviews)
+                        {
+                            if (!reviewers.Contains(name.login))
+                            {
+                                var user = await userClient.User.Get(name.login);
+                                combined_revs.Add(new ReviewObjDB
+                                {
+                                    login = name.login,
+                                    state = name.state,
+                                    avatar = user.AvatarUrl
+                                });
+                            }
+                        }
+
+                        var pr = new
                         {
                             Id = reader.GetInt64(0),
                             Title = reader.GetString(1),
@@ -2722,9 +2832,7 @@ public class GitHubController : ControllerBase
                             ChecksSuccess = reader.GetInt32(17),
                             ChecksFail = reader.GetInt32(18),
                             Assignees = reader.IsDBNull(19) ? new string[] { } : ((object[])reader.GetValue(19)).Select(obj => obj.ToString()).ToArray(),
-                            Reviews = JsonConvert.DeserializeObject<object[]>(reader.GetString(20)),
-                            Reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray()
-
+                            Reviews = combined_revs
                         };
 
                         allPRs.Add(pr);
@@ -2755,7 +2863,7 @@ public class GitHubController : ControllerBase
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
 
-        List<PRInfo> allPRs = new List<PRInfo>();
+        List<object> allPRs = new List<object>();
 
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
@@ -2880,7 +2988,36 @@ public class GitHubController : ControllerBase
                 {
                     while (await reader.ReadAsync())
                     {
-                        PRInfo pr = new PRInfo
+                        List<ReviewObjDB> combined_revs = [];
+                        var reviews = JsonConvert.DeserializeObject<ReviewObjDB[]>(reader.GetString(20));
+                        var reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray();
+
+                        foreach (var obj in reviewers)
+                        {
+                            var user = await userClient.User.Get(obj);
+                            combined_revs.Add(new ReviewObjDB
+                            {
+                                login = obj,
+                                state = "PENDING",
+                                avatar = user.AvatarUrl
+                            });
+                        }
+
+                        foreach (var name in reviews)
+                        {
+                            if (!reviewers.Contains(name.login))
+                            {
+                                var user = await userClient.User.Get(name.login);
+                                combined_revs.Add(new ReviewObjDB
+                                {
+                                    login = name.login,
+                                    state = name.state,
+                                    avatar = user.AvatarUrl
+                                });
+                            }
+                        }
+                        
+                        var pr = new
                         {
                             Id = reader.GetInt64(0),
                             Title = reader.GetString(1),
@@ -2902,10 +3039,9 @@ public class GitHubController : ControllerBase
                             ChecksSuccess = reader.GetInt32(17),
                             ChecksFail = reader.GetInt32(18),
                             Assignees = reader.IsDBNull(19) ? new string[] { } : ((object[])reader.GetValue(19)).Select(obj => obj.ToString()).ToArray(),
-                            Reviews = JsonConvert.DeserializeObject<object[]>(reader.GetString(20)),
-                            Reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray()
-
+                            Reviews = combined_revs
                         };
+
 
                         allPRs.Add(pr);
                     }
@@ -2935,7 +3071,7 @@ public class GitHubController : ControllerBase
         string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
         var userClient = GetNewClient(access_token);
 
-        List<PRInfo> allPRs = new List<PRInfo>();
+        List<object> allPRs = new List<object>();
 
         // Get organizations for the current user
         var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
@@ -3060,7 +3196,36 @@ public class GitHubController : ControllerBase
                 {
                     while (await reader.ReadAsync())
                     {
-                        PRInfo pr = new PRInfo
+                        List<ReviewObjDB> combined_revs = [];
+                        var reviews = JsonConvert.DeserializeObject<ReviewObjDB[]>(reader.GetString(20));
+                        var reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray();
+
+                        foreach (var obj in reviewers)
+                        {
+                            var user = await userClient.User.Get(obj);
+                            combined_revs.Add(new ReviewObjDB
+                            {
+                                login = obj,
+                                state = "PENDING",
+                                avatar = user.AvatarUrl
+                            });
+                        }
+
+                        foreach (var name in reviews)
+                        {
+                            if (!reviewers.Contains(name.login))
+                            {
+                                var user = await userClient.User.Get(name.login);
+                                combined_revs.Add(new ReviewObjDB
+                                {
+                                    login = name.login,
+                                    state = name.state,
+                                    avatar = user.AvatarUrl
+                                });
+                            }
+                        }
+                        
+                        var pr = new
                         {
                             Id = reader.GetInt64(0),
                             Title = reader.GetString(1),
@@ -3082,10 +3247,9 @@ public class GitHubController : ControllerBase
                             ChecksSuccess = reader.GetInt32(17),
                             ChecksFail = reader.GetInt32(18),
                             Assignees = reader.IsDBNull(19) ? new string[] { } : ((object[])reader.GetValue(19)).Select(obj => obj.ToString()).ToArray(),
-                            Reviews = JsonConvert.DeserializeObject<object[]>(reader.GetString(20)),
-                            Reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray()
-
+                            Reviews = combined_revs
                         };
+
 
                         allPRs.Add(pr);
                     }
