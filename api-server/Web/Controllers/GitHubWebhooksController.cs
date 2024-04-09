@@ -21,18 +21,17 @@ namespace CS.Web.Controllers
     public class GitHubWebhooksController : ControllerBase
     {
         private readonly GitHubClient _client;
-
         private readonly CoreConfiguration _coreConfiguration;
 
         public GitHubWebhooksController(CoreConfiguration coreConfiguration)
         {
             GitHubJwtFactory generator = new GitHubJwtFactory(
-                    new FilePrivateKeySource("../private-key.pem"),
-                    new GitHubJwtFactoryOptions
-                    {
-                        AppIntegrationId = 812902,
-                        ExpirationSeconds = 300
-                    }
+                new FilePrivateKeySource("../private-key.pem"),
+                new GitHubJwtFactoryOptions
+                {
+                    AppIntegrationId = coreConfiguration.AppId, // The GitHub App Id
+                    ExpirationSeconds = (int)TimeSpan.FromMinutes(5).TotalSeconds // 10 minutes is the maximum time allowed
+                }
             );
             string jwtToken = generator.CreateEncodedJwtToken();
             _client = new GitHubClient(new Octokit.ProductHeaderValue("HubReviewApp"))
