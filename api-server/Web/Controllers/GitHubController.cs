@@ -208,7 +208,6 @@ public class GitHubController : ControllerBase
 
             _httpContextAccessor?.HttpContext?.Session.SetString("UserLogin", user.Login);
             _httpContextAccessor?.HttpContext?.Session.SetString("UserAvatarURL", user.AvatarUrl);
-            _httpContextAccessor?.HttpContext?.Session.SetString("UserName", user.Name);
             _httpContextAccessor?.HttpContext?.Session.SetString("AccessToken", access_token);
 
             return Redirect(_environment.IsProduction() ? "https://hubreview.app" : "http://localhost:5173");
@@ -221,7 +220,6 @@ public class GitHubController : ControllerBase
 
         var userInfo = new
         {
-            UserName = _httpContextAccessor?.HttpContext?.Session.GetString("UserName"),
             UserLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"),
             UserAvatarUrl = _httpContextAccessor?.HttpContext?.Session.GetString("UserAvatarURL")
         };
