@@ -24,7 +24,7 @@ namespace CS.Web.Controllers
         private readonly CoreConfiguration _coreConfiguration;
 
         public GitHubWebhooksController(CoreConfiguration coreConfiguration)
-        {               
+        {
             GitHubJwtFactory generator = new GitHubJwtFactory(
                 new FilePrivateKeySource("../private-key.pem"),
                 new GitHubJwtFactoryOptions
