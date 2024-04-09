@@ -562,7 +562,7 @@ public class GitHubController : ControllerBase
                             avatar = user.AvatarUrl
                         });
                     }
-                    
+
 
                     foreach (var name in reviews)
                     {
@@ -2399,7 +2399,7 @@ public class GitHubController : ControllerBase
                                 });
                             }
                         }
-                        
+
                         var pr = new
                         {
                             Id = reader.GetInt64(0),
@@ -2607,7 +2607,7 @@ public class GitHubController : ControllerBase
                                 });
                             }
                         }
-                        
+
                         var pr = new
                         {
                             Id = reader.GetInt64(0),
@@ -3016,7 +3016,7 @@ public class GitHubController : ControllerBase
                                 });
                             }
                         }
-                        
+
                         var pr = new
                         {
                             Id = reader.GetInt64(0),
@@ -3224,7 +3224,7 @@ public class GitHubController : ControllerBase
                                 });
                             }
                         }
-                        
+
                         var pr = new
                         {
                             Id = reader.GetInt64(0),
