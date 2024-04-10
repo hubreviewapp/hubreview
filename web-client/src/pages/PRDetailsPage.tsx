@@ -36,7 +36,7 @@ export interface PullRequest {
   mergeable: boolean;
   merged: boolean;
   closedAt: string;
-  htmlUrl:string;
+  htmlUrl: string;
 }
 
 export interface PRDetail {
