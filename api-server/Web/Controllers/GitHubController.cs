@@ -326,7 +326,7 @@ public class GitHubController : ControllerBase
             return Ok(new { RepoNames = allRepos });
         }
 
-        return NotFound("There are no repositories in the database.");
+        return Ok();
 
     }
 
