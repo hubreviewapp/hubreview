@@ -321,12 +321,7 @@ public class GitHubController : ControllerBase
             await connection.CloseAsync();
         }
 
-        if (allRepos.Any())
-        {
-            return Ok(new { RepoNames = allRepos });
-        }
-
-        return Ok();
+        return Ok(new { RepoNames = allRepos });
 
     }
 
@@ -4303,5 +4298,5 @@ public class GitHubController : ControllerBase
         }
         return Ok("Assignee(s) are removed.");
     }
-
+    
 }
