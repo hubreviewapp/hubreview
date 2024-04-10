@@ -22,10 +22,10 @@ import { BASE_URL, GITHUB_APP_NAME } from "../env";
 function RepositoriesPage() {
   const iconPlus = <IconCirclePlus style={{ width: rem(22), height: rem(22) }} />;
   const [query, setQuery] = useState("");
-  const [repository, setRepository] = useState<Repository[]>([]);
+  const [repositories, setRepositories] = useState<Repository[]>([]);
   const iconSearch = <IconSearch style={{ width: rem(16), height: rem(16) }} />;
 
-  const filtered = repository.filter((item) => item.name.toLowerCase().includes(query.toLowerCase()));
+  const filteredRepos = repositories.filter((item) => item.name.toLowerCase().includes(query.toLowerCase()));
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -37,7 +37,7 @@ function RepositoriesPage() {
 
       const res = await axiosInstance.get("/getRepository");
       if (res) {
-        setRepository(res.data.repoNames);
+        setRepositories(res.data.repoNames);
       }
       setIsLoading(false);
     };
@@ -60,7 +60,7 @@ function RepositoriesPage() {
       .get(`/getRepository/${id}`);
   }
 
-  const rows = filtered.map((element) => (
+  const rows = filteredRepos.map((element) => (
     <Table.Tr key={element.id}>
       <Table.Td>
         <Text fw="700">{element.name.toString()}</Text>
@@ -103,6 +103,7 @@ function RepositoriesPage() {
         </Box>
 
         {isLoading && <Loader color="blue" />}
+        {!isLoading && rows.length===0 && <Text size="lg" fw={500}> There is no current repository</Text>}
         <Table verticalSpacing="md" striped>
           <Table.Tbody>{rows}</Table.Tbody>
         </Table>

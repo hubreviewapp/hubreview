@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Group, Accordion, Box, rem, TextInput, Text, ScrollArea } from "@mantine/core";
-import { IconBellRinging, IconNotebook, IconSearch } from "@tabler/icons-react";
+import { Group, Accordion, Box, rem, TextInput, Text, ScrollArea, Button } from "@mantine/core";
+import {IconBellRinging, IconNotebook, IconSearch, IconCirclePlus} from "@tabler/icons-react";
 import classes from "../../styles/NavbarSimple.module.css";
 import { Repository } from "../../models/Repository.tsx";
 import axios from "axios";
@@ -8,7 +8,7 @@ import { Checkbox } from "@mantine/core";
 import { Link } from "react-scroll";
 import { UseListStateHandlers } from "@mantine/hooks";
 import { SelectedRepos } from "../../pages/ReviewQueuePage.tsx";
-import { BASE_URL } from "../../env.ts";
+import { BASE_URL, GITHUB_APP_NAME } from "../../env";
 
 const data = [
   { link: "", label: "New PRs", icon: IconBellRinging },
@@ -30,6 +30,7 @@ interface PRNavbarProps {
 export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSelectedRepos }: PRNavbarProps) {
   //const [repository, setRepository] = useState<Repository[]>([]);
   const iconSearch = <IconSearch style={{ width: rem(16), height: rem(16) }} />;
+  const iconPlus = <IconCirclePlus style={{ width: rem(16), height: rem(16) }} />;
   const [query, setQuery] = useState("");
 
   useEffect(() => {
@@ -111,7 +112,8 @@ export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSe
       )}
       {selectedRepos.length == 0 && (
         <Accordion.Panel>
-          <Text> Add new repositories</Text>
+          <Text> There is no current repository </Text>
+          <Button component="a" href={`https://github.com/apps/${GITHUB_APP_NAME}/installations/new`} target="_blank" leftSection={iconPlus} > Add new repository</Button>
         </Accordion.Panel>
       )}
     </Accordion.Item>
