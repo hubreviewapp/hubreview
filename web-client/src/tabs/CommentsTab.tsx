@@ -281,12 +281,10 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
               <br />
             </Box>
           ))}
-        {filteredComments.length == 0 ? (
+        {filteredComments.length == 0 && !isLoading && (
           <Text size="lg" c="dimmed">
             There are currently no comments to display
           </Text>
-        ) : (
-          <div />
         )}
         {isLoading && (
           <Box pos="relative" h="200">

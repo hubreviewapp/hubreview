@@ -5,3 +5,8 @@
 .mantine-multi-select-pill {
   display: none !important;
 }
+
+.disabled-button {
+  background-color: green;
+  opacity: 0.8;
+}
