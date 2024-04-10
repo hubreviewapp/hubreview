@@ -4298,5 +4298,5 @@ public class GitHubController : ControllerBase
         }
         return Ok("Assignee(s) are removed.");
     }
-    
+
 }
