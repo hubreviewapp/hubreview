@@ -321,12 +321,7 @@ public class GitHubController : ControllerBase
             await connection.CloseAsync();
         }
 
-        if (allRepos.Any())
-        {
-            return Ok(new { RepoNames = allRepos });
-        }
-
-        return NotFound("There are no repositories in the database.");
+        return Ok(new { RepoNames = allRepos });
 
     }
 
