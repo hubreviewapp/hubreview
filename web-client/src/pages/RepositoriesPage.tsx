@@ -103,7 +103,12 @@ function RepositoriesPage() {
         </Box>
 
         {isLoading && <Loader color="blue" />}
-        {!isLoading && rows.length===0 && <Text size="lg" fw={500}> There is no current repository</Text>}
+        {!isLoading && rows.length === 0 && (
+          <Text size="lg" fw={500}>
+            {" "}
+            There is no current repository
+          </Text>
+        )}
         <Table verticalSpacing="md" striped>
           <Table.Tbody>{rows}</Table.Tbody>
         </Table>

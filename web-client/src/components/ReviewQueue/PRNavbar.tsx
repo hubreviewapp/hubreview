@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Group, Accordion, Box, rem, TextInput, Text, ScrollArea, Button } from "@mantine/core";
-import {IconBellRinging, IconNotebook, IconSearch, IconCirclePlus} from "@tabler/icons-react";
+import { IconBellRinging, IconNotebook, IconSearch, IconCirclePlus } from "@tabler/icons-react";
 import classes from "../../styles/NavbarSimple.module.css";
 import { Repository } from "../../models/Repository.tsx";
 import axios from "axios";
@@ -113,7 +113,15 @@ export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSe
       {selectedRepos.length == 0 && (
         <Accordion.Panel>
           <Text> There is no current repository </Text>
-          <Button component="a" href={`https://github.com/apps/${GITHUB_APP_NAME}/installations/new`} target="_blank" leftSection={iconPlus} > Add new repository</Button>
+          <Button
+            component="a"
+            href={`https://github.com/apps/${GITHUB_APP_NAME}/installations/new`}
+            target="_blank"
+            leftSection={iconPlus}
+          >
+            {" "}
+            Add new repository
+          </Button>
         </Accordion.Panel>
       )}
     </Accordion.Item>
