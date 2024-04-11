@@ -4299,4 +4299,27 @@ public class GitHubController : ControllerBase
         return Ok("Assignee(s) are removed.");
     }
 
+[HttpGet("reply")]
+public async Task<ActionResult> GetUserSavedReplies()
+{
+    var github = _getGitHubClient( _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+
+    var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
+    var Gconnection = new Octokit.GraphQL.Connection(productInformation,  _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
+
+    var query = new Query()
+        .User(_httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"))
+        .SavedReplies(100, null, null, null, null)
+        .Nodes
+        .Select(reply => new {
+            reply.Body,
+            reply.Title,
+        })
+        .Compile();
+
+    var response = await Gconnection.Run(query);
+
+    return Ok(response);
+}
+
 }
