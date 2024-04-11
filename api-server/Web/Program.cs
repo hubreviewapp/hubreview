@@ -72,8 +72,10 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 var coreConfiguration = builder.Services.AddCoreConfigurationInstance(new CoreConfiguration()
 {
     AppId = DotNetEnv.Env.GetInt("APP_ID"),
-    ClientId = DotNetEnv.Env.GetString("CLIENT_ID"),
-    ClientSecret = DotNetEnv.Env.GetString("CLIENT_SECRET"),
+    AppClientId = DotNetEnv.Env.GetString("APP_CLIENT_ID"),
+    AppClientSecret = DotNetEnv.Env.GetString("APP_CLIENT_SECRET"),
+    OAuthClientId = DotNetEnv.Env.GetString("OAUTH_CLIENT_ID"),
+    OAuthClientSecret = DotNetEnv.Env.GetString("OAUTH_CLIENT_SECRET"),
     DbConnectionString = DotNetEnv.Env.GetString("DB_CONNECTION_STRING"),
 });
 builder.Services.AddCoreProjectServices(coreConfiguration);
