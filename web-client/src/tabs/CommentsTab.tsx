@@ -268,7 +268,10 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
                 author={comment.author}
                 text={comment.body}
                 date={new Date(comment.updatedAt)}
-                isResolved={false}
+                isResolved={comment.status === "Resolved" ||
+                  comment.status === "Outdated" ||
+                  comment.status === "Closed" ||
+                  comment.status === "Duplicate"}
                 isAIGenerated={false}
                 deletePRComment={() => deletePRComment(comment.id)}
                 editPRComment={editPRComment}
