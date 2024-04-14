@@ -1,6 +1,6 @@
 import Comment from "../components/Comment.tsx";
 import TextEditor from "../components/TextEditor.tsx";
-import { Box, Text, Accordion, Grid, Select, LoadingOverlay, Flex } from "@mantine/core";
+import { Box, Text, Grid, Select, LoadingOverlay, Flex } from "@mantine/core";
 //import CommentList from "../components/DiffComment/CommentList";
 import PRDetailSideBar from "../components/PRDetailSideBar";
 import axios from "axios";
@@ -29,7 +29,6 @@ interface CommentProps {
   url: string;
 }
 
-const comments: { author: string; text: string; date: Date; isResolved: boolean; isAIGenerated: boolean }[] = [];
 export interface CommentsTabProps {
   pullRequest: PullRequest;
   reviews: Review[];
