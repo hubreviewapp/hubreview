@@ -108,7 +108,10 @@ function TextEditor({ content, addComment, setIsEditActive, editComment, comment
               color="green"
               top={20}
               onClick={() => handleAddComment()}
-              disabled={editorContent == null || editorContent == "" || editorContent == "<p></p>"}
+              disabled={editorContent == null || editorContent === "" || editorContent === "<p></p>"}
+              className={
+                editorContent == null || editorContent === "" || editorContent === "<p></p>" ? "disabled-button" : ""
+              }
             >
               Comment
             </Button>

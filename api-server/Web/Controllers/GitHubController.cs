@@ -100,8 +100,8 @@ public class GitHubController : ControllerBase
         {
             var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
             {
-                {"client_id", _coreConfiguration.ClientId},
-                {"client_secret", _coreConfiguration.ClientSecret},
+                {"client_id", _coreConfiguration.OAuthClientId},
+                {"client_secret", _coreConfiguration.OAuthClientSecret},
                 {"code", code},
             });
 

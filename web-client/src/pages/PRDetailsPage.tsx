@@ -1,7 +1,7 @@
 import ModifiedFilesTab from "../tabs/ModifiedFilesTab";
 import CommentsTab from "../tabs/CommentsTab.tsx";
 import CommitsTab from "../tabs/CommitsTab.tsx";
-import { Box, Badge, rem, Group, UnstyledButton } from "@mantine/core";
+import { Box, Badge, rem, Group, UnstyledButton, Anchor } from "@mantine/core";
 import TabComp from "../components/Tab.tsx";
 import { IconGitPullRequest } from "@tabler/icons-react";
 import PrDetailTab from "../tabs/PrDetailTab.tsx";
@@ -36,6 +36,7 @@ export interface PullRequest {
   mergeable: boolean;
   merged: boolean;
   closedAt: string;
+  htmlUrl: string;
 }
 
 export interface PRDetail {
@@ -82,15 +83,17 @@ function PRDetailsPage(props: PRDetailsPageProps) {
   return (
     <div style={{ textAlign: "left", marginLeft: 100 }}>
       <Group>
-        <h2>
-          {" "}
-          {pullRequest?.pull.title ?? "Loading"}
-          <span style={{ color: "#778DA9" }}> #{prnumber}</span>
-        </h2>
+        <Anchor component="a" href={pullRequest?.pull.htmlUrl} target="_blank" underline="never">
+          <h2>
+            {" "}
+            {pullRequest?.pull.title ?? "Loading"}
+            <span style={{ color: "#778DA9" }}> #{prnumber}</span>
+          </h2>
+        </Anchor>
         &ensp;&ensp;
         <Badge
           size="lg"
-          color={pullRequest?.pull.merged ? "purple" : pullRequest?.pull.closedAt != null ? "#778DA9" : "green"}
+          color={pullRequest?.pull.merged ? "#9539CA" : pullRequest?.pull.closedAt != null ? "#778DA9" : "green"}
           key={1}
           rightSection={<IconGitPullRequest style={{ width: rem(18), height: rem(18) }} />}
         >
