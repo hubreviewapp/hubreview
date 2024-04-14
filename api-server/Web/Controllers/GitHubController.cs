@@ -4356,4 +4356,50 @@ public class GitHubController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("analytics/{owner}/{repoName}/avg_merged_time")]
+    public async Task<ActionResult> GetAvgMergedTime(string owner, string repoName)
+    {
+        var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
+        var connection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
+
+        var states = new List<PullRequestState> { PullRequestState.Merged };
+
+        var query = new Query()
+            .Repository(Var("repoName"), Var("owner"))
+            .PullRequests(last: 100, states: new Arg<IEnumerable<PullRequestState>>(states))
+            .Nodes
+            .Select(pr => new {
+                CreatedDate = pr.CreatedAt, 
+                MergedDate = pr.MergedAt
+            })
+            .Compile();
+
+        var mergedPrs = await connection.Run(query, new Dictionary<string, object>
+        {
+            { "owner", owner },
+            { "repoName", repoName },
+        });
+
+        var lastWeek = DateTime.Today.AddDays(-7);
+
+        var groupedByMergedDate = mergedPrs
+            .Where(x => x.MergedDate <= DateTime.Today && x.MergedDate >= lastWeek)
+            .GroupBy(pr => DateTimeOffset.Parse(pr.MergedDate.ToString()).ToString("yyyy-MM-dd"))
+            .Select(group => new
+            {
+                MergedDate = group.Key,
+                PrCount = group.Count(),
+                AvgMergeTime = group.Average(pr => (long?)(pr.MergedDate - pr.CreatedDate)?.TotalMinutes)
+            })
+            .ToList()
+            .Select(group => new
+            {
+                group.MergedDate,
+                group.PrCount,
+                AvgMergeTime = group.AvgMergeTime.HasValue ? TimeSpan.FromMinutes(group.AvgMergeTime.Value).ToString(@"dd\.hh\:mm") : "00.00:00"
+            })
+            .ToList();
+      
+        return Ok(groupedByMergedDate);
+    }
 }
