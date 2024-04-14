@@ -1,7 +1,7 @@
 import { Text, Avatar, Group, Select, Box, rem, Badge } from "@mantine/core";
 import { Combobox, useCombobox, Input, Button, Accordion } from "@mantine/core";
 import classes from "../styles/comment.module.css";
-import {IconArrowBarDown, IconDots, IconSparkles, IconMessageCheck, IconCaretDown} from "@tabler/icons-react";
+import { IconArrowBarDown, IconDots, IconSparkles, IconMessageCheck } from "@tabler/icons-react";
 import Markdown from "react-markdown";
 import { useState } from "react";
 import convertHtmlToMarkdown from "../utility/convertHtmlToMarkdown";
@@ -44,8 +44,14 @@ export function Comment({
   const combobox = useCombobox({
     //  onDropdownClose: () => combobox.resetSelectedOption(),
   });
-  const icon = <IconMessageCheck style={{
-    width: rem(20), height: rem(20) }} />;
+  const icon = (
+    <IconMessageCheck
+      style={{
+        width: rem(20),
+        height: rem(20),
+      }}
+    />
+  );
 
   const iconSparkles = <IconSparkles style={{ width: rem(22), height: rem(22) }} />;
   const [replyValue, setReplyValue] = useState("");
@@ -158,78 +164,81 @@ export function Comment({
           </>
         </Box>
       )}
-      {!isEditActive && isResolved && ( <Accordion chevronPosition="right" variant="separated" chevron={<IconArrowBarDown
-          style={{ width: rem(27), height: rem(27) }}/>}
-        style={{borderRadius: 20}}>
-        <Accordion.Item value={id + ""} key={id}>
-          <Accordion.Control>
-            <Box
-              className={classes.comment}
-              style={{
-                position: "relative",
-                width: "100%",
-                border: "none",
-                borderRadius: 20,
-              }}
-            >
-              <Group>
-                <Avatar src={avatar} alt="author" radius="xl" />
-                <Box display="flex">
-                  <Box>
-                    <Text fz="md"> {author}</Text>
-                    <Text fz="xs" c="dimmed">
-                      {date.toLocaleString("en-US", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </Text>
-                  </Box>
-                  <Box style={{ position: "absolute", right: "5px", display: "flex" }}>
-                    <Select
-                      leftSection={icon}
-                      key={id}
-                      placeholder="Mark as resolved"
-                      data={["Active", "Pending", "Closed", "Outdated", "Resolved", "Duplicate"]}
-                      onChange={(val) => updatePRCommentStatus(id, val)}
-                      checkIconPosition="left"
-                      defaultValue={status ? status : null}
-                      allowDeselect={false}
-                    />
-                    <Combobox
-                      store={combobox}
-                      width={250}
-                      position="bottom-start"
-                      withArrow
-                      onOptionSubmit={(val) => {
-                        setSelectedItem(val);
-                        combobox.closeDropdown();
-                      }}
-                    >
-                      <Combobox.Target>
-                        <IconDots
-                          onClick={() => combobox.toggleDropdown()}
-                          style={{ width: rem(18), height: rem(18), marginLeft: 5, marginTop: 10 }}
-                        />
-                      </Combobox.Target>
+      {!isEditActive && isResolved && (
+        <Accordion
+          chevronPosition="right"
+          variant="separated"
+          chevron={<IconArrowBarDown style={{ width: rem(27), height: rem(27) }} />}
+          style={{ borderRadius: 20 }}
+        >
+          <Accordion.Item value={id + ""} key={id}>
+            <Accordion.Control>
+              <Box
+                className={classes.comment}
+                style={{
+                  position: "relative",
+                  width: "100%",
+                  border: "none",
+                  borderRadius: 20,
+                }}
+              >
+                <Group>
+                  <Avatar src={avatar} alt="author" radius="xl" />
+                  <Box display="flex">
+                    <Box>
+                      <Text fz="md"> {author}</Text>
+                      <Text fz="xs" c="dimmed">
+                        {date.toLocaleString("en-US", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </Text>
+                    </Box>
+                    <Box style={{ position: "absolute", right: "5px", display: "flex" }}>
+                      <Select
+                        leftSection={icon}
+                        key={id}
+                        placeholder="Mark as resolved"
+                        data={["Active", "Pending", "Closed", "Outdated", "Resolved", "Duplicate"]}
+                        onChange={(val) => updatePRCommentStatus(id, val)}
+                        checkIconPosition="left"
+                        defaultValue={status ? status : null}
+                        allowDeselect={false}
+                      />
+                      <Combobox
+                        store={combobox}
+                        width={250}
+                        position="bottom-start"
+                        withArrow
+                        onOptionSubmit={(val) => {
+                          setSelectedItem(val);
+                          combobox.closeDropdown();
+                        }}
+                      >
+                        <Combobox.Target>
+                          <IconDots
+                            onClick={() => combobox.toggleDropdown()}
+                            style={{ width: rem(18), height: rem(18), marginLeft: 5, marginTop: 10 }}
+                          />
+                        </Combobox.Target>
 
-                      <Combobox.Dropdown>
-                        <Combobox.Options>{options}</Combobox.Options>
-                      </Combobox.Dropdown>
-                    </Combobox>
+                        <Combobox.Dropdown>
+                          <Combobox.Options>{options}</Combobox.Options>
+                        </Combobox.Dropdown>
+                      </Combobox>
+                    </Box>
                   </Box>
-                </Box>
-              </Group>
-            </Box>
-          </Accordion.Control>
-          <Accordion.Panel>
-            <Markdown>{convertHtmlToMarkdown(text)}</Markdown>
-          </Accordion.Panel>
-        </Accordion.Item>
-      </Accordion>
-
+                </Group>
+              </Box>
+            </Accordion.Control>
+            <Accordion.Panel>
+              <Markdown>{convertHtmlToMarkdown(text)}</Markdown>
+            </Accordion.Panel>
+          </Accordion.Item>
+        </Accordion>
       )}
 
       {isEditActive && (

@@ -37,43 +37,8 @@ export interface CommentsTabProps {
 //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_comments")]
 function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
   const { owner, repoName, prnumber } = useParams();
-  const resolvedComments = comments.filter((comment) => comment.isResolved);
-  const unresolvedComments = comments.filter((comment) => !comment.isResolved);
   const userLogin = useUser().userLogin;
   const [isLoading, setIsLoading] = useState(true);
-
-  const comments2 = resolvedComments.map((comment, index) => (
-    <Accordion.Item value={index + ""} key={index}>
-      <Accordion.Control>
-        <Comment
-          key={index}
-          id={index}
-          author={comment.author}
-          text={comment.text}
-          date={comment.date}
-          isResolved={comment.isResolved}
-          status=""
-          avatar=""
-          url=""
-          deletePRComment={() => {
-            return;
-          }}
-          editPRComment={() => {
-            return;
-          }}
-          replyComment={() => {
-            return;
-          }}
-          updatePRCommentStatus={() => {
-            return;
-          }}
-        />
-      </Accordion.Control>
-      <Accordion.Panel>
-        <Text size="sm"> {comment.text}</Text>
-      </Accordion.Panel>
-    </Accordion.Item>
-  ));
 
   const [apiComments, setApiComments] = useState<CommentProps[] | []>([]);
   const [filteredComments, setFilteredComments] = useState<CommentProps[] | []>([]);
@@ -268,10 +233,12 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
                 author={comment.author}
                 text={comment.body}
                 date={new Date(comment.updatedAt)}
-                isResolved={comment.status === "Resolved" ||
+                isResolved={
+                  comment.status === "Resolved" ||
                   comment.status === "Outdated" ||
                   comment.status === "Closed" ||
-                  comment.status === "Duplicate"}
+                  comment.status === "Duplicate"
+                }
                 isAIGenerated={false}
                 deletePRComment={() => deletePRComment(comment.id)}
                 editPRComment={editPRComment}
@@ -299,39 +266,6 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
           </Box>
         )}
         <br></br>
-        {unresolvedComments.map((comment, index) => (
-          <Box key={index}>
-            <Comment
-              key={index}
-              id={index}
-              author={comment.author}
-              text={comment.text}
-              date={comment.date}
-              isResolved={false}
-              isAIGenerated={false}
-              status=""
-              avatar=""
-              url=""
-              deletePRComment={() => {
-                return;
-              }}
-              editPRComment={() => {
-                return;
-              }}
-              replyComment={() => {
-                return;
-              }}
-              updatePRCommentStatus={() => {
-                return;
-              }}
-            />
-            <br />
-          </Box>
-        ))}
-        <Accordion chevronPosition="right" variant="separated">
-          {comments2}
-        </Accordion>
-        <br />
         <Flex justify="right">
           <MergeButton canMerge={pullRequest?.mergeable} />
         </Flex>
