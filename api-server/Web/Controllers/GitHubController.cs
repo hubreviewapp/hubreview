@@ -4402,4 +4402,85 @@ public class GitHubController : ControllerBase
       
         return Ok(groupedByMergedDate);
     }
+
+    /*[HttpGet("analytics/{owner}/{repoName}/waiting_review")]
+    public async Task<ActionResult> GetWaitTimeForReview(string owner, string repoName)
+    {
+
+
+        return Ok();
+    }*/
+
+    [HttpGet("analytics/{owner}/{repoName}/review_statuses")]
+    public async Task<ActionResult> GetReviewStatuses(string owner, string repoName)
+    {
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+
+
+        //var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
+        //var connection = new Octokit.GraphQL.Connection(productInformation, token.ToString()/*_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString()*/);
+
+        /*var states = new List<PullRequestState> { PullRequestState.Open };
+
+        var reviews = new List<Octokit.GraphQL.Model.PullRequestReviewState> { 
+            Octokit.GraphQL.Model.PullRequestReviewState.Commented, 
+            Octokit.GraphQL.Model.PullRequestReviewState.Pending, 
+            Octokit.GraphQL.Model.PullRequestReviewState.Approved, 
+            Octokit.GraphQL.Model.PullRequestReviewState.ChangesRequested 
+        };
+
+        var query = new Query()
+            .Repository(Var("repoName"), Var("owner"))
+            .PullRequests(last: 100, states: new Arg<IEnumerable<PullRequestState>>(states))
+            .Nodes
+            .Select(pr => new
+            {
+                pr.Id,
+                Reviews = pr.Reviews(null, null, null, null, null, new Arg<IEnumerable<Octokit.GraphQL.Model.PullRequestReviewState>>(reviews))
+                .Nodes
+                .Select( r => new {r.Id, r.State})
+                .ToList()
+            })
+            .Compile();
+
+        Console.WriteLine(query);
+        
+        var prs = await connection.Run(query, new Dictionary<string, object>
+        {
+            { "owner", owner },
+            { "repoName", repoName },
+        });*/
+
+        var prs = await client.PullRequest.GetAllForRepository(owner, repoName);
+        List<object> result = [];
+
+        foreach (var pr in prs)
+        {
+            var reviews = client.PullRequest.Review.GetAll(owner, repoName, pr.Number)
+                .Result
+                .Select(r => new {
+                    reviewId = r.Id, 
+                    reviewState = r.State.StringValue,
+                    r.SubmittedAt
+                });
+
+            var reviewStateCounts = reviews
+                .GroupBy(r => r.reviewState)
+                .Select(g => new {
+                    ReviewState = g.Key,
+                    Count = g.Count()
+                })
+                .ToList();
+
+            
+            result.Add( new {
+                pr.Id,
+                reviewStateCounts
+            });
+        }
+
+        return Ok(result);
+    }
+
+
 }
