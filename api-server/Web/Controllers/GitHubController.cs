@@ -4299,7 +4299,7 @@ public class GitHubController : ControllerBase
         return Ok("Assignee(s) are removed.");
     }
 
-    [HttpGet("reply")]
+    [HttpGet("user/savedreplies")]
     public async Task<ActionResult> GetUserSavedReplies()
     {
         var github = _getGitHubClient( _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
