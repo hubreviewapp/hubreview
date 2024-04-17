@@ -4418,7 +4418,7 @@ public class GitHubController : ControllerBase
 
 
         //var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
-        //var connection = new Octokit.GraphQL.Connection(productInformation, token.ToString()/*_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString()*/);
+        //var connection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
 
         /*var states = new List<PullRequestState> { PullRequestState.Open };
 
@@ -4450,33 +4450,110 @@ public class GitHubController : ControllerBase
             { "owner", owner },
             { "repoName", repoName },
         });*/
+        
+        var result = new List<ReviewStats>();
+        List<RevStatusObj> prReviewsCombined = [];
+        int[][] prnumbers = new int[3][];
 
-        var prs = await client.PullRequest.GetAllForRepository(owner, repoName);
-        List<object> result = [];
+        var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
 
-        foreach (var pr in prs)
+        var weeks = new List<(DateTime start, DateTime end)>();
+        DateTime today = DateTime.Today;
+
+        // Calculate the start and end dates for the last 4 weeks
+        for (int i = 0; i < 3; i++)
         {
-            var reviews = client.PullRequest.Review.GetAll(owner, repoName, pr.Number)
-                .Result
-                .Select(r => new {
-                    reviewId = r.Id, 
-                    reviewState = r.State.StringValue,
-                    r.SubmittedAt
-                });
+            DateTime startOfWeek = today.AddDays(-(int)today.DayOfWeek + 1 - (i * 7)); // Start from Monday
+            DateTime endOfWeek = startOfWeek.AddDays(6); // End on Sunday
+            weeks.Add((startOfWeek, endOfWeek));
 
-            var reviewStateCounts = reviews
-                .GroupBy(r => r.reviewState)
-                .Select(g => new {
-                    ReviewState = g.Key,
-                    Count = g.Count()
-                })
-                .ToList();
-
-            
-            result.Add( new {
-                pr.Id,
-                reviewStateCounts
+            result.Add(new ReviewStats
+            {
+                FirstDay = startOfWeek.ToString("yyyy-MM-dd"),
+                LastDay = endOfWeek.ToString("yyyy-MM-dd"),
+                ApprovedCount = 0,
+                CommentedCount = 0,
+                ChangesReqCount = 0,
+                PendingCount = 0
             });
+
+            string query = $"SELECT pullnumber FROM pullrequestinfo WHERE reponame = '{repoName}' AND updatedat BETWEEN '{startOfWeek:yyyy-MM-dd}' AND '{endOfWeek:yyyy-MM-dd}'";
+            connection.Open();
+            using (var command = new NpgsqlCommand(query, connection))
+            {
+                var reader = await command.ExecuteReaderAsync();
+                List<int> prNumbersList = new List<int>();
+                while (await reader.ReadAsync())
+                {
+                    prNumbersList.Add(reader.GetFieldValue<int>(0));
+                }
+                prnumbers[i] = prNumbersList.ToArray();
+            }
+            connection.Close();
+        }
+        
+        //var prs = await client.PullRequest.GetAllForRepository(owner, repoName);
+
+        for (int i = 0; i < 3; i++)
+        {
+            foreach (var pr in prnumbers[i])
+            {
+                var reviews = client.PullRequest.Review.GetAll(owner, repoName, pr)
+                    .Result
+                    .Select(r => new RevStatusObjHelper{
+                        reviewId = r.Id, 
+                        reviewState = r.State.StringValue,
+                        submissionDate = r.SubmittedAt.DateTime
+                    })
+                    .ToArray();
+
+                /*var reviewStateCounts = reviews
+                    .GroupBy(r => r.reviewState)
+                    .Select(group => new {
+                        ReviewState = group.Key,
+                        Count = group.Count()
+                    })
+                    .ToList();*/
+
+                
+                prReviewsCombined.Add(new RevStatusObj{
+                    pr = pr,
+                    reviews = reviews
+                });
+            }
+        }
+
+        foreach (RevStatusObj item in prReviewsCombined)
+        {
+            if(item.reviews == null || item.reviews.Length == 0)
+            {
+                continue;
+            }
+
+            foreach (var rev in item.reviews)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    if (rev.submissionDate >= weeks[i].start && rev.submissionDate <= weeks[i].end)
+                    {
+                        switch (rev.reviewState)
+                        {
+                            case "APPROVED":
+                                result[i].ApprovedCount++;
+                                break;
+                            case "COMMENTED":
+                                result[i].CommentedCount++;
+                                break;
+                            case "CHANGES_REQUESTED":
+                                result[i].ChangesReqCount++;
+                                break;
+                            default:
+                                result[i].PendingCount++;
+                                break;
+                        }
+                    }
+                }
+            }
         }
 
         return Ok(result);
