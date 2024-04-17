@@ -4299,4 +4299,269 @@ public class GitHubController : ControllerBase
         return Ok("Assignee(s) are removed.");
     }
 
+    [HttpGet("user/savedreplies")]
+    public async Task<ActionResult> GetUserSavedReplies()
+    {
+        var github = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+
+        var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
+        var Gconnection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
+
+        var query = new Query()
+            .User(_httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"))
+            .SavedReplies(100, null, null, null, null)
+            .Nodes
+            .Select(reply => new
+            {
+                reply.Body,
+                reply.Title,
+            })
+            .Compile();
+
+        var response = await Gconnection.Run(query);
+
+        return Ok(response);
+    }
+
+    [HttpGet("analytics/{owner}/{repoName}")]
+    public async Task<ActionResult> GetPriorityDistribution(string owner, string repoName)
+    {
+        //last index highest priority
+        //first index lowest priority
+        List<int> result = [0, 0, 0, 0, 0];
+
+        using (NpgsqlConnection conn = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
+        {
+            await conn.OpenAsync();
+
+            string selects = "priority, COUNT(*) as amount";
+            string q = "SELECT " + selects + " FROM pullrequestinfo WHERE repoowner=@ownerLogin AND reponame=@repoName AND state='open' GROUP BY priority";
+            using (NpgsqlCommand command = new NpgsqlCommand(q, conn))
+            {
+                command.Parameters.AddWithValue("@ownerLogin", owner);
+                command.Parameters.AddWithValue("@repoName", repoName);
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        var pri = reader.GetInt32(0);
+                        result[pri] = reader.GetInt32(1);
+                    }
+                }
+            }
+
+            await conn.CloseAsync();
+        }
+
+        return Ok(result);
+    }
+
+    [HttpGet("analytics/{owner}/{repoName}/avg_merged_time")]
+    public async Task<ActionResult> GetAvgMergedTime(string owner, string repoName)
+    {
+        var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
+        var connection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
+
+        var states = new List<PullRequestState> { PullRequestState.Merged };
+
+        var query = new Query()
+            .Repository(Var("repoName"), Var("owner"))
+            .PullRequests(last: 100, states: new Arg<IEnumerable<PullRequestState>>(states))
+            .Nodes
+            .Select(pr => new
+            {
+                CreatedDate = pr.CreatedAt,
+                MergedDate = pr.MergedAt
+            })
+            .Compile();
+
+        var mergedPrs = await connection.Run(query, new Dictionary<string, object>
+        {
+            { "owner", owner },
+            { "repoName", repoName },
+        });
+
+        var lastWeek = DateTime.Today.AddDays(-7);
+
+        var groupedByMergedDate = mergedPrs
+            .Where(x => x.MergedDate <= DateTime.Today && x.MergedDate >= lastWeek)
+            .GroupBy(pr => DateTimeOffset.Parse(pr.MergedDate.ToString()).ToString("yyyy-MM-dd"))
+            .Select(group => new
+            {
+                MergedDate = group.Key,
+                PrCount = group.Count(),
+                AvgMergeTime = group.Average(pr => (long?)(pr.MergedDate - pr.CreatedDate)?.TotalMinutes)
+            })
+            .ToList()
+            .Select(group => new
+            {
+                group.MergedDate,
+                group.PrCount,
+                AvgMergeTime = group.AvgMergeTime.HasValue ? TimeSpan.FromMinutes(group.AvgMergeTime.Value).ToString(@"dd\.hh\:mm") : "00.00:00"
+            })
+            .ToList();
+
+        return Ok(groupedByMergedDate);
+    }
+
+    /*[HttpGet("analytics/{owner}/{repoName}/waiting_review")]
+    public async Task<ActionResult> GetWaitTimeForReview(string owner, string repoName)
+    {
+
+
+        return Ok();
+    }*/
+
+    [HttpGet("analytics/{owner}/{repoName}/review_statuses")]
+    public async Task<ActionResult> GetReviewStatuses(string owner, string repoName)
+    {
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+
+
+        //var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
+        //var connection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
+
+        /*var states = new List<PullRequestState> { PullRequestState.Open };
+
+        var reviews = new List<Octokit.GraphQL.Model.PullRequestReviewState> { 
+            Octokit.GraphQL.Model.PullRequestReviewState.Commented, 
+            Octokit.GraphQL.Model.PullRequestReviewState.Pending, 
+            Octokit.GraphQL.Model.PullRequestReviewState.Approved, 
+            Octokit.GraphQL.Model.PullRequestReviewState.ChangesRequested 
+        };
+
+        var query = new Query()
+            .Repository(Var("repoName"), Var("owner"))
+            .PullRequests(last: 100, states: new Arg<IEnumerable<PullRequestState>>(states))
+            .Nodes
+            .Select(pr => new
+            {
+                pr.Id,
+                Reviews = pr.Reviews(null, null, null, null, null, new Arg<IEnumerable<Octokit.GraphQL.Model.PullRequestReviewState>>(reviews))
+                .Nodes
+                .Select( r => new {r.Id, r.State})
+                .ToList()
+            })
+            .Compile();
+
+        Console.WriteLine(query);
+        
+        var prs = await connection.Run(query, new Dictionary<string, object>
+        {
+            { "owner", owner },
+            { "repoName", repoName },
+        });*/
+
+        var result = new List<ReviewStats>();
+        List<RevStatusObj> prReviewsCombined = [];
+        int[][] prnumbers = new int[3][];
+
+        var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
+
+        var weeks = new List<(DateTime start, DateTime end)>();
+        DateTime today = DateTime.Today;
+
+        // Calculate the start and end dates for the last 4 weeks
+        for (int i = 0; i < 3; i++)
+        {
+            DateTime startOfWeek = today.AddDays(-(int)today.DayOfWeek + 1 - (i * 7)); // Start from Monday
+            DateTime endOfWeek = startOfWeek.AddDays(6); // End on Sunday
+            weeks.Add((startOfWeek, endOfWeek));
+
+            result.Add(new ReviewStats
+            {
+                FirstDay = startOfWeek.ToString("yyyy-MM-dd"),
+                LastDay = endOfWeek.ToString("yyyy-MM-dd"),
+                ApprovedCount = 0,
+                CommentedCount = 0,
+                ChangesReqCount = 0,
+                PendingCount = 0
+            });
+
+            string query = $"SELECT pullnumber FROM pullrequestinfo WHERE reponame = '{repoName}' AND updatedat BETWEEN '{startOfWeek:yyyy-MM-dd}' AND '{endOfWeek:yyyy-MM-dd}'";
+            connection.Open();
+            using (var command = new NpgsqlCommand(query, connection))
+            {
+                var reader = await command.ExecuteReaderAsync();
+                List<int> prNumbersList = new List<int>();
+                while (await reader.ReadAsync())
+                {
+                    prNumbersList.Add(reader.GetFieldValue<int>(0));
+                }
+                prnumbers[i] = prNumbersList.ToArray();
+            }
+            connection.Close();
+        }
+
+        //var prs = await client.PullRequest.GetAllForRepository(owner, repoName);
+
+        for (int i = 0; i < 3; i++)
+        {
+            foreach (var pr in prnumbers[i])
+            {
+                var reviews = client.PullRequest.Review.GetAll(owner, repoName, pr)
+                    .Result
+                    .Select(r => new RevStatusObjHelper
+                    {
+                        reviewId = r.Id,
+                        reviewState = r.State.StringValue,
+                        submissionDate = r.SubmittedAt.DateTime
+                    })
+                    .ToArray();
+
+                /*var reviewStateCounts = reviews
+                    .GroupBy(r => r.reviewState)
+                    .Select(group => new {
+                        ReviewState = group.Key,
+                        Count = group.Count()
+                    })
+                    .ToList();*/
+
+
+                prReviewsCombined.Add(new RevStatusObj
+                {
+                    pr = pr,
+                    reviews = reviews
+                });
+            }
+        }
+
+        foreach (RevStatusObj item in prReviewsCombined)
+        {
+            if (item.reviews == null || item.reviews.Length == 0)
+            {
+                continue;
+            }
+
+            foreach (var rev in item.reviews)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    if (rev.submissionDate >= weeks[i].start && rev.submissionDate <= weeks[i].end)
+                    {
+                        switch (rev.reviewState)
+                        {
+                            case "APPROVED":
+                                result[i].ApprovedCount++;
+                                break;
+                            case "COMMENTED":
+                                result[i].CommentedCount++;
+                                break;
+                            case "CHANGES_REQUESTED":
+                                result[i].ChangesReqCount++;
+                                break;
+                            default:
+                                result[i].PendingCount++;
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return Ok(result);
+    }
+
+
 }
