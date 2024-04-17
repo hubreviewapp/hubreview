@@ -4302,16 +4302,17 @@ public class GitHubController : ControllerBase
     [HttpGet("user/savedreplies")]
     public async Task<ActionResult> GetUserSavedReplies()
     {
-        var github = _getGitHubClient( _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var github = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
 
         var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
-        var Gconnection = new Octokit.GraphQL.Connection(productInformation,  _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
+        var Gconnection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
 
         var query = new Query()
             .User(_httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"))
             .SavedReplies(100, null, null, null, null)
             .Nodes
-            .Select(reply => new {
+            .Select(reply => new
+            {
                 reply.Body,
                 reply.Title,
             })
@@ -4327,8 +4328,8 @@ public class GitHubController : ControllerBase
     {
         //last index highest priority
         //first index lowest priority
-        List<int> result = [0,0,0,0,0];
- 
+        List<int> result = [0, 0, 0, 0, 0];
+
         using (NpgsqlConnection conn = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await conn.OpenAsync();
@@ -4368,8 +4369,9 @@ public class GitHubController : ControllerBase
             .Repository(Var("repoName"), Var("owner"))
             .PullRequests(last: 100, states: new Arg<IEnumerable<PullRequestState>>(states))
             .Nodes
-            .Select(pr => new {
-                CreatedDate = pr.CreatedAt, 
+            .Select(pr => new
+            {
+                CreatedDate = pr.CreatedAt,
                 MergedDate = pr.MergedAt
             })
             .Compile();
@@ -4399,7 +4401,7 @@ public class GitHubController : ControllerBase
                 AvgMergeTime = group.AvgMergeTime.HasValue ? TimeSpan.FromMinutes(group.AvgMergeTime.Value).ToString(@"dd\.hh\:mm") : "00.00:00"
             })
             .ToList();
-      
+
         return Ok(groupedByMergedDate);
     }
 
@@ -4450,7 +4452,7 @@ public class GitHubController : ControllerBase
             { "owner", owner },
             { "repoName", repoName },
         });*/
-        
+
         var result = new List<ReviewStats>();
         List<RevStatusObj> prReviewsCombined = [];
         int[][] prnumbers = new int[3][];
@@ -4491,7 +4493,7 @@ public class GitHubController : ControllerBase
             }
             connection.Close();
         }
-        
+
         //var prs = await client.PullRequest.GetAllForRepository(owner, repoName);
 
         for (int i = 0; i < 3; i++)
@@ -4500,8 +4502,9 @@ public class GitHubController : ControllerBase
             {
                 var reviews = client.PullRequest.Review.GetAll(owner, repoName, pr)
                     .Result
-                    .Select(r => new RevStatusObjHelper{
-                        reviewId = r.Id, 
+                    .Select(r => new RevStatusObjHelper
+                    {
+                        reviewId = r.Id,
                         reviewState = r.State.StringValue,
                         submissionDate = r.SubmittedAt.DateTime
                     })
@@ -4515,8 +4518,9 @@ public class GitHubController : ControllerBase
                     })
                     .ToList();*/
 
-                
-                prReviewsCombined.Add(new RevStatusObj{
+
+                prReviewsCombined.Add(new RevStatusObj
+                {
                     pr = pr,
                     reviews = reviews
                 });
@@ -4525,7 +4529,7 @@ public class GitHubController : ControllerBase
 
         foreach (RevStatusObj item in prReviewsCombined)
         {
-            if(item.reviews == null || item.reviews.Length == 0)
+            if (item.reviews == null || item.reviews.Length == 0)
             {
                 continue;
             }
