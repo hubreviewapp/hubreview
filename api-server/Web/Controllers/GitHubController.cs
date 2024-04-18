@@ -4572,5 +4572,38 @@ public class GitHubController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("repository/{owner}/{repo}/{branch}/protection/{prnumber}")]
+    public async Task<ActionResult> UpdateBranchProtection(string owner, string repo, string branch, long prnumber)
+    {
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var protection = await client.Repository.Branch.GetBranchProtection(owner, repo, branch);
+        
+        List<string> required_checks = new List<string>();
+        if(protection.RequiredStatusChecks.Strict){
+            foreach(var check in protection.RequiredStatusChecks.Contexts){
+                required_checks.Add(check); 
+            }
+        }
+
+        var requiredApprovals = protection.RequiredPullRequestReviews.RequiredApprovingReviewCount;
+
+        
+
+        var pull = await client.PullRequest.Get(owner, repo, (int)prnumber);
+
+        var isConflict = false; 
+        if (pull.MergeableState == "dirty")
+        {
+            isConflict = true;
+        }                 
+
+        var result = new {
+            required_checks,
+            requiredApprovals,
+            isConflict
+        };
+
+        return Ok(result);
+    }
 
 }
