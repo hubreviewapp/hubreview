@@ -1068,8 +1068,8 @@ public class GitHubController : ControllerBase
 
                         if (comm.Body.Contains("#issuecomment-"))
                         {
-                            int index = comm.Body.LastIndexOf('-');
-                            replyId = long.Parse(comm.Body.Substring(index + 1, 10));
+                            int index = comm.Body.IndexOf("#issuecomment-");
+                            replyId = long.Parse(comm.Body.Substring(index + 14, 10));
                         }
 
                         if (!comm.Body.Contains("<!--Using HubReview-->"))
