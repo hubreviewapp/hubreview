@@ -1064,6 +1064,13 @@ public class GitHubController : ControllerBase
                     // Check if the comment ID has already been processed
                     if (!processedCommentIds.Contains(comm.Id))
                     {
+                        long replyId = 0;
+
+                        if (comm.Body.Contains("#issuecomment-"))
+                        {
+                            int index = comm.Body.IndexOf("#issuecomment-");
+                            replyId = long.Parse(comm.Body.Substring(index + 14, 10));
+                        }
 
                         if (!comm.Body.Contains("<!--Using HubReview-->"))
                         {
@@ -1078,7 +1085,8 @@ public class GitHubController : ControllerBase
                                 createdAt = comm.CreatedAt,
                                 updatedAt = comm.UpdatedAt,
                                 association = comm.AuthorAssociation.StringValue,
-                                url = comm.HtmlUrl
+                                url = comm.HtmlUrl,
+                                reply_to_id = (replyId == 0) ? null : replyId
                             };
 
                             result.Add(commentObj);
@@ -1106,7 +1114,8 @@ public class GitHubController : ControllerBase
                                     createdAt = comm.CreatedAt,
                                     updatedAt = comm.UpdatedAt,
                                     association = comm.AuthorAssociation.StringValue,
-                                    url = comm.HtmlUrl
+                                    url = comm.HtmlUrl,
+                                    reply_to_id = (replyId == 0) ? null : replyId
                                 };
 
                                 result.Add(commentObj);
