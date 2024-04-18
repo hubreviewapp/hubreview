@@ -4577,33 +4577,86 @@ public class GitHubController : ControllerBase
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         var protection = await client.Repository.Branch.GetBranchProtection(owner, repo, branch);
-        
+
         List<string> required_checks = new List<string>();
-        if(protection.RequiredStatusChecks.Strict){
-            foreach(var check in protection.RequiredStatusChecks.Contexts){
-                required_checks.Add(check); 
+        if (protection.RequiredStatusChecks.Strict)
+        {
+            foreach (var check in protection.RequiredStatusChecks.Contexts)
+            {
+                required_checks.Add(check);
             }
         }
 
         var requiredApprovals = protection.RequiredPullRequestReviews.RequiredApprovingReviewCount;
 
-        
+
 
         var pull = await client.PullRequest.Get(owner, repo, (int)prnumber);
 
-        var isConflict = false; 
+        var isConflict = false;
         if (pull.MergeableState == "dirty")
         {
             isConflict = true;
-        }                 
+        }
 
-        var result = new {
+        var result = new
+        {
             required_checks,
             requiredApprovals,
             isConflict
         };
 
         return Ok(result);
+    }
+
+    [HttpPatch("pullrequest/{owner}/{repoName}/{prnumber}/close")]
+    public async Task<ActionResult> ClosePullRequest(string owner, string repoName, long prnumber)
+    {
+        var appClient = GetNewClient();
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+
+        // Get organizations for the current user
+        var organizations = await client.Organization.GetAllForCurrent();
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
+        foreach (var installation in installations)
+        {
+            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            {
+                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
+                var installationClient = GetNewClient(response.Token);
+
+                try
+                {
+                    await client.PullRequest.Update(owner, repoName, (int)prnumber, new PullRequestUpdate
+                    {
+                        State = ItemState.Closed
+                    });
+
+                    using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
+                    connection.Open();
+
+                    string query = $"UPDATE pullrequestinfo SET updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE reponame = '{repoName}' AND pullnumber = {prnumber}";
+
+                    using (var command = new NpgsqlCommand(query, connection))
+                    {
+                        command.ExecuteNonQuery();
+                    }
+
+                    connection.Close();
+
+                    return Ok($"Pull request #{prnumber} in repository {repoName} is closed.");
+                }
+                catch (NotFoundException)
+                {
+                    return NotFound($"Pull request with number {prnumber} not found in repository {repoName}.");
+                }
+            }
+        }
+
+        return NotFound("There exists no user in session.");
     }
 
 }
