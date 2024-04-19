@@ -4662,4 +4662,28 @@ public class GitHubController : ControllerBase
     // everyone can assign priority option olsun eğer seçiliyse repodaki herkes ekleyebilir, yoksa sadece aşağıdakiler 
     // user type usersa direkt sahibi döndür.
     // userın type ı organizasyonsa, https://api.github.com/orgs/hubreviewapp/members?role=admin request.
+
+    [HttpGet("{repoOwner}/repoadmins")]
+    public async Task<ActionResult> GetRepoAdmins(string repoOwner)
+    {
+        List<string> result = new List<string>();
+
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+
+        var user = await client.User.Get(repoOwner);
+
+        if(user.Type.ToString() == "Organization"){
+
+            var role = OrganizationMembersRole.Admin; // Set the role to Admin
+
+            var members = await client.Organization.Member.GetAll(repoOwner,role);
+            
+            result.AddRange(members.Select(member => member.Login));
+        }
+        else{
+            result.Add(repoOwner);
+        }
+        return Ok(result);
+
+    }
 }
