@@ -24,7 +24,7 @@ export interface Check {
 export interface Review {
   login: string;
   state: string;
-  avatar: string;
+  avatarUrl: string;
 }
 
 export interface PRInfo {
