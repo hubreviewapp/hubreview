@@ -104,7 +104,7 @@ function TextEditor({ content, addComment, setIsEditActive, editComment, comment
       <Table.Td style={{ fontSize: "18px" }}>{reply.body}</Table.Td>
       <Table.Td>
         <Badge
-          size={"lg"}
+          size="lg"
           key={index}
           leftSection={iconWriting}
           style={{ cursor: "pointer", marginTop: "10px", marginBottom: "5px", marginRight: "5px" }}
@@ -170,7 +170,7 @@ function TextEditor({ content, addComment, setIsEditActive, editComment, comment
       <Modal
         opened={opened}
         onClose={close}
-        title={"Saved replies"}
+        title="Saved replies"
         overlayProps={{
           backgroundOpacity: 0.55,
           blur: 3,
@@ -191,7 +191,7 @@ function TextEditor({ content, addComment, setIsEditActive, editComment, comment
         </Table.ScrollContainer>
 
         <Box style={{ textAlign: "center", marginTop: "20px" }}>
-          <Button component="a" href={"https://github.com/settings/replies?return_to=1"} color="indigo">
+          <Button component="a" href="https://github.com/settings/replies?return_to=1" color="indigo">
             {" "}
             Create new one{" "}
           </Button>
@@ -203,7 +203,7 @@ function TextEditor({ content, addComment, setIsEditActive, editComment, comment
       <Box top="100%" right={0}>
         {savedReplies.slice(0, 3).map((suggestion, index) => (
           <Badge
-            size={"md"}
+            size="md"
             key={index}
             style={{ cursor: "pointer", marginTop: "10px", marginBottom: "5px", marginRight: "5px" }}
             onClick={() => handleSuggestionClick(suggestion.body)}
@@ -212,8 +212,8 @@ function TextEditor({ content, addComment, setIsEditActive, editComment, comment
           </Badge>
         ))}
         <Badge
-          color={"coral"}
-          size={"md"}
+          color="coral"
+          size="md"
           style={{ cursor: "pointer", marginTop: "10px", marginBottom: "5px", marginRight: "5px" }}
           onClick={open}
         >
