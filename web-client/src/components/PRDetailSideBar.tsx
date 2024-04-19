@@ -15,6 +15,9 @@ import {
   Divider,
   Select,
   CloseButton,
+  Popover,
+  Flex,
+  ActionIcon,
 } from "@mantine/core";
 import {
   IconInfoCircle,
@@ -25,6 +28,8 @@ import {
   IconMessage,
   IconHourglassHigh,
   IconFilePencil,
+  IconSearch,
+  IconUserPlus,
 } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import PriorityBadge, { PriorityBadgeLabel } from "./PriorityBadge";
@@ -49,7 +54,7 @@ export interface Label {
 export interface Reviewer {
   login: string;
   state: string;
-  avatar: string;
+  avatarUrl: string;
 }
 
 export interface Assignee {
@@ -65,15 +70,28 @@ export interface PRDetailSideBarProps {
   author: string;
 }
 
+interface AssigneesRequest {
+  assignees: string[];
+}
+
 function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRDetailSideBarProps) {
   const { owner, repoName, prnumber } = useParams();
   const iconInfo = <IconInfoCircle style={{ width: rem(18), height: rem(18) }} />;
+  const iconSearch = <IconSearch style={{ width: rem(16), height: rem(16) }} />;
   const [contributors, setContributors] = useState<Contributor[]>([]);
   const [addedReviewer, setAddedReviewer] = useState<Reviewer[]>([]);
   const [addedAssigneesList, setAddedAssigneesList] = useState<Assignee[]>([]);
   const [priority, setPriority] = useState<PriorityBadgeLabel>(null);
   const [query, setQuery] = useState("");
-  const filtered = contributors.filter((item) => item.login.toLowerCase().includes(query.toLowerCase()));
+  const [assigneeQuery, setAssigneeQuery] = useState("");
+  const [assigneeList, setAssigneeList] = useState<Assignee[]>([]);
+  const filteredReviewers = contributors.filter((item) => item.login.toLowerCase().includes(query.toLowerCase()));
+  const removedAssignees = assigneeList.filter(
+    (assignee) => !addedAssigneesList.some((addedItem) => addedItem.login === assignee.login),
+  );
+  const filteredAssignees = removedAssignees.filter((item) =>
+    item.login.toLowerCase().includes(assigneeQuery.toLowerCase()),
+  );
 
   useEffect(() => {
     const fetchContributors = async () => {
@@ -81,7 +99,6 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
         const res = await axios.get(`${BASE_URL}/api/github/GetPRReviewerSuggestion/${owner}/${repoName}/${author}`, {
           withCredentials: true,
         });
-
         if (res.data) {
           setContributors(res.data);
         }
@@ -114,6 +131,29 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
     }
   }, [labels]);
 
+  useEffect(() => {
+    if (addedReviewers.length != 0) {
+      setAddedReviewer(addedReviewers);
+    }
+  }, [addedReviewers]);
+
+  function addReviewer(reviewer: Contributor) {
+    const newReviewer = {
+      login: reviewer.login,
+      state: "PENDING",
+      avatarUrl: reviewer.avatarUrl,
+    };
+    setAddedReviewer([newReviewer, ...addedReviewer]);
+    axios
+      .post(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/request_review`, [reviewer.login], {
+        withCredentials: true,
+      })
+      .then(function () {})
+      .catch(function (error) {
+        console.log(error);
+      });
+  }
+
   //HttpDelete("pullrequest/{owner}/{repoName}/{prnumber}/remove_reviewer/{reviewer}")]
   const deleteReviewer = (reviewer: string) => {
     setAddedReviewer(addedReviewer.filter((item) => item.login.toString() != reviewer));
@@ -127,17 +167,41 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
       });
   };
 
-  // [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/request_review")]
-  function handleAddReviewer(reviewer: Contributor) {
-    const newReviewer = {
-      login: reviewer.login,
-      state: "PENDING",
-      avatar: reviewer.avatarUrl,
+  //HttpGet("getRepoAssignees/{owner}/{repoName}
+  useEffect(() => {
+    const fetchAssigneeList = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/api/github/getRepoAssignees/${owner}/${repoName}`, {
+          withCredentials: true,
+        });
+        if (res.data) {
+          console.log("sdvfb", res.data);
+          setAssigneeList(res.data);
+        }
+      } catch (error) {
+        console.error("Error fetching contributors:", error);
+      }
     };
-    setAddedReviewer([newReviewer, ...addedReviewer]);
+    fetchAssigneeList();
+  }, [owner, repoName]);
+
+  //[HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addAssignees")]
+  function addAssignee(assignee: Assignee) {
+    const newAssignee = {
+      login: assignee.login,
+      avatarUrl: assignee.avatarUrl,
+      id: assignee.id,
+    };
+    const assigneesRequest: AssigneesRequest = {
+      assignees: [assignee.login.toString()],
+    };
+    setAddedAssigneesList([newAssignee, ...addedAssigneesList]);
     axios
-      .post(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/request_review`, [reviewer.login], {
+      .post(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addAssignees`, assigneesRequest, {
         withCredentials: true,
+        headers: {
+          "Content-Type": "application/json",
+        },
       })
       .then(function () {})
       .catch(function (error) {
@@ -145,7 +209,23 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
       });
   }
 
-  function handleChangePriority(value: PriorityBadgeLabel) {
+  //[HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/removeAssignees")]
+  const deleteAssignee = (assignee: Assignee) => {
+    setAddedAssigneesList(addedAssigneesList.filter((item) => item != assignee));
+    const assigneesRequest: AssigneesRequest = {
+      assignees: [assignee.login.toString()],
+    };
+    axios
+      .post(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/removeAssignees`, assigneesRequest, {
+        withCredentials: true,
+      })
+      .then(function () {})
+      .catch(function (error) {
+        console.log(error);
+      });
+  };
+
+  function changePriority(value: PriorityBadgeLabel) {
     // delete the priority label
     if (value == null) {
       if (priority) {
@@ -225,7 +305,7 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
                 addedReviewer.map((reviewer) => (
                   <Grid key={reviewer.login} mb="sm">
                     <Grid.Col span={2}>
-                      <Avatar src={reviewer.avatar} size="sm" />
+                      <Avatar src={reviewer.avatarUrl} size="sm" />
                     </Grid.Col>
                     <Grid.Col span={7}>
                       <Text size="sm"> {reviewer.login} </Text>
@@ -277,7 +357,7 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
             />
           </Box>
           <ScrollArea h={100} mt="5px" scrollbars="y">
-            {filtered.map((itm) => (
+            {filteredReviewers.map((itm) => (
               <Grid key={itm.id}>
                 <Grid.Col span={6}>
                   <Group>
@@ -300,7 +380,7 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
                 </Grid.Col>
                 <Grid.Col span={1}>
                   {addedReviewer.find((itm2) => itm.login == itm2.login) == undefined ? (
-                    <UnstyledButton onClick={() => handleAddReviewer(itm)} style={{ fontSize: "12px" }}>
+                    <UnstyledButton onClick={() => addReviewer(itm)} style={{ fontSize: "12px" }}>
                       <IconCirclePlus size={18} stroke={1.5} />
                     </UnstyledButton>
                   ) : (
@@ -313,18 +393,58 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
         </Box>
         <Divider mt="md" />
         <Grid my="sm">
-          <Grid.Col span={6}>
-            <Group>
+          <Grid.Col span={5}>
+            <Flex>
               <Text fw={500} size="md">
                 Assignees
               </Text>
-            </Group>
+              <Tooltip label="assign up to 10 person" style={{ marginLeft: -50 }}>
+                <Badge leftSection={iconInfo} variant="transparent" />
+              </Tooltip>
+            </Flex>
           </Grid.Col>
-          <Grid.Col span={4}></Grid.Col>
+          <Grid.Col span={3}></Grid.Col>
+          <Grid.Col span={2}></Grid.Col>
           <Grid.Col span={2}>
-            <Tooltip label="assign up to 10 person" style={{ marginLeft: -50 }}>
-              <Badge leftSection={iconInfo} variant="transparent" />
-            </Tooltip>
+            <Popover width={250} position="bottom" clickOutsideEvents={["mouseup", "touchend"]}>
+              <Popover.Target>
+                <ActionIcon variant="outline">
+                  <IconUserPlus size={16} stroke={1.5} />
+                </ActionIcon>
+              </Popover.Target>
+              <Popover.Dropdown>
+                {assigneeList.length - addedAssigneesList.length === 0 && <Text c="dimmed">No assignee to add </Text>}
+                {assigneeList.length - addedAssigneesList.length > 0 && (
+                  <Box my="sm">
+                    <TextInput
+                      size="xs"
+                      radius="xl"
+                      value={assigneeQuery}
+                      leftSection={iconSearch}
+                      onChange={(event) => {
+                        setAssigneeQuery(event.currentTarget.value);
+                      }}
+                      placeholder="Search Assignees"
+                    />
+                  </Box>
+                )}
+                {filteredAssignees.map((itm) => (
+                  <Grid key={itm.id} style={{ marginBottom: 5 }}>
+                    <Grid.Col span={2}>
+                      <Avatar src={itm.avatarUrl} size="sm" />
+                    </Grid.Col>
+                    <Grid.Col span={8}>
+                      <Text size="sm"> {itm.login} </Text>
+                    </Grid.Col>
+                    <Grid.Col span={2}>
+                      <UnstyledButton onClick={() => addAssignee(itm)} style={{ fontSize: "12px" }}>
+                        <IconCirclePlus size={18} stroke={1.5} />
+                      </UnstyledButton>
+                    </Grid.Col>
+                  </Grid>
+                ))}
+              </Popover.Dropdown>
+            </Popover>
           </Grid.Col>
         </Grid>
         {addedAssigneesList.length === 0 ? (
@@ -336,6 +456,10 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
                 <Avatar src={itm.avatarUrl} size="sm" />
               </Box>
               <Text size="sm"> {itm.login} </Text>
+              <CloseButton
+                onClick={() => deleteAssignee(itm)}
+                icon={<IconXboxX color="gray" size={18} stroke={1.5} />}
+              />
             </Group>
           ))
         )}
@@ -345,7 +469,7 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
           <Select
             label="Assign Priority"
             value={priority}
-            onChange={(val) => handleChangePriority(val as PriorityBadgeLabel)}
+            onChange={(val) => changePriority(val as PriorityBadgeLabel)}
             placeholder="Assign Priority"
             data={["Critical", "High", "Medium", "Low"]}
             clearable
