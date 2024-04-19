@@ -1,5 +1,8 @@
+import {useEffect, useState} from "react";
+
 import { RichTextEditor, Link } from "@mantine/tiptap";
-import { Button, Box } from "@mantine/core";
+import { useDisclosure } from '@mantine/hooks';
+import { Button, Box, Badge, Modal, Table} from "@mantine/core";
 import { useEditor } from "@tiptap/react";
 import Highlight from "@tiptap/extension-highlight";
 import StarterKit from "@tiptap/starter-kit";
@@ -7,8 +10,11 @@ import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
 import Superscript from "@tiptap/extension-superscript";
 import SubScript from "@tiptap/extension-subscript";
+import axios from "axios";
+import {IconWriting} from "@tabler/icons-react";
+import {BASE_URL} from "../env.ts";
+import {rem} from "@mantine/core";
 
-import { useState } from "react";
 
 interface TextEditorProps {
   content: string;
@@ -18,9 +24,17 @@ interface TextEditorProps {
   commentId?: number;
 }
 
+interface SavedReplyProps {
+  body: string;
+  title: string;
+}
+
 function TextEditor({ content, addComment, setIsEditActive, editComment, commentId }: TextEditorProps) {
   const [editorContent, setEditorContent] = useState(content);
   const isAddComment = !!addComment;
+  const [savedReplies, setSavedReplies] = useState<SavedReplyProps[]>([])
+  const [opened, { open, close }] = useDisclosure(false);
+  const iconWriting = <IconWriting style={{ width: rem(20), height: rem(20) }} />;
 
   const editor = useEditor({
     extensions: [
@@ -49,6 +63,60 @@ function TextEditor({ content, addComment, setIsEditActive, editComment, comment
       setIsEditActive(false);
     }
   }
+
+  /*
+  const commentSuggestions = [
+    'Well done',
+    'Looks good to me ',
+    'It seems unclear, can you explain further?',
+  ]; */
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setEditorContent(editorContent + suggestion);
+    editor?.commands.insertContent(suggestion);
+    close();
+  };
+
+  //[HttpGet("user/savedreplies")]
+  useEffect(() => {
+    const fetchSavedReplies = async () => {
+      try {
+        const apiUrl = `${BASE_URL}/api/github/user/savedreplies`;
+        const res = await axios.get(apiUrl, {
+          withCredentials: true,
+        });
+
+        if (res) {
+          console.log(res.data)
+          setSavedReplies(res.data)
+        }
+      } catch (error) {
+        console.error("Error fetching PR info:", error);
+      }
+    };
+    fetchSavedReplies();
+  }, []);
+
+  const rows = savedReplies.map((reply, index) => (
+    <Table.Tr key={reply.title}>
+      <Table.Td style={{ fontSize: '18px' }}>{index+1}</Table.Td>
+      <Table.Td style={{ fontSize: '18px' }}>{reply.title}</Table.Td>
+      <Table.Td style={{ fontSize: '18px' }}>{reply.body}</Table.Td>
+      <Table.Td>
+        <Badge
+        size={"lg"}
+        key={index}
+        leftSection={iconWriting}
+        style={{ cursor: 'pointer', marginTop: '10px', marginBottom: '5px', marginRight: '5px'}}
+        onClick={() => handleSuggestionClick(reply.body)}
+      >
+        Add
+        </Badge>
+      </Table.Td>
+
+    </Table.Tr>
+  ));
+
   return (
     <Box style={{ position: "relative", width: "100%" }}>
       <RichTextEditor editor={editor} my="sm">
@@ -99,6 +167,58 @@ function TextEditor({ content, addComment, setIsEditActive, editComment, comment
 
         <RichTextEditor.Content />
       </RichTextEditor>
+
+      <Modal
+        opened={opened}
+        onClose={close}
+        title={"Saved replies"}
+        overlayProps={{
+          backgroundOpacity: 0.55,
+          blur: 3,
+        }}
+      >
+        <Table.ScrollContainer minWidth={300}>
+          <Table striped highlightOnHover withColumnBorders>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th></Table.Th>
+                <Table.Th style={{ fontSize: '18px' }}>Reply Title</Table.Th>
+                <Table.Th style={{ fontSize: '18px' }}>Reply Body</Table.Th>
+                <Table.Th> Add to comment</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>{rows}</Table.Tbody>
+          </Table>
+        </Table.ScrollContainer>
+
+        <Box style={{ textAlign: 'center', marginTop: "20px" }}>
+          <Button component="a" href={"https://github.com/settings/replies?return_to=1"} color="indigo"> Create new one </Button>
+        </Box>
+
+        {/* Modal content */}
+      </Modal>
+
+
+      <Box top="100%" right={0} >
+        {savedReplies.slice(0, 3).map((suggestion, index) => (
+          <Badge
+            size={"md"}
+            key={index}
+            style={{ cursor: 'pointer', marginTop: '10px', marginBottom: '5px', marginRight: '5px'}}
+            onClick={() => handleSuggestionClick(suggestion.body)}
+          >
+            {suggestion.title}
+          </Badge>
+        ))}
+        <Badge
+          color={"coral"}
+          size={"md"}
+          style={{ cursor: 'pointer', marginTop: '10px', marginBottom: '5px', marginRight: '5px'}}
+          onClick={open}
+        >
+          See all saved replies
+        </Badge>
+      </Box>
 
       {isAddComment && (
         <>
