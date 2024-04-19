@@ -1086,7 +1086,7 @@ public class GitHubController : ControllerBase
                                 updatedAt = comm.UpdatedAt,
                                 association = comm.AuthorAssociation.StringValue,
                                 url = comm.HtmlUrl,
-                                reply_to_id = (replyId == 0) ? null : replyId
+                                replyToId = (replyId == 0) ? null : replyId
                             };
 
                             result.Add(commentObj);
@@ -1115,7 +1115,7 @@ public class GitHubController : ControllerBase
                                     updatedAt = comm.UpdatedAt,
                                     association = comm.AuthorAssociation.StringValue,
                                     url = comm.HtmlUrl,
-                                    reply_to_id = (replyId == 0) ? null : replyId
+                                    replyToId = (replyId == 0) ? null : replyId
                                 };
 
                                 result.Add(commentObj);
@@ -4433,11 +4433,11 @@ public class GitHubController : ControllerBase
 
         /*var states = new List<PullRequestState> { PullRequestState.Open };
 
-        var reviews = new List<Octokit.GraphQL.Model.PullRequestReviewState> { 
-            Octokit.GraphQL.Model.PullRequestReviewState.Commented, 
-            Octokit.GraphQL.Model.PullRequestReviewState.Pending, 
-            Octokit.GraphQL.Model.PullRequestReviewState.Approved, 
-            Octokit.GraphQL.Model.PullRequestReviewState.ChangesRequested 
+        var reviews = new List<Octokit.GraphQL.Model.PullRequestReviewState> {
+            Octokit.GraphQL.Model.PullRequestReviewState.Commented,
+            Octokit.GraphQL.Model.PullRequestReviewState.Pending,
+            Octokit.GraphQL.Model.PullRequestReviewState.Approved,
+            Octokit.GraphQL.Model.PullRequestReviewState.ChangesRequested
         };
 
         var query = new Query()
@@ -4455,7 +4455,7 @@ public class GitHubController : ControllerBase
             .Compile();
 
         Console.WriteLine(query);
-        
+
         var prs = await connection.Run(query, new Dictionary<string, object>
         {
             { "owner", owner },
