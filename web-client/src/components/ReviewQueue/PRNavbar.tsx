@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { Group, Accordion, Box, rem, TextInput, Text, ScrollArea, Button } from "@mantine/core";
+import { Checkbox } from "@mantine/core";
 import { IconBellRinging, IconNotebook, IconSearch, IconCirclePlus } from "@tabler/icons-react";
+import axios from "axios";
 import classes from "../../styles/NavbarSimple.module.css";
 import { Repository } from "../../models/Repository.tsx";
-import axios from "axios";
-import { Checkbox } from "@mantine/core";
 import { Link } from "react-scroll";
 import { UseListStateHandlers } from "@mantine/hooks";
 import { SelectedRepos } from "../../pages/ReviewQueuePage.tsx";
