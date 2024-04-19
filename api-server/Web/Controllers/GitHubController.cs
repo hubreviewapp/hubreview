@@ -552,7 +552,7 @@ public class GitHubController : ControllerBase
                         {
                             login = obj,
                             state = "PENDING",
-                            avatar = user.AvatarUrl
+                            avatarUrl = user.AvatarUrl
                         });
                     }
 
@@ -566,7 +566,7 @@ public class GitHubController : ControllerBase
                             {
                                 login = name.login,
                                 state = name.state,
-                                avatar = user.AvatarUrl
+                                avatarUrl = user.AvatarUrl
                             });
                         }
                     }
@@ -1568,7 +1568,7 @@ public class GitHubController : ControllerBase
                         {
                             id = assignee.Id,
                             login = assignee.Login,
-                            avatar_url = assignee.AvatarUrl,
+                            avatarUrl = assignee.AvatarUrl,
                             url = assignee.Url
                         });
                     }
@@ -2169,7 +2169,7 @@ public class GitHubController : ControllerBase
                             {
                                 login = obj,
                                 state = "PENDING",
-                                avatar = user.AvatarUrl
+                                avatarUrl = user.AvatarUrl
                             });
                         }
 
@@ -2182,7 +2182,7 @@ public class GitHubController : ControllerBase
                                 {
                                     login = name.login,
                                     state = name.state,
-                                    avatar = user.AvatarUrl
+                                    avatarUrl = user.AvatarUrl
                                 });
                             }
                         }
@@ -2375,7 +2375,7 @@ public class GitHubController : ControllerBase
                             {
                                 login = obj,
                                 state = "PENDING",
-                                avatar = user.AvatarUrl
+                                avatarUrl = user.AvatarUrl
                             });
                         }
 
@@ -2388,7 +2388,7 @@ public class GitHubController : ControllerBase
                                 {
                                     login = name.login,
                                     state = name.state,
-                                    avatar = user.AvatarUrl
+                                    avatarUrl = user.AvatarUrl
                                 });
                             }
                         }
@@ -2583,7 +2583,7 @@ public class GitHubController : ControllerBase
                             {
                                 login = obj,
                                 state = "PENDING",
-                                avatar = user.AvatarUrl
+                                avatarUrl = user.AvatarUrl
                             });
                         }
 
@@ -2596,7 +2596,7 @@ public class GitHubController : ControllerBase
                                 {
                                     login = name.login,
                                     state = name.state,
-                                    avatar = user.AvatarUrl
+                                    avatarUrl = user.AvatarUrl
                                 });
                             }
                         }
@@ -2785,7 +2785,7 @@ public class GitHubController : ControllerBase
                             {
                                 login = obj,
                                 state = "PENDING",
-                                avatar = user.AvatarUrl
+                                avatarUrl = user.AvatarUrl
                             });
                         }
 
@@ -2798,7 +2798,7 @@ public class GitHubController : ControllerBase
                                 {
                                     login = name.login,
                                     state = name.state,
-                                    avatar = user.AvatarUrl
+                                    avatarUrl = user.AvatarUrl
                                 });
                             }
                         }
@@ -2992,7 +2992,7 @@ public class GitHubController : ControllerBase
                             {
                                 login = obj,
                                 state = "PENDING",
-                                avatar = user.AvatarUrl
+                                avatarUrl = user.AvatarUrl
                             });
                         }
 
@@ -3005,7 +3005,7 @@ public class GitHubController : ControllerBase
                                 {
                                     login = name.login,
                                     state = name.state,
-                                    avatar = user.AvatarUrl
+                                    avatarUrl = user.AvatarUrl
                                 });
                             }
                         }
@@ -3200,7 +3200,7 @@ public class GitHubController : ControllerBase
                             {
                                 login = obj,
                                 state = "PENDING",
-                                avatar = user.AvatarUrl
+                                avatarUrl = user.AvatarUrl
                             });
                         }
 
@@ -3213,7 +3213,7 @@ public class GitHubController : ControllerBase
                                 {
                                     login = name.login,
                                     state = name.state,
-                                    avatar = user.AvatarUrl
+                                    avatarUrl = user.AvatarUrl
                                 });
                             }
                         }
