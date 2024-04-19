@@ -1,8 +1,9 @@
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 
 import { RichTextEditor, Link } from "@mantine/tiptap";
-import { useDisclosure } from '@mantine/hooks';
-import { Button, Box, Badge, Modal, Table} from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import { Button, Box, Badge, Modal, Table } from "@mantine/core";
+import { rem } from "@mantine/core";
 import { useEditor } from "@tiptap/react";
 import Highlight from "@tiptap/extension-highlight";
 import StarterKit from "@tiptap/starter-kit";
@@ -11,10 +12,9 @@ import TextAlign from "@tiptap/extension-text-align";
 import Superscript from "@tiptap/extension-superscript";
 import SubScript from "@tiptap/extension-subscript";
 import axios from "axios";
-import {IconWriting} from "@tabler/icons-react";
-import {BASE_URL} from "../env.ts";
-import {rem} from "@mantine/core";
+import { IconWriting } from "@tabler/icons-react";
 
+import { BASE_URL } from "../env.ts";
 
 interface TextEditorProps {
   content: string;
@@ -32,7 +32,7 @@ interface SavedReplyProps {
 function TextEditor({ content, addComment, setIsEditActive, editComment, commentId }: TextEditorProps) {
   const [editorContent, setEditorContent] = useState(content);
   const isAddComment = !!addComment;
-  const [savedReplies, setSavedReplies] = useState<SavedReplyProps[]>([])
+  const [savedReplies, setSavedReplies] = useState<SavedReplyProps[]>([]);
   const [opened, { open, close }] = useDisclosure(false);
   const iconWriting = <IconWriting style={{ width: rem(20), height: rem(20) }} />;
 
@@ -87,8 +87,8 @@ function TextEditor({ content, addComment, setIsEditActive, editComment, comment
         });
 
         if (res) {
-          console.log(res.data)
-          setSavedReplies(res.data)
+          console.log(res.data);
+          setSavedReplies(res.data);
         }
       } catch (error) {
         console.error("Error fetching PR info:", error);
@@ -99,21 +99,20 @@ function TextEditor({ content, addComment, setIsEditActive, editComment, comment
 
   const rows = savedReplies.map((reply, index) => (
     <Table.Tr key={reply.title}>
-      <Table.Td style={{ fontSize: '18px' }}>{index+1}</Table.Td>
-      <Table.Td style={{ fontSize: '18px' }}>{reply.title}</Table.Td>
-      <Table.Td style={{ fontSize: '18px' }}>{reply.body}</Table.Td>
+      <Table.Td style={{ fontSize: "18px" }}>{index + 1}</Table.Td>
+      <Table.Td style={{ fontSize: "18px" }}>{reply.title}</Table.Td>
+      <Table.Td style={{ fontSize: "18px" }}>{reply.body}</Table.Td>
       <Table.Td>
         <Badge
-        size={"lg"}
-        key={index}
-        leftSection={iconWriting}
-        style={{ cursor: 'pointer', marginTop: '10px', marginBottom: '5px', marginRight: '5px'}}
-        onClick={() => handleSuggestionClick(reply.body)}
-      >
-        Add
+          size={"lg"}
+          key={index}
+          leftSection={iconWriting}
+          style={{ cursor: "pointer", marginTop: "10px", marginBottom: "5px", marginRight: "5px" }}
+          onClick={() => handleSuggestionClick(reply.body)}
+        >
+          Add
         </Badge>
       </Table.Td>
-
     </Table.Tr>
   ));
 
@@ -182,8 +181,8 @@ function TextEditor({ content, addComment, setIsEditActive, editComment, comment
             <Table.Thead>
               <Table.Tr>
                 <Table.Th></Table.Th>
-                <Table.Th style={{ fontSize: '18px' }}>Reply Title</Table.Th>
-                <Table.Th style={{ fontSize: '18px' }}>Reply Body</Table.Th>
+                <Table.Th style={{ fontSize: "18px" }}>Reply Title</Table.Th>
+                <Table.Th style={{ fontSize: "18px" }}>Reply Body</Table.Th>
                 <Table.Th> Add to comment</Table.Th>
               </Table.Tr>
             </Table.Thead>
@@ -191,20 +190,22 @@ function TextEditor({ content, addComment, setIsEditActive, editComment, comment
           </Table>
         </Table.ScrollContainer>
 
-        <Box style={{ textAlign: 'center', marginTop: "20px" }}>
-          <Button component="a" href={"https://github.com/settings/replies?return_to=1"} color="indigo"> Create new one </Button>
+        <Box style={{ textAlign: "center", marginTop: "20px" }}>
+          <Button component="a" href={"https://github.com/settings/replies?return_to=1"} color="indigo">
+            {" "}
+            Create new one{" "}
+          </Button>
         </Box>
 
         {/* Modal content */}
       </Modal>
 
-
-      <Box top="100%" right={0} >
+      <Box top="100%" right={0}>
         {savedReplies.slice(0, 3).map((suggestion, index) => (
           <Badge
             size={"md"}
             key={index}
-            style={{ cursor: 'pointer', marginTop: '10px', marginBottom: '5px', marginRight: '5px'}}
+            style={{ cursor: "pointer", marginTop: "10px", marginBottom: "5px", marginRight: "5px" }}
             onClick={() => handleSuggestionClick(suggestion.body)}
           >
             {suggestion.title}
@@ -213,7 +214,7 @@ function TextEditor({ content, addComment, setIsEditActive, editComment, comment
         <Badge
           color={"coral"}
           size={"md"}
-          style={{ cursor: 'pointer', marginTop: '10px', marginBottom: '5px', marginRight: '5px'}}
+          style={{ cursor: "pointer", marginTop: "10px", marginBottom: "5px", marginRight: "5px" }}
           onClick={open}
         >
           See all saved replies
