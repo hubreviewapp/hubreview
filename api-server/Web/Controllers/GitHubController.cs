@@ -4659,4 +4659,7 @@ public class GitHubController : ControllerBase
         return NotFound("There exists no user in session.");
     }
 
+    // everyone can assign priority option olsun eğer seçiliyse repodaki herkes ekleyebilir, yoksa sadece aşağıdakiler 
+    // user type usersa direkt sahibi döndür.
+    // userın type ı organizasyonsa, https://api.github.com/orgs/hubreviewapp/members?role=admin request.
 }
