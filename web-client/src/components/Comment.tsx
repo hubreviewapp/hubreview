@@ -63,29 +63,28 @@ export function Comment({
 
   //links for replied comments are used for scrolling
   const scrollToComment = (replyToId: number) => {
-    const commentElement = document.getElementById(replyToId+"");
+    const commentElement = document.getElementById(replyToId + "");
     if (commentElement) {
       commentElement.scrollIntoView({ behavior: "smooth", block: "center" });
-      setSelectedComment(replyToId)
+      setSelectedComment(replyToId);
       setTimeout(() => {
         setSelectedComment(0);
       }, 8000);
     } else {
       console.error("Belirtilen ID'ye sahip bir yorum bulunamadı.");
     }
-  }
-
+  };
 
   const handleCommentBody = () => {
     if (replyToId !== null) {
       if (text.includes("https://github.com") && text.includes(replyToId.toString())) {
-        const regex = new RegExp(`https://github\\.com/.*?${replyToId}.*?(?=\\s|$)`, 'g');
-        const modifiedText = text.replace(regex, '');
+        const regex = new RegExp(`https://github\\.com/.*?${replyToId}.*?(?=\\s|$)`, "g");
+        const modifiedText = text.replace(regex, "");
         return modifiedText;
       }
       if (text.includes("/github.com") && text.includes(replyToId.toString())) {
-        const regex = new RegExp(`/github\\.com/.*?${replyToId}.*?(?=\\s|$)`, 'g');
-        const modifiedText = text.replace(regex, '');
+        const regex = new RegExp(`/github\\.com/.*?${replyToId}.*?(?=\\s|$)`, "g");
+        const modifiedText = text.replace(regex, "");
         return modifiedText;
       }
       const githubIndex = text.indexOf("https://github.com");
@@ -109,7 +108,7 @@ export function Comment({
       }
     }
     return text;
-  }
+  };
   const convertedText = handleCommentBody();
 
   const options = settings.map((item) => (
@@ -151,7 +150,8 @@ export function Comment({
           style={{
             position: "relative",
             width: "100%",
-            border: selectedComment === id ? "solid 0.5px cyan": isAIGenerated ? "solid 0.5px cyan" : "1px groove gray",
+            border:
+              selectedComment === id ? "solid 0.5px cyan" : isAIGenerated ? "solid 0.5px cyan" : "1px groove gray",
             borderRadius: 20,
           }}
         >
@@ -211,15 +211,11 @@ export function Comment({
             </Box>
           </Group>
           <>
-            {replyToId &&
-              <Anchor
-                onClick={() => scrollToComment(replyToId)}
-                target="_blank"
-                c="blue"
-              >
+            {replyToId && (
+              <Anchor onClick={() => scrollToComment(replyToId)} target="_blank" c="blue">
                 Replied Comment: {replyToId}
               </Anchor>
-            }
+            )}
             <Markdown>{convertHtmlToMarkdown(convertedText.toString())}</Markdown>
             <Box style={{ display: "flex" }}>
               <Input
@@ -304,15 +300,11 @@ export function Comment({
               </Box>
             </Accordion.Control>
             <Accordion.Panel>
-              { replyToId &&
-              <Anchor
-                onClick={() => scrollToComment(replyToId)}
-                target="_blank"
-                c="blue"
-              >
-                Replied Comment: {replyToId}
-              </Anchor>
-              }
+              {replyToId && (
+                <Anchor onClick={() => scrollToComment(replyToId)} target="_blank" c="blue">
+                  Replied Comment: {replyToId}
+                </Anchor>
+              )}
               <Markdown>{convertHtmlToMarkdown(convertedText.toString())}</Markdown>
             </Accordion.Panel>
           </Accordion.Item>
