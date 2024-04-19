@@ -58,7 +58,7 @@ export interface Reviewer {
 }
 
 export interface Assignee {
-  id:string;
+  id: string;
   login: string;
   avatarUrl: string;
 }
@@ -86,10 +86,12 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
   const [assigneeQuery, setAssigneeQuery] = useState("");
   const [assigneeList, setAssigneeList] = useState<Assignee[]>([]);
   const filteredReviewers = contributors.filter((item) => item.login.toLowerCase().includes(query.toLowerCase()));
-  const removedAssignees = assigneeList.filter(assignee =>
-    !addedAssigneesList.some(addedItem => addedItem.login === assignee.login)
+  const removedAssignees = assigneeList.filter(
+    (assignee) => !addedAssigneesList.some((addedItem) => addedItem.login === assignee.login),
   );
-  const filteredAssignees = removedAssignees.filter((item) => item.login.toLowerCase().includes(assigneeQuery.toLowerCase()));
+  const filteredAssignees = removedAssignees.filter((item) =>
+    item.login.toLowerCase().includes(assigneeQuery.toLowerCase()),
+  );
 
   useEffect(() => {
     const fetchContributors = async () => {
@@ -139,7 +141,7 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
     const newReviewer = {
       login: reviewer.login,
       state: "PENDING",
-      avatarUrl : reviewer.avatarUrl,
+      avatarUrl: reviewer.avatarUrl,
     };
     setAddedReviewer([newReviewer, ...addedReviewer]);
     axios
@@ -173,7 +175,7 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
           withCredentials: true,
         });
         if (res.data) {
-          console.log("sdvfb", res.data)
+          console.log("sdvfb", res.data);
           setAssigneeList(res.data);
         }
       } catch (error) {
@@ -183,24 +185,23 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
     fetchAssigneeList();
   }, [owner, repoName]);
 
-
   //[HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addAssignees")]
   function addAssignee(assignee: Assignee) {
     const newAssignee = {
       login: assignee.login,
       avatarUrl: assignee.avatarUrl,
-      id: assignee.id
+      id: assignee.id,
     };
     const assigneesRequest: AssigneesRequest = {
-      assignees: [assignee.login.toString()]
+      assignees: [assignee.login.toString()],
     };
     setAddedAssigneesList([newAssignee, ...addedAssigneesList]);
     axios
       .post(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addAssignees`, assigneesRequest, {
         withCredentials: true,
         headers: {
-          'Content-Type': 'application/json'
-        }
+          "Content-Type": "application/json",
+        },
       })
       .then(function () {})
       .catch(function (error) {
@@ -212,7 +213,7 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
   const deleteAssignee = (assignee: Assignee) => {
     setAddedAssigneesList(addedAssigneesList.filter((item) => item != assignee));
     const assigneesRequest: AssigneesRequest = {
-      assignees: [assignee.login.toString()]
+      assignees: [assignee.login.toString()],
     };
     axios
       .post(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/removeAssignees`, assigneesRequest, {
@@ -402,20 +403,17 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
               </Tooltip>
             </Flex>
           </Grid.Col>
-          <Grid.Col span={3}>
-          </Grid.Col>
+          <Grid.Col span={3}></Grid.Col>
           <Grid.Col span={2}></Grid.Col>
           <Grid.Col span={2}>
-            <Popover width={250} position="bottom" clickOutsideEvents={['mouseup', 'touchend']}>
+            <Popover width={250} position="bottom" clickOutsideEvents={["mouseup", "touchend"]}>
               <Popover.Target>
-                <ActionIcon variant="outline" >
+                <ActionIcon variant="outline">
                   <IconUserPlus size={16} stroke={1.5} />
                 </ActionIcon>
               </Popover.Target>
-              <Popover.Dropdown >
-                {assigneeList.length - addedAssigneesList.length === 0 && (
-                  <Text c="dimmed">No assignee to add </Text>
-                )}
+              <Popover.Dropdown>
+                {assigneeList.length - addedAssigneesList.length === 0 && <Text c="dimmed">No assignee to add </Text>}
                 {assigneeList.length - addedAssigneesList.length > 0 && (
                   <Box my="sm">
                     <TextInput
@@ -430,27 +428,24 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
                     />
                   </Box>
                 )}
-                {
-                  filteredAssignees.map((itm) => (
-                    <Grid key={itm.id} style={{ marginBottom: 5 }}>
-                      <Grid.Col span={2}>
-                        <Avatar src={itm.avatarUrl} size="sm" />
-                      </Grid.Col>
-                      <Grid.Col span={8}>
-                        <Text size="sm"> {itm.login} </Text>
-                      </Grid.Col>
-                      <Grid.Col span={2}>
-                        <UnstyledButton onClick={() => addAssignee(itm)} style={{ fontSize: "12px" }}>
-                          <IconCirclePlus size={18} stroke={1.5} />
-                        </UnstyledButton>
-                      </Grid.Col>
-                    </Grid>
-                  ))
-                }
+                {filteredAssignees.map((itm) => (
+                  <Grid key={itm.id} style={{ marginBottom: 5 }}>
+                    <Grid.Col span={2}>
+                      <Avatar src={itm.avatarUrl} size="sm" />
+                    </Grid.Col>
+                    <Grid.Col span={8}>
+                      <Text size="sm"> {itm.login} </Text>
+                    </Grid.Col>
+                    <Grid.Col span={2}>
+                      <UnstyledButton onClick={() => addAssignee(itm)} style={{ fontSize: "12px" }}>
+                        <IconCirclePlus size={18} stroke={1.5} />
+                      </UnstyledButton>
+                    </Grid.Col>
+                  </Grid>
+                ))}
               </Popover.Dropdown>
             </Popover>
           </Grid.Col>
-
         </Grid>
         {addedAssigneesList.length === 0 ? (
           <Text c="dimmed">No assignee added </Text>
@@ -461,7 +456,7 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
                 <Avatar src={itm.avatarUrl} size="sm" />
               </Box>
               <Text size="sm"> {itm.login} </Text>
-              <CloseButton 
+              <CloseButton
                 onClick={() => deleteAssignee(itm)}
                 icon={<IconXboxX color="gray" size={18} stroke={1.5} />}
               />
