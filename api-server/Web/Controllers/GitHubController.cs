@@ -1569,7 +1569,7 @@ public class GitHubController : ControllerBase
 
                 try
                 {
-                    var assignees = await installationClient.Issue.Assignee.GetAllForRepository(owner, repoName);
+                    var assignees = await installationClient.Repository.Collaborator.GetAll(owner, repoName);
 
                     foreach (var assignee in assignees)
                     {
@@ -4663,8 +4663,8 @@ public class GitHubController : ControllerBase
     // user type usersa direkt sahibi döndür.
     // userın type ı organizasyonsa, https://api.github.com/orgs/hubreviewapp/members?role=admin request.
 
-    [HttpGet("{repoOwner}/repoadmins")]
-    public async Task<ActionResult> GetRepoAdmins(string repoOwner)
+    [HttpGet("{repoOwner}/{repoName}/repoadmins")]
+    public async Task<ActionResult> GetRepoAdmins(string repoOwner, string repoName)
     {
         List<string> result = new List<string>();
 
@@ -4672,18 +4672,128 @@ public class GitHubController : ControllerBase
 
         var user = await client.User.Get(repoOwner);
 
-        if(user.Type.ToString() == "Organization"){
+        if (user.Type.ToString() == "Organization")
+        {
 
             var role = OrganizationMembersRole.Admin; // Set the role to Admin
 
-            var members = await client.Organization.Member.GetAll(repoOwner,role);
-            
+            var members = await client.Organization.Member.GetAll(repoOwner, role);
+
             result.AddRange(members.Select(member => member.Login));
         }
-        else{
+        else
+        {
             result.Add(repoOwner);
         }
+
         return Ok(result);
+
+    }
+
+    [HttpGet("{repoOwner}/{repoName}/repoprioritysetters")]
+    public async Task<ActionResult> GetRepoPrioritySetters(string repoOwner, string repoName)
+    {
+        List<string> result = new List<string>();
+
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+
+        var user = await client.User.Get(repoOwner);
+
+        var onlyAdmin = false;
+        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
+        {
+            await connection.OpenAsync();
+
+            string selects = "onlyAdmin";
+            string query = "SELECT " + selects + " FROM repositoryinfo WHERE ownerLogin = @repoOwner AND name = @repoName ";
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@repoOwner", repoOwner);
+                command.Parameters.AddWithValue("@repoName", repoName);
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        Console.WriteLine(reader.GetBoolean(0));
+                        onlyAdmin = reader.GetBoolean(0);
+                    }
+                }
+            }
+
+            await connection.CloseAsync();
+        }
+
+        if (onlyAdmin)
+        {
+            if (user.Type.ToString() == "Organization")
+            {
+
+                var role = OrganizationMembersRole.Admin; // Set the role to Admin
+
+                var members = await client.Organization.Member.GetAll(repoOwner, role);
+
+                result.AddRange(members.Select(member => member.Login));
+            }
+            else
+            {
+                result.Add(repoOwner);
+            }
+        }
+        else
+        {
+            result = await GetRepoCollaborators(repoOwner, repoName);
+        }
+
+        return Ok(result);
+
+    }
+
+    public async Task<List<string>> GetRepoCollaborators(string repoOwner, string repoName)
+    {
+        List<string> result = new List<string>();
+
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+
+        var collaborators = await client.Repository.Collaborator.GetAll(repoOwner, repoName);
+        result.AddRange(collaborators.Select(collaborator => collaborator.Login));
+
+        return result;
+
+    }
+
+    [HttpPatch("{repoOwner}/{repoName}/changeonlyadmin/{onlyAdmin}")]
+    public async Task<ActionResult> GetRepoPrioritySetters(string repoOwner, string repoName, bool onlyAdmin)
+    {
+        List<string> result = new List<string>();
+
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+
+        var user = await client.User.Get(repoOwner);
+
+        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
+        {
+            await connection.OpenAsync();
+
+            string query = "UPDATE repositoryinfo SET onlyAdmin = @onlyAdmin WHERE ownerLogin = @repoOwner AND name = @repoName ";
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@repoOwner", repoOwner);
+                command.Parameters.AddWithValue("@repoName", repoName);
+                command.Parameters.AddWithValue("@onlyAdmin", onlyAdmin);
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        onlyAdmin = reader.GetBoolean(0);
+                    }
+                }
+            }
+
+            await connection.CloseAsync();
+        }
+        return Ok("Successfully updated");
 
     }
 }
