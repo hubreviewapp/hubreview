@@ -1093,8 +1093,8 @@ public class GitHubController : ControllerBase
                         }
                         else
                         {
-                            int index = comm.Body.IndexOf(':');
-                            string parsed_message = comm.Body[(index + 2)..];
+                            int index = (replyId == 0) ? comm.Body.IndexOf(':') : comm.Body.IndexOf("\n\n");
+                            string parsed_message = (replyId == 0) ? comm.Body[(index + 2)..] : comm.Body[(index + 1)..];
 
                             await connection.OpenAsync();
                             string query = $"SELECT label, decoration, status FROM comments WHERE commentid = {comm.Id}";
