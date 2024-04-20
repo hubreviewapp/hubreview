@@ -1,5 +1,5 @@
-import CommitHistory from "../components/PRCreate/CommitHistory";
 import { Box } from "@mantine/core";
+import CommitHistory from "../components/PRCreate/CommitHistory";
 
 function CommitsTab() {
   return (
