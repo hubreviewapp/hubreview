@@ -4609,7 +4609,7 @@ public class GitHubController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPatch("pullrequest/{owner}/{repoName}/{prnumber}/{state}")]
+    [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/{state}")]
     public async Task<ActionResult> ClosePullRequest(string owner, string repoName, long prnumber, string state)
     {
         var appClient = GetNewClient();
