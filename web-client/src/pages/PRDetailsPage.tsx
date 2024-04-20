@@ -1,13 +1,13 @@
+import { useEffect, useState } from "react";
+import { Box, Badge, rem, Group, UnstyledButton, Anchor } from "@mantine/core";
+import axios from "axios";
+import { IconGitPullRequest } from "@tabler/icons-react";
+import { useParams } from "react-router-dom";
 import ModifiedFilesTab from "../tabs/ModifiedFilesTab";
 import CommentsTab from "../tabs/CommentsTab.tsx";
 import CommitsTab from "../tabs/CommitsTab.tsx";
-import { Box, Badge, rem, Group, UnstyledButton, Anchor } from "@mantine/core";
 import TabComp from "../components/Tab.tsx";
-import { IconGitPullRequest } from "@tabler/icons-react";
 import PrDetailTab from "../tabs/PrDetailTab.tsx";
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { useParams } from "react-router-dom";
 import PRSummaryBox from "../components/PRCreate/PRSummaryBox";
 import { Assignee, Label, Reviewer } from "../components/PRDetailSideBar.tsx";
 import { Check, Review } from "../models/PRInfo.tsx";
