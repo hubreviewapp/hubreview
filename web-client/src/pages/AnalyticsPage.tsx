@@ -21,6 +21,7 @@ function AnalyticsPage() {
   type Repo = {
     id: number;
     name: string;
+    ownerLogin: string;
   };
 
   interface RepoListResponse {
@@ -93,7 +94,7 @@ function AnalyticsPage() {
               </Title>
               <Flex direction="column" justify="center" align="center">
                 {repoList.repoNames.map((r: Repo) => (
-                  <Link to={`${r.name}`} key={r.id} style={{ textDecoration: "none" }}>
+                  <Link to={`${r.name}/${r.ownerLogin}`} key={r.id} style={{ textDecoration: "none" }}>
                     <Button mb="sm" variant="outline" color="blue">
                       {r.name}
                     </Button>
