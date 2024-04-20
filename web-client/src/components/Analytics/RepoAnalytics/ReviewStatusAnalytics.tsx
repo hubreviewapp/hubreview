@@ -9,6 +9,15 @@ export interface AnalyticsProps {
   repoName: string | undefined;
   owner: string | undefined;
 }
+
+interface ReviewStatusData{
+  firstDay:string;
+  lastDay:string;
+  commentedCount:string;
+  pendingCount: string;
+  approvedCount:string;
+  changesReqCount:string;
+}
 function ReviewStatusAnalytics({ repoName, owner }: AnalyticsProps) {
   //   [HttpGet("analytics/{owner}/{repoName}/review_statuses")]
   const [repoData, setRepoData] = useState([]);
@@ -20,7 +29,7 @@ function ReviewStatusAnalytics({ repoName, owner }: AnalyticsProps) {
         });
         if (res) {
           setRepoData(
-            res.data.map((item) => ({
+            res.data.map((item:ReviewStatusData) => ({
               ...item,
               week: formatDateInterval(item.firstDay, item.lastDay),
             })),

@@ -1,6 +1,6 @@
 import Comment from "../components/Comment.tsx";
 import TextEditor from "../components/TextEditor.tsx";
-import { Box, Text, Grid, Select, LoadingOverlay, Flex } from "@mantine/core";
+import {Box, Text, Grid, Select, LoadingOverlay, Flex} from "@mantine/core";
 //import CommentList from "../components/DiffComment/CommentList";
 import PRDetailSideBar from "../components/PRDetailSideBar";
 import axios from "axios";
@@ -11,6 +11,7 @@ import { useUser } from "../providers/context-utilities";
 import MergeButton from "../components/MergeButton";
 import { Review } from "../models/PRInfo.tsx";
 import { BASE_URL } from "../env.ts";
+import ClosePRButton from "../components/ClosePRButton.tsx";
 
 interface CreateReplyRequestModel {
   body: string;
@@ -266,6 +267,7 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
         )}
         <br></br>
         <Flex justify="right">
+          <ClosePRButton isClosed={pullRequest?.closedAt != null}/>
           <MergeButton canMerge={pullRequest?.mergeable} />
         </Flex>
         <br />
