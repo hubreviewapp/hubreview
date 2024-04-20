@@ -4623,7 +4623,8 @@ public class GitHubController : ControllerBase
         var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
 
         var myState = ItemState.Closed;
-        if(state == "open"){
+        if (state == "open")
+        {
             myState = ItemState.Open;
         }
 
