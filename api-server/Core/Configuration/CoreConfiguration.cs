@@ -8,5 +8,6 @@ public class CoreConfiguration
     public string OAuthClientId { get; set; } = String.Empty;
     public string OAuthClientSecret { get; set; } = String.Empty;
     public string DbConnectionString { get; set; } = String.Empty;
+    public string OpenaiApiKey { get; set; } = String.Empty;
 }
 

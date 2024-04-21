@@ -1,15 +1,18 @@
 using System.ComponentModel;
 using System.Data;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Web;
 using CS.Core.Configuration;
 using CS.Core.Entities;
 using CS.Web.Models.Api.Request;
+using CS.Web.Models.Api.Response;
 using GitHubJwt;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
 using Npgsql;
 using Octokit;
 using Octokit.GraphQL;
@@ -86,6 +89,52 @@ public class GitHubController : ControllerBase
         _coreConfiguration = coreConfiguration;
         _appClient = GetNewClient();
         _environment = environment;
+    }
+
+    [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/summary")]
+    public async Task<ActionResult> summary(string owner, string repoName, int prnumber)
+    {
+
+        var githubclient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+
+        var files = await githubclient.PullRequest.Files(owner, repoName, prnumber);
+        var selected = string.Join("\n\n", files.Select(file => $"{file.FileName}:\n\n{file.Patch}"));
+
+        string prompt = "summarize in detail the diff files from my pull request given below, as a list of file names and their explanations:\n\n";
+        string concat = prompt + selected;
+
+        if (concat.Length >= 50000)
+        {
+            return Ok("Unfortunately, this pull request is too long to generate a summary");
+        }
+
+        var client = new HttpClient();
+
+        await Task.Delay(TimeSpan.FromSeconds(2));
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/chat/completions");
+        request.Headers.Add("Authorization", "Bearer " + _coreConfiguration.OpenaiApiKey);
+
+        var requestData = new
+        {
+            model = "gpt-3.5-turbo",
+            messages = new[]
+            {
+                new
+                {
+                    role = "user",
+                    content = concat
+                }
+            }
+        };
+
+        request.Content = new StringContent(JsonConvert.SerializeObject(requestData), Encoding.UTF8, "application/json");
+
+        HttpResponseMessage response = await client.SendAsync(request);
+        string responseBody = await response.Content.ReadAsStringAsync();
+        var res = JsonConvert.DeserializeObject<ChatCompletionResponseModel>(responseBody);
+
+        return Ok(res.Choices[0].Message.Content ?? "");
     }
 
     [HttpGet("acquireToken")]
