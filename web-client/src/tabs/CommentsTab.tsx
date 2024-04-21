@@ -7,10 +7,10 @@ import Comment from "../components/Comment.tsx";
 import TextEditor from "../components/TextEditor.tsx";
 //import CommentList from "../components/DiffComment/CommentList";
 import PRDetailSideBar from "../components/PRDetailSideBar";
-import { PullRequest } from "../pages/PRDetailsPage.tsx";
+import { MergeInfo, PullRequest } from "../pages/PRDetailsPage.tsx";
 import { useUser } from "../providers/context-utilities";
-import MergeButton from "../components/MergeButton";
 import { Review } from "../models/PRInfo.tsx";
+import SplitButton from "../components/SplitButton.tsx";
 import ClosePRButton from "../components/ClosePRButton.tsx";
 
 interface CreateReplyRequestModel {
@@ -34,9 +34,10 @@ interface CommentProps {
 export interface CommentsTabProps {
   pullRequest: PullRequest;
   reviews: Review[];
+  mergeInfo: MergeInfo | null;
 }
 //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_comments")]
-function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
+function CommentsTab({ pullRequest, reviews, mergeInfo }: CommentsTabProps) {
   const { owner, repoName, prnumber } = useParams();
   const userLogin = useUser().userLogin;
   const [isLoading, setIsLoading] = useState(true);
@@ -271,9 +272,12 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
           </Box>
         )}
         <br></br>
+        {pullRequest?.merged === false && (
+          <SplitButton mergeInfo={mergeInfo} isMergeable={pullRequest?.mergeable}></SplitButton>
+        )}
+
         <Flex justify="right">
           <ClosePRButton isClosed={pullRequest?.closedAt != null} />
-          <MergeButton canMerge={pullRequest?.mergeable} />
         </Flex>
         <br />
         <Box style={{ border: "2px groove gray", borderRadius: 10, padding: "10px" }}>

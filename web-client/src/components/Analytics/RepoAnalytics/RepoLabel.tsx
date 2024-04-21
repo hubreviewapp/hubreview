@@ -5,23 +5,36 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { BASE_URL } from "../../../env.ts";
 
-function PriorityDataAnalytics({ repoName, owner }: AnalyticsProps) {
+interface UpdateValues {
+  refactoring: number;
+  suggestion: number;
+  bug: number;
+  enhancement: number;
+  documentation: number;
+  question: number;
+}
+function RepoLabel({ repoName, owner }: AnalyticsProps) {
   const data = [
-    { name: "Unassigned", value: 0, color: "gray.6" },
-    { name: "Low", value: 0, color: "green.6" },
-    { name: "Medium", value: 0, color: "yellow.6" },
-    { name: "High", value: 0, color: "orange.6" },
-    { name: "Critical", value: 0, color: "red.6" },
+    { name: "refactoring", value: 0, color: "violet.6" },
+    { name: "bug", value: 0, color: "red.6" },
+    { name: "enhancement", value: 0, color: "cyan.6" },
+    { name: "question", value: 0, color: "blue.6" },
+    { name: "documentation", value: 0, color: "gray.6" },
+    { name: "suggestion", value: 0, color: "green.6" },
   ];
 
-  function handlePriority(resData: number[]) {
-    const newData = [];
+  function handlePriority(resData: UpdateValues) {
+    data[0].value = resData.refactoring;
+    data[1].value = resData.bug;
+    data[2].value = resData.enhancement;
+    data[3].value = resData.question;
+    data[4].value = resData.documentation;
+    data[5].value = resData.suggestion;
 
-    for (let i = 0; i < 5; i++) {
-      newData.push({ name: data[i].name, value: resData[i], color: data[i].color });
-    }
-    return newData;
+    return data;
   }
+
+  //[HttpGet("analytics/{owner}/{repoName}/label/all")]
 
   const [repoData, setRepoData] = useState(data);
   const [value, setValue] = useState("all");
@@ -30,7 +43,7 @@ function PriorityDataAnalytics({ repoName, owner }: AnalyticsProps) {
     const fetchData = async () => {
       try {
         const end = value == "all" ? "all" : "";
-        const res = await axios.get(`${BASE_URL}/api/github/analytics/${owner}/${repoName}/${end}`, {
+        const res = await axios.get(`${BASE_URL}/api/github/analytics/${owner}/${repoName}/label/${end}`, {
           withCredentials: true,
         });
         if (res) {
@@ -46,7 +59,7 @@ function PriorityDataAnalytics({ repoName, owner }: AnalyticsProps) {
   return (
     <Paper ta="center" p="md">
       <Title order={4} mb="sm">
-        Priority Distribution of PRs
+        Label Distribution of PRs
       </Title>
       <SegmentedControl
         value={value}
@@ -68,4 +81,4 @@ function PriorityDataAnalytics({ repoName, owner }: AnalyticsProps) {
   );
 }
 
-export default PriorityDataAnalytics;
+export default RepoLabel;

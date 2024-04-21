@@ -5,6 +5,7 @@ import PriorityDataAnalytics from "../components/Analytics/RepoAnalytics/Priorit
 import AverageMergeTimePR from "../components/Analytics/RepoAnalytics/AverageMergeTimePR.tsx";
 import ReviewStatusAnalytics from "../components/Analytics/RepoAnalytics/ReviewStatusAnalytics.tsx";
 import { IconCircleArrowLeftFilled } from "@tabler/icons-react";
+import RepoLabel from "../components/Analytics/RepoAnalytics/RepoLabel.tsx";
 
 function RepoAnalyticsPage() {
   const { repoName, owner } = useParams();
@@ -46,10 +47,13 @@ function RepoAnalyticsPage() {
           </Grid.Col>
           <Divider orientation="vertical" />
           <Grid.Col span={6}>
-            <AverageMergeTimePR owner={owner} repoName={repoName} />
+            <RepoLabel repoName={repoName} owner={owner} />
           </Grid.Col>
         </Grid>
       </SimpleGrid>
+      <Container mt="md">
+        <AverageMergeTimePR owner={owner} repoName={repoName} />
+      </Container>
     </Container>
   );
 }

@@ -8,7 +8,7 @@ import { BASE_URL } from "../env";
 //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/merge")]
 
 export interface MergeButtonProps {
-  canMerge: boolean;
+  canMerge: boolean | null;
 }
 function MergeButton(props: MergeButtonProps) {
   const [opened, { open, close }] = useDisclosure(false);
@@ -45,7 +45,7 @@ function MergeButton(props: MergeButtonProps) {
           Merge Pull Request
         </Button>
       ) : (
-        <Button leftSection={icon} disabled>
+        <Button style={{ border: "1px groove gray" }} leftSection={icon} disabled>
           Not able to merge
         </Button>
       )}
