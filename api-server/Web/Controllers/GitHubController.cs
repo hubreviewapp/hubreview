@@ -4694,6 +4694,32 @@ public class GitHubController : ControllerBase
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
 
+        var allPullRequests = await client.PullRequest.GetAllForRepository(owner, repoName, new PullRequestRequest { State = ItemStateFilter.Open });
+
+        var labelUsage = new ConcurrentDictionary<string, int>();
+
+        Parallel.ForEach(allPullRequests, pullRequest =>
+        {
+            var labels = pullRequest.Labels.Select(label => label.Name);
+
+            foreach (var label in labels)
+            {
+                if (!label.StartsWith("Priority:"))
+                {
+                    labelUsage.AddOrUpdate(label, 1, (_, count) => count + 1); // Thread-safe update of label count
+                }
+            }
+        });
+
+        return labelUsage.ToDictionary(kv => kv.Key, kv => kv.Value);
+    }
+
+    [HttpGet("analytics/{owner}/{repoName}/label/all")]
+    public async Task<Dictionary<string, int>> GetLabelUsageAllTime(string owner, string repoName)
+    {
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
         var allPullRequests = await client.PullRequest.GetAllForRepository(owner, repoName, new PullRequestRequest { State = ItemStateFilter.All });
 
         var labelUsage = new ConcurrentDictionary<string, int>();
