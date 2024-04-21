@@ -70,9 +70,8 @@ function PRDetailsPage(props: PRDetailsPageProps) {
         console.error("Error fetching merge info:", error);
       }
     };
-    if (pullRequestDetails)
-      fetchMergeInfo(pullRequestDetails.baseRefName);
-  }, [owner, prNumber, repoName]);
+    if (pullRequestDetails) fetchMergeInfo(pullRequestDetails.baseRefName);
+  }, [owner, prNumber, repoName, pullRequestDetails]);
 
   if (isLoadingPullRequestData)
     return (
@@ -142,9 +141,9 @@ function PRDetailsPage(props: PRDetailsPageProps) {
           {currentTab === "comments" && <CommentsTab pullRequestDetails={pullRequestDetails} mergeInfo={mergeInfo} />}
           {currentTab === "details" && <PrDetailTab pullRequestDetails={pullRequestDetails} />}
           {currentTab === "commits" && <CommitsTab />}
-        </Box >
-      </Box >
-    </div >
+        </Box>
+      </Box>
+    </div>
   );
 }
 
