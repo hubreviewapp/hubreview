@@ -386,12 +386,13 @@ public class GitHubController : ControllerBase
                 {
                     while (await reader.ReadAsync())
                     {
-                        RepoInfo repo = new RepoInfo
+                        var repo = new RepoInfo
                         {
                             Id = reader.GetInt64(0),
                             Name = reader.GetString(1),
                             OwnerLogin = reader.GetString(2),
-                            CreatedAt = reader.GetFieldValue<DateOnly>(3)
+                            CreatedAt = reader.GetFieldValue<DateOnly>(3),
+                            IsAdmin = await GetRepoAdmins(reader.GetString(2), reader.GetString(1), userLogin)
                         };
                         allRepos.Add(repo);
                     }
@@ -4761,8 +4762,8 @@ public class GitHubController : ControllerBase
     // user type usersa direkt sahibi döndür.
     // userın type ı organizasyonsa, https://api.github.com/orgs/hubreviewapp/members?role=admin request.
 
-    [HttpGet("{repoOwner}/{repoName}/repoadmins/{userLogin}")]
-    public async Task<ActionResult> GetRepoAdmins(string repoOwner, string repoName,  string userLogin)
+    //[HttpGet("{repoOwner}/{repoName}/repoadmins/{userLogin}")]
+    public async Task<bool> GetRepoAdmins(string repoOwner, string repoName, string userLogin)
     {
         List<string> result = new List<string>();
 
@@ -4784,7 +4785,7 @@ public class GitHubController : ControllerBase
             result.Add(repoOwner);
         }
 
-        return Ok(result.Contains(userLogin));
+        return result.Contains(userLogin);
 
     }
 
