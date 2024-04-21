@@ -7,46 +7,7 @@ import TabComp from "../components/Tab.tsx";
 import PrDetailTab from "../tabs/PrDetailTab.tsx";
 import { Params, useParams } from "react-router-dom";
 import PRSummaryBox from "../components/PRCreate/PRSummaryBox";
-import { Assignee, Label, Reviewer } from "../components/PRDetailSideBar.tsx";
-import { Check, Review } from "../models/PRInfo.tsx";
 import { apiHooks } from "../api/apiHooks.ts";
-
-export interface PullRequest {
-  title: string;
-  draft: boolean;
-  updatedAt: string;
-  user: {
-    htmlUrl: string;
-    login: string;
-  };
-  changedFiles: number;
-  additions: number;
-  deletions: number;
-  commits: number;
-  base: {
-    repository: {
-      htmlUrl: string;
-    };
-  };
-  labels: Label[];
-  reviews: Reviewer[];
-  assignees: Assignee[];
-  mergeable: boolean;
-  merged: boolean;
-  closedAt: string;
-  htmlUrl: string;
-}
-
-export interface PRDetail {
-  pull: PullRequest;
-  checks: Check[];
-  reviews: Review[];
-  reviewers: string[]; //duplicate I guess
-  checksComplete: number;
-  checksIncomplete: number;
-  checksSuccess: number;
-  checksFail: number;
-}
 
 export type PRDetailsPageTabName = "comments" | "commits" | "details" | "reviews";
 const tabs: PRDetailsPageTabName[] = ["comments", "commits", "details", "reviews"];
@@ -59,14 +20,13 @@ export interface PRDetailsPageParams {
 
 const processParams = (rawParams: Params<string>): PRDetailsPageParams => {
   const { owner, repoName, prnumber } = rawParams;
-  if (owner === undefined || repoName === undefined || prnumber === undefined)
-    throw Error("Missing params in router");
+  if (owner === undefined || repoName === undefined || prnumber === undefined) throw Error("Missing params in router");
   return {
     owner,
     repoName,
     prNumber: parseInt(prnumber),
-  }
-}
+  };
+};
 
 export interface PRDetailsPageProps {
   tab?: PRDetailsPageTabName;
@@ -76,13 +36,25 @@ function PRDetailsPage(props: PRDetailsPageProps) {
   const { owner, repoName, prNumber } = processParams(useParams());
   const currentTab = props.tab ?? tabs[0];
 
-  const { data: pullRequestData, isLoading: isLoadingPullRequestData } = apiHooks.pullRequests.getByNumber(owner,repoName, prNumber)
+  const { data: pullRequestData, isLoading: isLoadingPullRequestData } = apiHooks.pullRequests.useGetByNumberQuery(
+    owner,
+    repoName,
+    prNumber,
+  );
   const pullRequestDetails = pullRequestData?.data;
 
   if (isLoadingPullRequestData)
-    return <Center h="100vh"><Loader /></Center>;
+    return (
+      <Center h="100vh">
+        <Loader />
+      </Center>
+    );
   if (pullRequestDetails === undefined)
-    return <Center><Text>Something went wrong, pull request was not found?</Text></Center>;
+    return (
+      <Center>
+        <Text>Something went wrong, pull request was not found?</Text>
+      </Center>
+    );
 
   return (
     <div style={{ textAlign: "left", marginLeft: 100 }}>
@@ -125,7 +97,7 @@ function PRDetailsPage(props: PRDetailsPageProps) {
         <PRSummaryBox
           numFiles={pullRequestDetails.changedFiles.fileCount ?? 0}
           numCommits={pullRequestDetails.commitCount ?? 0}
-          addedLines={pullRequestDetails.changedFiles.lineAdditions?? 0}
+          addedLines={pullRequestDetails.changedFiles.lineAdditions ?? 0}
           deletedLines={pullRequestDetails.changedFiles.lineDeletions ?? 0}
         />
       </Box>
@@ -136,9 +108,7 @@ function PRDetailsPage(props: PRDetailsPageProps) {
         <br />
         <Box>
           {currentTab === "reviews" && <ModifiedFilesTab />}
-          {currentTab === "comments" && (
-            <CommentsTab pullRequestDetails={pullRequestDetails} />
-          )}
+          {currentTab === "comments" && <CommentsTab pullRequestDetails={pullRequestDetails} />}
           {currentTab === "details" && <PrDetailTab pullRequestDetails={pullRequestDetails} />}
           {currentTab === "commits" && <CommitsTab />}
         </Box>

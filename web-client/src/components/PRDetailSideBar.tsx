@@ -38,7 +38,14 @@ import axios from "axios";
 import SelectLabel from "./SelectLabel";
 import BarColor from "../utility/WorkloadBarColor.ts";
 import { BASE_URL } from "../env.ts";
-import { APIPullRequestAssignee, APIPullRequestDetails, APIPullRequestReviewState, APIPullRequestReviewer, APIPullRequestReviewerActorType } from "../api/types.ts";
+import {
+  APIPullRequestAssignee,
+  APIPullRequestDetails,
+  APIPullRequestReviewMetadata,
+  APIPullRequestReviewState,
+  APIPullRequestReviewer,
+  APIPullRequestReviewerActorType,
+} from "../api/types.ts";
 
 export interface Contributor {
   id: string;
@@ -69,18 +76,34 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
   const [contributors, setContributors] = useState<Contributor[]>([]);
 
   const [addedReviewers, setAddedReviewers] = useState<APIPullRequestReviewer[]>([]);
+
+  const [query, setQuery] = useState("");
   const filteredReviewers = contributors.filter((item) => item.login.toLowerCase().includes(query.toLowerCase()));
-  const allReviewers = [...pullRequestDetails.reviews, ...addedReviewers.map(r => ({
+
+  const reviewsPerReviewer = pullRequestDetails.reviews.reduce(
+    function (result, review) {
+      (result[review.author.login] = result[review.author.login] || []).push(review);
+      return result;
+    },
+    {} as { [key: string]: APIPullRequestReviewMetadata[] },
+  );
+  const latestReviewsPerReviewer = Object.values(reviewsPerReviewer).map(
+    (reviews) => reviews.sort((a, b) => +b.createdAt - +a.createdAt)[0],
+  );
+
+  const pendingReviewerReviews = addedReviewers.map((r) => ({
     id: r.id,
-    author: r.actor.type === APIPullRequestReviewerActorType.USER ? {
-      login: r.actor.login,
-      avatarUrl: r.actor.avatarUrl,
-    } : null!, // TODO: support team reviewers
+    author:
+      r.actor.type === APIPullRequestReviewerActorType.USER
+        ? {
+            login: r.actor.login,
+            avatarUrl: r.actor.avatarUrl,
+          }
+        : null!, // TODO: support team reviewers
     state: APIPullRequestReviewState.PENDING,
-  }))];
+  }));
 
   const [priority, setPriority] = useState<PriorityBadgeLabel>(null);
-  const [query, setQuery] = useState("");
 
   const [addedAssigneesList, setAddedAssigneesList] = useState<APIPullRequestAssignee[]>([]);
   const [assigneeQuery, setAssigneeQuery] = useState("");
@@ -95,9 +118,12 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
   useEffect(() => {
     const fetchContributors = async () => {
       try {
-        const res = await axios.get(`${BASE_URL}/api/github/GetPRReviewerSuggestion/${owner}/${repoName}/${pullRequestDetails.author.login}`, {
-          withCredentials: true,
-        });
+        const res = await axios.get(
+          `${BASE_URL}/api/github/GetPRReviewerSuggestion/${owner}/${repoName}/${pullRequestDetails.author.login}`,
+          {
+            withCredentials: true,
+          },
+        );
         if (res.data) {
           setContributors(res.data);
         }
@@ -135,21 +161,22 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
       .post(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/request_review`, [reviewer.login], {
         withCredentials: true,
       })
-      .then(function() { })
-      .catch(function(error) {
+      .then(function () {})
+      .catch(function (error) {
         console.log(error);
       });
   }
 
   //HttpDelete("pullrequest/{owner}/{repoName}/{prnumber}/remove_reviewer/{reviewer}")]
   const deleteReviewer = (reviewerId: string) => {
-    const reviewer = addedReviewers.find(r => r.id === reviewerId);
+    const reviewer = addedReviewers.find((r) => r.id === reviewerId);
     if (reviewer === undefined) {
       console.warn(`Couldn't find reviewer with ID ${reviewerId}`);
       return;
     }
 
-    const reviewerAPIIdentifier = reviewer.actor.type === APIPullRequestReviewerActorType.USER ? reviewer.actor.login : null;
+    const reviewerAPIIdentifier =
+      reviewer.actor.type === APIPullRequestReviewerActorType.USER ? reviewer.actor.login : null;
     if (reviewerAPIIdentifier === undefined) {
       console.error(`Couldn't find API-side reviewer ID`);
       return;
@@ -157,11 +184,14 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
 
     setAddedReviewers(addedReviewers.filter((item) => item.id !== reviewerId));
     axios
-      .delete(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/remove_reviewer/${reviewerAPIIdentifier}`, {
-        withCredentials: true,
-      })
-      .then(function() { })
-      .catch(function(error) {
+      .delete(
+        `${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/remove_reviewer/${reviewerAPIIdentifier}`,
+        {
+          withCredentials: true,
+        },
+      )
+      .then(function () {})
+      .catch(function (error) {
         console.log(error);
       });
   };
@@ -197,8 +227,8 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
           "Content-Type": "application/json",
         },
       })
-      .then(function() { })
-      .catch(function(error) {
+      .then(function () {})
+      .catch(function (error) {
         console.log(error);
       });
   }
@@ -213,8 +243,8 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
       .post(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/removeAssignees`, assigneesRequest, {
         withCredentials: true,
       })
-      .then(function() { })
-      .catch(function(error) {
+      .then(function () {})
+      .catch(function (error) {
         console.log(error);
       });
   };
@@ -232,8 +262,8 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
               withCredentials: true,
             },
           )
-          .then(function() { })
-          .catch(function(error) {
+          .then(function () {})
+          .catch(function (error) {
             console.log(error);
           });
       }
@@ -250,8 +280,8 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
           withCredentials: true,
         },
       )
-      .then(function() { })
-      .catch(function(error) {
+      .then(function () {})
+      .catch(function (error) {
         console.log(error);
       });
   }
@@ -295,31 +325,56 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
               <Text fw={500} size="md" mb="sm">
                 Reviewers
               </Text>
-              {allReviewers.length == 0 ? (
+              {latestReviewsPerReviewer.length === 0 ? (
                 <Text c="dimmed">No reviewer added</Text>
               ) : (
-                allReviewers.map((reviewer) => (
-                  <Grid key={reviewer.id} mb="sm">
+                latestReviewsPerReviewer.map((review) => (
+                  <Grid key={review.id} mb="sm">
                     <Grid.Col span={2}>
-                      <Avatar src={reviewer.author.avatarUrl} size="sm" />
+                      <Avatar src={review.author.avatarUrl} size="sm" />
                     </Grid.Col>
                     <Grid.Col span={7}>
-                      <Text size="sm"> {reviewer.author.login} </Text>
+                      <Text size="sm"> {review.author.login} </Text>
                     </Grid.Col>
-                    <Grid.Col span={2}>{stateToMessage(reviewer.state)}</Grid.Col>
+                    <Grid.Col span={2}>{stateToMessage(review.state)}</Grid.Col>
                     <Grid.Col span={1}>
-                      {
-                        reviewer.state === APIPullRequestReviewState.PENDING &&
+                      {review.state === APIPullRequestReviewState.PENDING && (
                         <Tooltip label="Delete">
                           <CloseButton
-                            onClick={() => deleteReviewer(reviewer.id)}
+                            onClick={() => deleteReviewer(review.id)}
                             icon={<IconXboxX color="gray" size={18} stroke={1.5} />}
                           />
                         </Tooltip>
-                      }
+                      )}
                     </Grid.Col>
                   </Grid>
                 ))
+              )}
+              {addedReviewers.length !== 0 && (
+                <Box>
+                  <Text ta="center" size="xs" c="dimmed" mb="sm">
+                    Pending Reviewers
+                  </Text>
+                  {pendingReviewerReviews.map((review) => (
+                    <Grid key={review.id} mb="sm">
+                      <Grid.Col span={2}>
+                        <Avatar src={review.author.avatarUrl} size="sm" />
+                      </Grid.Col>
+                      <Grid.Col span={7}>
+                        <Text size="sm"> {review.author.login} </Text>
+                      </Grid.Col>
+                      <Grid.Col span={2}>{stateToMessage(review.state)}</Grid.Col>
+                      <Grid.Col span={1}>
+                        <Tooltip label="Delete">
+                          <CloseButton
+                            onClick={() => deleteReviewer(review.id)}
+                            icon={<IconXboxX color="gray" size={18} stroke={1.5} />}
+                          />
+                        </Tooltip>
+                      </Grid.Col>
+                    </Grid>
+                  ))}
+                </Box>
               )}
             </Grid.Col>
             <Grid.Col span={6}></Grid.Col>
@@ -477,7 +532,9 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
           <PriorityBadge label={priority} size="md" />
         </Box>
         <Divider mt="md" />
-        <SelectLabel githubAddedLabels={pullRequestDetails.labels.map(({ name }) => ({ name, key: name, color: "ffffff" }))} />
+        <SelectLabel
+          githubAddedLabels={pullRequestDetails.labels.map(({ name }) => ({ name, key: name, color: "ffffff" }))}
+        />
       </Paper>
     </Box>
   );

@@ -10,10 +10,10 @@ export const apiHooks = {
       }),
   }),
   pullRequests: Object.freeze({
-    getByNumber: (owner: string, repoName: string, prNumber: number) =>
+    useGetByNumberQuery: (owner: string, repoName: string, prNumber: number) =>
       useQuery({
         queryKey: [`/pullrequests/${owner}/${repoName}/${prNumber}`],
         queryFn: () => apiClient.pullRequests.getByNumber(owner, repoName, prNumber),
-      })
+      }),
   }),
 };

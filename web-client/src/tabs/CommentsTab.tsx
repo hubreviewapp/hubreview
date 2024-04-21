@@ -72,10 +72,10 @@ function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
         },
         withCredentials: true,
       })
-      .then(function() {
+      .then(function () {
         fetchPRComments();
       })
-      .catch(function(error) {
+      .catch(function (error) {
         console.log(error);
       });
   }
@@ -87,10 +87,10 @@ function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
       .delete(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${commentId}/deleteComment`, {
         withCredentials: true,
       })
-      .then(function() {
+      .then(function () {
         fetchPRComments();
       })
-      .catch(function(error) {
+      .catch(function (error) {
         console.log(error);
       });
   }
@@ -105,10 +105,10 @@ function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
         },
         withCredentials: true,
       })
-      .then(function() {
+      .then(function () {
         fetchPRComments();
       })
-      .catch(function(error) {
+      .catch(function (error) {
         console.log(error);
       });
   }
@@ -126,10 +126,10 @@ function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
         },
         withCredentials: true,
       })
-      .then(function() {
+      .then(function () {
         fetchPRComments();
       })
-      .catch(function(error) {
+      .catch(function (error) {
         console.log(error);
       });
   }
@@ -142,10 +142,10 @@ function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
       .post(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addCommentReply`, data, {
         withCredentials: true,
       })
-      .then(function() {
+      .then(function () {
         fetchPRComments();
       })
-      .catch(function(error) {
+      .catch(function (error) {
         console.log(error);
       });
   }
@@ -201,23 +201,23 @@ function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
               "All Comments (" + apiComments.length + ")",
               "My Comments (" + apiComments.filter((comment) => comment.author === user?.login).length + ")",
               "Active (" +
-              apiComments.filter(
-                (comment) =>
-                  comment.status === null ||
-                  comment.status === "Active" ||
-                  comment.status === "ACTIVE" ||
-                  comment.status === "Pending",
-              ).length +
-              ")",
+                apiComments.filter(
+                  (comment) =>
+                    comment.status === null ||
+                    comment.status === "Active" ||
+                    comment.status === "ACTIVE" ||
+                    comment.status === "Pending",
+                ).length +
+                ")",
               "Resolved (" +
-              apiComments.filter(
-                (comment) =>
-                  comment.status === "Resolved" ||
-                  comment.status === "Outdated" ||
-                  comment.status === "Closed" ||
-                  comment.status === "Duplicate",
-              ).length +
-              ")",
+                apiComments.filter(
+                  (comment) =>
+                    comment.status === "Resolved" ||
+                    comment.status === "Outdated" ||
+                    comment.status === "Closed" ||
+                    comment.status === "Duplicate",
+                ).length +
+                ")",
             ]}
             checkIconPosition="left"
             onChange={(val) => handleSelect(val)}

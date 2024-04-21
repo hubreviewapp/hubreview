@@ -4,19 +4,20 @@ import { IconCircleCheck, IconXboxX } from "@tabler/icons-react";
 
 import { APICheckConclusionState, APIPullRequestDetails } from "../api/types.ts";
 
+const iconCheckupList = <IconCheckupList style={{ width: rem(27), height: rem(27) }} />;
+
 export interface PRDetailTabProps {
   pullRequestDetails: APIPullRequestDetails;
 }
 
 export default function PrDetailTab({ pullRequestDetails }: PRDetailTabProps) {
-  const iconCheckupList = <IconCheckupList style={{ width: rem(27), height: rem(27) }} />;
-
-  const checkSuites = pullRequestDetails.checkSuites;
+  const checkSuites = pullRequestDetails.checkSuites.filter((cs) => cs.workflowRun !== null);
 
   return (
     <Box>
       <Badge leftSection={iconCheckupList} size="lg" mb={10} variant="gradient" style={{ visibility: "visible" }}>
-        Checks ( {checkSuites.filter(cs => cs.conclusion === APICheckConclusionState.SUCCESS).length} / {checkSuites.length} )
+        Checks ( {checkSuites.filter((cs) => cs.conclusion === APICheckConclusionState.SUCCESS).length} /{" "}
+        {checkSuites.length} )
       </Badge>
       <Box display="flex" style={{ flexWrap: "wrap" }}>
         {checkSuites.map((checkSuite) => (
@@ -33,9 +34,7 @@ export default function PrDetailTab({ pullRequestDetails }: PRDetailTabProps) {
           >
             <Group>
               <Text fw={500} size="lg" mt="md" style={{ marginBottom: "10px" }}>
-                {
-                  checkSuite.id // FIXME: should be name, not id
-                }
+                {checkSuite.workflowRun?.workflow.name}
               </Text>
 
               <Text fw={500} size="lg" mt="md">

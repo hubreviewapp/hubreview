@@ -4,23 +4,43 @@ export interface APICurrentUser {
 }
 
 export enum APIMergeableState {
-  MERGEABLE, CONFLICTING, UNKNOWN
+  MERGEABLE = "MERGEABLE",
+  CONFLICTING = "CONFLICTING",
+  UNKNOWN = "UNKNOWN",
 }
 
 export enum APIPullRequestReviewState {
-  PENDING, COMMENTED, APPROVED, CHANGES_REQUESTED, DISMISSED
+  PENDING = "PENDING",
+  COMMENTED = "COMMENTED",
+  APPROVED = "APPROVED",
+  CHANGES_REQUESTED = "CHANGES_REQUESTED",
+  DISMISSED = "DISMISSED",
 }
 
 export enum APICheckConclusionState {
-  ACTION_REQUIRED, TIMED_OUT, CANCELLED, FAILURE, SUCCESS, NEUTRAL, SKIPPED, STARTUP_FAILURE, STALE
+  ACTION_REQUIRED = "ACTION_REQUIRED",
+  TIMED_OUT = "TIMED_OUT",
+  CANCELLED = "CANCELLED",
+  FAILURE = "FAILURE",
+  SUCCESS = "SUCCESS",
+  NEUTRAL = "NEUTRAL",
+  SKIPPED = "SKIPPED",
+  STARTUP_FAILURE = "STARTUP_FAILURE",
+  STALE = "STALE",
 }
 
 export enum APICheckStatusState {
-  REQUESTED, QUEUED, IN_PROGRESS, COMPLETED, WAITING, PENDING
+  REQUESTED = "REQUESTED",
+  QUEUED = "QUEUED",
+  IN_PROGRESS = "IN_PROGRESS",
+  COMPLETED = "COMPLETED",
+  WAITING = "WAITING",
+  PENDING = "PENDING",
 }
 
 export enum APIPullRequestReviewerActorType {
-  USER, TEAM
+  USER = "USER",
+  TEAM = "TEAM",
 }
 
 export interface APIPullRequestReviewerActor {
@@ -44,7 +64,17 @@ export interface APIPullRequestReviewerTeam extends APIPullRequestReviewerActor 
 export interface APIPullRequestReviewer {
   id: string;
   asCodeOwner: boolean;
-  actor: APIPullRequestReviewerUser | APIPullRequestReviewerTeam
+  actor: APIPullRequestReviewerUser | APIPullRequestReviewerTeam;
+}
+
+export interface APIPullRequestReviewMetadata {
+  id: string;
+  createdAt: Date;
+  author: {
+    login: string;
+    avatarUrl: string | null;
+  };
+  state: APIPullRequestReviewState;
 }
 
 export interface APIPullRequestAssignee {
@@ -73,14 +103,7 @@ export interface APIPullRequestDetails {
   }[];
   assignees: APIPullRequestAssignee[];
   reviewers: APIPullRequestReviewer[];
-  reviews: {
-    id: string;
-    author: {
-      login: string;
-      avatarUrl: string | null;
-    };
-    state: APIPullRequestReviewState;
-  }[];
+  reviews: APIPullRequestReviewMetadata[];
   checkSuites: {
     id: string;
     conclusion: APICheckConclusionState | null;
@@ -98,7 +121,7 @@ export interface APIPullRequestDetails {
         conclusion: APICheckConclusionState | null;
         status: APICheckStatusState;
       }[];
-    } | null
+    } | null;
   }[];
   isDraft: boolean;
   mergeable: APIMergeableState;

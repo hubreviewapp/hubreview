@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using Octokit.GraphQL;
 using static Octokit.GraphQL.Variable;
 
@@ -35,9 +37,10 @@ public class PullRequestDetails
 
     public class ReviewerDetails
     {
+        [JsonConverter(typeof(StringEnumConverter))]
         public enum ReviewerType
         {
-            User, Team
+            USER, TEAM
         }
 
         public abstract class ReviewerActorDetails
@@ -73,6 +76,7 @@ public class PullRequestDetails
         }
 
         public required Octokit.GraphQL.ID Id { get; set; }
+        public required DateTimeOffset CreatedAt { get; set; }
         public required AuthorDetails Author { get; set; }
         public required Octokit.GraphQL.Model.PullRequestReviewState State { get; set; }
     }
@@ -173,14 +177,14 @@ public class PullRequestDetails
                             when
                                 .User(u => new PullRequestDetails.ReviewerDetails.ReviewerUserDetails
                                 {
-                                    Type = ReviewerDetails.ReviewerType.User,
+                                    Type = ReviewerDetails.ReviewerType.USER,
                                     Login = u.Login,
                                     AvatarUrl = u.AvatarUrl(null),
                                     Url = u.Url,
                                 })
                                 .Team(t => new PullRequestDetails.ReviewerDetails.ReviewerTeamDetails
                                 {
-                                    Type = ReviewerDetails.ReviewerType.Team,
+                                    Type = ReviewerDetails.ReviewerType.TEAM,
                                     Id = t.Id,
                                     Name = t.Name,
                                     Url = t.Url,
@@ -193,6 +197,7 @@ public class PullRequestDetails
                     .Select(r => new PullRequestDetails.ReviewDetails
                     {
                         Id = r.Id,
+                        CreatedAt = r.CreatedAt,
                         Author = new PullRequestDetails.ReviewDetails.AuthorDetails
                         {
                             Login = r.Author.Login,
