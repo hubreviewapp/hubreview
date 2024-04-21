@@ -368,21 +368,17 @@ public class GitHubController : ControllerBase
 
         var userClient = GetNewClient(access_token);
 
-        // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
+        var repos = userClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
         List<RepoInfo> allRepos = new List<RepoInfo>();
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await connection.OpenAsync();
 
-            string query = "SELECT id, name, ownerLogin, created_at FROM repositoryinfo WHERE ownerLogin = @ownerLogin OR ownerLogin = ANY(@organizationLogins) ORDER BY name ASC";
+            string query = "SELECT id, name, ownerLogin, created_at FROM repositoryinfo WHERE id = ANY(@repos) ORDER BY name ASC";
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
-                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@repos", repos);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
