@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Data;
 using System.Text;
 using System.Web;
@@ -15,6 +16,7 @@ using Octokit.GraphQL;
 using Octokit.GraphQL.Core;
 using Octokit.GraphQL.Model;
 using static Octokit.GraphQL.Variable;
+
 
 namespace CS.Web.Controllers;
 
@@ -134,8 +136,29 @@ public class GitHubController : ControllerBase
     }
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/summary")]
-    public async Task<ActionResult> summary(string owner, string repoName, int prnumber)
+    public async Task<ActionResult> summary(string owner, string repoName, int prnumber, [FromQuery] bool regen = false)
     {
+        using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
+
+        string query = $"SELECT summary FROM pullrequestinfo WHERE reponame = '{repoName}' AND pullnumber = {prnumber}";
+        string? summary = null;
+
+        connection.Open();
+
+        var command = new NpgsqlCommand(query, connection);
+        NpgsqlDataReader reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            summary = reader.IsDBNull(0) ? null : reader.GetString(0);
+        }
+
+        connection.Close();
+
+        if (summary != null && !regen)
+        {
+            return Ok(summary.Replace("''", "'"));
+        }
+
         var files = await GitHubUserClient.PullRequest.Files(owner, repoName, prnumber);
         var selected = string.Join("\n\n", files.Select(file => $"{file.FileName}:\n\n{file.Patch}"));
 
@@ -172,8 +195,18 @@ public class GitHubController : ControllerBase
         HttpResponseMessage response = await client.SendAsync(request);
         string responseBody = await response.Content.ReadAsStringAsync();
         var res = JsonConvert.DeserializeObject<ChatCompletionResponseModel>(responseBody);
+        var summaryContent = res?.Choices?[0].Message?.Content;
 
-        return Ok(res?.Choices?[0].Message?.Content ?? "");
+        query = $"UPDATE pullrequestinfo SET summary = '{summaryContent?.Replace("'", "''")}' WHERE reponame = '{repoName}' AND pullnumber = {prnumber}";
+
+        connection.Open();
+        using (var command2 = new NpgsqlCommand(query, connection))
+        {
+            command2.ExecuteNonQuery();
+        }
+        connection.Close();
+
+        return Ok(summaryContent ?? "");
     }
 
     [HttpGet("acquireToken")]
@@ -3655,6 +3688,40 @@ public class GitHubController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("analytics/{owner}/{repoName}/all")]
+    public async Task<ActionResult> GetPriorityDistributionAllTime(string owner, string repoName)
+    {
+        //last index highest priority
+        //first index lowest priority
+        List<int> result = [0, 0, 0, 0, 0];
+
+        using (NpgsqlConnection conn = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
+        {
+            await conn.OpenAsync();
+
+            string selects = "priority, COUNT(*) as amount";
+            string q = "SELECT " + selects + " FROM pullrequestinfo WHERE repoowner=@ownerLogin AND reponame=@repoName GROUP BY priority";
+            using (NpgsqlCommand command = new NpgsqlCommand(q, conn))
+            {
+                command.Parameters.AddWithValue("@ownerLogin", owner);
+                command.Parameters.AddWithValue("@repoName", repoName);
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        var pri = reader.GetInt32(0);
+                        result[pri] = reader.GetInt32(1);
+                    }
+                }
+            }
+
+            await conn.CloseAsync();
+        }
+
+        return Ok(result);
+    }
+
     [HttpGet("analytics/{owner}/{repoName}/avg_merged_time")]
     public async Task<ActionResult> GetAvgMergedTime(string owner, string repoName)
     {
@@ -3855,6 +3922,52 @@ public class GitHubController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("analytics/{owner}/{repoName}/label")]
+    public async Task<Dictionary<string, int>> GetLabelUsage(string owner, string repoName)
+    {
+        var allPullRequests = await GitHubUserClient.PullRequest.GetAllForRepository(owner, repoName, new PullRequestRequest { State = ItemStateFilter.Open });
+
+        var labelUsage = new ConcurrentDictionary<string, int>();
+
+        Parallel.ForEach(allPullRequests, pullRequest =>
+        {
+            var labels = pullRequest.Labels.Select(label => label.Name);
+
+            foreach (var label in labels)
+            {
+                if (!label.StartsWith("Priority:"))
+                {
+                    labelUsage.AddOrUpdate(label, 1, (_, count) => count + 1); // Thread-safe update of label count
+                }
+            }
+        });
+
+        return labelUsage.ToDictionary(kv => kv.Key, kv => kv.Value);
+    }
+
+    [HttpGet("analytics/{owner}/{repoName}/label/all")]
+    public async Task<Dictionary<string, int>> GetLabelUsageAllTime(string owner, string repoName)
+    {
+        var allPullRequests = await GitHubUserClient.PullRequest.GetAllForRepository(owner, repoName, new PullRequestRequest { State = ItemStateFilter.All });
+
+        var labelUsage = new ConcurrentDictionary<string, int>();
+
+        Parallel.ForEach(allPullRequests, pullRequest =>
+        {
+            var labels = pullRequest.Labels.Select(label => label.Name);
+
+            foreach (var label in labels)
+            {
+                if (!label.StartsWith("Priority:"))
+                {
+                    labelUsage.AddOrUpdate(label, 1, (_, count) => count + 1); // Thread-safe update of label count
+                }
+            }
+        });
+
+        return labelUsage.ToDictionary(kv => kv.Key, kv => kv.Value);
+    }
+
     [HttpGet("repository/{owner}/{repo}/{branch}/protection/{prnumber}")]
     public async Task<ActionResult> GetBranchProtection(string owner, string repo, string branch, long prnumber)
     {
@@ -3957,8 +4070,8 @@ public class GitHubController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("{repoOwner}/{repoName}/repoprioritysetters")]
-    public async Task<ActionResult> GetRepoPrioritySetters(string repoOwner, string repoName)
+    [HttpGet("{repoOwner}/{repoName}/repoprioritysetters/{userLogin}")]
+    public async Task<ActionResult> GetRepoPrioritySetters(string repoOwner, string repoName, string userLogin)
     {
         List<string> result = new List<string>();
 
@@ -4010,7 +4123,7 @@ public class GitHubController : ControllerBase
             result = await GetRepoCollaborators(repoOwner, repoName);
         }
 
-        return Ok(result);
+        return Ok(result.Contains(userLogin));
     }
 
     public async Task<List<string>> GetRepoCollaborators(string repoOwner, string repoName)
@@ -4024,7 +4137,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpPatch("{repoOwner}/{repoName}/changeonlyadmin/{onlyAdmin}")]
-    public async Task<ActionResult> GetRepoPrioritySetters(string repoOwner, string repoName, bool onlyAdmin)
+    public async Task<ActionResult> SetRepoSetting(string repoOwner, string repoName, bool onlyAdmin)
     {
         List<string> result = new List<string>();
 

@@ -73,7 +73,7 @@ function NavBar() {
               Analytics
             </Button>
             {location.pathname !== "/signIn" && user && (
-              <Button variant="transparent">
+              <Button variant="transparent" component="a" href={"https://github.com/" + user.login} target="_blank">
                 <Avatar src={user.avatarUrl} radius="xl" size="2rem" />
                 <Space w="xs" />
                 {user.login}
