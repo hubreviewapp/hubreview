@@ -2,9 +2,9 @@ namespace CS.Core.Entities
 {
     public class CollaboratorInfo
     {
-        public int Id { get; set; }
-        public string Login { get; set; }
-        public string AvatarUrl { get; set; }
+        public required int Id { get; set; }
+        public required string Login { get; set; }
+        public required string AvatarUrl { get; set; }
     }
 
 }

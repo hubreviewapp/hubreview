@@ -10,52 +10,52 @@ namespace CS.Core.Entities
         //
         // Summary:
         //     URL of the account's avatar.
-        public string AvatarUrl { get; set; }
+        public string? AvatarUrl { get; set; }
 
         //
         // Summary:
         //     The account's bio.
-        public string Bio { get; protected set; }
+        public string? Bio { get; set; }
 
         //
         // Summary:
         //     URL of the account's blog.
-        public string Blog { get; protected set; }
+        public string? Blog { get; set; }
 
         //
         // Summary:
         //     Number of collaborators the account has.
-        public int? Collaborators { get; protected set; }
+        public int? Collaborators { get; set; }
 
         //
         // Summary:
         //     Company the account works for.
-        public string Company { get; protected set; }
+        public string? Company { get; set; }
 
         //
         // Summary:
         //     Date the account was created.
-        public DateTimeOffset CreatedAt { get; protected set; }
+        public DateTimeOffset? CreatedAt { get; set; }
 
         //
         // Summary:
         //     Amount of disk space the account is using.
-        public int? DiskUsage { get; protected set; }
+        public int? DiskUsage { get; set; }
 
         //
         // Summary:
         //     The account's email.
-        public string Email { get; protected set; }
+        public string? Email { get; set; }
 
         //
         // Summary:
         //     Number of followers the account has.
-        public int Followers { get; protected set; }
+        public int? Followers { get; set; }
 
         //
         // Summary:
         //     Number of other users the account is following.
-        public int Following { get; protected set; }
+        public int? Following { get; set; }
 
         //
         // Summary:
@@ -63,37 +63,37 @@ namespace CS.Core.Entities
         //
         // Value:
         //     True if the account is hireable; otherwise, false.
-        public bool? Hireable { get; protected set; }
+        public bool? Hireable { get; set; }
 
         //
         // Summary:
         //     The HTML URL for the account on github.com (or GitHub Enterprise).
-        public string HtmlUrl { get; protected set; }
+        public string? HtmlUrl { get; set; }
 
         //
         // Summary:
         //     The account's system-wide unique Id.
-        public int Id { get; protected set; }
+        public int? Id { get; set; }
 
         //
         // Summary:
         //     GraphQL Node Id
-        public string NodeId { get; protected set; }
+        public string? NodeId { get; set; }
 
         //
         // Summary:
         //     The account's geographic location.
-        public string Location { get; protected set; }
+        public string? Location { get; set; }
 
         //
         // Summary:
         //     The account's login.
-        public string Login { get; set; }
+        public string? Login { get; set; }
 
         //
         // Summary:
         //     The account's full name.
-        public string Name { get; protected set; }
+        public string? Name { get; set; }
 
         //
         // Summary:
@@ -101,7 +101,7 @@ namespace CS.Core.Entities
         //
         // Summary:
         //     Number of private repos owned by the account.
-        public int OwnedPrivateRepos { get; protected set; }
+        public int? OwnedPrivateRepos { get; set; }
 
         //
         // Summary:
@@ -111,27 +111,27 @@ namespace CS.Core.Entities
         //
         // Summary:
         //     Number of private gists the account has created.
-        public int? PrivateGists { get; protected set; }
+        public int? PrivateGists { get; set; }
 
         //
         // Summary:
         //     Number of public gists the account has created.
-        public int PublicGists { get; protected set; }
+        public int? PublicGists { get; set; }
 
         //
         // Summary:
         //     Number of public repos the account owns.
-        public int PublicRepos { get; protected set; }
+        public int? PublicRepos { get; set; }
 
         //
         // Summary:
         //     Total number of private repos the account owns.
-        public int TotalPrivateRepos { get; protected set; }
+        public int? TotalPrivateRepos { get; set; }
 
         //
         // Summary:
         //     The account's API URL.
-        public string Url { get; protected set; }
+        public string? Url { get; set; }
 
     }
     /*

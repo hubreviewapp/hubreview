@@ -1,75 +1,113 @@
-using System.ComponentModel;
 using System.Data;
 using System.Text;
 using System.Web;
 using CS.Core.Configuration;
 using CS.Core.Entities;
+using CS.Core.Entities.V2;
 using CS.Web.Models.Api.Request;
 using GitHubJwt;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using Npgsql;
 using Octokit;
 using Octokit.GraphQL;
-using Octokit.GraphQL.Core;
-using Octokit.GraphQL.Core.Builders;
 using Octokit.GraphQL.Model;
-using Swashbuckle.AspNetCore.SwaggerGen;
 using static Octokit.GraphQL.Variable;
 
 namespace CS.Web.Controllers;
 
 [Route("api/github")]
 [ApiController]
-
 public class GitHubController : ControllerBase
 {
-
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly CoreConfiguration _coreConfiguration;
     private readonly IWebHostEnvironment _environment;
-    private GitHubClient _appClient;
 
-    public object[]? Reviews { get; private set; }
-
-    private static GitHubClient _getGitHubClient(string token)
+    public GitHubController(IHttpContextAccessor httpContextAccessor, CoreConfiguration coreConfiguration, IWebHostEnvironment environment)
     {
-        return new GitHubClient(new Octokit.ProductHeaderValue("HubReviewApp"))
+        _httpContextAccessor = httpContextAccessor;
+        _coreConfiguration = coreConfiguration;
+        _environment = environment;
+    }
+
+    private string _githubProductHeaderName = "HubReviewApp";
+    private string _githubProductHeaderVersion = "1.0.0";
+
+    private GitHubClient GetGitHubClient(string token)
+    {
+        return new GitHubClient(new Octokit.ProductHeaderValue(_githubProductHeaderName))
         {
-            Credentials = new Credentials(token, AuthenticationType.Bearer)
+            Credentials = new(token, AuthenticationType.Bearer)
         };
     }
 
-    private GitHubJwtFactory _getGitHubJwtGenerator()
+    private string GitHubAppToken
     {
-        return new GitHubJwtFactory(
-            new FilePrivateKeySource("../private-key.pem"),
-            new GitHubJwtFactoryOptions
-            {
-                AppIntegrationId = _coreConfiguration.AppId, // The GitHub App Id
-                ExpirationSeconds = (int)TimeSpan.FromMinutes(5).TotalSeconds // 10 minutes is the maximum time allowed
-            }
-        );
+        get
+        {
+            var jwtFactory = new GitHubJwtFactory(
+                new FilePrivateKeySource("../private-key.pem"),
+                new GitHubJwtFactoryOptions
+                {
+                    AppIntegrationId = _coreConfiguration.AppId,
+                    ExpirationSeconds = (int)TimeSpan.FromMinutes(5).TotalSeconds // 10 minutes is the maximum time allowed
+                }
+            );
+
+            return jwtFactory.CreateEncodedJwtToken();
+        }
     }
 
-    private GitHubClient GetNewClient(string? token = null)
+    private GitHubClient? _githubAnonymousClient;
+    private GitHubClient GitHubAnonymousClient => _githubAnonymousClient ??= new GitHubClient(new Octokit.ProductHeaderValue(_githubProductHeaderName));
+
+    private GitHubClient? _githubAppClient;
+    private GitHubClient GitHubAppClient => _githubAppClient ??= GetGitHubClient(GitHubAppToken);
+
+    private const string _userAccessTokenSessionKey = "UserAccessToken";
+    private const string _userLoginSessionKey = "UserLogin";
+
+    private string? UserAccessToken => _httpContextAccessor?.HttpContext?.Session.GetString(_userAccessTokenSessionKey);
+    private string? UserLogin => _httpContextAccessor?.HttpContext?.Session.GetString(_userLoginSessionKey);
+    private bool IsLoggedIn => UserAccessToken is not null;
+
+    private void SetUserAccessToken(Octokit.OauthToken token) =>
+        _httpContextAccessor?.HttpContext?.Session.SetString(_userAccessTokenSessionKey, token.AccessToken);
+    private void SetUserLogin(Octokit.User user) =>
+        _httpContextAccessor?.HttpContext?.Session.SetString(_userLoginSessionKey, user.Login);
+
+    private GitHubClient? _githubUserClient;
+    private GitHubClient GitHubUserClient
     {
-        GitHubClient res;
-
-        if (token == null)
+        get
         {
-            GitHubJwtFactory generator = _getGitHubJwtGenerator();
-            string jwtToken = generator.CreateEncodedJwtToken();
-            res = _getGitHubClient(jwtToken);
+            if (_githubUserClient is not null) return _githubUserClient;
 
+            if (UserAccessToken is null)
+                throw new InvalidOperationException("Tried to create GitHub user client, but found no token");
+            return _githubUserClient = GetGitHubClient(UserAccessToken);
         }
-        else
+    }
+
+    private Octokit.GraphQL.Connection GetGitHubGraphQLConnection(string token)
+    {
+        return new Octokit.GraphQL.Connection(
+            new Octokit.GraphQL.ProductHeaderValue(_githubProductHeaderName, _githubProductHeaderVersion),
+            token);
+    }
+
+    private Octokit.GraphQL.Connection? _githubUserGraphQLConnection;
+    private Octokit.GraphQL.Connection GitHubUserGraphQLConnection
+    {
+        get
         {
-            res = _getGitHubClient(token);
+            if (_githubUserGraphQLConnection is not null) return _githubUserGraphQLConnection;
+
+            if (UserAccessToken is null)
+                throw new InvalidOperationException("Tried to create GitHub user GraphQL connection, but found no token");
+            return _githubUserGraphQLConnection = GetGitHubGraphQLConnection(UserAccessToken);
         }
-        return res;
     }
 
     private static string GenerateRandomColor()
@@ -79,733 +117,201 @@ public class GitHubController : ControllerBase
         return color;
     }
 
-    [ActivatorUtilitiesConstructor]
-    public GitHubController(IHttpContextAccessor httpContextAccessor, CoreConfiguration coreConfiguration, IWebHostEnvironment environment)
-    {
-        _httpContextAccessor = httpContextAccessor;
-        _coreConfiguration = coreConfiguration;
-        _appClient = GetNewClient();
-        _environment = environment;
-    }
-
     [HttpGet("acquireToken")]
-    public async Task<ActionResult> acquireToken(string code)
+    public async Task<ActionResult> AcquireToken([FromQuery] string code, [FromQuery] string state)
     {
-        using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
+        var stateObject = JsonConvert.DeserializeAnonymousType(HttpUtility.UrlDecode(state), new { from = "" });
 
-        connection.Open();
+        var request = new OauthTokenRequest(
+            clientId: _coreConfiguration.OAuthClientId,
+            clientSecret: _coreConfiguration.OAuthClientSecret,
+            code: code);
 
+        var token = await GitHubAnonymousClient.Oauth.CreateAccessToken(request);
+        SetUserAccessToken(token);
 
-        using (var httpClient = new HttpClient())
-        {
-            var tokenRequest = new FormUrlEncodedContent(new Dictionary<string, string>
-            {
-                {"client_id", _coreConfiguration.OAuthClientId},
-                {"client_secret", _coreConfiguration.OAuthClientSecret},
-                {"code", code},
-            });
+        var user = await GitHubUserClient.User.Current();
+        SetUserLogin(user);
 
-            var tokenResponse = await httpClient.PostAsync("https://github.com/login/oauth/access_token", tokenRequest);
-            var responseContent = await tokenResponse.Content.ReadAsStringAsync();
-
-            // Parse the response to get the access token
-            var parsedResponse = HttpUtility.ParseQueryString(responseContent);
-            var access_token = parsedResponse["access_token"];
-
-            GitHubClient userClient = GetNewClient(access_token);
-            var user = await userClient.User.Current();
-
-            string exists = "SELECT EXISTS (SELECT 1 FROM userinfo WHERE userid = @userid LIMIT 1)";
-            bool doesExist = false;
-            using (NpgsqlCommand command = new NpgsqlCommand(exists, connection))
-            {
-                command.Parameters.AddWithValue("@userid", user.Id);
-                var reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    doesExist = reader.GetBoolean(0);
-                }
-
-            }
-
-            await connection.CloseAsync();
-            var orgs = await userClient.Organization.GetAllForCurrent();
-            var orgList = orgs.Select(o => o.Login).ToArray();
-
-
-            if (!doesExist)
-            {
-                string parameters = "(userid, login, email, avatarurl, profileurl, organizations, workload, token)";
-                string at_parameters = "(@userid, @login, @email, @avatarurl, @profileurl, @organizations, @workload, @token)";
-                string query = "INSERT INTO userinfo " + parameters + " VALUES " + at_parameters;
-
-                connection.Open();
-
-                using (NpgsqlCommand command2 = new NpgsqlCommand(query, connection))
-                {
-                    command2.Parameters.AddWithValue("@userid", user.Id);
-                    command2.Parameters.AddWithValue("@login", user.Login);
-                    if (user.Email != null)
-                    {
-                        command2.Parameters.AddWithValue("@email", user.Email);
-                    }
-                    else
-                    {
-                        command2.Parameters.AddWithValue("@email", DBNull.Value);
-                    }
-                    command2.Parameters.AddWithValue("@avatarurl", user.AvatarUrl);
-                    command2.Parameters.AddWithValue("@profileurl", user.Url);
-                    command2.Parameters.AddWithValue("@organizations", orgList);
-                    command2.Parameters.AddWithValue("@workload", 0);
-                    if (access_token != null)
-                    {
-                        command2.Parameters.AddWithValue("@token", access_token);
-                    }
-                    else
-                    {
-                        command2.Parameters.AddWithValue("@token", DBNull.Value);
-                    }
-
-
-                    command2.ExecuteNonQuery();
-                }
-
-                await connection.CloseAsync();
-            }
-            else
-            {
-                string query = @"
-                    UPDATE userinfo
-                    SET email = @email,
-                        login = @login,
-                        profileurl = @profileurl,
-                        organizations = @organizations,
-                        token = @token
-                    WHERE userid = @userid";
-
-                connection.Open();
-
-                using (NpgsqlCommand command2 = new NpgsqlCommand(query, connection))
-                {
-                    command2.Parameters.AddWithValue("@userid", user.Id);
-                    command2.Parameters.AddWithValue("@login", user.Login);
-                    if (user.Email != null)
-                    {
-                        command2.Parameters.AddWithValue("@email", user.Email);
-                    }
-                    else
-                    {
-                        command2.Parameters.AddWithValue("@email", DBNull.Value);
-                    }
-                    command2.Parameters.AddWithValue("@profileurl", user.Url);
-                    command2.Parameters.AddWithValue("@organizations", orgList);
-                    command2.Parameters.AddWithValue("@token", access_token);
-
-                    command2.ExecuteNonQuery();
-                }
-                await connection.CloseAsync();
-            }
-
-            _httpContextAccessor?.HttpContext?.Session.SetString("UserLogin", user.Login);
-            _httpContextAccessor?.HttpContext?.Session.SetString("UserAvatarURL", user.AvatarUrl);
-            _httpContextAccessor?.HttpContext?.Session.SetString("AccessToken", access_token);
-
-            return Redirect(_environment.IsProduction() ? "https://hubreview.app" : "http://localhost:5173");
-        }
+        var baseUrl = _environment.IsProduction() ? "https://hubreview.app" : "http://localhost:5173";
+        var returnPathName = stateObject?.from ?? "";
+        return Redirect(baseUrl + returnPathName);
     }
 
-    [HttpGet("getUserInfo")]
-    public ActionResult getUserInfo()
+    [HttpGet("/users/current")]
+    public async Task<ActionResult> GetCurrentUser()
     {
+        if (!IsLoggedIn) return Unauthorized();
 
-        var userInfo = new
+        var user = await GitHubUserClient.User.Current();
+
+        SetUserLogin(user);
+
+        return Ok(new
         {
-            UserLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"),
-            UserAvatarUrl = _httpContextAccessor?.HttpContext?.Session.GetString("UserAvatarURL")
-        };
-
-        return Ok(userInfo);
+            Login = user.Login,
+            AvatarUrl = user.AvatarUrl,
+        });
     }
 
     [HttpGet("logoutUser")]
-    public ActionResult logoutUser()
+    public ActionResult LogoutUser()
     {
         _httpContextAccessor?.HttpContext?.Session.Clear();
         return Ok();
-
     }
 
     [HttpGet("getRepository")]
-    public async Task<ActionResult> getRepository()
+    public async Task<ActionResult> GetRepositories()
     {
-        /*
-        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
-        string? userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+        // Note: A user's repositories are immediately visible upon authorization.
+        // However, organization repository access requires that the HubReview OAuth app is authorized to
+        // access the organization's resources.
+        // For details: https://docs.github.com/en/organizations/managing-oauth-access-to-your-organizations-data/about-oauth-app-access-restrictions
+        var repositories = await GitHubUserClient.Repository.GetAllForCurrent();
 
-        var userClient = GetNewClient(access_token);
-
-        // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
-        // Store all repositories
-        var allRepos = new List<RepoInfo>();
-
-        var installations = await _appClient.GitHubApps.GetAllInstallationsForCurrent();
-        foreach (var installation in installations)
+        return Ok(new
         {
-            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            RepoNames = repositories.Select(r => new RepoInfo
             {
-                var response = await _appClient.GitHubApps.CreateInstallationToken(installation.Id);
-                var installationClient = GetNewClient(response.Token);
-                var repos = await installationClient.GitHubApps.Installation.GetAllRepositoriesForCurrent();
-
-                // Add repositories to the list
-                allRepos.AddRange(repos.Repositories.Select(rep => new RepoInfo
-                {
-                    Id = rep.Id,
-                    Name = rep.Name,
-                    OwnerLogin = rep.Owner.Login,
-                    CreatedAt = rep.CreatedAt.Date.ToString("dd/MM/yyyy")
-                }));
-            }
-        }
-
-        if (allRepos.Any())
-        {
-            var sortedRepos = allRepos.OrderBy(repo => repo.Name).ToArray();
-            return Ok(new { RepoNames = sortedRepos });
-        }
-
-        return NotFound("There exists no user in session.");
-        */
-
-        // Get repositories from the database
-        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
-        string? userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
-
-        var userClient = GetNewClient(access_token);
-
-        // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
-
-        List<RepoInfo> allRepos = new List<RepoInfo>();
-        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
-        {
-            await connection.OpenAsync();
-
-            string query = "SELECT id, name, ownerLogin, created_at FROM repositoryinfo WHERE ownerLogin = @ownerLogin OR ownerLogin = ANY(@organizationLogins) ORDER BY name ASC";
-            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
-            {
-                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
-
-                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
-                {
-                    while (await reader.ReadAsync())
-                    {
-                        RepoInfo repo = new RepoInfo
-                        {
-                            Id = reader.GetInt64(0),
-                            Name = reader.GetString(1),
-                            OwnerLogin = reader.GetString(2),
-                            CreatedAt = reader.GetFieldValue<DateOnly>(3)
-                        };
-                        allRepos.Add(repo);
-                    }
-                }
-            }
-
-            await connection.CloseAsync();
-        }
-
-        return Ok(new { RepoNames = allRepos });
-
+                Id = r.Id,
+                Name = r.FullName,
+                CreatedAt = DateOnly.FromDateTime(r.CreatedAt.DateTime),
+                OwnerLogin = r.Owner.Login,
+            })
+        });
     }
 
-    [HttpGet("getRepository/{id}")] // Update the route to include repository ID
-    public async Task<Octokit.Repository?> GetRepositoryById(int id) // Change the method signature to accept ID
+    [HttpGet("getRepository/{id}")]
+    public async Task<ActionResult> GetRepositoryById(int id)
     {
-        var appClient = GetNewClient();
+        var repository = await GitHubUserClient.Repository.Get(id);
 
-        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
-
-        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
-        foreach (var installation in installations)
-        {
-            if (installation.Account.Login == userLogin)
-            {
-                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
-                var installationClient = GetNewClient(response.Token);
-
-
-                // Get the repository by ID
-                var repository = await installationClient.Repository.Get(id);
-
-                // Now you have the repository object, you can use it or return it as needed
-                Console.WriteLine($"Repository: {repository.FullName}");
-                Console.WriteLine($"Repository URL: {repository.HtmlUrl}");
-                Console.WriteLine($"Repository Description: {repository.Description}");
-
-                return repository;
-            }
-        }
-        return null;
+        if (repository is null)
+            return NotFound();
+        return Ok(repository);
     }
 
-    [HttpGet("prs")]
-    public async Task<ActionResult> getAllPRs()
+    [HttpGet("/pullrequests/{owner}/{repoName}/{prNumber}")]
+    public async Task<ActionResult> GetPRByNumber(string owner, string repoName, long prNumber)
     {
-        /*
-        var generator = _getGitHubJwtGenerator();
-        var jwtToken = generator.CreateEncodedJwtToken();
-        var appClient = _getGitHubClient(jwtToken);
+        var query = PullRequestDetails.GetQuery();
 
-        var client = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-
-        // Get organizations for the current user
-        var organizations = await client.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
-        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
-
-        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
-        var pullRequests = new List<PRInfo>([]); // Change list type to "PullRequest" to examine the PR data
-
-        foreach (var installation in installations)
+        var pullRequestDetails = await GitHubUserGraphQLConnection.Run(query, new Dictionary<string, object>
         {
-            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
-            {
-                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
-                var installationClient = _getGitHubClient(response.Token);
-                var repos = await installationClient.GitHubApps.Installation.GetAllRepositoriesForCurrent();
+            { "repoName", repoName },
+            { "owner", owner },
+            { "prNumber", prNumber },
+        });
 
-                foreach (var repository in repos.Repositories)
-                {
-
-                    var repoPulls = await installationClient.PullRequest.GetAllForRepository(repository.Id);
-
-
-                    //foreach( var repoPull in repoPulls ){
-                    //    var pull = await installationClient.PullRequest.Get(repository.Id, repoPull.Number);
-                    //    pullRequests.Add(pull);
-                    //}
-
-
-                    foreach (var repoPull in repoPulls)
-                    {
-                        var pull = await installationClient.PullRequest.Get(repository.Id, repoPull.Number);
-                        var repoPullsInfos = new PRInfo
-                        {
-                            Id = pull.Id,
-                            Title = pull.Title,
-                            PRNumber = pull.Number,
-                            Author = pull.User.Login,
-                            AuthorAvatarURL = pull.User.AvatarUrl,
-                            CreatedAt = pull.CreatedAt.Date.ToString("dd/MM/yyyy"),
-                            UpdatedAt = pull.UpdatedAt.Date.ToString("dd/MM/yyyy"),
-                            RepoName = pull.Base.Repository.Name,
-                            Additions = pull.Additions,
-                            Deletions = pull.Deletions,
-                            Files = pull.ChangedFiles,
-                            Comments = pull.Comments,
-                            Labels = pull.Labels.ToArray(),
-                            RepoOwner = pull.Base.Repository.Owner.Login
-                        };
-
-                        pullRequests.Add(repoPullsInfos);
-                    }
-
-                }
-            }
-        }
-
-
-        return Ok(pullRequests);*/
-
-        // Get repositories from the database
-        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
-        string? userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
-
-        var userClient = GetNewClient(access_token);
-
-        // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
-
-        List<PRInfo> allPRs = new List<PRInfo>();
-        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
-        {
-            await connection.OpenAsync();
-
-            string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner";
-            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins)";// ORDER BY name ASC";
-            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
-            {
-                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
-
-                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
-                {
-                    while (await reader.ReadAsync())
-                    {
-                        PRInfo pr = new PRInfo
-                        {
-                            Id = reader.GetInt64(0),
-                            Title = reader.GetString(1),
-                            PRNumber = reader.GetInt32(2),
-                            Author = reader.GetString(3),
-                            AuthorAvatarURL = reader.GetString(4),
-                            CreatedAt = reader.GetFieldValue<DateOnly>(5),
-                            UpdatedAt = reader.GetFieldValue<DateOnly>(6),
-                            RepoName = reader.GetString(7),
-                            Additions = reader.GetInt32(8),
-                            Deletions = reader.GetInt32(9),
-                            Files = reader.GetInt32(10),
-                            Comments = reader.GetInt32(11),
-                            Labels = JsonConvert.DeserializeObject<object[]>(reader.GetString(12)),
-                            RepoOwner = reader.GetString(13)
-                        };
-                        allPRs.Add(pr);
-                    }
-                }
-            }
-
-            await connection.CloseAsync();
-        }
-
-        return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
+        return Ok(pullRequestDetails);
     }
 
-    [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}")]
-    public async Task<ActionResult> getPRById(string owner, string repoName, long prnumber)
+    [HttpPost("pullrequest/{owner}/{repoName}/{prNumber}/addLabel")]
+    public async Task<ActionResult> AddLabelToPR(string owner, string repoName, long prNumber, [FromBody] List<string> labelNames)
     {
-        var generator = _getGitHubJwtGenerator();
-        var jwtToken = generator.CreateEncodedJwtToken();
-        var appClient = _getGitHubClient(jwtToken);
-
-        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
-
-        var client = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-
-        // Get organizations for the current user
-        var organizations = await client.Organization.GetAllForCurrent();
-
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
-        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
-        foreach (var installation in installations)
+        try
         {
-            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            var repositoryLabels = await GitHubUserClient.Issue.Labels.GetAllForRepository(owner, repoName);
+            var labelsToAdd = new List<Octokit.Label>();
+
+            foreach (var labelName in labelNames)
             {
-                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
-                var installationClient = _getGitHubClient(response.Token);
-
-                try
+                var label = repositoryLabels.FirstOrDefault(l => l.Name.Equals(labelName, StringComparison.OrdinalIgnoreCase));
+                if (label == null)
                 {
-                    var pull = await installationClient.PullRequest.Get(owner, repoName, (int)prnumber);
-
-                    Array checks;
-                    List<ReviewObjDB> reviews = [];
-                    string[] reviewers;
-                    List<ReviewObjDB> combined_revs = [];
-                    int ChecksComplete;
-                    int ChecksIncomplete;
-                    int ChecksSuccess;
-                    int ChecksFail;
-
-                    using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
-                    {
-                        await connection.OpenAsync();
-
-                        string selects = "checks, checks_complete, checks_incomplete, checks_success, checks_fail, reviews, reviewers";
-                        string query = "SELECT " + selects + " FROM pullrequestinfo WHERE reponame=@reponame AND repoowner=@owner AND pullnumber = @prnumber";// ORDER BY name ASC";
-                        using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
-                        {
-                            command.Parameters.AddWithValue("@reponame", repoName);
-                            command.Parameters.AddWithValue("@owner", owner);
-                            command.Parameters.AddWithValue("@prnumber", prnumber);
-
-                            using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
-                            {
-                                await reader.ReadAsync();
-                                checks = JsonConvert.DeserializeObject<object[]>(reader.GetString(0));
-                                ChecksComplete = reader.GetInt32(1);
-                                ChecksIncomplete = reader.GetInt32(2);
-                                ChecksSuccess = reader.GetInt32(3);
-                                ChecksFail = reader.GetInt32(4);
-                                reviews = JsonConvert.DeserializeObject<List<ReviewObjDB>>(reader.GetString(5));
-                                reviewers = reader.IsDBNull(6) ? new string[] { } : ((object[])reader.GetValue(6)).Select(obj => obj.ToString()).ToArray();
-                            }
-                        }
-
-                        await connection.CloseAsync();
-                    }
-
-                    foreach (var obj in reviewers)
-                    {
-                        var user = await installationClient.User.Get(obj);
-                        combined_revs.Add(new ReviewObjDB
-                        {
-                            login = obj,
-                            state = "PENDING",
-                            avatar = user.AvatarUrl
-                        });
-                    }
-
-
-                    foreach (var name in reviews)
-                    {
-                        if (!reviewers.Contains(name.login))
-                        {
-                            var user = await installationClient.User.Get(name.login);
-                            combined_revs.Add(new ReviewObjDB
-                            {
-                                login = name.login,
-                                state = name.state,
-                                avatar = user.AvatarUrl
-                            });
-                        }
-                    }
-
-                    var prDetails = new
-                    {
-                        Pull = pull,
-                        checks = checks,
-                        reviews = combined_revs,
-                        checksComplete = ChecksComplete,
-                        ChecksIncomplete = ChecksIncomplete,
-                        ChecksSuccess = ChecksSuccess,
-                        ChecksFail = ChecksFail
-                    };
-
-                    return Ok(prDetails);
+                    var randomColor = GenerateRandomColor();
+                    label = await GitHubUserClient.Issue.Labels.Create(
+                        owner,
+                        repoName,
+                        new NewLabel(labelName, randomColor.Substring(1)));
                 }
-                catch (NotFoundException)
-                {
-                    return NotFound($"Pull request with number {prnumber} not found in repository {repoName}.");
-                }
+                labelsToAdd.Add(label);
             }
-        }
+            await GitHubUserClient.Issue.Labels.AddToIssue(owner, repoName, (int)prNumber, labelsToAdd.Select(l => l.Name).ToArray());
 
-        return NotFound("There exists no user in session.");
+            return Ok($"Labels '{string.Join(",", labelNames)}' added to pull request #{prNumber} in repository {repoName}.");
+        }
+        catch (NotFoundException)
+        {
+            return NotFound($"Pull request with number {prNumber} not found in repository {repoName}.");
+        }
     }
 
-    [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addLabel")]
-    public async Task<ActionResult> addLabelToPR(string owner, string repoName, long prnumber, [FromBody] List<string> labelNames)
+    [HttpDelete("pullrequest/{owner}/{repoName}/{prNumber}/{labelName}")]
+    public async Task<ActionResult> RemoveLabelFromPR(string owner, string repoName, long prNumber, string labelName)
     {
-        var generator = _getGitHubJwtGenerator();
-        var jwtToken = generator.CreateEncodedJwtToken();
-        var appClient = _getGitHubClient(jwtToken);
-
-        var client = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-
-        // Get organizations for the current user
-        var organizations = await client.Organization.GetAllForCurrent();
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
-        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
-
-        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
-        foreach (var installation in installations)
+        try
         {
-            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
-            {
-                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
-                var installationClient = _getGitHubClient(response.Token);
-
-                try
-                {
-                    // Get the existing labels of the repository
-                    var labels = await installationClient.Issue.Labels.GetAllForRepository(owner, repoName);
-
-                    foreach (var labelName in labelNames)
-                    {
-                        // Find the label by name
-                        var label = labels.FirstOrDefault(l => l.Name.Equals(labelName, StringComparison.OrdinalIgnoreCase));
-                        if (label == null)
-                        {
-                            // If the label does not exist, create it
-                            var randomColor = GenerateRandomColor();
-                            label = await client.Issue.Labels.Create(owner, repoName, new NewLabel(labelName, "ffffff"));
-                        }
-
-                        // Add the label to the pull request
-                        await client.Issue.Labels.AddToIssue(owner, repoName, (int)prnumber, new[] { label.Name });
-                    }
-
-                    return Ok($"Labels '{string.Join(",", labelNames)}' added to pull request #{prnumber} in repository {repoName}.");
-                }
-                catch (NotFoundException)
-                {
-                    return NotFound($"Pull request with number {prnumber} not found in repository {repoName}.");
-                }
-            }
+            await GitHubUserClient.Issue.Labels.RemoveFromIssue(owner, repoName, (int)prNumber, labelName);
+            return Ok($"Label '{labelName}' removed from pull request #{prNumber} in repository {repoName}.");
         }
-
-        return NotFound("There exists no user in session.");
-    }
-
-    [HttpDelete("pullrequest/{owner}/{repoName}/{prnumber}/{labelName}")]
-    public async Task<ActionResult> RemoveLabelFromPR(string owner, string repoName, long prnumber, string labelName)
-    {
-        var generator = _getGitHubJwtGenerator();
-        var jwtToken = generator.CreateEncodedJwtToken();
-        var appClient = _getGitHubClient(jwtToken);
-
-        var client = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-
-        // Get organizations for the current user
-        var organizations = await client.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
-        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
-
-        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
-        foreach (var installation in installations)
+        catch (NotFoundException)
         {
-            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
-            {
-                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
-                var installationClient = _getGitHubClient(response.Token);
-
-                try
-                {
-                    // Get the existing labels of the repository
-                    var labels = await installationClient.Issue.Labels.GetAllForRepository(owner, repoName);
-
-                    // Find the label by name
-                    var label = labels.FirstOrDefault(l => l.Name.Equals(labelName, StringComparison.OrdinalIgnoreCase));
-                    if (label == null)
-                    {
-                        return NotFound($"Label '{labelName}' not found in repository {repoName}.");
-                    }
-
-                    // Remove the label from the pull request
-                    await client.Issue.Labels.RemoveFromIssue(owner, repoName, (int)prnumber, labelName);
-                    return Ok($"Label '{labelName}' removed from pull request #{prnumber} in repository {repoName}.");
-                }
-                catch (NotFoundException)
-                {
-                    return NotFound($"Pull request with number {prnumber} in repository {repoName} does not have a label named {labelName}.");
-                }
-            }
+            return NotFound($"Pull request with number {prNumber} in repository {repoName} does not have a label named {labelName}.");
         }
-
-        return NotFound("There exists no user in session.");
     }
 
     [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/request_review")]
     public async Task<ActionResult> requestReview(string owner, string repoName, long prnumber, [FromBody] string[] reviewers)
     {
-
-        var appClient = GetNewClient();
-        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-
-        // Get organizations for the current user
-        var organizations = await client.Organization.GetAllForCurrent();
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
-        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
-
-        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
-        foreach (var installation in installations)
+        try
         {
-            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            // TODO: add support for team reviewers
+            var reviewRequest = new PullRequestReviewRequest(reviewers, null);
+            var pull = await GitHubUserClient.PullRequest.ReviewRequest.Create(owner, repoName, (int)prnumber, reviewRequest);
+
+            using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
+            connection.Open();
+
+            string query = $"UPDATE pullrequestinfo SET updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE reponame = '{repoName}' AND pullnumber = {prnumber}";
+
+            using (var command = new NpgsqlCommand(query, connection))
             {
-                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
-                var installationClient = GetNewClient(response.Token);
-
-                try
-                {
-                    var reviewRequest = new PullRequestReviewRequest(reviewers, null);
-                    var pull = await client.PullRequest.ReviewRequest.Create(owner, repoName, (int)prnumber, reviewRequest);
-
-                    using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
-                    connection.Open();
-
-                    string query = $"UPDATE pullrequestinfo SET updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE reponame = '{repoName}' AND pullnumber = {prnumber}";
-
-                    using (var command = new NpgsqlCommand(query, connection))
-                    {
-                        command.ExecuteNonQuery();
-                    }
-
-                    connection.Close();
-
-                    return Ok($"{string.Join(",", reviewers)} is assigned to PR #{prnumber}.");
-
-                }
-                catch (NotFoundException)
-                {
-                    return NotFound($"Pull request with number {prnumber} not found in repository {repoName}.");
-                }
+                command.ExecuteNonQuery();
             }
+            connection.Close();
+
+            return Ok($"{string.Join(",", reviewers)} is requested to review PR #{prnumber}.");
         }
-
-        return NotFound("There exists no user in session.");
-
+        catch (NotFoundException)
+        {
+            return NotFound($"Pull request with number {prnumber} not found in repository {repoName}.");
+        }
     }
 
     [HttpDelete("pullrequest/{owner}/{repoName}/{prnumber}/remove_reviewer/{reviewer}")]
     public async Task<ActionResult> removeReviewer(string owner, string repoName, long prnumber, string reviewer)
     {
-        var appClient = GetNewClient();
-        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
-
-        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-
-        // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent();
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
-        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
-        foreach (var installation in installations)
+        try
         {
-            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            var reviewRequest = new PullRequestReviewRequest([reviewer], null);
+            await GitHubUserClient.PullRequest.ReviewRequest.Delete(owner, repoName, (int)prnumber, reviewRequest);
+
+            using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
+            connection.Open();
+
+            string query = $"UPDATE pullrequestinfo SET updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE reponame = '{repoName}' AND pullnumber = {prnumber}";
+
+            using (var command = new NpgsqlCommand(query, connection))
             {
-                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
-                var installationClient = GetNewClient(response.Token);
-
-                try
-                {
-                    string[] arr = [reviewer];
-                    var reviewRequest = new PullRequestReviewRequest(arr, null);
-                    await client.PullRequest.ReviewRequest.Delete(owner, repoName, (int)prnumber, reviewRequest);
-
-                    using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
-                    connection.Open();
-
-                    string query = $"UPDATE pullrequestinfo SET updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE reponame = '{repoName}' AND pullnumber = {prnumber}";
-
-                    using (var command = new NpgsqlCommand(query, connection))
-                    {
-                        command.ExecuteNonQuery();
-                    }
-
-                    connection.Close();
-
-                    return Ok($"{reviewer} is removed from PR #{prnumber}.");
-                }
-                catch (NotFoundException)
-                {
-                    return NotFound($"Pull request with number {prnumber} not found in repository {repoName}.");
-                }
+                command.ExecuteNonQuery();
             }
-        }
+            connection.Close();
 
-        return NotFound("There exists no user in session.");
+            return Ok($"{reviewer} is removed from PR #{prnumber}.");
+        }
+        catch (NotFoundException)
+        {
+            return NotFound($"Pull request with number {prnumber} not found in repository {repoName}.");
+        }
     }
 
     [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addComment")]
     public async Task<ActionResult> AddCommentToPR(string owner, string repoName, int prnumber, [FromBody] string commentBody)
     {
-        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         string decorated_body = $"<!--Using HubReview-->**ACTIVE**: {commentBody}";
-        var comment = await client.Issue.Comment.Create(owner, repoName, prnumber, decorated_body);
+        var comment = await GitHubUserClient.Issue.Comment.Create(owner, repoName, prnumber, decorated_body);
 
         using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
         connection.Open();
@@ -831,14 +337,10 @@ public class GitHubController : ControllerBase
     [HttpPatch("pullrequest/{owner}/{repoName}/{comment_id}/updateCommentStatus")]
     public async Task<ActionResult> UpdateStatus(string owner, string repoName, int comment_id, [FromBody] string status)
     {
-        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         bool is_review = false;
         int prnumber = 0;
         Octokit.PullRequestReviewComment? res1 = null;
         Octokit.IssueComment? res2 = null;
-
-        var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
-        var graphqlconnection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
 
         using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
         connection.Open();
@@ -858,24 +360,15 @@ public class GitHubController : ControllerBase
 
         if (is_review)
         {
-            var comment = await client.PullRequest.ReviewComment.GetComment(owner, repoName, comment_id);
+            var comment = await GitHubUserClient.PullRequest.ReviewComment.GetComment(owner, repoName, comment_id);
             string new_body = $"<!--Using HubReview-->**{status}** {comment.Body[comment.Body.IndexOf('\n')..]}";
-            res1 = await client.PullRequest.ReviewComment.Edit(owner, repoName, comment_id, new PullRequestReviewCommentEdit(new_body));
-
-            /*if (status == "RESOLVED")
-            {
-                var arg = new ResolveReviewThreadInput
-                {
-                    ThreadId = comment.
-                    ClientMutationId = "hubreviewapp"
-                };
-            }*/
+            res1 = await GitHubUserClient.PullRequest.ReviewComment.Edit(owner, repoName, comment_id, new PullRequestReviewCommentEdit(new_body));
         }
         else
         {
-            var comment = await client.Issue.Comment.Get(owner, repoName, comment_id);
+            var comment = await GitHubUserClient.Issue.Comment.Get(owner, repoName, comment_id);
             string new_body = $"<!--Using HubReview-->**{status}**: {comment.Body[(comment.Body.IndexOf(':') + 2)..]}";
-            res2 = await client.Issue.Comment.Update(owner, repoName, comment_id, new_body);
+            res2 = await GitHubUserClient.Issue.Comment.Update(owner, repoName, comment_id, new_body);
 
             if (status == "RESOLVED")
             {
@@ -890,8 +383,7 @@ public class GitHubController : ControllerBase
                                 .MinimizeComment(arg)
                                 .Select(x => new { x.MinimizedComment.IsMinimized });
 
-                await graphqlconnection.Run(mutation);
-
+                await GitHubUserGraphQLConnection.Run(mutation);
             }
 
             if (status == "ACTIVE")
@@ -906,7 +398,7 @@ public class GitHubController : ControllerBase
                                 .UnminimizeComment(arg)
                                 .Select(x => new { x.UnminimizedComment.IsMinimized });
 
-                await graphqlconnection.Run(mutation);
+                await GitHubUserGraphQLConnection.Run(mutation);
 
             }
 
@@ -935,12 +427,10 @@ public class GitHubController : ControllerBase
     [HttpPatch("pullrequest/{owner}/{repoName}/{comment_id}/updateComment")]
     public async Task<ActionResult> UpdateComment(string owner, string repoName, int comment_id, [FromBody] string body)
     {
-        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         bool is_review = false;
         int prnumber = 0;
         Octokit.PullRequestReviewComment? res1 = null;
         Octokit.IssueComment? res2 = null;
-
 
         using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
         connection.Open();
@@ -958,17 +448,17 @@ public class GitHubController : ControllerBase
 
         if (is_review)
         {
-            var comment = await client.PullRequest.ReviewComment.GetComment(owner, repoName, comment_id);
+            var comment = await GitHubUserClient.PullRequest.ReviewComment.GetComment(owner, repoName, comment_id);
             var before_colon = comment.Body[..(comment.Body.IndexOf(':') + 2)];
             string new_body = before_colon + body;
-            res1 = await client.PullRequest.ReviewComment.Edit(owner, repoName, comment_id, new PullRequestReviewCommentEdit(body = new_body));
+            res1 = await GitHubUserClient.PullRequest.ReviewComment.Edit(owner, repoName, comment_id, new PullRequestReviewCommentEdit(body = new_body));
         }
         else
         {
-            var comment = await client.Issue.Comment.Get(owner, repoName, comment_id);
+            var comment = await GitHubUserClient.Issue.Comment.Get(owner, repoName, comment_id);
             var before_colon = comment.Body[..(comment.Body.IndexOf(':') + 2)];
             string new_body = before_colon + body;
-            res2 = await client.Issue.Comment.Update(owner, repoName, comment_id, new_body);
+            res2 = await GitHubUserClient.Issue.Comment.Update(owner, repoName, comment_id, new_body);
         }
 
         connection.Open();
@@ -985,7 +475,6 @@ public class GitHubController : ControllerBase
     [HttpDelete("pullrequest/{owner}/{repoName}/{comment_id}/deleteComment")]
     public async Task<ActionResult> DeleteComment(string owner, string repoName, int comment_id)
     {
-        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
         bool is_review = false;
         int prnumber = 0;
 
@@ -1007,11 +496,11 @@ public class GitHubController : ControllerBase
 
         if (is_review)
         {
-            await client.PullRequest.ReviewComment.Delete(owner, repoName, comment_id);
+            await GitHubUserClient.PullRequest.ReviewComment.Delete(owner, repoName, comment_id);
         }
         else
         {
-            await client.Issue.Comment.Delete(owner, repoName, comment_id);
+            await GitHubUserClient.Issue.Comment.Delete(owner, repoName, comment_id);
         }
 
         connection.Open();
@@ -1036,91 +525,70 @@ public class GitHubController : ControllerBase
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_comments")]
     public async Task<ActionResult> getCommentsOnPR(string owner, string repoName, int prnumber)
     {
-        var appClient = GetNewClient();
-        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
-
-        // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent();
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
         var result = new List<IssueCommentInfo>([]);
         var processedCommentIds = new HashSet<long>();
 
         using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
 
-        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
-        foreach (var installation in installations)
+        var comments = await GitHubUserClient.Issue.Comment.GetAllForIssue(owner, repoName, prnumber);
+
+        foreach (var comm in comments)
         {
-            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            // Check if the comment ID has already been processed
+            if (!processedCommentIds.Contains(comm.Id))
             {
-                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
-                var installationClient = GetNewClient(response.Token);
-
-                var comments = await installationClient.Issue.Comment.GetAllForIssue(owner, repoName, prnumber);
-
-                foreach (var comm in comments)
+                if (!comm.Body.Contains("<!--Using HubReview-->"))
                 {
-                    // Check if the comment ID has already been processed
-                    if (!processedCommentIds.Contains(comm.Id))
+                    var commentObj = new IssueCommentInfo
                     {
+                        id = comm.Id,
+                        author = comm.User.Login,
+                        avatar = comm.User.AvatarUrl,
+                        body = comm.Body,
+                        label = null,
+                        decoration = null,
+                        createdAt = comm.CreatedAt,
+                        updatedAt = comm.UpdatedAt,
+                        association = comm.AuthorAssociation.StringValue,
+                        url = comm.HtmlUrl
+                    };
 
-                        if (!comm.Body.Contains("<!--Using HubReview-->"))
+                    result.Add(commentObj);
+                }
+                else
+                {
+                    int index = comm.Body.IndexOf(':');
+                    string parsed_message = comm.Body[(index + 2)..];
+
+                    await connection.OpenAsync();
+                    string query = $"SELECT label, decoration, status FROM comments WHERE commentid = {comm.Id}";
+                    var command = new NpgsqlCommand(query, connection);
+                    NpgsqlDataReader reader = await command.ExecuteReaderAsync();
+                    while (await reader.ReadAsync())
+                    {
+                        var commentObj = new IssueCommentInfo
                         {
-                            var commentObj = new IssueCommentInfo
-                            {
-                                id = comm.Id,
-                                author = comm.User.Login,
-                                avatar = comm.User.AvatarUrl,
-                                body = comm.Body,
-                                label = null,
-                                decoration = null,
-                                createdAt = comm.CreatedAt,
-                                updatedAt = comm.UpdatedAt,
-                                association = comm.AuthorAssociation.StringValue,
-                                url = comm.HtmlUrl
-                            };
+                            id = comm.Id,
+                            author = comm.User.Login,
+                            avatar = comm.User.AvatarUrl,
+                            body = parsed_message,
+                            label = reader.IsDBNull(0) ? null : reader.GetString(0),
+                            decoration = reader.IsDBNull(1) ? null : reader.GetString(1),
+                            status = reader.IsDBNull(2) ? null : reader.GetString(2),
+                            createdAt = comm.CreatedAt,
+                            updatedAt = comm.UpdatedAt,
+                            association = comm.AuthorAssociation.StringValue,
+                            url = comm.HtmlUrl
+                        };
 
-                            result.Add(commentObj);
-                        }
-                        else
-                        {
-                            int index = comm.Body.IndexOf(':');
-                            string parsed_message = comm.Body[(index + 2)..];
-
-                            await connection.OpenAsync();
-                            string query = $"SELECT label, decoration, status FROM comments WHERE commentid = {comm.Id}";
-                            var command = new NpgsqlCommand(query, connection);
-                            NpgsqlDataReader reader = await command.ExecuteReaderAsync();
-                            while (await reader.ReadAsync())
-                            {
-                                var commentObj = new IssueCommentInfo
-                                {
-                                    id = comm.Id,
-                                    author = comm.User.Login,
-                                    avatar = comm.User.AvatarUrl,
-                                    body = parsed_message,
-                                    label = reader.IsDBNull(0) ? null : reader.GetString(0),
-                                    decoration = reader.IsDBNull(1) ? null : reader.GetString(1),
-                                    status = reader.IsDBNull(2) ? null : reader.GetString(2),
-                                    createdAt = comm.CreatedAt,
-                                    updatedAt = comm.UpdatedAt,
-                                    association = comm.AuthorAssociation.StringValue,
-                                    url = comm.HtmlUrl
-                                };
-
-                                result.Add(commentObj);
-                            }
-
-                            await connection.CloseAsync();
-                        }
-
-                        // Add the comment ID to the set of processed IDs
-                        processedCommentIds.Add(comm.Id);
+                        result.Add(commentObj);
                     }
 
+                    await connection.CloseAsync();
                 }
 
+                // Add the comment ID to the set of processed IDs
+                processedCommentIds.Add(comm.Id);
             }
         }
 
@@ -1130,11 +598,12 @@ public class GitHubController : ControllerBase
     [HttpGet("pullrequests/{owner}/{repoName}/{prnumber}/reviews")]
     public async Task<ActionResult> GetPullRequestReviews(string owner, string repoName, int prnumber)
     {
-        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-
-        var reviews = await userClient.PullRequest.Review.GetAll(owner, repoName, prnumber);
-        var reviewComments = await userClient.PullRequest.ReviewComment.GetAll(owner, repoName, prnumber);
-        var reviewCommentDict = reviewComments.GroupBy(rc => (long)rc.PullRequestReviewId).ToDictionary(g => g.Key, g => g.ToList());
+        var reviews = await GitHubUserClient.PullRequest.Review.GetAll(owner, repoName, prnumber);
+        var reviewComments = await GitHubUserClient.PullRequest.ReviewComment.GetAll(owner, repoName, prnumber);
+        var publishedReviewComments = reviewComments.Where(rc => rc.PullRequestReviewId is not null).ToList();
+        var reviewCommentDict = publishedReviewComments
+            .GroupBy(rc => (long)rc.PullRequestReviewId!)
+            .ToDictionary(g => g.Key, g => g.ToList());
 
         var reviewsWithComments = reviews.Select(review =>
             new
@@ -1150,8 +619,6 @@ public class GitHubController : ControllerBase
     [HttpPost("pullrequests/{owner}/{repoName}/{prnumber}/reviews")]
     public async Task<ActionResult> CreatePullRequestReview(string owner, string repoName, int prnumber, [FromBody] CreateReviewRequestModel req)
     {
-        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-
         var rev = new PullRequestReviewCreate()
         {
             //CommitId = sha, // TODO: Ideally this'd be used, but it's not straightforward to pull PR files with commit ID attached... Maybe GraphQL needed?
@@ -1171,7 +638,7 @@ public class GitHubController : ControllerBase
             }).ToList() ?? [],
         };
 
-        var review = await userClient.PullRequest.Review.Create(owner, repoName, prnumber, rev);
+        var review = await GitHubUserClient.PullRequest.Review.Create(owner, repoName, prnumber, rev);
 
         if (review == null)
         {
@@ -1182,15 +649,13 @@ public class GitHubController : ControllerBase
     }
 
     [HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addCommentReply")]
-    public async Task<ActionResult> addCommentReply(string owner, string repoName, int prnumber, [FromBody] CreateReplyRequestModel req)
+    public async Task<ActionResult> AddCommentReply(string owner, string repoName, int prnumber, [FromBody] CreateReplyRequestModel req)
     {
-        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-
-        var replied_to = await client.Issue.Comment.Get(owner, repoName, req.replyToId);
+        var replied_to = await GitHubUserClient.Issue.Comment.Get(owner, repoName, req.replyToId);
 
         string decorated_body = replied_to.Body.Contains("<!--Using HubReview-->") ? $"<!--Using HubReview-->\n> {replied_to.Body.Remove(0, 22)}\n> {replied_to.HtmlUrl} \n\n{req.body}" : $"<!--Using HubReview-->\n> {replied_to.Body}\n> {replied_to.HtmlUrl} \n\n{req.body}";
 
-        var comment = await client.Issue.Comment.Create(owner, repoName, prnumber, decorated_body);
+        var comment = await GitHubUserClient.Issue.Comment.Create(owner, repoName, prnumber, decorated_body);
 
         return Ok(comment);
     }
@@ -1198,9 +663,7 @@ public class GitHubController : ControllerBase
     [HttpPost("pullrequests/{owner}/{repoName}/{prNumber}/reviews/comments/{topCommentId}/replies")]
     public async Task<ActionResult> ReplyToPullRequestThread(string owner, string repoName, int prNumber, int topCommentId, [FromBody] CreateReviewThreadReplyRequestModel req)
     {
-        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-
-        var response = await userClient.PullRequest.ReviewComment.CreateReply(owner, repoName, prNumber, new PullRequestReviewCommentReplyCreate(req.body, topCommentId));
+        var response = await GitHubUserClient.PullRequest.ReviewComment.CreateReply(owner, repoName, prNumber, new PullRequestReviewCommentReplyCreate(req.body, topCommentId));
 
         return Ok(response);
     }
@@ -1208,9 +671,6 @@ public class GitHubController : ControllerBase
     [HttpPost("pullrequests/{owner}/{repoName}/{prNumber}/reviews/comments/{commentNodeId}/toggleResolution")]
     public async Task<ActionResult> TogglePullRequestReviewCommentResolution(string owner, string repoName, int prNumber, string commentNodeId)
     {
-        var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
-        var connection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
-
         var query = new Query()
             .Repository(Var("repoName"), Var("owner"))
             .PullRequest(Var("prNumber"))
@@ -1224,7 +684,7 @@ public class GitHubController : ControllerBase
             })
             .Compile();
 
-        var reviewThreads = await connection.Run(query, new Dictionary<string, object>
+        var reviewThreads = await GitHubUserGraphQLConnection.Run(query, new Dictionary<string, object>
         {
             { "owner", owner },
             { "repoName", repoName },
@@ -1242,7 +702,7 @@ public class GitHubController : ControllerBase
                     ThreadId = thread.Id,
                 })
                 .Select(p => p.ClientMutationId);
-            var result = await connection.Run(mutation);
+            var result = await GitHubUserGraphQLConnection.Run(mutation);
         }
         else
         {
@@ -1253,7 +713,7 @@ public class GitHubController : ControllerBase
                     ThreadId = thread.Id,
                 })
                 .Select(p => p.ClientMutationId);
-            var result = await connection.Run(mutation);
+            var result = await GitHubUserGraphQLConnection.Run(mutation);
         }
 
         return Ok();
@@ -1262,84 +722,65 @@ public class GitHubController : ControllerBase
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_commits")]
     public async Task<ActionResult> getCommits(string owner, string repoName, int prnumber)
     {
-        var appClient = GetNewClient();
-        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
         var processedCommitIds = new HashSet<string>();
         var result = new List<CommitsList>([]);
         string link = "https://github.com/" + owner + "/" + repoName + "/pull/" + prnumber + "/commits/";
 
-        // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent();
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+        var commits = await GitHubUserClient.PullRequest.Commits(owner, repoName, prnumber);
 
-        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
-        foreach (var installation in installations)
+        CommitInfo obj;
+
+        foreach (var commit in commits)
         {
-            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            if (processedCommitIds.Contains(commit.NodeId))
             {
-                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
-                var installationClient = GetNewClient(response.Token);
-                var commits = await installationClient.PullRequest.Commits(owner, repoName, prnumber);
-
-                CommitInfo obj;
-
-                foreach (var commit in commits)
-                {
-
-                    if (processedCommitIds.Contains(commit.NodeId))
-                    {
-                        continue;
-                    }
-
-                    bool dateExists = result.Any(temp => temp.date == commit.Commit.Author.Date.ToString("yyyy/MM/dd"));
-
-                    if (!dateExists)
-                    {
-                        result.Add(new CommitsList
-                        {
-                            date = commit.Commit.Author.Date.ToString("yyyy/MM/dd"),
-                            commits = []
-                        });
-                    }
-
-                    int indexOfDate = result.FindIndex(temp => temp.date == commit.Commit.Author.Date.ToString("yyyy/MM/dd"));
-
-                    if (commit.Commit.Message.Contains('\n'))
-                    {
-                        string split_here = "\n\n";
-                        string[] message = commit.Commit.Message.Split(split_here);
-                        obj = new CommitInfo
-                        {
-                            title = message[0],
-                            description = message[1],
-                            author = commit.Author.Login,
-                            avatarUrl = commit.Author.AvatarUrl,
-                            githubLink = link + commit.Sha,
-                            sha = commit.Sha
-                        };
-
-                    }
-                    else
-                    {
-                        obj = new CommitInfo
-                        {
-                            title = commit.Commit.Message,
-                            description = null,
-                            author = commit.Author.Login,
-                            avatarUrl = commit.Author.AvatarUrl,
-                            githubLink = link + commit.Sha,
-                            sha = commit.Sha
-                        };
-                    }
-
-                    result[indexOfDate].commits?.Add(obj);
-
-                    processedCommitIds.Add(commit.NodeId);
-
-                }
+                continue;
             }
 
+            bool dateExists = result.Any(temp => temp.date == commit.Commit.Author.Date.ToString("yyyy/MM/dd"));
+
+            if (!dateExists)
+            {
+                result.Add(new CommitsList
+                {
+                    date = commit.Commit.Author.Date.ToString("yyyy/MM/dd"),
+                    commits = []
+                });
+            }
+
+            int indexOfDate = result.FindIndex(temp => temp.date == commit.Commit.Author.Date.ToString("yyyy/MM/dd"));
+
+            if (commit.Commit.Message.Contains('\n'))
+            {
+                string split_here = "\n\n";
+                string[] message = commit.Commit.Message.Split(split_here);
+                obj = new CommitInfo
+                {
+                    title = message[0],
+                    description = message[1],
+                    author = commit.Author.Login,
+                    avatarUrl = commit.Author.AvatarUrl,
+                    githubLink = link + commit.Sha,
+                    sha = commit.Sha
+                };
+
+            }
+            else
+            {
+                obj = new CommitInfo
+                {
+                    title = commit.Commit.Message,
+                    description = null,
+                    author = commit.Author.Login,
+                    avatarUrl = commit.Author.AvatarUrl,
+                    githubLink = link + commit.Sha,
+                    sha = commit.Sha
+                };
+            }
+
+            result[indexOfDate].commits?.Add(obj);
+
+            processedCommitIds.Add(commit.NodeId);
         }
 
         return Ok(result);
@@ -1348,48 +789,31 @@ public class GitHubController : ControllerBase
     [HttpGet("commit/{owner}/{repoName}/{prnumber}/{sha}/get_patches")]
     public async Task<ActionResult> getDiffs(string owner, string repoName, int prnumber, string sha)
     {
-        var appClient = GetNewClient();
-        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
         var result = new List<object>([]);
 
-        // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent();
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
-        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
-        foreach (var installation in installations)
+        var commit = await GitHubUserClient.Repository.Commit.Get(owner, repoName, sha);
+        foreach (var file in commit.Files)
         {
-            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            var fileContent = await GitHubUserClient.Repository.Content.GetAllContentsByRef(owner, repoName, file.Filename, sha);
+            result.Add(new
             {
-                var commit = await userClient.Repository.Commit.Get(owner, repoName, sha);
-                foreach (var file in commit.Files)
-                {
-                    var fileContent = await userClient.Repository.Content.GetAllContentsByRef(owner, repoName, file.Filename, sha);
-                    result.Add(new
-                    {
-                        name = file.Filename,
-                        status = file.Status,
-                        sha = file.Sha,
-                        adds = file.Additions,
-                        dels = file.Deletions,
-                        changes = file.Changes,
-                        content = file.Patch
-                    });
-                }
-
-                return Ok(result);
-            }
+                name = file.Filename,
+                status = file.Status,
+                sha = file.Sha,
+                adds = file.Additions,
+                dels = file.Deletions,
+                changes = file.Changes,
+                content = file.Patch
+            });
         }
-        return NotFound("not found");
+
+        return Ok(result);
     }
 
     [HttpGet("pullrequests/{owner}/{repoName}/{prnumber}/files")]
     public async Task<ActionResult> getAllPatches(string owner, string repoName, int prnumber)
     {
-        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-
-        var files = await userClient.PullRequest.Files(owner, repoName, prnumber);
+        var files = await GitHubUserClient.PullRequest.Files(owner, repoName, prnumber);
         var result = files.Select(file => new
         {
             name = file.FileName,
@@ -1407,54 +831,34 @@ public class GitHubController : ControllerBase
     [HttpGet("getPRReviewerSuggestion/{owner}/{repoName}/{prOwner}")]
     public async Task<ActionResult> getPRReviewerSuggestion(string owner, string repoName, string prOwner)
     {
-        var appClient = GetNewClient();
-        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
-
-        // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent();
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
         var result = new List<object>();
 
-        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
-        foreach (var installation in installations)
+        try
         {
-            if (installation.Account.Login == owner)
+            var collaborators = await GitHubUserClient.Repository.Collaborator.GetAll(owner, repoName);
+
+            foreach (var collaborator in collaborators)
             {
-                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
-                var installationClient = GetNewClient(response.Token);
+                if (collaborator.Login == prOwner)
+                    continue; // Skip the pr owner
 
-                try
+                var userLoads = await GetUserWorkload(collaborator.Login);
+                result.Add(new
                 {
-                    var collaborators = await installationClient.Repository.Collaborator.GetAll(owner, repoName);
-
-                    foreach (var collaborator in collaborators)
-                    {
-                        if (collaborator.Login == prOwner)
-                            continue; // Skip the pr owner
-
-                        var userLoads = await GetUserWorkload(collaborator.Login);
-                        result.Add(new
-                        {
-                            Id = collaborator.Id,
-                            Login = collaborator.Login,
-                            AvatarUrl = collaborator.AvatarUrl,
-                            currentLoad = userLoads.currentLoad,
-                            maxLoad = userLoads.maxLoad
-                        });
-                    }
-
-                    return Ok(result);
-                }
-                catch (NotFoundException)
-                {
-                    return NotFound($"Repository {repoName} not found under owner {owner}.");
-                }
+                    Id = collaborator.Id,
+                    Login = collaborator.Login,
+                    AvatarUrl = collaborator.AvatarUrl,
+                    currentLoad = userLoads.currentLoad,
+                    maxLoad = userLoads.maxLoad
+                });
             }
-        }
 
-        return NotFound("There exists no user in session.");
+            return Ok(result);
+        }
+        catch (NotFoundException)
+        {
+            return NotFound($"Repository {repoName} not found under owner {owner}.");
+        }
     }
 
     public async Task<Workload> GetUserWorkload(string userName)
@@ -1494,160 +898,92 @@ public class GitHubController : ControllerBase
     [HttpGet("getRepoLabels/{owner}/{repoName}")]
     public async Task<ActionResult> GetRepoLabels(string owner, string repoName)
     {
-        var appClient = GetNewClient();
-        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
-
-        // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent();
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
         var result = new List<LabelInfo>();
 
-        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
-        foreach (var installation in installations)
+        try
         {
-            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            var labels = await GitHubUserClient.Issue.Labels.GetAllForRepository(owner, repoName);
+
+            foreach (var label in labels)
             {
-                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
-                var installationClient = GetNewClient(response.Token);
-
-                try
+                result.Add(new LabelInfo
                 {
-                    var labels = await installationClient.Issue.Labels.GetAllForRepository(owner, repoName);
-
-                    foreach (var label in labels)
-                    {
-                        result.Add(new LabelInfo
-                        {
-                            id = label.Id,
-                            name = label.Name,
-                            color = label.Color
-                        });
-                    }
-
-                    return Ok(result);
-                }
-                catch (NotFoundException)
-                {
-                    return NotFound($"Repository {repoName} not found under owner {owner}.");
-                }
+                    id = label.Id,
+                    name = label.Name,
+                    color = label.Color
+                });
             }
+
+            return Ok(result);
         }
-        return NotFound("There exists no user in session.");
+        catch (NotFoundException)
+        {
+            return NotFound($"Repository {repoName} not found under owner {owner}.");
+        }
     }
 
     [HttpGet("getRepoAssignees/{owner}/{repoName}")]
     public async Task<ActionResult> GetRepoAssignees(string owner, string repoName)
     {
-        var appClient = GetNewClient();
-        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
-
-        // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent();
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
-        var result = new List<AssigneeInfo>();
-
-        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
-        foreach (var installation in installations)
+        try
         {
-            if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+            var assignees = await GitHubUserClient.Issue.Assignee.GetAllForRepository(owner, repoName);
+
+            var result = assignees.Select(assignee => new AssigneeInfo
             {
-                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
-                var installationClient = GetNewClient(response.Token);
+                id = assignee.Id,
+                login = assignee.Login,
+                avatar_url = assignee.AvatarUrl,
+                url = assignee.Url
+            });
 
-                try
-                {
-                    var assignees = await installationClient.Issue.Assignee.GetAllForRepository(owner, repoName);
-
-                    foreach (var assignee in assignees)
-                    {
-                        result.Add(new AssigneeInfo
-                        {
-                            id = assignee.Id,
-                            login = assignee.Login,
-                            avatar_url = assignee.AvatarUrl,
-                            url = assignee.Url
-                        });
-                    }
-
-                    return Ok(result);
-                }
-                catch (NotFoundException)
-                {
-                    return NotFound($"Repository {repoName} not found under owner {owner}.");
-                }
-            }
+            return Ok(result);
         }
-        return NotFound("There exists no user in session.");
+        catch (NotFoundException)
+        {
+            return NotFound($"Repository {repoName} not found under owner {owner}.");
+        }
     }
 
     [HttpGet("GetReviewerSuggestions/{owner}/{repoName}/{prNumber}")]
     public async Task<ActionResult> GetReviewerSuggestions(string owner, string repoName, int prNumber)
     {
-        var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
-        var connection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
-
-        var appClient = GetNewClient();
-        var userClient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
-
-        // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent();
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
-        var installations = await appClient.GitHubApps.GetAllInstallationsForCurrent();
         List<string> suggestedReviewersList = new List<string>();
-        foreach (var installation in installations)
-        {
-            if (installation.Account.Login == userLogin)
+        var query = new Query()
+            .RepositoryOwner(Var("owner"))
+            .Repository(Var("name"))
+            .PullRequest(Var("prnumber"))
+            .Select(pr => new
             {
-                var response = await appClient.GitHubApps.CreateInstallationToken(installation.Id);
-                var installationClient = GetNewClient(response.Token);
-
-                var query = new Query()
-                                    .RepositoryOwner(Var("owner"))
-                                    .Repository(Var("name"))
-                                    .PullRequest(Var("prnumber"))
-                                    .Select(pr => new
-                                    {
-                                        pr.Number,
-                                        pr.Title,
-                                        SuggestedReviewers = pr.SuggestedReviewers.Select(reviewer => new
-                                        {
-                                            Login = reviewer.Reviewer.Login,
-                                            avatarUrl = reviewer.Reviewer.Url + ".png",
-                                        }).ToList(),
-                                    }).Compile();
-
-                var vars = new Dictionary<string, object>
+                pr.Number,
+                pr.Title,
+                SuggestedReviewers = pr.SuggestedReviewers.Select(reviewer => new
                 {
-                    { "owner", owner },
-                    { "name", repoName },
-                    { "prnumber", prNumber },
-                };
+                    Login = reviewer.Reviewer.Login,
+                    avatarUrl = reviewer.Reviewer.Url + ".png",
+                }).ToList(),
+            }).Compile();
 
-                var result = await connection.Run(query, vars);
+        var vars = new Dictionary<string, object>
+        {
+            { "owner", owner },
+            { "name", repoName },
+            { "prnumber", prNumber },
+        };
 
+        var result = await GitHubUserGraphQLConnection.Run(query, vars);
 
-
-                foreach (var suggestedReviewer in result.SuggestedReviewers)
-                {
-                    suggestedReviewersList.Add(suggestedReviewer.Login);
-                }
-                return Ok(result.SuggestedReviewers);
-            }
+        foreach (var suggestedReviewer in result.SuggestedReviewers)
+        {
+            suggestedReviewersList.Add(suggestedReviewer.Login);
         }
-
-        return Ok(suggestedReviewersList);
+        // FIXME: why isn't this returning `suggestedReviewersList`?
+        return Ok(result.SuggestedReviewers);
     }
 
     [HttpGet("prs/needsreview")]
     public async Task<ActionResult> GetNeedsYourReview()
     {
-
         List<PRInfo> allPRs = new List<PRInfo>();
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
@@ -1657,7 +993,8 @@ public class GitHubController : ControllerBase
             string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'open' AND @ownerLogin = ANY(reviewers)";
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
-                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
+                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
@@ -1704,7 +1041,6 @@ public class GitHubController : ControllerBase
     [HttpGet("prs/userprs")]
     public async Task<ActionResult> GetUserPRs()
     {
-
         List<PRInfo> allPRs = new List<PRInfo>();
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
@@ -1714,7 +1050,8 @@ public class GitHubController : ControllerBase
             string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'open' AND author = @ownerLogin";
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
-                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
+                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
@@ -1761,14 +1098,10 @@ public class GitHubController : ControllerBase
     [HttpGet("prs/waitingauthor")]
     public async Task<ActionResult> GetWaitingAuthors()
     {
-
-        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
-        var userClient = GetNewClient(access_token);
-
         List<PRInfo> allPRs = new List<PRInfo>();
 
         // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
@@ -1779,7 +1112,8 @@ public class GitHubController : ControllerBase
             string query = "SELECT " + selects + " FROM pullrequestinfo WHERE ( @ownerLogin != ANY(reviewers) AND EXISTS ( SELECT 1 FROM json_array_elements(reviews) AS review WHERE review->>'login' = @ownerLogin) ) AND state='open' AND @ownerLogin != author AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
-                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
+                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
@@ -1827,13 +1161,10 @@ public class GitHubController : ControllerBase
     [HttpGet("prs/open")]
     public async Task<ActionResult> GetOpenPRs()
     {
-        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
-        var userClient = GetNewClient(access_token);
-
         List<PRInfo> allPRs = new List<PRInfo>();
 
         // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
@@ -1844,7 +1175,8 @@ public class GitHubController : ControllerBase
             string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'open' AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
-                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
+                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
@@ -1892,16 +1224,11 @@ public class GitHubController : ControllerBase
     [HttpGet("prs/merged")]
     public async Task<ActionResult> GetMergedPRs()
     {
-
-        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
-        var userClient = GetNewClient(access_token);
-
         List<PRInfo> allPRs = new List<PRInfo>();
 
         // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
 
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
@@ -1911,7 +1238,8 @@ public class GitHubController : ControllerBase
             string query = "SELECT " + selects + " FROM pullrequestinfo WHERE merged = true AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
-                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
+                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
@@ -1959,16 +1287,11 @@ public class GitHubController : ControllerBase
     [HttpGet("prs/closed")]
     public async Task<ActionResult> GetClosedPRs()
     {
-
-        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
-        var userClient = GetNewClient(access_token);
-
         List<PRInfo> allPRs = new List<PRInfo>();
 
         // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
 
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
@@ -1978,7 +1301,8 @@ public class GitHubController : ControllerBase
             string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'closed' AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
-                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
+                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
@@ -2035,18 +1359,15 @@ public class GitHubController : ControllerBase
 
         */
 
-
-        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
-        var userClient = GetNewClient(access_token);
-
         List<object> allPRs = [];
 
         // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
         if (filter.repositories == null)
         {
+            // FIXME: ???
             filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
         }
 
@@ -2129,7 +1450,8 @@ public class GitHubController : ControllerBase
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
-                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
+                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
                 if (!string.IsNullOrEmpty(filter.author))
                 {
@@ -2164,7 +1486,7 @@ public class GitHubController : ControllerBase
 
                         foreach (var obj in reviewers)
                         {
-                            var user = await userClient.User.Get(obj);
+                            var user = await GitHubUserClient.User.Get(obj);
                             combined_revs.Add(new ReviewObjDB
                             {
                                 login = obj,
@@ -2177,7 +1499,7 @@ public class GitHubController : ControllerBase
                         {
                             if (!reviewers.Contains(name.login))
                             {
-                                var user = await userClient.User.Get(name.login);
+                                var user = await GitHubUserClient.User.Get(name.login);
                                 combined_revs.Add(new ReviewObjDB
                                 {
                                     login = name.login,
@@ -2224,7 +1546,6 @@ public class GitHubController : ControllerBase
 
     [HttpPost("prs/userprs/filter")]
     public async Task<ActionResult> FilterUserPRs([FromBody] PRFilter filter)
-
     {
         /*
         filter.assignee string
@@ -2235,18 +1556,15 @@ public class GitHubController : ControllerBase
 
         */
 
-
-        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
-        var userClient = GetNewClient(access_token);
-
         List<object> allPRs = [];
 
         // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
         if (filter.repositories == null)
         {
+            // FIXME: ???
             filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
         }
 
@@ -2335,7 +1653,8 @@ public class GitHubController : ControllerBase
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
-                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
+                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
                 if (!string.IsNullOrEmpty(filter.author))
                 {
@@ -2370,7 +1689,7 @@ public class GitHubController : ControllerBase
 
                         foreach (var obj in reviewers)
                         {
-                            var user = await userClient.User.Get(obj);
+                            var user = await GitHubUserClient.User.Get(obj);
                             combined_revs.Add(new ReviewObjDB
                             {
                                 login = obj,
@@ -2383,7 +1702,7 @@ public class GitHubController : ControllerBase
                         {
                             if (!reviewers.Contains(name.login))
                             {
-                                var user = await userClient.User.Get(name.login);
+                                var user = await GitHubUserClient.User.Get(name.login);
                                 combined_revs.Add(new ReviewObjDB
                                 {
                                     login = name.login,
@@ -2432,7 +1751,6 @@ public class GitHubController : ControllerBase
 
     [HttpPost("prs/waitingauthor/filter")]
     public async Task<ActionResult> FilterWaitingAuthors([FromBody] PRFilter filter)
-
     {
         /*
         filter.assignee string
@@ -2443,18 +1761,15 @@ public class GitHubController : ControllerBase
 
         */
 
-
-        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
-        var userClient = GetNewClient(access_token);
-
         List<object> allPRs = new List<object>();
 
         // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
         if (filter.repositories == null)
         {
+            // FIXME: ???
             filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
         }
 
@@ -2540,10 +1855,10 @@ public class GitHubController : ControllerBase
             }
              */
 
-
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
-                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
+                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
                 if (!string.IsNullOrEmpty(filter.author))
                 {
@@ -2578,7 +1893,7 @@ public class GitHubController : ControllerBase
 
                         foreach (var obj in reviewers)
                         {
-                            var user = await userClient.User.Get(obj);
+                            var user = await GitHubUserClient.User.Get(obj);
                             combined_revs.Add(new ReviewObjDB
                             {
                                 login = obj,
@@ -2591,7 +1906,7 @@ public class GitHubController : ControllerBase
                         {
                             if (!reviewers.Contains(name.login))
                             {
-                                var user = await userClient.User.Get(name.login);
+                                var user = await GitHubUserClient.User.Get(name.login);
                                 combined_revs.Add(new ReviewObjDB
                                 {
                                     login = name.login,
@@ -2639,7 +1954,6 @@ public class GitHubController : ControllerBase
     }
     [HttpPost("prs/open/filter")]
     public async Task<ActionResult> FilterOpenPRs([FromBody] PRFilter filter)
-
     {
         /*
         filter.assignee string
@@ -2650,18 +1964,15 @@ public class GitHubController : ControllerBase
 
         */
 
-
-        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
-        var userClient = GetNewClient(access_token);
-
         List<object> allPRs = [];
 
         // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
         if (filter.repositories == null)
         {
+            // FIXME: ???
             filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
         }
 
@@ -2751,7 +2062,8 @@ public class GitHubController : ControllerBase
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
-                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
+                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
                 if (!string.IsNullOrEmpty(filter.author))
                 {
@@ -2780,7 +2092,7 @@ public class GitHubController : ControllerBase
 
                         foreach (var obj in reviewers)
                         {
-                            var user = await userClient.User.Get(obj);
+                            var user = await GitHubUserClient.User.Get(obj);
                             combined_revs.Add(new ReviewObjDB
                             {
                                 login = obj,
@@ -2793,7 +2105,7 @@ public class GitHubController : ControllerBase
                         {
                             if (!reviewers.Contains(name.login))
                             {
-                                var user = await userClient.User.Get(name.login);
+                                var user = await GitHubUserClient.User.Get(name.login);
                                 combined_revs.Add(new ReviewObjDB
                                 {
                                     login = name.login,
@@ -2841,7 +2153,6 @@ public class GitHubController : ControllerBase
 
     [HttpPost("prs/merged/filter")]
     public async Task<ActionResult> FilterMergedPRs([FromBody] PRFilter filter)
-
     {
         /*
         filter.assignee string
@@ -2852,14 +2163,10 @@ public class GitHubController : ControllerBase
 
         */
 
-
-        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
-        var userClient = GetNewClient(access_token);
-
         List<object> allPRs = new List<object>();
 
         // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
         if (filter.repositories == null)
@@ -2949,10 +2256,10 @@ public class GitHubController : ControllerBase
             }
              */
 
-
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
-                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
+                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
                 if (!string.IsNullOrEmpty(filter.author))
                 {
@@ -2987,7 +2294,7 @@ public class GitHubController : ControllerBase
 
                         foreach (var obj in reviewers)
                         {
-                            var user = await userClient.User.Get(obj);
+                            var user = await GitHubUserClient.User.Get(obj);
                             combined_revs.Add(new ReviewObjDB
                             {
                                 login = obj,
@@ -3000,7 +2307,7 @@ public class GitHubController : ControllerBase
                         {
                             if (!reviewers.Contains(name.login))
                             {
-                                var user = await userClient.User.Get(name.login);
+                                var user = await GitHubUserClient.User.Get(name.login);
                                 combined_revs.Add(new ReviewObjDB
                                 {
                                     login = name.login,
@@ -3049,7 +2356,6 @@ public class GitHubController : ControllerBase
 
     [HttpPost("prs/closed/filter")]
     public async Task<ActionResult> FilterClosedPRs([FromBody] PRFilter filter)
-
     {
         /*
         filter.assignee string
@@ -3060,18 +2366,15 @@ public class GitHubController : ControllerBase
 
         */
 
-
-        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
-        var userClient = GetNewClient(access_token);
-
         List<object> allPRs = new List<object>();
 
         // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
         if (filter.repositories == null)
         {
+            // FIXME: ???
             filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
         }
 
@@ -3160,7 +2463,8 @@ public class GitHubController : ControllerBase
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
-                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
+                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
                 if (!string.IsNullOrEmpty(filter.author))
                 {
@@ -3195,7 +2499,7 @@ public class GitHubController : ControllerBase
 
                         foreach (var obj in reviewers)
                         {
-                            var user = await userClient.User.Get(obj);
+                            var user = await GitHubUserClient.User.Get(obj);
                             combined_revs.Add(new ReviewObjDB
                             {
                                 login = obj,
@@ -3208,7 +2512,7 @@ public class GitHubController : ControllerBase
                         {
                             if (!reviewers.Contains(name.login))
                             {
-                                var user = await userClient.User.Get(name.login);
+                                var user = await GitHubUserClient.User.Get(name.login);
                                 combined_revs.Add(new ReviewObjDB
                                 {
                                     login = name.login,
@@ -3258,14 +2562,10 @@ public class GitHubController : ControllerBase
     [HttpGet("user/weeklysummary")]
     public async Task<ActionResult> GetReviewsForUserInLastWeek()
     {
-        var github = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-
-        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
-
         List<PRInfo> allPRs = new List<PRInfo>();
 
         // Get organizations for the current user
-        var organizations = await github.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
         var lastWeek = DateTime.Today.AddDays(-7);
@@ -3278,7 +2578,8 @@ public class GitHubController : ControllerBase
             string query = "SELECT " + selects + " FROM pullrequestinfo WHERE ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) ) AND updatedat >= @lastWeek AND EXISTS (SELECT 1 FROM json_array_elements(reviews) AS elem WHERE elem->>'login' = @ownerLogin)";
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
-                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
+                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
                 command.Parameters.AddWithValue("@lastWeek", lastWeek);
 
@@ -3306,13 +2607,11 @@ public class GitHubController : ControllerBase
 
         var allReviewsTasks = allPRs.Select(async pull =>
         {
-
-
-            var reviews = await github.PullRequest.Review.GetAll(pull.RepoOwner, pull.RepoName, (int)pull.PRNumber);
+            var reviews = await GitHubUserClient.PullRequest.Review.GetAll(pull.RepoOwner, pull.RepoName, (int)pull.PRNumber);
 
             foreach (var review in reviews)
             {
-                if (review.User.Login == userLogin && review.SubmittedAt >= lastWeek)
+                if (review.User.Login == UserLogin && review.SubmittedAt >= lastWeek)
                 {
                     reviewsLastWeek.Add(review);
                     submitted++;
@@ -3323,7 +2622,7 @@ public class GitHubController : ControllerBase
 
 
 
-        var requestedReviewsCount = await GetRequestedPRs(github);
+        var requestedReviewsCount = await GetRequestedPRs((GitHubClient?)GitHubUserClient);
 
         var waitingReviewsCount = await GetWaitingReviews();
 
@@ -3335,12 +2634,6 @@ public class GitHubController : ControllerBase
 
     public async Task<int> GetRequestedPRs(GitHubClient github)
     {
-        var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
-        var connection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
-
-        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
-
-
         List<PRInfo> allPRs = new List<PRInfo>();
 
         // Get organizations for the current user
@@ -3357,7 +2650,8 @@ public class GitHubController : ControllerBase
             string q = "SELECT " + selects + " FROM pullrequestinfo WHERE ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) ) AND updatedat >= @lastWeek";
             using (NpgsqlCommand command = new NpgsqlCommand(q, conn))
             {
-                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
+                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
                 command.Parameters.AddWithValue("@lastWeek", lastWeek);
 
@@ -3423,9 +2717,7 @@ public class GitHubController : ControllerBase
                 { "prnumber", pr.PRNumber },
             };
 
-            var result = await connection.Run(query, vars);
-
-
+            var result = await GitHubUserGraphQLConnection.Run(query, vars);
 
             foreach (var node in result)
             {
@@ -3434,7 +2726,7 @@ public class GitHubController : ControllerBase
                 var user = requestedReviewer?.User?.Login;
                 var created = reviewRequestedEvent?.CreatedAt;
 
-                if (user == userLogin && created >= lastWeek)
+                if (user == UserLogin && created >= lastWeek)
                 {
                     requestedPRCount++;
                 }
@@ -3448,7 +2740,6 @@ public class GitHubController : ControllerBase
 
     public async Task<int> GetWaitingReviews()
     {
-
         try
         {
             using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
@@ -3459,11 +2750,10 @@ public class GitHubController : ControllerBase
 
                 using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
                 {
-                    // Assuming _httpContextAccessor.HttpContext.Session.GetString("UserLogin") returns the login string
-                    string userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin") ?? "";
-                    command.Parameters.AddWithValue("@ownerLogin", userLogin);
+                    ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
+                    command.Parameters.AddWithValue("@ownerLogin", UserLogin);
 
-                    long waitingReviewsCount = (long)await command.ExecuteScalarAsync();
+                    long waitingReviewsCount = (long)(await command.ExecuteScalarAsync() ?? 0);
                     return (int)waitingReviewsCount;
 
                 }
@@ -3480,16 +2770,8 @@ public class GitHubController : ControllerBase
     [HttpGet("user/monthlysummary")]
     public async Task<ActionResult> GetReviewsForUserInLastMonth()
     {
-        var github = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-
-        var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
-        var Gconnection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
-
-
-        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
-
         // Get organizations for the current user
-        var organizations = await github.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
+        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
         var weeks = new List<(DateTime start, DateTime end)>();
@@ -3517,7 +2799,8 @@ public class GitHubController : ControllerBase
             string query = "SELECT pullnumber, reponame, repoowner FROM pullrequestinfo WHERE (repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins)) AND updatedat >= @startOfWeek AND EXISTS (SELECT 1 FROM json_array_elements(reviews) AS elem WHERE elem->>'login' = @ownerLogin)";
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
-                command.Parameters.AddWithValue("@ownerLogin", userLogin);
+                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
+                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
                 command.Parameters.AddWithValue("@startOfWeek", weeks[3].start);
 
@@ -3542,11 +2825,11 @@ public class GitHubController : ControllerBase
 
         var allReviewsTasks = allPRs.Select(async pull =>
         {
-            var reviews = await github.PullRequest.Review.GetAll(pull.RepoOwner, pull.RepoName, (int)pull.PRNumber);
+            var reviews = await GitHubUserClient.PullRequest.Review.GetAll(pull.RepoOwner, pull.RepoName, (int)pull.PRNumber);
 
             foreach (var review in reviews)
             {
-                bool isMyUser = review.User.Login == userLogin;
+                bool isMyUser = review.User.Login == UserLogin;
                 if (isMyUser && review.SubmittedAt >= weeks[0].start && review.SubmittedAt <= weeks[0].end)
                 {
                     reviewsThisWeek[0]++;
@@ -3588,7 +2871,7 @@ public class GitHubController : ControllerBase
                                     { "prnumber", pull.PRNumber },
                                 };
 
-                    var result = await Gconnection.Run(query, vars);
+                    var result = await GitHubUserGraphQLConnection.Run(query, vars);
 
                     foreach (var node in result.Reverse())
                     {
@@ -3597,7 +2880,7 @@ public class GitHubController : ControllerBase
                         var user = requestedReviewer?.User?.Login;
                         var created = reviewRequestedEvent?.CreatedAt;
 
-                        bool isUser = user == userLogin;
+                        bool isUser = user == UserLogin;
                         if (isUser && created <= review.SubmittedAt)
                         {
                             reviewsWithRequests[0]++;
@@ -3649,7 +2932,7 @@ public class GitHubController : ControllerBase
                                     { "prnumber", pull.PRNumber },
                                 };
 
-                    var result = await Gconnection.Run(query, vars);
+                    var result = await GitHubUserGraphQLConnection.Run(query, vars);
 
                     foreach (var node in result.Reverse())
                     {
@@ -3658,7 +2941,7 @@ public class GitHubController : ControllerBase
                         var user = requestedReviewer?.User?.Login;
                         var created = reviewRequestedEvent?.CreatedAt;
 
-                        bool isUser = user == userLogin;
+                        bool isUser = user == UserLogin;
                         if (isUser && created <= review.SubmittedAt)
                         {
                             reviewsWithRequests[1]++;
@@ -3694,6 +2977,7 @@ public class GitHubController : ControllerBase
                                     .User(user => new Core.Entities.User
                                     {
                                         AvatarUrl = user.AvatarUrl(100),
+                                        Name = user.Name,
                                         Login = user.Login,
                                     })),
                         })
@@ -3710,7 +2994,7 @@ public class GitHubController : ControllerBase
                                     { "prnumber", pull.PRNumber },
                                 };
 
-                    var result = await Gconnection.Run(query, vars);
+                    var result = await GitHubUserGraphQLConnection.Run(query, vars);
 
                     foreach (var node in result.Reverse())
                     {
@@ -3719,7 +3003,7 @@ public class GitHubController : ControllerBase
                         var user = requestedReviewer?.User?.Login;
                         var created = reviewRequestedEvent?.CreatedAt;
 
-                        bool isUser = user == userLogin;
+                        bool isUser = user == UserLogin;
                         if (isUser && created <= review.SubmittedAt)
                         {
                             reviewsWithRequests[2]++;
@@ -3771,7 +3055,7 @@ public class GitHubController : ControllerBase
                                     { "prnumber", pull.PRNumber },
                                 };
 
-                    var result = await Gconnection.Run(query, vars);
+                    var result = await GitHubUserGraphQLConnection.Run(query, vars);
 
                     foreach (var node in result.Reverse())
                     {
@@ -3780,7 +3064,7 @@ public class GitHubController : ControllerBase
                         var user = requestedReviewer?.User?.Login;
                         var created = reviewRequestedEvent?.CreatedAt;
 
-                        bool isUser = user == userLogin;
+                        bool isUser = user == UserLogin;
                         if (isUser && created <= review.SubmittedAt)
                         {
                             reviewsWithRequests[3]++;
@@ -3794,7 +3078,7 @@ public class GitHubController : ControllerBase
         });
         await Task.WhenAll(allReviewsTasks);
 
-        var requestedReviewsCount = await GetMonthlyRequestedPRs(github);
+        var requestedReviewsCount = await GetMonthlyRequestedPRs((GitHubClient?)GitHubUserClient);
 
         var reviewSpeeds = new List<string>();
 
@@ -3832,12 +3116,6 @@ public class GitHubController : ControllerBase
 
     public async Task<int[]> GetMonthlyRequestedPRs(GitHubClient github)
     {
-        var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
-        var connection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
-
-        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
-
-
         List<PRInfo> allPRs = new List<PRInfo>();
 
         // Get organizations for the current user
@@ -3863,7 +3141,8 @@ public class GitHubController : ControllerBase
             string q = "SELECT " + selects + " FROM pullrequestinfo WHERE ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) ) AND updatedat >= @lastWeek";
             using (NpgsqlCommand command = new NpgsqlCommand(q, conn))
             {
-                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
+                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
                 command.Parameters.AddWithValue("@lastWeek", weeks[3].start);
 
@@ -3930,7 +3209,7 @@ public class GitHubController : ControllerBase
                 { "prnumber", pr.PRNumber },
             };
 
-            var result = await connection.Run(query, vars);
+            var result = await GitHubUserGraphQLConnection.Run(query, vars);
 
 
 
@@ -3941,7 +3220,7 @@ public class GitHubController : ControllerBase
                 var user = requestedReviewer?.User?.Login;
                 var created = reviewRequestedEvent?.CreatedAt;
 
-                bool isMyUser = user == userLogin;
+                bool isMyUser = user == UserLogin;
                 if (isMyUser && created >= weeks[0].start && created <= weeks[0].end)
                 {
                     requestedThisWeek[0]++;
@@ -4101,13 +3380,8 @@ public class GitHubController : ControllerBase
     [HttpGet("GetFilterLists")]
     public async Task<ActionResult> GetRepositoryAssignees()
     {
-        string? access_token = _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken");
-        string? userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
-
-        var userClient = GetNewClient(access_token);
-
         // Get organizations for the current user
-        var organizations = await userClient.Organization.GetAllForCurrent();
+        var organizations = await GitHubUserClient.Organization.GetAllForCurrent();
         var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
         HashSet<string> allAssignees = new HashSet<string>();
@@ -4122,7 +3396,8 @@ public class GitHubController : ControllerBase
             string query = "SELECT id, name, ownerLogin, created_at FROM repositoryinfo WHERE ownerLogin = @ownerLogin OR ownerLogin = ANY(@organizationLogins) ORDER BY name ASC";
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
-                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
+                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
@@ -4140,13 +3415,13 @@ public class GitHubController : ControllerBase
                 }
             }
 
-            var installations = await _appClient.GitHubApps.GetAllInstallationsForCurrent();
+            var installations = await GitHubAppClient.GitHubApps.GetAllInstallationsForCurrent();
             var installationTasks = installations.Select(async installation =>
             {
-                if (installation.Account.Login == userLogin || organizationLogins.Contains(installation.Account.Login))
+                if (installation.Account.Login == UserLogin || organizationLogins.Contains(installation.Account.Login))
                 {
-                    var response = await _appClient.GitHubApps.CreateInstallationToken(installation.Id);
-                    var installationClient = GetNewClient(response.Token);
+                    var response = await GitHubAppClient.GitHubApps.CreateInstallationToken(installation.Id);
+                    var installationClient = GetGitHubClient(response.Token);
 
                     foreach (var repo in allRepos)
                     {
@@ -4179,7 +3454,8 @@ public class GitHubController : ControllerBase
             string query2 = "SELECT DISTINCT author FROM pullrequestinfo WHERE repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) ORDER BY author ASC";
             using (NpgsqlCommand command = new NpgsqlCommand(query2, connection))
             {
-                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
+                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
@@ -4192,9 +3468,10 @@ public class GitHubController : ControllerBase
             }
 
             string query3 = "SELECT DISTINCT unnest(assignees) as assignee FROM pullrequestinfo WHERE repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) ORDER BY assignee ASC";
-            using (NpgsqlCommand command = new NpgsqlCommand(query2, connection))
+            using (NpgsqlCommand command = new NpgsqlCommand(query3, connection))
             {
-                command.Parameters.AddWithValue("@ownerLogin", _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"));
+                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
+                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
@@ -4221,14 +3498,13 @@ public class GitHubController : ControllerBase
     {
         try
         {
-            var github = _getGitHubClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
 
-            var pullRequest = await github.PullRequest.Get(owner, repoName, prnumber);
+            var pullRequest = await GitHubUserClient.PullRequest.Get(owner, repoName, prnumber);
 
-            await github.PullRequest.Merge(owner, repoName, prnumber, new MergePullRequest());
+            await GitHubUserClient.PullRequest.Merge(owner, repoName, prnumber, new MergePullRequest());
 
             var branchToDelete = $"refs/heads/{pullRequest.Head.Ref}";
-            await github.Git.Reference.Delete(owner, repoName, branchToDelete);
+            await GitHubUserClient.Git.Reference.Delete(owner, repoName, branchToDelete);
             Console.WriteLine($"{owner} {repoName} {prnumber} is merged, and branch {branchToDelete} is deleted.");
             return Ok();
         }
@@ -4244,22 +3520,9 @@ public class GitHubController : ControllerBase
     {
         try
         {
-            HttpClient _client = new HttpClient();
-            _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken")}");
-            _client.BaseAddress = new Uri("https://api.github.com/");
-            _client.DefaultRequestHeaders.Add("User-Agent", "YourAppName");
-
-            var assigneesJson = "[" + string.Join(",", assigneesRequest.assignees.ConvertAll(a => $"\"{a}\"")) + "]";
-            var content = new StringContent($"{{\"assignees\": {assigneesJson}}}", Encoding.UTF8, "application/json");
-
-            var response = await _client.PostAsync($"repos/{owner}/{repoName}/issues/{prnumber}/assignees", content);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception($"Failed to add assignees. Status code: {response.StatusCode}");
-            }
+            await GitHubUserClient.Issue.Assignee.AddAssignees(owner, repoName, (int)prnumber, new AssigneesUpdate(assigneesRequest.assignees));
         }
-        catch (Exception e)
+        catch (Exception)
         {
             return Ok("Assignee(s) could not be added.");
         }
@@ -4271,32 +3534,13 @@ public class GitHubController : ControllerBase
     {
         try
         {
-            HttpClient _client = new HttpClient();
-            _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken")}");
-            _client.DefaultRequestHeaders.Add("User-Agent", "YourAppName");
-
-            var assigneesJson = "[" + string.Join(",", assigneesRequest.assignees.ConvertAll(a => $"\"{a}\"")) + "]";
-            var content = new StringContent($"{{\"assignees\": {assigneesJson}}}", Encoding.UTF8, "application/json");
-
-            HttpRequestMessage request = new HttpRequestMessage
-            {
-                Method = HttpMethod.Delete,
-                RequestUri = new Uri($"https://api.github.com/repos/{owner}/{repoName}/issues/{prnumber}/assignees"),
-                Content = content
-            };
-
-            var response = await _client.SendAsync(request);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new Exception($"Failed to remove assignees. Status code: {response.StatusCode}");
-            }
+            await GitHubUserClient.Issue.Assignee.RemoveAssignees(owner, repoName, (int)prnumber, new AssigneesUpdate(assigneesRequest.assignees));
         }
-        catch (Exception e)
+        catch (Exception)
         {
             return Ok("Assignee(s) could not be removed.");
         }
         return Ok("Assignee(s) are removed.");
     }
-
 }
+

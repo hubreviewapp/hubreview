@@ -2,30 +2,30 @@ import { Badge, Box, rem, Text, Card, Group, Anchor } from "@mantine/core";
 import { IconCheckupList } from "@tabler/icons-react";
 import { IconCircleCheck, IconXboxX } from "@tabler/icons-react";
 
-import { PRDetail } from "../pages/PRDetailsPage.tsx";
+import { APICheckConclusionState, APIPullRequestDetails } from "../api/types.ts";
 
 export interface PRDetailTabProps {
-  pull: PRDetail;
+  pullRequestDetails: APIPullRequestDetails;
 }
 
-export default function PrDetailTab({ pull }: PRDetailTabProps) {
+export default function PrDetailTab({ pullRequestDetails }: PRDetailTabProps) {
   const iconCheckupList = <IconCheckupList style={{ width: rem(27), height: rem(27) }} />;
 
-  const checks = pull.checks;
+  const checkSuites = pullRequestDetails.checkSuites;
 
   return (
     <Box>
       <Badge leftSection={iconCheckupList} size="lg" mb={10} variant="gradient" style={{ visibility: "visible" }}>
-        Checks ( {pull.checksSuccess} / {pull.checks.length} )
+        Checks ( {checkSuites.filter(cs => cs.conclusion === APICheckConclusionState.SUCCESS).length} / {checkSuites.length} )
       </Badge>
       <Box display="flex" style={{ flexWrap: "wrap" }}>
-        {checks.map((check) => (
+        {checkSuites.map((checkSuite) => (
           <Card
-            key={check.id}
+            key={checkSuite.id}
             shadow="sm"
             component="a"
             padding="sm"
-            href={check?.url}
+            href={checkSuite.workflowRun?.url}
             target="_blank"
             withBorder
             w="30%"
@@ -33,17 +33,19 @@ export default function PrDetailTab({ pull }: PRDetailTabProps) {
           >
             <Group>
               <Text fw={500} size="lg" mt="md" style={{ marginBottom: "10px" }}>
-                {check.name}
+                {
+                  checkSuite.id // FIXME: should be name, not id
+                }
               </Text>
 
               <Text fw={500} size="lg" mt="md">
-                {check.conclusion?.StringValue === "success" && (
+                {checkSuite.conclusion === APICheckConclusionState.SUCCESS && (
                   <IconCircleCheck
                     color="green"
                     style={{ width: rem(22), height: rem(22), color: "green", marginLeft: "auto" }}
                   />
                 )}
-                {check.conclusion?.StringValue === "failure" && (
+                {checkSuite.conclusion === APICheckConclusionState.FAILURE && (
                   <IconXboxX
                     color="red"
                     style={{ width: rem(22), height: rem(22), color: "red", marginLeft: "auto" }}
@@ -52,7 +54,7 @@ export default function PrDetailTab({ pull }: PRDetailTabProps) {
               </Text>
 
               <Anchor
-                href={check?.url}
+                href={checkSuite.workflowRun?.url}
                 target="_blank"
                 c="blue"
                 style={{ position: "absolute", right: "15px", display: "flex" }}

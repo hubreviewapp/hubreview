@@ -109,7 +109,6 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseStaticFiles();
 app.UseRouting();
 
 app.UseCors("_allowedOrigins");
@@ -119,7 +118,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapFallbackToFile("index.html"); ;
 
 app.Run();
 

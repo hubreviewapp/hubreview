@@ -74,7 +74,7 @@ function PRCard({ data: pr }: PullRequestCardProps) {
         .map((label) => (
           <PriorityBadge key={label.id} label={label.name.replace("Priority: ", "") as PriorityBadgeLabel} size="md" />
         ))}
-      <Link to={`pulls/pullrequest/${pr.repoOwner}/${pr.repoName}/${pr.prNumber}`} style={{ textDecoration: "none" }}>
+      <Link to={`/${pr.repoOwner}/${pr.repoName}/pull/${pr.prNumber}`} style={{ textDecoration: "none" }}>
         <Group grow>
           <Box>
             <Text c="dimmed">{pr.repoName}</Text>

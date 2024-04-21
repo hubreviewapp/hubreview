@@ -1,16 +1,15 @@
 import Comment from "../components/Comment.tsx";
 import TextEditor from "../components/TextEditor.tsx";
 import { Box, Text, Grid, Select, LoadingOverlay, Flex } from "@mantine/core";
-//import CommentList from "../components/DiffComment/CommentList";
 import PRDetailSideBar from "../components/PRDetailSideBar";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
-import { PullRequest } from "../pages/PRDetailsPage.tsx";
 import { useUser } from "../providers/context-utilities";
 import MergeButton from "../components/MergeButton";
 import { Review } from "../models/PRInfo.tsx";
 import { BASE_URL } from "../env.ts";
+import { APIPullRequestDetails } from "../api/types.ts";
 
 interface CreateReplyRequestModel {
   body: string;
@@ -30,13 +29,12 @@ interface CommentProps {
 }
 
 export interface CommentsTabProps {
-  pullRequest: PullRequest;
-  reviews: Review[];
+  pullRequestDetails: APIPullRequestDetails;
 }
-//[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_comments")]
-function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
+
+function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
   const { owner, repoName, prnumber } = useParams();
-  const userLogin = useUser().userLogin;
+  const { user } = useUser();
   const [isLoading, setIsLoading] = useState(true);
 
   const [apiComments, setApiComments] = useState<CommentProps[] | []>([]);
@@ -159,7 +157,7 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
         setFilteredComments(apiComments);
       }
       if (selected.startsWith("My Comments")) {
-        setFilteredComments(apiComments.filter((comment) => comment.author === userLogin));
+        setFilteredComments(apiComments.filter((comment) => comment.author === user?.login));
       }
       if (selected.startsWith("Active")) {
         setFilteredComments(
@@ -199,7 +197,7 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
             data={[
               "Show Everything (" + apiComments.length + ")",
               "All Comments (" + apiComments.length + ")",
-              "My Comments (" + apiComments.filter((comment) => comment.author === userLogin).length + ")",
+              "My Comments (" + apiComments.filter((comment) => comment.author === user?.login).length + ")",
               "Active (" +
                 apiComments.filter(
                   (comment) =>
@@ -266,7 +264,7 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
         )}
         <br></br>
         <Flex justify="right">
-          <MergeButton canMerge={pullRequest?.mergeable} />
+          <MergeButton mergeableState={pullRequestDetails.mergeable} />
         </Flex>
         <br />
         <Box style={{ border: "2px groove gray", borderRadius: 10, padding: "10px" }}>
@@ -275,12 +273,7 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
       </Grid.Col>
       <Grid.Col span={3}>
         <Box m="md">
-          <PRDetailSideBar
-            labels={pullRequest?.labels ?? []}
-            addedReviewers={reviews ?? []}
-            addedAssignees={pullRequest?.assignees ?? []}
-            author={pullRequest?.user.login}
-          />
+          <PRDetailSideBar pullRequestDetails={pullRequestDetails} />
         </Box>
       </Grid.Col>
     </Grid>

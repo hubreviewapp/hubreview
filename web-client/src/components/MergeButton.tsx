@@ -4,11 +4,12 @@ import axios from "axios";
 import { useParams } from "react-router-dom";
 import { useDisclosure } from "@mantine/hooks";
 import { BASE_URL } from "../env";
+import { APIMergeableState } from "../api/types";
 
 //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/merge")]
 
 export interface MergeButtonProps {
-  canMerge: boolean;
+  mergeableState: APIMergeableState;
 }
 function MergeButton(props: MergeButtonProps) {
   const [opened, { open, close }] = useDisclosure(false);
@@ -40,7 +41,7 @@ function MergeButton(props: MergeButtonProps) {
           <Button onClick={closeModal}>Done</Button>
         </Center>
       </Modal>
-      {props.canMerge ? (
+      {props.mergeableState === APIMergeableState.MERGEABLE ? (
         <Button leftSection={icon} color="green" onClick={handleButtonClick}>
           Merge Pull Request
         </Button>

@@ -33,6 +33,7 @@ import axios from "axios";
 import SelectLabel from "./SelectLabel";
 import BarColor from "../utility/WorkloadBarColor.ts";
 import { BASE_URL } from "../env.ts";
+import { APIPullRequestAssignee, APIPullRequestDetails, APIPullRequestReviewer } from "../api/types.ts";
 
 export interface Contributor {
   id: string;
@@ -59,18 +60,15 @@ export interface Assignee {
 }
 
 export interface PRDetailSideBarProps {
-  addedReviewers: Reviewer[];
-  addedAssignees: Assignee[];
-  labels: Label[];
-  author: string;
+  pullRequestDetails: APIPullRequestDetails;
 }
 
-function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRDetailSideBarProps) {
+function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
   const { owner, repoName, prnumber } = useParams();
   const iconInfo = <IconInfoCircle style={{ width: rem(18), height: rem(18) }} />;
   const [contributors, setContributors] = useState<Contributor[]>([]);
-  const [addedReviewer, setAddedReviewer] = useState<Reviewer[]>([]);
-  const [addedAssigneesList, setAddedAssigneesList] = useState<Assignee[]>([]);
+  const [addedReviewer, setAddedReviewer] = useState<APIPullRequestReviewer[]>([]);
+  const [addedAssigneesList, setAddedAssigneesList] = useState<APIPullRequestAssignee[]>([]);
   const [priority, setPriority] = useState<PriorityBadgeLabel>(null);
   const [query, setQuery] = useState("");
   const filtered = contributors.filter((item) => item.login.toLowerCase().includes(query.toLowerCase()));
@@ -78,7 +76,7 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
   useEffect(() => {
     const fetchContributors = async () => {
       try {
-        const res = await axios.get(`${BASE_URL}/api/github/GetPRReviewerSuggestion/${owner}/${repoName}/${author}`, {
+        const res = await axios.get(`${BASE_URL}/api/github/GetPRReviewerSuggestion/${owner}/${repoName}/${pullRequestDetails.author.login}`, {
           withCredentials: true,
         });
 
@@ -90,35 +88,36 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
       }
     };
     fetchContributors();
-  }, [author, owner, repoName]);
+  }, [pullRequestDetails.author.login, owner, repoName]);
 
   useEffect(() => {
-    if (addedReviewers.length != 0) {
-      setAddedReviewer(addedReviewers);
+    if (pullRequestDetails.reviewers.length !== 0) {
+      setAddedReviewer(pullRequestDetails.reviewers);
     }
-  }, [addedReviewers]);
+  }, [pullRequestDetails.reviewers]);
 
   useEffect(() => {
-    if (addedAssignees.length != 0) {
-      setAddedAssigneesList(addedAssignees);
+    if (pullRequestDetails.assignees.length !== 0) {
+      setAddedAssigneesList(pullRequestDetails.assignees);
     }
-  }, [addedAssignees]);
+  }, [pullRequestDetails.assignees]);
 
   useEffect(() => {
-    if (labels.length != 0) {
-      const temp = labels.find((itm) => itm.name.includes("Priority"));
+    if (pullRequestDetails.labels.length !== 0) {
+      const temp = pullRequestDetails.labels.find((itm) => itm.name.includes("Priority"));
       if (temp != undefined) {
-        labels.filter((itm) => itm !== temp);
+        pullRequestDetails.labels.filter((itm) => itm !== temp);
         setPriority(temp.name.slice("Priority: ".length) as PriorityBadgeLabel);
       }
     }
-  }, [labels]);
+  }, [pullRequestDetails.labels]);
 
   //HttpDelete("pullrequest/{owner}/{repoName}/{prnumber}/remove_reviewer/{reviewer}")]
-  const deleteReviewer = (reviewer: string) => {
-    setAddedReviewer(addedReviewer.filter((item) => item.login.toString() != reviewer));
+  const deleteReviewer = (reviewerId: string) => {
+    const reviewer = addedReviewer.find(r => r.id === reviewerId);
+    setAddedReviewer(addedReviewer.filter((item) => item.id !== reviewerId));
     axios
-      .delete(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/remove_reviewer/${reviewer}`, {
+      .delete(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/remove_reviewer/${reviewer.actor.login}`, {
         withCredentials: true,
       })
       .then(function () {})
@@ -223,18 +222,18 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
                 <Text c="dimmed">No reviewer added</Text>
               ) : (
                 addedReviewer.map((reviewer) => (
-                  <Grid key={reviewer.login} mb="sm">
+                  <Grid key={reviewer.id} mb="sm">
                     <Grid.Col span={2}>
-                      <Avatar src={reviewer.avatar} size="sm" />
+                      <Avatar src={reviewer.actor.avatarUrl} size="sm" />
                     </Grid.Col>
                     <Grid.Col span={7}>
-                      <Text size="sm"> {reviewer.login} </Text>
+                      <Text size="sm"> {reviewer.actor.login} </Text>
                     </Grid.Col>
                     <Grid.Col span={2}>{stateToMessage(reviewer.state)}</Grid.Col>
                     <Grid.Col span={1}>
                       <Tooltip label="Delete">
                         <CloseButton
-                          onClick={() => deleteReviewer(reviewer.login)}
+                          onClick={() => deleteReviewer(reviewer.id)}
                           icon={<IconXboxX color="gray" size={18} stroke={1.5} />}
                         />
                       </Tooltip>
@@ -299,7 +298,7 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
                   </Tooltip>
                 </Grid.Col>
                 <Grid.Col span={1}>
-                  {addedReviewer.find((itm2) => itm.login == itm2.login) == undefined ? (
+                  {addedReviewer.find((itm2) => itm.id == itm2.id) == undefined ? (
                     <UnstyledButton onClick={() => handleAddReviewer(itm)} style={{ fontSize: "12px" }}>
                       <IconCirclePlus size={18} stroke={1.5} />
                     </UnstyledButton>
@@ -354,7 +353,7 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
           <PriorityBadge label={priority} size="md" />
         </Box>
         <Divider mt="md" />
-        <SelectLabel githubAddedLabels={labels.map(({ name }) => ({ name, key: name, color: "ffffff" }))} />
+        <SelectLabel githubAddedLabels={pullRequestDetails.labels.map(({ name }) => ({ name, key: name, color: "ffffff" }))} />
       </Paper>
     </Box>
   );

@@ -1,0 +1,233 @@
+using Octokit.GraphQL;
+using static Octokit.GraphQL.Variable;
+
+namespace CS.Core.Entities.V2;
+
+public class PullRequestDetails
+{
+    public class AuthorDetails
+    {
+        public required string Url { get; set; }
+        public required string Login { get; set; }
+    }
+
+    public class ChangedFileDetails
+    {
+        public required int FileCount { get; set; }
+        public required int LineAdditions { get; set; }
+        public required int LineDeletions { get; set; }
+    }
+
+    public class LabelDetails
+    {
+        public required Octokit.GraphQL.ID Id { get; set; }
+        public required string Name { get; set; }
+        public required string? Description { get; set; }
+        public required string Color { get; set; }
+    }
+
+    public class AssigneeDetails
+    {
+        public required Octokit.GraphQL.ID Id { get; set; }
+        public required string Login { get; set; }
+        public required string? AvatarUrl { get; set; }
+    }
+
+    public class ReviewerDetails
+    {
+        public abstract class ReviewerActorDetails { }
+
+        public class ReviewerUserDetails : ReviewerActorDetails
+        {
+            public required string Login { get; set; }
+            public required string? AvatarUrl { get; set; }
+            public required string Url { get; set; }
+        }
+
+        public class ReviewerTeamDetails : ReviewerActorDetails
+        {
+            public required Octokit.GraphQL.ID Id { get; set; }
+            public required string Name { get; set; }
+            public required string Url { get; set; }
+        }
+
+        public required Octokit.GraphQL.ID Id { get; set; }
+        public required bool AsCodeOwner { get; set; }
+        public required ReviewerActorDetails Actor { get; set; }
+    }
+
+    public class ReviewDetails
+    {
+        public class AuthorDetails
+        {
+            public required string Login { get; set; }
+            public required string? AvatarUrl { get; set; }
+        }
+
+        public required Octokit.GraphQL.ID Id { get; set; }
+        public required AuthorDetails Author { get; set; }
+        public required Octokit.GraphQL.Model.PullRequestReviewState State { get; set; }
+    }
+
+    public class CheckSuiteDetails
+    {
+        public class WorkflowRunDetails
+        {
+            public required Octokit.GraphQL.ID Id { get; set; }
+            public required string Url { get; set; }
+            public required WorkflowDetails Workflow { get; set; }
+            public required List<CheckRunDetails> CheckRuns { get; set; }
+        }
+
+        public class WorkflowDetails
+        {
+            public required Octokit.GraphQL.ID WorkflowId { get; set; }
+            public required string Name { get; set; }
+        }
+
+        public class CheckRunDetails
+        {
+            public required string Name { get; set; }
+            public required string Permalink { get; set; }
+            public required Octokit.GraphQL.Model.CheckConclusionState? Conclusion { get; set; }
+            public required Octokit.GraphQL.Model.CheckStatusState Status { get; set; }
+        }
+
+        public required Octokit.GraphQL.ID Id { get; set; }
+        public required Octokit.GraphQL.Model.CheckConclusionState? Conclusion { get; set; }
+        public required Octokit.GraphQL.Model.CheckStatusState Status { get; set; }
+        public required WorkflowRunDetails? WorkflowRun { get; set; }
+    }
+
+    public required string Title { get; set; }
+    public required AuthorDetails Author { get; set; }
+    public required ChangedFileDetails ChangedFiles { get; set; }
+    public required int CommitCount { get; set; }
+    public required List<LabelDetails> Labels { get; set; }
+    public required List<AssigneeDetails> Assignees { get; set; }
+    public required List<ReviewerDetails> Reviewers { get; set; }
+    public required List<ReviewDetails> Reviews { get; set; }
+    public required List<CheckSuiteDetails> CheckSuites { get; set; }
+    public required bool IsDraft { get; set; }
+    public required Octokit.GraphQL.Model.MergeableState Mergeable { get; set; }
+    public required bool Merged { get; set; }
+    public required DateTimeOffset UpdatedAt { get; set; }
+    public required DateTimeOffset? ClosedAt { get; set; }
+    public required string PullRequestUrl { get; set; }
+    public required string RepositoryUrl { get; set; }
+
+    public static Octokit.GraphQL.ICompiledQuery<PullRequestDetails> GetQuery()
+    {
+        return new Query()
+            .Repository(Var("repoName"), Var("owner"))
+            .PullRequest(Var("prNumber"))
+            .Select(pr => new PullRequestDetails
+            {
+                Title = pr.Title,
+                Author = new()
+                {
+                    Url = pr.Author.Url,
+                    Login = pr.Author.Login,
+                },
+                ChangedFiles = new()
+                {
+                    FileCount = pr.ChangedFiles,
+                    LineAdditions = pr.Additions,
+                    LineDeletions = pr.Deletions,
+                },
+                CommitCount = pr.Commits(null, null, null, null).TotalCount,
+                Labels = pr.Labels(null, null, null, null, null)
+                    .AllPages()
+                    .Select(l => new PullRequestDetails.LabelDetails
+                    {
+                        Id = l.Id,
+                        Name = l.Name,
+                        Color = l.Color,
+                        Description = l.Description,
+                    })
+                    .ToList(),
+                Assignees = pr.Assignees(null, null, null, null)
+                    .AllPages()
+                    .Select(a => new PullRequestDetails.AssigneeDetails
+                    {
+                        Id = a.Id,
+                        Login = a.Login,
+                        AvatarUrl = a.AvatarUrl(null),
+                    })
+                    .ToList(),
+                Reviewers = pr.ReviewRequests(null, null, null, null)
+                    .AllPages()
+                    .Select(r => new PullRequestDetails.ReviewerDetails
+                    {
+                        Id = r.Id,
+                        AsCodeOwner = r.AsCodeOwner,
+                        Actor = r.RequestedReviewer.Switch<PullRequestDetails.ReviewerDetails.ReviewerActorDetails>(when =>
+                            when
+                                .User(u => new PullRequestDetails.ReviewerDetails.ReviewerUserDetails
+                                {
+                                    Login = u.Login,
+                                    AvatarUrl = u.AvatarUrl(null),
+                                    Url = u.Url,
+                                })
+                                .Team(t => new PullRequestDetails.ReviewerDetails.ReviewerTeamDetails
+                                {
+                                    Id = t.Id,
+                                    Name = t.Name,
+                                    Url = t.Url,
+                                })
+                        ),
+                    })
+                    .ToList(),
+                Reviews = pr.Reviews(null, null, null, null, null, null)
+                    .AllPages()
+                    .Select(r => new PullRequestDetails.ReviewDetails
+                    {
+                        Id = r.Id,
+                        Author = new PullRequestDetails.ReviewDetails.AuthorDetails
+                        {
+                            Login = r.Author.Login,
+                            AvatarUrl = r.Author.AvatarUrl(null),
+                        },
+                        State = r.State,
+                    })
+                    .ToList(),
+                CheckSuites = pr.Commits(null, null, 1, null).Nodes
+                    .Select(prCommit =>
+                        prCommit.Commit.CheckSuites(null, null, null, null, null)
+                        .AllPages()
+                        .Select(cs => new PullRequestDetails.CheckSuiteDetails
+                        {
+                            Id = cs.Id,
+                            Conclusion = cs.Conclusion,
+                            Status = cs.Status,
+                            WorkflowRun = cs.WorkflowRun.Select(wr => new PullRequestDetails.CheckSuiteDetails.WorkflowRunDetails
+                            {
+                                Id = wr.Id,
+                                Url = wr.Url,
+                                Workflow = new PullRequestDetails.CheckSuiteDetails.WorkflowDetails
+                                {
+                                    WorkflowId = wr.Workflow.Id,
+                                    Name = wr.Workflow.Name,
+                                },
+                                CheckRuns = wr.CheckSuite.CheckRuns(null, null, null, null, null)
+                                    .AllPages()
+                                    .Select(cr => new PullRequestDetails.CheckSuiteDetails.CheckRunDetails
+                                    {
+                                        Name = cr.Name,
+                                        Permalink = cr.Permalink,
+                                        Conclusion = cr.Conclusion,
+                                        Status = cr.Status,
+                                    }).ToList(),
+                            }).SingleOrDefault(),
+                        }).ToList()
+                    ).ToList().SelectMany(x => x).ToList(),
+                IsDraft = pr.IsDraft,
+                Mergeable = pr.Mergeable,
+                Merged = pr.Merged,
+                UpdatedAt = pr.UpdatedAt,
+                ClosedAt = pr.ClosedAt,
+                PullRequestUrl = pr.Url,
+                RepositoryUrl = pr.BaseRepository.Url,
+            }).Compile();
+    }
+}
