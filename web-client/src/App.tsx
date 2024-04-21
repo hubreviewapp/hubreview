@@ -49,7 +49,7 @@ function AppRoutes() {
             <Route path="/" element={<ReviewQueuePage />} />
             <Route path="/repositories" element={<RepositoriesPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="/analytics/:repoName" element={<RepoAnalyticsPage />} />
+            <Route path="/analytics/:repoName/:owner" element={<RepoAnalyticsPage />} />
             <Route path="/analytics/author/rates" element={<ApprRejRatesForAuthorPage />} />
             <Route path="/createPR" element={<PRCreationPage />} />
             <Route path="/pulls/create" element={<PRDetailsPage />} />

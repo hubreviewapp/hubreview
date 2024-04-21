@@ -3857,45 +3857,56 @@ public class GitHubController : ControllerBase
     [HttpGet("repository/{owner}/{repo}/{branch}/protection/{prnumber}")]
     public async Task<ActionResult> GetBranchProtection(string owner, string repo, string branch, long prnumber)
     {
-        var protection = await GitHubUserClient.Repository.Branch.GetBranchProtection(owner, repo, branch);
-
-        List<string> required_checks = new List<string>();
-        if (protection.RequiredStatusChecks.Strict)
-        {
-            foreach (var check in protection.RequiredStatusChecks.Contexts)
-            {
-                required_checks.Add(check);
-            }
-        }
-
-        var requiredApprovals = protection.RequiredPullRequestReviews.RequiredApprovingReviewCount;
-
         var pull = await GitHubUserClient.PullRequest.Get(owner, repo, (int)prnumber);
 
-        var isConflict = false;
-        if (pull.MergeableState == "dirty")
+        var isConflict = pull.MergeableState == "dirty";
+
+        try
         {
-            isConflict = true;
+            var protection = await GitHubUserClient.Repository.Branch.GetBranchProtection(owner, repo, branch);
+
+            List<string> required_checks = new List<string>();
+            if (protection.RequiredStatusChecks.Strict)
+            {
+                foreach (var check in protection.RequiredStatusChecks.Contexts)
+                {
+                    required_checks.Add(check);
+                }
+            }
+
+            var requiredApprovals = protection.RequiredPullRequestReviews.RequiredApprovingReviewCount;
+
+            var requiredConversationResolution = protection.RequiredConversationResolution.Enabled;
+            var result = new
+            {
+                required_checks,
+                requiredApprovals,
+                isConflict,
+                requiredConversationResolution
+            };
+            return Ok(result);
         }
-
-        var result = new
+        catch (NotFoundException)
         {
-            required_checks,
-            requiredApprovals,
-            isConflict
-        };
-
-        return Ok(result);
+            var result = new
+            {
+                required_checks = new List<string>(),
+                requiredApprovals = 0,
+                isConflict,
+                requiredConversationResolution = false
+            };
+            return Ok(result);
+        }
     }
 
-    [HttpPatch("pullrequest/{owner}/{repoName}/{prnumber}/close")]
-    public async Task<ActionResult> ClosePullRequest(string owner, string repoName, long prnumber)
+    [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/{state}")]
+    public async Task<ActionResult> ClosePullRequest(string owner, string repoName, long prnumber, string state)
     {
         try
         {
             await GitHubUserClient.PullRequest.Update(owner, repoName, (int)prnumber, new PullRequestUpdate
             {
-                State = ItemState.Closed
+                State = state == "open" ? ItemState.Open : ItemState.Closed
             });
 
             using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
@@ -3910,7 +3921,7 @@ public class GitHubController : ControllerBase
 
             connection.Close();
 
-            return Ok($"Pull request #{prnumber} in repository {repoName} is closed.");
+            return Ok($"Pull request #{prnumber} in repository {repoName} is closed/opened.");
         }
         catch (NotFoundException)
         {

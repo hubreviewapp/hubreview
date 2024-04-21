@@ -9,6 +9,7 @@ import { APIPullRequestDetails } from "../api/types.ts";
 import PRDetailSideBar from "../components/PRDetailSideBar";
 import { useUser } from "../providers/context-utilities";
 import MergeButton from "../components/MergeButton";
+import ClosePRButton from "../components/ClosePRButton.tsx";
 
 interface CreateReplyRequestModel {
   body: string;
@@ -268,6 +269,7 @@ function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
         )}
         <br></br>
         <Flex justify="right">
+          <ClosePRButton isClosed={pullRequestDetails.closedAt !== null} />
           <MergeButton mergeableState={pullRequestDetails.mergeable} />
         </Flex>
         <br />

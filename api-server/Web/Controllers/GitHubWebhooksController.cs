@@ -44,7 +44,6 @@ namespace CS.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> Webhook()
         {
-            Console.WriteLine("aaaaaaaaaaa");
             string requestBody;
             using (var reader = new StreamReader(Request.Body, Encoding.UTF8))
             {
@@ -761,6 +760,7 @@ namespace CS.Web.Controllers
                     break;
                 case "pull_request": // DONE
                     var pullRequestPayload = JsonConvert.DeserializeObject<PullRequestPayload>(requestBody);
+                    Console.WriteLine(pullRequestPayload.action);
                     if (pullRequestPayload.action == "assigned" || pullRequestPayload.action == "unassigned")
                     {
                         var requestedReviewers = pullRequestPayload.pull_request.assignees.Any()
@@ -777,7 +777,7 @@ namespace CS.Web.Controllers
                         connection.Close();
                         Console.WriteLine("Assignee " + pullRequestPayload.action);
                     }
-                    else if (pullRequestPayload.action == "opened")
+                    else if (pullRequestPayload.action == "opened" || pullRequestPayload.action == "ready_for_review")
                     {
                         connection.Open();
                         int priority = 0;
@@ -934,6 +934,19 @@ namespace CS.Web.Controllers
                         }
                         connection.Close();
                         Console.WriteLine("Review Request Update");
+                    }
+                    else if (pullRequestPayload.action == "converted_to_draft")
+                    {
+                        connection.Open();
+                        string query = "DELETE FROM pullrequestinfo WHERE repoid= @repoid AND pullid=@pullid";
+                        using (var command = new NpgsqlCommand(query, connection))
+                        {
+                            command.Parameters.AddWithValue("@repoid", pullRequestPayload.repository.id);
+                            command.Parameters.AddWithValue("@pullid", pullRequestPayload.pull_request.id);
+                            command.ExecuteNonQuery();
+                        }
+                        connection.Close();
+                        Console.WriteLine("pr eklendi");
                     }
                     break;
                 case "pull_request_review": // DONE
