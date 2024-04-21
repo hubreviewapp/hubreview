@@ -1,12 +1,47 @@
 import { BarChart } from "@mantine/charts";
 import { Paper, Title } from "@mantine/core";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { BASE_URL } from "../../../env.ts";
+import formatDateInterval from "./dateUtils.ts";
 
-const data = [
-  { date: "1 May", commented: 2, pending: 3, approved: 1, changeRequested: 4 },
-  { date: "3 May", commented: 3, pending: 3, approved: 4, changeRequested: 1 },
-  { date: "5 May", commented: 4, pending: 1, approved: 4, changeRequested: 2 },
-];
-function ReviewStatusAnalytics() {
+export interface AnalyticsProps {
+  repoName: string | undefined;
+  owner: string | undefined;
+}
+
+interface ReviewStatusData {
+  firstDay: string;
+  lastDay: string;
+  commentedCount: string;
+  pendingCount: string;
+  approvedCount: string;
+  changesReqCount: string;
+}
+function ReviewStatusAnalytics({ repoName, owner }: AnalyticsProps) {
+  //   [HttpGet("analytics/{owner}/{repoName}/review_statuses")]
+  const [repoData, setRepoData] = useState([]);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/api/github/analytics/${owner}/${repoName}/review_statuses`, {
+          withCredentials: true,
+        });
+        if (res) {
+          setRepoData(
+            res.data.map((item: ReviewStatusData) => ({
+              ...item,
+              week: formatDateInterval(item.firstDay, item.lastDay),
+            })),
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching ReviewStatusAnalytics info:", error);
+      }
+    };
+
+    fetchData().then();
+  }, []); // eslint-disable-line
   return (
     <Paper p="md" ta="center">
       <Title order={4} mb="sm">
@@ -14,13 +49,13 @@ function ReviewStatusAnalytics() {
       </Title>
       <BarChart
         h={300}
-        data={data}
-        dataKey="date"
+        data={repoData}
+        dataKey="week"
         series={[
-          { name: "commented", color: "violet.6" },
-          { name: "pending", color: "blue.6" },
-          { name: "approved", color: "teal.6" },
-          { name: "changeRequested", color: "pink.6" },
+          { name: "commentedCount", color: "violet.6" },
+          { name: "pendingCount", color: "blue.6" },
+          { name: "approvedCount", color: "teal.6" },
+          { name: "changesReqCount", color: "pink.6" },
         ]}
         tickLine="y"
       />

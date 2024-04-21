@@ -11,6 +11,7 @@ import { PullRequest } from "../pages/PRDetailsPage.tsx";
 import { useUser } from "../providers/context-utilities";
 import MergeButton from "../components/MergeButton";
 import { Review } from "../models/PRInfo.tsx";
+import ClosePRButton from "../components/ClosePRButton.tsx";
 
 interface CreateReplyRequestModel {
   body: string;
@@ -271,6 +272,7 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
         )}
         <br></br>
         <Flex justify="right">
+          <ClosePRButton isClosed={pullRequest?.closedAt != null} />
           <MergeButton canMerge={pullRequest?.mergeable} />
         </Flex>
         <br />
