@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Data;
 using System.Net.Http.Headers;
@@ -21,6 +22,7 @@ using Octokit.GraphQL.Core.Builders;
 using Octokit.GraphQL.Model;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using static Octokit.GraphQL.Variable;
+
 
 namespace CS.Web.Controllers;
 
@@ -4650,6 +4652,32 @@ public class GitHubController : ControllerBase
         }
 
         return Ok(result);
+    }
+
+    [HttpGet("analytics/{owner}/{repoName}/label")]
+    public async Task<Dictionary<string, int>> GetLabelUsage(string owner, string repoName)
+    {
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        var allPullRequests = await client.PullRequest.GetAllForRepository(owner, repoName, new PullRequestRequest { State = ItemStateFilter.All });
+
+        var labelUsage = new ConcurrentDictionary<string, int>();
+
+        Parallel.ForEach(allPullRequests, pullRequest =>
+        {
+            var labels = pullRequest.Labels.Select(label => label.Name);
+
+            foreach (var label in labels)
+            {
+                if (!label.StartsWith("Priority:"))
+                {
+                    labelUsage.AddOrUpdate(label, 1, (_, count) => count + 1); // Thread-safe update of label count
+                }
+            }
+        });
+
+        return labelUsage.ToDictionary(kv => kv.Key, kv => kv.Value);
     }
 
     [HttpGet("repository/{owner}/{repo}/{branch}/protection/{prnumber}")]
