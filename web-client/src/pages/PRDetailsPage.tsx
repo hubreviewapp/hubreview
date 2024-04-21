@@ -71,21 +71,6 @@ function PRDetailsPage(props: PRDetailsPageProps) {
   const currentTab = props.tab ?? tabs[0];
 
   //[HttpGet("repository/{owner}/{repo}/{branch}/protection/{prnumber}")]
-  const fetchMergeInfo = async (branch: string) => {
-    try {
-      const apiUrl = `${BASE_URL}/api/github/repository/${owner}/${repoName}/${branch}/protection/${prnumber}`;
-      const res = await axios.get(apiUrl, {
-        withCredentials: true,
-      });
-      if (res) {
-        setMergeInfo(res.data);
-        console.log("protection", res.data);
-      }
-    } catch (error) {
-      console.error("Error fetching merge info:", error);
-    }
-  };
-
   useEffect(() => {
     const fetchPRInfo = async () => {
       try {
@@ -94,7 +79,23 @@ function PRDetailsPage(props: PRDetailsPageProps) {
         });
         if (res) {
           setPullRequest(res.data);
-          if (res.data.pull.base.ref !== undefined) fetchMergeInfo(res.data.pull.base.ref);
+          if (res.data.pull.base.ref !== undefined) {
+            const fetchMergeInfo = async (branch: string) => {
+              try {
+                const apiUrl = `${BASE_URL}/api/github/repository/${owner}/${repoName}/${branch}/protection/${prnumber}`;
+                const res = await axios.get(apiUrl, {
+                  withCredentials: true,
+                });
+                if (res) {
+                  setMergeInfo(res.data);
+                  console.log("protection", res.data);
+                }
+              } catch (error) {
+                console.error("Error fetching merge info:", error);
+              }
+            };
+            fetchMergeInfo(res.data.pull.base.ref);
+          }
           console.log("fff", res.data);
         }
       } catch (error) {
@@ -102,7 +103,7 @@ function PRDetailsPage(props: PRDetailsPageProps) {
       }
     };
     fetchPRInfo();
-  }, [owner, prnumber, repoName, fetchMergeInfo]);
+  }, [owner, prnumber, repoName]);
 
   return (
     <div style={{ textAlign: "left", marginLeft: 100 }}>
