@@ -226,24 +226,26 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
   };
 
   function changePriority(value: PriorityBadgeLabel) {
+    console.log("value", value);
+    console.log(priority);
     // delete the priority label
-    if (value == null) {
-      if (priority) {
-        axios
-          .delete(
-            `${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/${"Priority: ".concat(
-              priority.toString(),
-            )}`,
-            {
-              withCredentials: true,
-            },
-          )
-          .then(function () {})
-          .catch(function (error) {
-            console.log(error);
-          });
-      }
 
+    if (priority != null) {
+      axios
+        .delete(
+          `${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/${"Priority: ".concat(
+            priority.toString(),
+          )}`,
+          {
+            withCredentials: true,
+          },
+        )
+        .then(function () {})
+        .catch(function (error) {
+          console.log(error);
+        });
+    }
+    if (value == null) {
       setPriority(value);
       return;
     }
