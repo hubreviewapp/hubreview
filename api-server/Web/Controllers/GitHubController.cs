@@ -18,6 +18,9 @@ using Octokit.GraphQL.Core.Builders;
 using Octokit.GraphQL.Model;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using static Octokit.GraphQL.Variable;
+using Newtonsoft.Json.Linq;
+using System.Net.Http.Headers;
+using CS.Web.Models.Api.Response;
 
 namespace CS.Web.Controllers;
 
@@ -86,6 +89,50 @@ public class GitHubController : ControllerBase
         _coreConfiguration = coreConfiguration;
         _appClient = GetNewClient();
         _environment = environment;
+    }
+
+    [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/summary")]
+    public async Task<ActionResult> summary(string owner, string repoName, int prnumber)
+    {
+        
+        var githubclient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+
+        var files = await githubclient.PullRequest.Files(owner, repoName, prnumber);
+        var selected = string.Join("\n\n", files.Select(file => $"{file.FileName}:\n\n{file.Patch}"));
+
+        string prompt = "summarize in detail the diff files from my pull request given below, as a list of file names and their explanations:\n\n";   
+
+        Console.WriteLine(prompt + selected);
+
+        var client = new HttpClient();
+
+        await Task.Delay(TimeSpan.FromSeconds(2));
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/chat/completions");
+        request.Headers.Add("Authorization", "Bearer " + _coreConfiguration.OpenaiApiKey);
+        
+        var requestData = new
+        {
+            model = "gpt-3.5-turbo",
+            messages = new[]
+            {
+                new
+                {
+                    role = "user",
+                    content = prompt + selected
+                }
+            }
+        };
+
+        request.Content = new StringContent(JsonConvert.SerializeObject(requestData), Encoding.UTF8, "application/json");
+
+        HttpResponseMessage response = await client.SendAsync(request);
+        string responseBody = await response.Content.ReadAsStringAsync();
+        var res = JsonConvert.DeserializeObject<ChatCompletionResponseModel>(responseBody);
+
+        Console.WriteLine(res.Usage.TotalTokens);
+
+        return Ok(res.Choices[0].Message.Content ?? "");
     }
 
     [HttpGet("acquireToken")]
