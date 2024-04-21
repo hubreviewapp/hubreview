@@ -1,4 +1,6 @@
-import { IconGitPullRequest } from "@tabler/icons-react";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { IconGitMerge, IconGitPullRequest, IconGitPullRequestClosed } from "@tabler/icons-react";
 import ModifiedFilesTab from "../tabs/ModifiedFilesTab";
 import CommentsTab from "../tabs/CommentsTab.tsx";
 import CommitsTab from "../tabs/CommitsTab.tsx";
@@ -8,9 +10,7 @@ import PrDetailTab from "../tabs/PrDetailTab.tsx";
 import { Params, useParams } from "react-router-dom";
 import PRSummaryBox from "../components/PRCreate/PRSummaryBox";
 import { apiHooks } from "../api/apiHooks.ts";
-import { useEffect, useState } from "react";
 import { BASE_URL } from "../env.ts";
-import axios from "axios";
 
 export type PRDetailsPageTabName = "comments" | "commits" | "details" | "reviews";
 const tabs: PRDetailsPageTabName[] = ["comments", "commits", "details", "reviews"];
@@ -44,6 +44,9 @@ export interface MergeInfo {
 function PRDetailsPage(props: PRDetailsPageProps) {
   const { owner, repoName, prNumber } = processParams(useParams());
   const currentTab = props.tab ?? tabs[0];
+  const mergeIcon = <IconGitMerge style={{ width: rem(18), height: rem(18) }} />;
+  const openIcon = <IconGitPullRequest style={{ width: rem(18), height: rem(18) }} />;
+  const closeIcon = <IconGitPullRequestClosed style={{ width: rem(18), height: rem(18) }} />;
 
   const { data: pullRequestData, isLoading: isLoadingPullRequestData } = apiHooks.pullRequests.useGetByNumberQuery(
     owner,
@@ -99,11 +102,13 @@ function PRDetailsPage(props: PRDetailsPageProps) {
         &ensp;&ensp;
         <Badge
           size="lg"
-          color={pullRequestDetails.merged ? "#9539CA" : pullRequestDetails.closedAt !== null ? "#778DA9" : "green"}
+          color={pullRequestDetails.merged ? "#9539CA" : pullRequestDetails.closedAt !== null ? "red" : "green"}
           key={1}
-          rightSection={<IconGitPullRequest style={{ width: rem(18), height: rem(18) }} />}
+          rightSection={
+            pullRequestDetails.merged ? mergeIcon : pullRequestDetails.closedAt !== null ? closeIcon : openIcon
+          }
         >
-          {pullRequestDetails.merged ? "Merged" : pullRequestDetails.closedAt != null ? "Closed" : "Open"}
+          {pullRequestDetails.merged ? "Merged" : pullRequestDetails.closedAt !== null ? "Closed" : "Open"}
         </Badge>
       </Group>
       <Group mb="sm">
