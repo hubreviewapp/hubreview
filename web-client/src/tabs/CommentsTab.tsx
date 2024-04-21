@@ -269,8 +269,12 @@ function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
         )}
         <br></br>
         <Flex justify="right">
-          <ClosePRButton isClosed={pullRequestDetails.closedAt !== null} />
-          <MergeButton mergeableState={pullRequestDetails.mergeable} />
+          {pullRequestDetails.merged === false && (
+            <>
+              <ClosePRButton isClosed={pullRequestDetails.closedAt !== null} />
+              <MergeButton mergeableState={pullRequestDetails.mergeable} />
+            </>
+          )}
         </Flex>
         <br />
         <Box style={{ border: "2px groove gray", borderRadius: 10, padding: "10px" }}>
