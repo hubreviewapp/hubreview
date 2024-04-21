@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Data;
 using System.Net.Http.Headers;
@@ -21,7 +22,6 @@ using Octokit.GraphQL.Core.Builders;
 using Octokit.GraphQL.Model;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using static Octokit.GraphQL.Variable;
-using System.Collections.Concurrent;
 
 
 namespace CS.Web.Controllers;
