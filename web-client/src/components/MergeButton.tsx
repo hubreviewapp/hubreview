@@ -7,10 +7,10 @@ import { BASE_URL } from "../env";
 import { APIMergeableState } from "../api/types";
 
 //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/merge")]
-
 export interface MergeButtonProps {
-  mergeableState: APIMergeableState;
+  isMergeable: boolean;
 }
+
 function MergeButton(props: MergeButtonProps) {
   const [opened, { open, close }] = useDisclosure(false);
   const { owner, repoName, prnumber } = useParams();
@@ -41,7 +41,7 @@ function MergeButton(props: MergeButtonProps) {
           <Button onClick={closeModal}>Done</Button>
         </Center>
       </Modal>
-      {props.mergeableState === APIMergeableState.MERGEABLE ? (
+      {props.isMergeable ? (
         <Button leftSection={icon} color="green" onClick={handleButtonClick}>
           Merge Pull Request
         </Button>

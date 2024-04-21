@@ -9,6 +9,17 @@ export enum APIMergeableState {
   UNKNOWN = "UNKNOWN",
 }
 
+export enum APIMergeStateStatus {
+  BEHIND = "BEHIND",
+  BLOCKED = "BLOCKED",
+  CLEAN = "CLEAN",
+  DIRTY = "DIRTY",
+  DRAFT = "DRAFT",
+  HAS_HOOKS = "HAS_HOOKS",
+  UNKNOWN = "UNKNOWN",
+  UNSTABLE = "UNSTABLE",
+}
+
 export enum APIPullRequestReviewState {
   PENDING = "PENDING",
   COMMENTED = "COMMENTED",
@@ -126,6 +137,7 @@ export interface APIPullRequestDetails {
   }[];
   isDraft: boolean;
   mergeable: APIMergeableState;
+  mergeStateStatus: APIMergeStateStatus;
   merged: boolean;
   updatedAt: Date;
   closedAt: Date | null;

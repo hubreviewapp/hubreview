@@ -256,20 +256,17 @@ public class GitHubController : ControllerBase
     [HttpGet("getRepository")]
     public async Task<ActionResult> GetRepositories()
     {
-        var organizations = await GitHubUserClient.Organization.GetAllForCurrent();
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+        var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
         List<RepoInfo> allRepos = new List<RepoInfo>();
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await connection.OpenAsync();
 
-            string query = "SELECT id, name, ownerLogin, created_at FROM repositoryinfo WHERE ownerLogin = @ownerLogin OR ownerLogin = ANY(@organizationLogins) ORDER BY name ASC";
+            string query = "SELECT id, name, ownerLogin, created_at FROM repositoryinfo WHERE id = ANY(@repos) ORDER BY name ASC";
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
-                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
-                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@repos", repos);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
@@ -281,7 +278,7 @@ public class GitHubController : ControllerBase
                             Name = reader.GetString(1),
                             OwnerLogin = reader.GetString(2),
                             CreatedAt = reader.GetFieldValue<DateOnly>(3),
-                            IsAdmin = await GetRepoAdmins(reader.GetString(2), reader.GetString(1), UserLogin)
+                            IsAdmin = await GetRepoAdmins(reader.GetString(2), reader.GetString(1), UserLogin!)
                         };
                         allRepos.Add(repo);
                     }
