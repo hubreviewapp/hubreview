@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.ComponentModel;
 using System.Data;
 using System.Net.Http.Headers;
@@ -21,6 +22,7 @@ using Octokit.GraphQL.Core.Builders;
 using Octokit.GraphQL.Model;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using static Octokit.GraphQL.Variable;
+
 
 namespace CS.Web.Controllers;
 
@@ -4447,6 +4449,40 @@ public class GitHubController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("analytics/{owner}/{repoName}/all")]
+    public async Task<ActionResult> GetPriorityDistributionAllTime(string owner, string repoName)
+    {
+        //last index highest priority
+        //first index lowest priority
+        List<int> result = [0, 0, 0, 0, 0];
+
+        using (NpgsqlConnection conn = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
+        {
+            await conn.OpenAsync();
+
+            string selects = "priority, COUNT(*) as amount";
+            string q = "SELECT " + selects + " FROM pullrequestinfo WHERE repoowner=@ownerLogin AND reponame=@repoName GROUP BY priority";
+            using (NpgsqlCommand command = new NpgsqlCommand(q, conn))
+            {
+                command.Parameters.AddWithValue("@ownerLogin", owner);
+                command.Parameters.AddWithValue("@repoName", repoName);
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        var pri = reader.GetInt32(0);
+                        result[pri] = reader.GetInt32(1);
+                    }
+                }
+            }
+
+            await conn.CloseAsync();
+        }
+
+        return Ok(result);
+    }
+
     [HttpGet("analytics/{owner}/{repoName}/avg_merged_time")]
     public async Task<ActionResult> GetAvgMergedTime(string owner, string repoName)
     {
@@ -4651,6 +4687,58 @@ public class GitHubController : ControllerBase
         }
 
         return Ok(result);
+    }
+
+    [HttpGet("analytics/{owner}/{repoName}/label")]
+    public async Task<Dictionary<string, int>> GetLabelUsage(string owner, string repoName)
+    {
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        var allPullRequests = await client.PullRequest.GetAllForRepository(owner, repoName, new PullRequestRequest { State = ItemStateFilter.Open });
+
+        var labelUsage = new ConcurrentDictionary<string, int>();
+
+        Parallel.ForEach(allPullRequests, pullRequest =>
+        {
+            var labels = pullRequest.Labels.Select(label => label.Name);
+
+            foreach (var label in labels)
+            {
+                if (!label.StartsWith("Priority:"))
+                {
+                    labelUsage.AddOrUpdate(label, 1, (_, count) => count + 1); // Thread-safe update of label count
+                }
+            }
+        });
+
+        return labelUsage.ToDictionary(kv => kv.Key, kv => kv.Value);
+    }
+
+    [HttpGet("analytics/{owner}/{repoName}/label/all")]
+    public async Task<Dictionary<string, int>> GetLabelUsageAllTime(string owner, string repoName)
+    {
+        var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
+        var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
+
+        var allPullRequests = await client.PullRequest.GetAllForRepository(owner, repoName, new PullRequestRequest { State = ItemStateFilter.All });
+
+        var labelUsage = new ConcurrentDictionary<string, int>();
+
+        Parallel.ForEach(allPullRequests, pullRequest =>
+        {
+            var labels = pullRequest.Labels.Select(label => label.Name);
+
+            foreach (var label in labels)
+            {
+                if (!label.StartsWith("Priority:"))
+                {
+                    labelUsage.AddOrUpdate(label, 1, (_, count) => count + 1); // Thread-safe update of label count
+                }
+            }
+        });
+
+        return labelUsage.ToDictionary(kv => kv.Key, kv => kv.Value);
     }
 
     [HttpGet("repository/{owner}/{repo}/{branch}/protection/{prnumber}")]
