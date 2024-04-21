@@ -4761,8 +4761,8 @@ public class GitHubController : ControllerBase
     // user type usersa direkt sahibi döndür.
     // userın type ı organizasyonsa, https://api.github.com/orgs/hubreviewapp/members?role=admin request.
 
-    [HttpGet("{repoOwner}/{repoName}/repoadmins")]
-    public async Task<ActionResult> GetRepoAdmins(string repoOwner, string repoName)
+    [HttpGet("{repoOwner}/{repoName}/repoadmins/{userLogin}")]
+    public async Task<ActionResult> GetRepoAdmins(string repoOwner, string repoName,  string userLogin)
     {
         List<string> result = new List<string>();
 
@@ -4784,7 +4784,7 @@ public class GitHubController : ControllerBase
             result.Add(repoOwner);
         }
 
-        return Ok(result);
+        return Ok(result.Contains(userLogin));
 
     }
 
