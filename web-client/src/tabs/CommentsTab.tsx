@@ -13,7 +13,6 @@ import { Review } from "../models/PRInfo.tsx";
 import SplitButton from "../components/SplitButton.tsx";
 import ClosePRButton from "../components/ClosePRButton.tsx";
 
-
 interface CreateReplyRequestModel {
   body: string;
   replyToId: number;
