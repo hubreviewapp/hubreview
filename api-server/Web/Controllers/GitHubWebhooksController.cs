@@ -277,7 +277,7 @@ namespace CS.Web.Controllers
                                                 priority = 1;
                                                 break;
                                             default:
-                                                // Do nothing
+                                                priority = 0;
                                                 break;
                                         }
                                     }
@@ -569,7 +569,7 @@ namespace CS.Web.Controllers
                                                 priority = 1;
                                                 break;
                                             default:
-                                                // Do nothing
+                                                priority = 0;
                                                 break;
                                         }
                                     }
@@ -816,7 +816,7 @@ namespace CS.Web.Controllers
                                     priority = 1;
                                     break;
                                 default:
-                                    // Do nothing
+                                    priority = 0;
                                     break;
                             }
                         }
@@ -903,7 +903,7 @@ namespace CS.Web.Controllers
                                     priority = 1;
                                     break;
                                 default:
-                                    // Do nothing
+                                    priority = 0;
                                     break;
                             }
                         }
