@@ -327,31 +327,30 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
               <Text fw={500} size="md" mb="sm">
                 Reviewers
               </Text>
-              {latestReviewsPerReviewer.length === 0 ? (
+              {latestReviewsPerReviewer.length === 0 && addedReviewers.length === 0 && (
                 <Text c="dimmed">No reviewer added</Text>
-              ) : (
-                latestReviewsPerReviewer.map((review) => (
-                  <Grid key={review.id} mb="sm">
-                    <Grid.Col span={2}>
-                      <Avatar src={review.author.avatarUrl} size="sm" />
-                    </Grid.Col>
-                    <Grid.Col span={7}>
-                      <Text size="sm"> {review.author.login} </Text>
-                    </Grid.Col>
-                    <Grid.Col span={2}>{stateToMessage(review.state)}</Grid.Col>
-                    <Grid.Col span={1}>
-                      {review.state === APIPullRequestReviewState.PENDING && (
-                        <Tooltip label="Delete">
-                          <CloseButton
-                            onClick={() => deleteReviewer(review.id)}
-                            icon={<IconXboxX color="gray" size={18} stroke={1.5} />}
-                          />
-                        </Tooltip>
-                      )}
-                    </Grid.Col>
-                  </Grid>
-                ))
               )}
+              {latestReviewsPerReviewer.map((review) => (
+                <Grid key={review.id} mb="sm">
+                  <Grid.Col span={2}>
+                    <Avatar src={review.author.avatarUrl} size="sm" />
+                  </Grid.Col>
+                  <Grid.Col span={7}>
+                    <Text size="sm"> {review.author.login} </Text>
+                  </Grid.Col>
+                  <Grid.Col span={2}>{stateToMessage(review.state)}</Grid.Col>
+                  <Grid.Col span={1}>
+                    {review.state === APIPullRequestReviewState.PENDING && (
+                      <Tooltip label="Delete">
+                        <CloseButton
+                          onClick={() => deleteReviewer(review.id)}
+                          icon={<IconXboxX color="gray" size={18} stroke={1.5} />}
+                        />
+                      </Tooltip>
+                    )}
+                  </Grid.Col>
+                </Grid>
+              ))}
               {addedReviewers.length !== 0 && (
                 <Box>
                   <Text ta="center" size="xs" c="dimmed" mb="sm">

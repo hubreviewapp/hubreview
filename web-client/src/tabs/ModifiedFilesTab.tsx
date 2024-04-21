@@ -42,6 +42,25 @@ const parseDiffMarker = (markerLine: string): DiffMarker => {
 };
 
 const parseRawDiff = (getAllPatchesResponse: GetAllPatchesResponse): FileDiff => {
+  if (getAllPatchesResponse.content === null) {
+    return {
+      sha: getAllPatchesResponse.sha,
+      status: getAllPatchesResponse.status,
+      diffstat: {
+        additions: getAllPatchesResponse.adds,
+        deletions: getAllPatchesResponse.dels,
+      },
+      fileName: getAllPatchesResponse.name,
+      lines: [
+        {
+          type: DiffLineType.Context,
+          content: "This file is not viewable from HubReview",
+          lineNumber: {},
+        },
+      ],
+    };
+  }
+
   const trimmedRawDiff = getAllPatchesResponse.content.trim();
   const rawDiffLines = trimmedRawDiff.split("\n");
 
