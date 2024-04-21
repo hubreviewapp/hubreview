@@ -9,9 +9,10 @@ import TextEditor from "../components/TextEditor.tsx";
 import PRDetailSideBar from "../components/PRDetailSideBar";
 import { MergeInfo, PullRequest } from "../pages/PRDetailsPage.tsx";
 import { useUser } from "../providers/context-utilities";
-import MergeButton from "../components/MergeButton";
 import { Review } from "../models/PRInfo.tsx";
 import SplitButton from "../components/SplitButton.tsx";
+import ClosePRButton from "../components/ClosePRButton.tsx";
+
 
 interface CreateReplyRequestModel {
   body: string;
@@ -275,6 +276,10 @@ function CommentsTab({ pullRequest, reviews, mergeInfo }: CommentsTabProps) {
         {pullRequest?.merged === false && (
           <SplitButton mergeInfo={mergeInfo} isMergeable={pullRequest?.mergeable}></SplitButton>
         )}
+
+        <Flex justify="right">
+          <ClosePRButton isClosed={pullRequest?.closedAt != null} />
+        </Flex>
         <br />
         <Box style={{ border: "2px groove gray", borderRadius: 10, padding: "10px" }}>
           <TextEditor content="" addComment={addPRComment} />
