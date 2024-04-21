@@ -1,10 +1,16 @@
-import { Button, Menu, Group, ActionIcon, rem, Text } from "@mantine/core";
+import { Button, rem, Text } from "@mantine/core";
 import { Box, Popover } from "@mantine/core";
-import { IconChevronDown } from "@tabler/icons-react";
-import classes from "./SplitButton.module.scss";
+//import classes from "./SplitButton.module.scss";
 import { IconGitMerge, IconX, IconCheck } from "@tabler/icons-react";
+import { MergeInfo } from "../pages/PRDetailsPage.tsx";
+import MergeButton from "./MergeButton.tsx";
 
-function SplitButton() {
+export interface SplitButtonProps {
+  mergeInfo: MergeInfo | null;
+  isMergeable: boolean | null;
+}
+
+function SplitButton({ mergeInfo, isMergeable }: SplitButtonProps) {
   return (
     <div>
       <Popover
@@ -17,82 +23,136 @@ function SplitButton() {
       >
         <Popover.Target>
           <Box
-            style={{ position: "relative", backgroundColor: "dimgray", width: 140, borderRadius: 10, display: "flex" }}
+            style={{
+              position: "relative",
+              backgroundColor: isMergeable ? "green" : "gray",
+              width: 140,
+              borderRadius: 10,
+              display: "flex",
+            }}
           >
-            <IconGitMerge style={{ width: rem(50), height: rem(50), marginTop: 0, marginLeft: 10 }} />
-            <Text size="sm" fw={700} c="#A30000">
-              {" "}
-              Not Able to Merge
-            </Text>
+            {!isMergeable && (
+              <>
+                <IconGitMerge
+                  color="darkred"
+                  style={{ width: rem(50), height: rem(50), marginTop: 0, marginLeft: 10 }}
+                />
+                <Text size="sm" fw={700} c="darkred">
+                  {" "}
+                  Not Able to Merge
+                </Text>
+              </>
+            )}
+            {isMergeable && (
+              <>
+                <IconGitMerge style={{ width: rem(50), height: rem(50), marginTop: 0, marginLeft: 10 }} />
+                <Text size="sm" fw={700}>
+                  {" "}
+                  Able to Merge
+                </Text>
+              </>
+            )}
           </Box>
         </Popover.Target>
         <Popover.Dropdown style={{ width: 770 }}>
-          <Box style={{ display: "flex" }}>
-            <Box>
-              <IconX color="red" style={{ width: rem(30), height: rem(30), marginLeft: 5, marginTop: 10 }} />
-            </Box>
-            <Text color="red" fw={700} style={{ marginTop: 15 }}>
-              Review required (2/3)
-            </Text>
-          </Box>
-          <Text size="sm">At least 3 approving review is required by reviewers with write access.</Text>
-          <Text size="sm" td="underline" c="blue">
-            See all reviewers
-          </Text>
+          {mergeInfo?.requiredApprovals !== 0 && (
+            <>
+              <Box style={{ display: "flex" }}>
+                <Box>
+                  <IconX color="red" style={{ width: rem(30), height: rem(30), marginLeft: 5, marginTop: 10 }} />
+                </Box>
+                <Text color="red" fw={700} style={{ marginTop: 15 }}>
+                  Review required (2/ {mergeInfo?.requiredApprovals})
+                </Text>
+              </Box>
+              <Text size="sm">
+                At least {mergeInfo?.requiredApprovals} approving review is required by reviewers with write access.
+              </Text>
+              <Text size="sm" td="underline" c="blue">
+                See all reviewers
+              </Text>
+            </>
+          )}
+          {mergeInfo?.requiredApprovals === 0 && (
+            <>
+              <Box style={{ display: "flex" }}>
+                <Box>
+                  <IconCheck color="green" style={{ width: rem(30), height: rem(30), marginLeft: 5, marginTop: 10 }} />
+                </Box>
+                <Text color="white" fw={700} style={{ marginTop: 15 }}>
+                  Approval not required
+                </Text>
+              </Box>
+              <Text size="sm">This pull request may be merged without approvals.</Text>
+              <Text size="sm" td="underline" c="blue">
+                See all reviewers
+              </Text>
+            </>
+          )}
           <hr></hr>
-          <Box style={{ display: "flex" }}>
-            <Box>
-              <IconCheck color="green" style={{ width: rem(30), height: rem(30), marginLeft: 5, marginTop: 10 }} />
-            </Box>
-            <Text fw={700} style={{ marginTop: 15 }}>
-              All checks have passed
-            </Text>
-          </Box>
-          <Text size="sm">2 successful checks</Text>
-          <hr></hr>
-          <Box style={{ display: "flex" }}>
-            <Box>
-              <IconX color="red" style={{ width: rem(30), height: rem(30), marginLeft: 5, marginTop: 10 }} />
-            </Box>
-            <Text color="red" style={{ marginTop: 15 }}>
-              Merging is blocked
-            </Text>
-          </Box>
-          <Text size="sm">Merging can be performed automatically with 3 approving reviews.</Text>
+          {mergeInfo && mergeInfo?.requiredChecks && mergeInfo.requiredChecks.length !== 0 && (
+            <>
+              <Box style={{ display: "flex" }}>
+                <Box>
+                  <IconCheck color="green" style={{ width: rem(30), height: rem(30), marginLeft: 5, marginTop: 10 }} />
+                </Box>
+                <Text fw={700} style={{ marginTop: 15 }}>
+                  All checks have passed
+                </Text>
+                <Text size="sm">2 successful checks {mergeInfo?.requiredChecks}</Text>
+              </Box>
+              <hr></hr>
+            </>
+          )}
 
-          <br></br>
-          <Group wrap="nowrap" gap={0} style={{ border: "1px groove gray", width: 250 }}>
-            <Button disabled color="green" className={classes.button}>
-              Merge Pull Request
-            </Button>
-            <Menu transitionProps={{ transition: "pop" }} position="bottom-end" withinPortal>
-              <Menu.Target>
-                <ActionIcon disabled variant="filled" color="gray" size={36} className={classes.menuControl}>
-                  <IconChevronDown style={{ width: rem(16), height: rem(16) }} stroke={1.5} />
-                </ActionIcon>
-              </Menu.Target>
-              <Menu.Dropdown>
-                <Menu.Item>
-                  Create a merge commit
-                  <Text c="dimmed" mt="xs" fz="xs" w="250px">
-                    All commits from this branch will be added to the base branch via a merge commit.
-                  </Text>
-                </Menu.Item>
-                <Menu.Item>
-                  Squash and merge
-                  <Text mt="xs" c="dimmed" fz="xs" w="250px">
-                    The 1 commit from this branch will be added to the base branch.
-                  </Text>
-                </Menu.Item>
-                <Menu.Item>
-                  Rebase and merge
-                  <Text mt="xs" c="dimmed" fz="xs" w="250px">
-                    The 1 commit from this branch will be rebased and added to the base branch.
-                  </Text>
-                </Menu.Item>
-              </Menu.Dropdown>
-            </Menu>
-          </Group>
+          {mergeInfo?.isConflict && (
+            <>
+              <Box style={{ display: "flex" }}>
+                <Box>
+                  <IconX color="red" style={{ width: rem(30), height: rem(30), marginLeft: 5, marginTop: 10 }} />
+                </Box>
+                <Text color="red" style={{ marginTop: 15, marginRight: 30 }}>
+                  This branch has conflicts that must be resolved
+                </Text>
+                <Button color="gray"> Resolve Conflicts </Button>
+              </Box>
+            </>
+          )}
+          {!mergeInfo?.isConflict && (
+            <>
+              <Box style={{ display: "flex" }}>
+                <Box>
+                  <IconCheck color="green" style={{ width: rem(30), height: rem(30), marginLeft: 5, marginTop: 10 }} />
+                </Box>
+                <Text color="white" style={{ marginTop: 15 }}>
+                  This branch has no conflicts with the base branch
+                </Text>
+              </Box>
+              <Text size="sm"> Merging can be performed automatically.</Text>
+            </>
+          )}
+          <hr></hr>
+          {!isMergeable && (
+            <Box style={{ display: "flex" }}>
+              <Box>
+                <IconX color="red" style={{ width: rem(30), height: rem(30), marginLeft: 5, marginTop: 10 }} />
+              </Box>
+              <Text color="red" style={{ marginTop: 15 }}>
+                Merging is blocked
+              </Text>
+            </Box>
+          )}
+          {isMergeable && (
+            <Box style={{ display: "flex" }}>
+              <Box>
+                <IconCheck color="green" style={{ width: rem(30), height: rem(30), marginLeft: 5, marginTop: 10 }} />
+              </Box>
+              <Text style={{ marginTop: 15 }}>Mergeable</Text>
+            </Box>
+          )}
+          <br />
+          <MergeButton canMerge={isMergeable} />
+          <br />
         </Popover.Dropdown>
       </Popover>
     </div>
