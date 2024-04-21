@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Box, Badge, rem, Group, UnstyledButton, Anchor } from "@mantine/core";
 import axios from "axios";
-import { IconGitPullRequest } from "@tabler/icons-react";
+import { IconGitMerge, IconGitPullRequest, IconGitPullRequestClosed } from "@tabler/icons-react";
 import { useParams } from "react-router-dom";
 import ModifiedFilesTab from "../tabs/ModifiedFilesTab";
 import CommentsTab from "../tabs/CommentsTab.tsx";
@@ -69,6 +69,9 @@ function PRDetailsPage(props: PRDetailsPageProps) {
   const [pullRequest, setPullRequest] = useState<PRDetail | null>(null);
   const [mergeInfo, setMergeInfo] = useState<MergeInfo | null>(null);
   const currentTab = props.tab ?? tabs[0];
+  const mergeIcon = <IconGitMerge style={{ width: rem(18), height: rem(18) }} />;
+  const openIcon = <IconGitPullRequest style={{ width: rem(18), height: rem(18) }} />;
+  const closeIcon = <IconGitPullRequestClosed style={{ width: rem(18), height: rem(18) }} />;
 
   //[HttpGet("repository/{owner}/{repo}/{branch}/protection/{prnumber}")]
   useEffect(() => {
@@ -118,9 +121,11 @@ function PRDetailsPage(props: PRDetailsPageProps) {
         &ensp;&ensp;
         <Badge
           size="lg"
-          color={pullRequest?.pull.merged ? "#9539CA" : pullRequest?.pull.closedAt != null ? "#778DA9" : "green"}
+          color={pullRequest?.pull.merged ? "#9539CA" : pullRequest?.pull.closedAt != null ? "red" : "green"}
           key={1}
-          rightSection={<IconGitPullRequest style={{ width: rem(18), height: rem(18) }} />}
+          rightSection={
+            pullRequest?.pull.merged ? mergeIcon : pullRequest?.pull.closedAt != null ? closeIcon : openIcon
+          }
         >
           {pullRequest?.pull.merged ? "Merged" : pullRequest?.pull.closedAt != null ? "Closed" : "Open"}
         </Badge>

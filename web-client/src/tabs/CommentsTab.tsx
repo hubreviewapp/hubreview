@@ -44,7 +44,7 @@ function CommentsTab({ pullRequest, reviews, mergeInfo }: CommentsTabProps) {
 
   const [apiComments, setApiComments] = useState<CommentProps[] | []>([]);
   const [filteredComments, setFilteredComments] = useState<CommentProps[] | []>([]);
-  const [selectedComment, setSelectedComment] = useState<number>(2041386626);
+  const [selectedComment, setSelectedComment] = useState<number>(0);
 
   //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_comments")]
   const fetchPRComments = useCallback(async () => {

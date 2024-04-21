@@ -69,7 +69,7 @@ export function Comment({
       setSelectedComment(replyToId);
       setTimeout(() => {
         setSelectedComment(0);
-      }, 8000);
+      }, 5000);
     } else {
       console.error("Belirtilen ID'ye sahip bir yorum bulunamadı.");
     }
