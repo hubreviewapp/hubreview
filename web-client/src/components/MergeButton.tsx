@@ -4,7 +4,6 @@ import axios from "axios";
 import { useParams } from "react-router-dom";
 import { useDisclosure } from "@mantine/hooks";
 import { BASE_URL } from "../env";
-import { APIMergeableState } from "../api/types";
 
 //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/merge")]
 export interface MergeButtonProps {
