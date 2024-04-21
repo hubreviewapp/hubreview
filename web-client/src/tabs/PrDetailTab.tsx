@@ -1,4 +1,4 @@
-import {Badge, Box, rem, Text, Card, Group, Anchor, Title, Loader, Center, Button, Flex} from "@mantine/core";
+import { Badge, Box, rem, Text, Card, Group, Anchor, Title, Loader, Center, Button, Flex } from "@mantine/core";
 import { IconCheckupList, IconSparkles } from "@tabler/icons-react";
 import { IconCircleCheck, IconXboxX } from "@tabler/icons-react";
 
@@ -23,13 +23,15 @@ export default function PrDetailTab({ pull }: PRDetailTabProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   function regenerate() {
-
     setIsLoading(true);
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/summary?regen=true`, {
-          withCredentials: true,
-        });
+        const res = await axios.get(
+          `${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/summary?regen=true`,
+          {
+            withCredentials: true,
+          },
+        );
         if (res) {
           setAiSummary(res.data);
           setIsLoading(false);
@@ -112,7 +114,7 @@ export default function PrDetailTab({ pull }: PRDetailTabProps) {
       </Box>
       <br></br>
       <Box style={{ border: "1px solid cyan", borderRadius: "10px" }} p="md" w="80%">
-        <Flex justify={"space-between"}>
+        <Flex justify="space-between">
           <Group>
             <IconSparkles color="cyan" style={{ width: rem(25), height: rem(25) }} />
             <Title c="cyan" order={4}>
@@ -126,11 +128,11 @@ export default function PrDetailTab({ pull }: PRDetailTabProps) {
             <Loader color="blue" m="md" />
           </Center>
         )}
-        {!isLoading &&
+        {!isLoading && (
           <div>
             <Markdown>{aiSummary}</Markdown>
           </div>
-        }
+        )}
       </Box>
     </Box>
   );
