@@ -4576,37 +4576,48 @@ public class GitHubController : ControllerBase
     public async Task<ActionResult> UpdateBranchProtection(string owner, string repo, string branch, long prnumber)
     {
         var client = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
-        var protection = await client.Repository.Branch.GetBranchProtection(owner, repo, branch);
-
-        List<string> required_checks = new List<string>();
-        if (protection.RequiredStatusChecks.Strict)
-        {
-            foreach (var check in protection.RequiredStatusChecks.Contexts)
-            {
-                required_checks.Add(check);
-            }
-        }
-
-        var requiredApprovals = protection.RequiredPullRequestReviews.RequiredApprovingReviewCount;
-
-
-
         var pull = await client.PullRequest.Get(owner, repo, (int)prnumber);
 
-        var isConflict = false;
-        if (pull.MergeableState == "dirty")
+        var isConflict = pull.MergeableState == "dirty";
+
+        try
         {
-            isConflict = true;
+            var protection = await client.Repository.Branch.GetBranchProtection(owner, repo, branch);
+
+            List<string> required_checks = new List<string>();
+            if (protection.RequiredStatusChecks.Strict)
+            {
+                foreach (var check in protection.RequiredStatusChecks.Contexts)
+                {
+                    required_checks.Add(check);
+                }
+            }
+
+            var requiredApprovals = protection.RequiredPullRequestReviews.RequiredApprovingReviewCount;
+
+            var requiredConversationResolution = protection.RequiredConversationResolution.Enabled;
+            var result = new
+            {
+                required_checks,
+                requiredApprovals,
+                isConflict,
+                requiredConversationResolution
+            };
+            return Ok(result);
+        }
+        catch (NotFoundException ex)
+        {
+            var result = new
+            {
+                required_checks = new List<string>(),
+                requiredApprovals = 0,
+                isConflict,
+                requiredConversationResolution = false
+            };
+            return Ok(result);
         }
 
-        var result = new
-        {
-            required_checks,
-            requiredApprovals,
-            isConflict
-        };
 
-        return Ok(result);
     }
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/{state}")]
