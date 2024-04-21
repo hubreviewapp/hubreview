@@ -92,8 +92,29 @@ public class GitHubController : ControllerBase
     }
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/summary")]
-    public async Task<ActionResult> summary(string owner, string repoName, int prnumber)
+    public async Task<ActionResult> summary(string owner, string repoName, int prnumber, [FromQuery] bool regen = false)
     {
+
+        using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
+
+        string query = $"SELECT summary FROM pullrequestinfo WHERE reponame = {repoName} AND pullnumber = {prnumber}";
+        string? summary = null;
+
+        connection.Open();
+
+        var command = new NpgsqlCommand(query, connection);
+        NpgsqlDataReader reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            summary = reader.IsDBNull(0) ? null : reader.GetString(0);
+        }
+
+        connection.Close();
+
+        if ( (summary != null || summary.Length != 0) && !regen )
+        {
+            return Ok(summary);
+        }
 
         var githubclient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
 
@@ -133,6 +154,16 @@ public class GitHubController : ControllerBase
         HttpResponseMessage response = await client.SendAsync(request);
         string responseBody = await response.Content.ReadAsStringAsync();
         var res = JsonConvert.DeserializeObject<ChatCompletionResponseModel>(responseBody);
+
+        query = $"UPDATE pullrequest SET summary = {res.Choices[0].Message.Content} WHERE reponame = {repoName} AND pullnumber = {prnumber}";
+        
+        connection.Open();
+        using (var command = new NpgsqlCommand(query, connection))
+        {
+            command.ExecuteNonQuery();
+        }
+        connection.Close();
+
 
         return Ok(res.Choices[0].Message.Content ?? "");
     }
