@@ -13,6 +13,10 @@ import { Assignee, Label, Reviewer } from "../components/PRDetailSideBar.tsx";
 import { Check, Review } from "../models/PRInfo.tsx";
 import { BASE_URL } from "../env.ts";
 
+export interface MergeableState {
+  stringValue: string;
+  value: number;
+}
 export interface PullRequest {
   title: string;
   draft: boolean;
@@ -35,6 +39,7 @@ export interface PullRequest {
   reviews: Reviewer[];
   assignees: Assignee[];
   mergeable: boolean;
+  mergeableState: MergeableState;
   merged: boolean;
   closedAt: string;
   htmlUrl: string;
