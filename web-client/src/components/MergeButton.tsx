@@ -6,7 +6,6 @@ import { useDisclosure } from "@mantine/hooks";
 import { BASE_URL } from "../env";
 
 //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/merge")]
-
 export interface MergeButtonProps {
   isMergeable: boolean | null;
 }
