@@ -935,7 +935,8 @@ namespace CS.Web.Controllers
                         connection.Close();
                         Console.WriteLine("Review Request Update");
                     }
-                    else if (pullRequestPayload.action == "converted_to_draft"){
+                    else if (pullRequestPayload.action == "converted_to_draft")
+                    {
                         connection.Open();
                         string query = "DELETE FROM pullrequestinfo WHERE repoid= @repoid AND pullid=@pullid";
                         using (var command = new NpgsqlCommand(query, connection))
