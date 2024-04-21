@@ -97,7 +97,7 @@ public class GitHubController : ControllerBase
 
         using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
 
-        string query = $"SELECT summary FROM pullrequestinfo WHERE reponame = {repoName} AND pullnumber = {prnumber}";
+        string query = $"SELECT summary FROM pullrequestinfo WHERE reponame = '{repoName}' AND pullnumber = {prnumber}";
         string? summary = null;
 
         connection.Open();
@@ -111,9 +111,9 @@ public class GitHubController : ControllerBase
 
         connection.Close();
 
-        if ( (summary != null || summary.Length != 0) && !regen )
+        if ( summary != null && !regen )
         {
-            return Ok(summary);
+            return Ok(summary.Replace("''", "'"));
         }
 
         var githubclient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
@@ -155,12 +155,12 @@ public class GitHubController : ControllerBase
         string responseBody = await response.Content.ReadAsStringAsync();
         var res = JsonConvert.DeserializeObject<ChatCompletionResponseModel>(responseBody);
 
-        query = $"UPDATE pullrequest SET summary = {res.Choices[0].Message.Content} WHERE reponame = {repoName} AND pullnumber = {prnumber}";
+        query = $"UPDATE pullrequestinfo SET summary = '{res.Choices[0].Message.Content.Replace("'", "''")}' WHERE reponame = '{repoName}' AND pullnumber = {prnumber}";
         
         connection.Open();
-        using (var command = new NpgsqlCommand(query, connection))
+        using (var command2 = new NpgsqlCommand(query, connection))
         {
-            command.ExecuteNonQuery();
+            command2.ExecuteNonQuery();
         }
         connection.Close();
 
