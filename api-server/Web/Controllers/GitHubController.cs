@@ -1,15 +1,18 @@
 using System.ComponentModel;
 using System.Data;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Web;
 using CS.Core.Configuration;
 using CS.Core.Entities;
 using CS.Web.Models.Api.Request;
+using CS.Web.Models.Api.Response;
 using GitHubJwt;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
 using Npgsql;
 using Octokit;
 using Octokit.GraphQL;
@@ -18,9 +21,6 @@ using Octokit.GraphQL.Core.Builders;
 using Octokit.GraphQL.Model;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using static Octokit.GraphQL.Variable;
-using Newtonsoft.Json.Linq;
-using System.Net.Http.Headers;
-using CS.Web.Models.Api.Response;
 
 namespace CS.Web.Controllers;
 
@@ -94,15 +94,19 @@ public class GitHubController : ControllerBase
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/summary")]
     public async Task<ActionResult> summary(string owner, string repoName, int prnumber)
     {
-        
+
         var githubclient = GetNewClient(_httpContextAccessor?.HttpContext?.Session.GetString("AccessToken"));
 
         var files = await githubclient.PullRequest.Files(owner, repoName, prnumber);
         var selected = string.Join("\n\n", files.Select(file => $"{file.FileName}:\n\n{file.Patch}"));
 
-        string prompt = "summarize in detail the diff files from my pull request given below, as a list of file names and their explanations:\n\n";   
+        string prompt = "summarize in detail the diff files from my pull request given below, as a list of file names and their explanations:\n\n";
+        string concat = prompt + selected;
 
-        Console.WriteLine(prompt + selected);
+        if (concat.Length >= 50000)
+        {
+            return Ok("Unfortunately, this pull request is too long to generate a summary");
+        }
 
         var client = new HttpClient();
 
@@ -110,7 +114,7 @@ public class GitHubController : ControllerBase
 
         var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/chat/completions");
         request.Headers.Add("Authorization", "Bearer " + _coreConfiguration.OpenaiApiKey);
-        
+
         var requestData = new
         {
             model = "gpt-3.5-turbo",
@@ -119,7 +123,7 @@ public class GitHubController : ControllerBase
                 new
                 {
                     role = "user",
-                    content = prompt + selected
+                    content = concat
                 }
             }
         };
@@ -129,8 +133,6 @@ public class GitHubController : ControllerBase
         HttpResponseMessage response = await client.SendAsync(request);
         string responseBody = await response.Content.ReadAsStringAsync();
         var res = JsonConvert.DeserializeObject<ChatCompletionResponseModel>(responseBody);
-
-        Console.WriteLine(res.Usage.TotalTokens);
 
         return Ok(res.Choices[0].Message.Content ?? "");
     }
