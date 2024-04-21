@@ -44,6 +44,20 @@ public class GitHubController : ControllerBase
         };
     }
 
+    // Reason for obsolete attribute below:
+    // The problem is that we have to use GitHub's OAuth apps for many features, particularly with GraphQL.
+    // However, installations work best when coupled with OAuth performed through a GitHub App (which we can't do).
+    // There are workarounds, such as asking the user to authorize the GitHub App for installation-related features,
+    // but we actually don't even have any features that would require an installation client, at least as of now and for the
+    // foreseeable future.
+    // However, we do use GitHub App webhooks, so installations are still needed for some features to work.
+    [Obsolete("Avoid using any form of GitHub installation client, prefer `GitHubUserClient`")]
+    private async Task<GitHubClient> GetGitHubInstallationClient(Octokit.Installation installation)
+    {
+        var installationToken = await GitHubAppClient.GitHubApps.CreateInstallationToken(installation.Id);
+        return GetGitHubClient(installationToken.Token);
+    }
+
     private string GitHubAppToken
     {
         get
@@ -3473,41 +3487,30 @@ public class GitHubController : ControllerBase
                 }
             }
 
-            var installations = await GitHubAppClient.GitHubApps.GetAllInstallationsForCurrent();
-            var installationTasks = installations.Select(async installation =>
+            var labelTasks = allRepos.Select(async repo =>
             {
-                if (installation.Account.Login == UserLogin || organizationLogins.Contains(installation.Account.Login))
+                try
                 {
-                    var response = await GitHubAppClient.GitHubApps.CreateInstallationToken(installation.Id);
-                    var installationClient = GetGitHubClient(response.Token);
+                    var labels = await GitHubUserClient.Issue.Labels.GetAllForRepository(repo.OwnerLogin, repo.Name);
 
-                    foreach (var repo in allRepos)
+                    foreach (var label in labels)
                     {
-                        try
+                        if (!label.Name.StartsWith("Priority:"))
                         {
-                            var labels = await installationClient.Issue.Labels.GetAllForRepository(repo.OwnerLogin, repo.Name);
-
-                            foreach (var label in labels)
+                            lock (allLabels)
                             {
-                                if (!label.Name.StartsWith("Priority:"))
-                                {
-                                    lock (allLabels)
-                                    {
-                                        allLabels.Add(label.Name);
-                                    }
-                                }
+                                allLabels.Add(label.Name);
                             }
-                        }
-                        catch (NotFoundException)
-                        {
-
                         }
                     }
                 }
+                catch (NotFoundException)
+                {
+
+                }
             });
 
-            await Task.WhenAll(installationTasks);
-
+            await Task.WhenAll(labelTasks);
 
             string query2 = "SELECT DISTINCT author FROM pullrequestinfo WHERE repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) ORDER BY author ASC";
             using (NpgsqlCommand command = new NpgsqlCommand(query2, connection))
@@ -3540,8 +3543,6 @@ public class GitHubController : ControllerBase
                     }
                 }
             }
-
-
 
             await connection.CloseAsync();
         }
