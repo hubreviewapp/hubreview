@@ -111,7 +111,7 @@ public class GitHubController : ControllerBase
 
         connection.Close();
 
-        if ( summary != null && !regen )
+        if (summary != null && !regen)
         {
             return Ok(summary.Replace("''", "'"));
         }
@@ -156,7 +156,7 @@ public class GitHubController : ControllerBase
         var res = JsonConvert.DeserializeObject<ChatCompletionResponseModel>(responseBody);
 
         query = $"UPDATE pullrequestinfo SET summary = '{res.Choices[0].Message.Content.Replace("'", "''")}' WHERE reponame = '{repoName}' AND pullnumber = {prnumber}";
-        
+
         connection.Open();
         using (var command2 = new NpgsqlCommand(query, connection))
         {
