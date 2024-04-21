@@ -4757,8 +4757,8 @@ public class GitHubController : ControllerBase
 
     }
 
-    [HttpGet("{repoOwner}/{repoName}/repoprioritysetters")]
-    public async Task<ActionResult> GetRepoPrioritySetters(string repoOwner, string repoName)
+    [HttpGet("{repoOwner}/{repoName}/repoprioritysetters/{userLogin}")]
+    public async Task<ActionResult> GetRepoPrioritySetters(string repoOwner, string repoName, string userLogin)
     {
         List<string> result = new List<string>();
 
@@ -4812,7 +4812,7 @@ public class GitHubController : ControllerBase
             result = await GetRepoCollaborators(repoOwner, repoName);
         }
 
-        return Ok(result);
+        return Ok(result.Contains(userLogin));
 
     }
 
@@ -4830,7 +4830,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpPatch("{repoOwner}/{repoName}/changeonlyadmin/{onlyAdmin}")]
-    public async Task<ActionResult> GetRepoPrioritySetters(string repoOwner, string repoName, bool onlyAdmin)
+    public async Task<ActionResult> SetRepoSetting(string repoOwner, string repoName, bool onlyAdmin)
     {
         List<string> result = new List<string>();
 
