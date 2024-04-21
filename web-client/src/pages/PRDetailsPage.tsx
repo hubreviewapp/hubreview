@@ -39,7 +39,7 @@ export interface PullRequest {
   reviews: Reviewer[];
   assignees: Assignee[];
   mergeable: boolean;
-  mergeableState:MergeableState;
+  mergeableState: MergeableState;
   merged: boolean;
   closedAt: string;
   htmlUrl: string;

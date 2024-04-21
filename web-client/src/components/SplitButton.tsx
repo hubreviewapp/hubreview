@@ -8,7 +8,7 @@ import MergeButton from "./MergeButton.tsx";
 export interface SplitButtonProps {
   mergeInfo: MergeInfo | null;
   isMergeable: boolean | null;
-  mergeableState:string;
+  mergeableState: string;
 }
 
 function SplitButton({ mergeInfo, isMergeable, mergeableState }: SplitButtonProps) {
@@ -26,13 +26,13 @@ function SplitButton({ mergeInfo, isMergeable, mergeableState }: SplitButtonProp
           <Box
             style={{
               position: "relative",
-              backgroundColor: isMergeable && mergeableState==="clean"? "green" : "gray",
+              backgroundColor: isMergeable && mergeableState === "clean" ? "green" : "gray",
               width: 140,
               borderRadius: 10,
               display: "flex",
             }}
           >
-            {(!isMergeable || mergeableState !=="clean") && (
+            {(!isMergeable || mergeableState !== "clean") && (
               <>
                 <IconGitMerge
                   color="darkred"
@@ -44,7 +44,7 @@ function SplitButton({ mergeInfo, isMergeable, mergeableState }: SplitButtonProp
                 </Text>
               </>
             )}
-            {isMergeable && mergeableState==="clean" && (
+            {isMergeable && mergeableState === "clean" && (
               <>
                 <IconGitMerge style={{ width: rem(50), height: rem(50), marginTop: 0, marginLeft: 10 }} />
                 <Text size="sm" fw={700}>
@@ -143,7 +143,7 @@ function SplitButton({ mergeInfo, isMergeable, mergeableState }: SplitButtonProp
               </Text>
             </Box>
           )}
-          {isMergeable && mergeableState==="clean" && (
+          {isMergeable && mergeableState === "clean" && (
             <Box style={{ display: "flex" }}>
               <Box>
                 <IconCheck color="green" style={{ width: rem(30), height: rem(30), marginLeft: 5, marginTop: 10 }} />
@@ -152,7 +152,7 @@ function SplitButton({ mergeInfo, isMergeable, mergeableState }: SplitButtonProp
             </Box>
           )}
           <br />
-          <MergeButton isMergeable={isMergeable && mergeableState==="clean"}/>
+          <MergeButton isMergeable={isMergeable && mergeableState === "clean"} />
           <br />
         </Popover.Dropdown>
       </Popover>

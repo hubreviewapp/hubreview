@@ -1,6 +1,5 @@
 import { Grid, Button, Center } from "@mantine/core";
 import FilterInput from "../components/ReviewQueue/FilterInput";
-import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useListState } from "@mantine/hooks";
 import { PRNavbar } from "../components/ReviewQueue/PRNavbar.tsx";
@@ -284,11 +283,6 @@ function ReviewQueuePage() {
             </Button>
           </Center>
         </div>
-        <Center>
-          <Link to="/createPR">
-            <Button m="lg">Create New PR</Button>
-          </Link>
-        </Center>
       </Grid.Col>
     </Grid>
   );

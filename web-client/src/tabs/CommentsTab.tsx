@@ -273,7 +273,11 @@ function CommentsTab({ pullRequest, reviews, mergeInfo }: CommentsTabProps) {
         )}
         <br></br>
         {pullRequest?.merged === false && (
-          <SplitButton mergeInfo={mergeInfo} isMergeable={pullRequest?.mergeable} mergeableState={pullRequest?.mergeableState.stringValue}></SplitButton>
+          <SplitButton
+            mergeInfo={mergeInfo}
+            isMergeable={pullRequest?.mergeable}
+            mergeableState={pullRequest?.mergeableState.stringValue}
+          ></SplitButton>
         )}
 
         <Flex justify="right">
