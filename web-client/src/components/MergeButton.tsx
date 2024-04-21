@@ -6,9 +6,8 @@ import { useDisclosure } from "@mantine/hooks";
 import { BASE_URL } from "../env";
 
 //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/merge")]
-
 export interface MergeButtonProps {
-  canMerge: boolean | null;
+  isMergeable: boolean | null;
 }
 function MergeButton(props: MergeButtonProps) {
   const [opened, { open, close }] = useDisclosure(false);
@@ -40,7 +39,7 @@ function MergeButton(props: MergeButtonProps) {
           <Button onClick={closeModal}>Done</Button>
         </Center>
       </Modal>
-      {props.canMerge ? (
+      {props.isMergeable ? (
         <Button leftSection={icon} color="green" onClick={handleButtonClick}>
           Merge Pull Request
         </Button>
