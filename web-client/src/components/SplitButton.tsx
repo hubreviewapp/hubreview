@@ -8,9 +8,10 @@ import MergeButton from "./MergeButton.tsx";
 export interface SplitButtonProps {
   mergeInfo: MergeInfo | null;
   isMergeable: boolean | null;
+  mergeableState: string;
 }
 
-function SplitButton({ mergeInfo, isMergeable }: SplitButtonProps) {
+function SplitButton({ mergeInfo, isMergeable, mergeableState }: SplitButtonProps) {
   return (
     <div>
       <Popover
@@ -25,13 +26,13 @@ function SplitButton({ mergeInfo, isMergeable }: SplitButtonProps) {
           <Box
             style={{
               position: "relative",
-              backgroundColor: isMergeable ? "green" : "gray",
+              backgroundColor: isMergeable && mergeableState === "clean" ? "green" : "gray",
               width: 140,
               borderRadius: 10,
               display: "flex",
             }}
           >
-            {!isMergeable && (
+            {(!isMergeable || mergeableState !== "clean") && (
               <>
                 <IconGitMerge
                   color="darkred"
@@ -43,7 +44,7 @@ function SplitButton({ mergeInfo, isMergeable }: SplitButtonProps) {
                 </Text>
               </>
             )}
-            {isMergeable && (
+            {isMergeable && mergeableState === "clean" && (
               <>
                 <IconGitMerge style={{ width: rem(50), height: rem(50), marginTop: 0, marginLeft: 10 }} />
                 <Text size="sm" fw={700}>
@@ -132,7 +133,7 @@ function SplitButton({ mergeInfo, isMergeable }: SplitButtonProps) {
             </>
           )}
           <hr></hr>
-          {!isMergeable && (
+          {(!isMergeable || mergeableState !== "clean") && (
             <Box style={{ display: "flex" }}>
               <Box>
                 <IconX color="red" style={{ width: rem(30), height: rem(30), marginLeft: 5, marginTop: 10 }} />
@@ -142,7 +143,7 @@ function SplitButton({ mergeInfo, isMergeable }: SplitButtonProps) {
               </Text>
             </Box>
           )}
-          {isMergeable && (
+          {isMergeable && mergeableState === "clean" && (
             <Box style={{ display: "flex" }}>
               <Box>
                 <IconCheck color="green" style={{ width: rem(30), height: rem(30), marginLeft: 5, marginTop: 10 }} />
@@ -151,7 +152,7 @@ function SplitButton({ mergeInfo, isMergeable }: SplitButtonProps) {
             </Box>
           )}
           <br />
-          <MergeButton canMerge={isMergeable} />
+          <MergeButton isMergeable={isMergeable && mergeableState === "clean"} />
           <br />
         </Popover.Dropdown>
       </Popover>
