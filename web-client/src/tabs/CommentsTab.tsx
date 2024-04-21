@@ -1,16 +1,16 @@
+import { useCallback, useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { Box, Text, Grid, Select, LoadingOverlay, Flex } from "@mantine/core";
+import axios from "axios";
+import { BASE_URL } from "../env.ts";
 import Comment from "../components/Comment.tsx";
 import TextEditor from "../components/TextEditor.tsx";
-import { Box, Text, Grid, Select, LoadingOverlay, Flex } from "@mantine/core";
 //import CommentList from "../components/DiffComment/CommentList";
 import PRDetailSideBar from "../components/PRDetailSideBar";
-import axios from "axios";
-import { useParams } from "react-router-dom";
-import { useCallback, useEffect, useState } from "react";
 import { PullRequest } from "../pages/PRDetailsPage.tsx";
 import { useUser } from "../providers/context-utilities";
 import MergeButton from "../components/MergeButton";
 import { Review } from "../models/PRInfo.tsx";
-import { BASE_URL } from "../env.ts";
 import ClosePRButton from "../components/ClosePRButton.tsx";
 
 interface CreateReplyRequestModel {
@@ -28,6 +28,7 @@ interface CommentProps {
   status: string;
   avatar: string;
   url: string;
+  replyToId: number;
 }
 
 export interface CommentsTabProps {
@@ -42,6 +43,7 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
 
   const [apiComments, setApiComments] = useState<CommentProps[] | []>([]);
   const [filteredComments, setFilteredComments] = useState<CommentProps[] | []>([]);
+  const [selectedComment, setSelectedComment] = useState<number>(2041386626);
 
   //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_comments")]
   const fetchPRComments = useCallback(async () => {
@@ -247,6 +249,9 @@ function CommentsTab({ pullRequest, reviews }: CommentsTabProps) {
                 avatar={comment.avatar}
                 url={comment.url}
                 updatePRCommentStatus={updatePRCommentStatus}
+                replyToId={comment.replyToId}
+                selectedComment={selectedComment}
+                setSelectedComment={setSelectedComment}
               />
               <br />
             </Box>
