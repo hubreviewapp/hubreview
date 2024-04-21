@@ -1,15 +1,14 @@
+import { useCallback, useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { Box, Text, Grid, Select, LoadingOverlay, Flex } from "@mantine/core";
+import axios from "axios";
+import { BASE_URL } from "../env.ts";
 import Comment from "../components/Comment.tsx";
 import TextEditor from "../components/TextEditor.tsx";
-import { Box, Text, Grid, Select, LoadingOverlay, Flex } from "@mantine/core";
+import { APIPullRequestDetails } from "../api/types.ts";
 import PRDetailSideBar from "../components/PRDetailSideBar";
-import axios from "axios";
-import { useParams } from "react-router-dom";
-import { useCallback, useEffect, useState } from "react";
 import { useUser } from "../providers/context-utilities";
 import MergeButton from "../components/MergeButton";
-import { Review } from "../models/PRInfo.tsx";
-import { BASE_URL } from "../env.ts";
-import { APIPullRequestDetails } from "../api/types.ts";
 
 interface CreateReplyRequestModel {
   body: string;
@@ -26,6 +25,7 @@ interface CommentProps {
   status: string;
   avatar: string;
   url: string;
+  replyToId: number;
 }
 
 export interface CommentsTabProps {
@@ -39,6 +39,7 @@ function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
 
   const [apiComments, setApiComments] = useState<CommentProps[] | []>([]);
   const [filteredComments, setFilteredComments] = useState<CommentProps[] | []>([]);
+  const [selectedComment, setSelectedComment] = useState<number>(2041386626);
 
   //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_comments")]
   const fetchPRComments = useCallback(async () => {
@@ -70,10 +71,10 @@ function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
         },
         withCredentials: true,
       })
-      .then(function () {
+      .then(function() {
         fetchPRComments();
       })
-      .catch(function (error) {
+      .catch(function(error) {
         console.log(error);
       });
   }
@@ -85,10 +86,10 @@ function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
       .delete(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${commentId}/deleteComment`, {
         withCredentials: true,
       })
-      .then(function () {
+      .then(function() {
         fetchPRComments();
       })
-      .catch(function (error) {
+      .catch(function(error) {
         console.log(error);
       });
   }
@@ -103,10 +104,10 @@ function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
         },
         withCredentials: true,
       })
-      .then(function () {
+      .then(function() {
         fetchPRComments();
       })
-      .catch(function (error) {
+      .catch(function(error) {
         console.log(error);
       });
   }
@@ -124,10 +125,10 @@ function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
         },
         withCredentials: true,
       })
-      .then(function () {
+      .then(function() {
         fetchPRComments();
       })
-      .catch(function (error) {
+      .catch(function(error) {
         console.log(error);
       });
   }
@@ -140,10 +141,10 @@ function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
       .post(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addCommentReply`, data, {
         withCredentials: true,
       })
-      .then(function () {
+      .then(function() {
         fetchPRComments();
       })
-      .catch(function (error) {
+      .catch(function(error) {
         console.log(error);
       });
   }
@@ -199,23 +200,23 @@ function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
               "All Comments (" + apiComments.length + ")",
               "My Comments (" + apiComments.filter((comment) => comment.author === user?.login).length + ")",
               "Active (" +
-                apiComments.filter(
-                  (comment) =>
-                    comment.status === null ||
-                    comment.status === "Active" ||
-                    comment.status === "ACTIVE" ||
-                    comment.status === "Pending",
-                ).length +
-                ")",
+              apiComments.filter(
+                (comment) =>
+                  comment.status === null ||
+                  comment.status === "Active" ||
+                  comment.status === "ACTIVE" ||
+                  comment.status === "Pending",
+              ).length +
+              ")",
               "Resolved (" +
-                apiComments.filter(
-                  (comment) =>
-                    comment.status === "Resolved" ||
-                    comment.status === "Outdated" ||
-                    comment.status === "Closed" ||
-                    comment.status === "Duplicate",
-                ).length +
-                ")",
+              apiComments.filter(
+                (comment) =>
+                  comment.status === "Resolved" ||
+                  comment.status === "Outdated" ||
+                  comment.status === "Closed" ||
+                  comment.status === "Duplicate",
+              ).length +
+              ")",
             ]}
             checkIconPosition="left"
             onChange={(val) => handleSelect(val)}
@@ -244,6 +245,9 @@ function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
                 avatar={comment.avatar}
                 url={comment.url}
                 updatePRCommentStatus={updatePRCommentStatus}
+                replyToId={comment.replyToId}
+                selectedComment={selectedComment}
+                setSelectedComment={setSelectedComment}
               />
               <br />
             </Box>

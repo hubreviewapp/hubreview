@@ -13,6 +13,6 @@ namespace CS.Core.Entities
         public DateTimeOffset? updatedAt { get; set; }
         public string? association { get; set; }
         public string? url { get; set; }
-
+        public long? replyToId { get; set; }
     }
 }

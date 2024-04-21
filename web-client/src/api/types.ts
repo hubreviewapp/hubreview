@@ -19,13 +19,23 @@ export enum APICheckStatusState {
   REQUESTED, QUEUED, IN_PROGRESS, COMPLETED, WAITING, PENDING
 }
 
-export interface APIPullRequestReviewerUser {
+export enum APIPullRequestReviewerActorType {
+  USER, TEAM
+}
+
+export interface APIPullRequestReviewerActor {
+  type: APIPullRequestReviewerActorType;
+}
+
+export interface APIPullRequestReviewerUser extends APIPullRequestReviewerActor {
+  type: APIPullRequestReviewerActorType.USER;
   login: string;
   avatarUrl: string | null;
   url: string;
 }
 
-export interface APIPullRequestReviewerTeam {
+export interface APIPullRequestReviewerTeam extends APIPullRequestReviewerActor {
+  type: APIPullRequestReviewerActorType.TEAM;
   id: string;
   name: string;
   url: string;

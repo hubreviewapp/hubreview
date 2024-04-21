@@ -35,7 +35,15 @@ public class PullRequestDetails
 
     public class ReviewerDetails
     {
-        public abstract class ReviewerActorDetails { }
+        public enum ReviewerType
+        {
+            User, Team
+        }
+
+        public abstract class ReviewerActorDetails
+        {
+            public required ReviewerType Type { get; set; }
+        }
 
         public class ReviewerUserDetails : ReviewerActorDetails
         {
@@ -165,12 +173,14 @@ public class PullRequestDetails
                             when
                                 .User(u => new PullRequestDetails.ReviewerDetails.ReviewerUserDetails
                                 {
+                                    Type = ReviewerDetails.ReviewerType.User,
                                     Login = u.Login,
                                     AvatarUrl = u.AvatarUrl(null),
                                     Url = u.Url,
                                 })
                                 .Team(t => new PullRequestDetails.ReviewerDetails.ReviewerTeamDetails
                                 {
+                                    Type = ReviewerDetails.ReviewerType.Team,
                                     Id = t.Id,
                                     Name = t.Name,
                                     Url = t.Url,

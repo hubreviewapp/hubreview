@@ -77,6 +77,7 @@ var coreConfiguration = builder.Services.AddCoreConfigurationInstance(new CoreCo
     OAuthClientId = DotNetEnv.Env.GetString("OAUTH_CLIENT_ID"),
     OAuthClientSecret = DotNetEnv.Env.GetString("OAUTH_CLIENT_SECRET"),
     DbConnectionString = DotNetEnv.Env.GetString("DB_CONNECTION_STRING"),
+    OpenaiApiKey = DotNetEnv.Env.GetString("OPENAI_API_KEY"),
 });
 builder.Services.AddCoreProjectServices(coreConfiguration);
 

@@ -5,12 +5,14 @@ using CS.Core.Configuration;
 using CS.Core.Entities;
 using CS.Core.Entities.V2;
 using CS.Web.Models.Api.Request;
+using CS.Web.Models.Api.Response;
 using GitHubJwt;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Npgsql;
 using Octokit;
 using Octokit.GraphQL;
+using Octokit.GraphQL.Core;
 using Octokit.GraphQL.Model;
 using static Octokit.GraphQL.Variable;
 
@@ -115,6 +117,49 @@ public class GitHubController : ControllerBase
         var random = new Random();
         var color = String.Format("#{0:X6}", random.Next(0x1000000)); // Generates a random color code in hexadecimal format
         return color;
+    }
+
+    [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/summary")]
+    public async Task<ActionResult> summary(string owner, string repoName, int prnumber)
+    {
+        var files = await GitHubUserClient.PullRequest.Files(owner, repoName, prnumber);
+        var selected = string.Join("\n\n", files.Select(file => $"{file.FileName}:\n\n{file.Patch}"));
+
+        var prompt = "summarize in detail the diff files from my pull request given below, as a list of file names and their explanations:\n\n";
+        var concat = prompt + selected;
+
+        if (concat.Length >= 50000)
+        {
+            return Ok("Unfortunately, this pull request is too long to generate a summary");
+        }
+
+        var client = new HttpClient();
+
+        await Task.Delay(TimeSpan.FromSeconds(2));
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/chat/completions");
+        request.Headers.Add("Authorization", "Bearer " + _coreConfiguration.OpenaiApiKey);
+
+        var requestData = new
+        {
+            model = "gpt-3.5-turbo",
+            messages = new[]
+            {
+                new
+                {
+                    role = "user",
+                    content = concat
+                }
+            }
+        };
+
+        request.Content = new StringContent(JsonConvert.SerializeObject(requestData), Encoding.UTF8, "application/json");
+
+        HttpResponseMessage response = await client.SendAsync(request);
+        string responseBody = await response.Content.ReadAsStringAsync();
+        var res = JsonConvert.DeserializeObject<ChatCompletionResponseModel>(responseBody);
+
+        return Ok(res?.Choices?[0].Message?.Content ?? "");
     }
 
     [HttpGet("acquireToken")]
@@ -534,9 +579,16 @@ public class GitHubController : ControllerBase
 
         foreach (var comm in comments)
         {
-            // Check if the comment ID has already been processed
             if (!processedCommentIds.Contains(comm.Id))
             {
+                long replyId = 0;
+
+                if (comm.Body.Contains("#issuecomment-"))
+                {
+                    int index = comm.Body.IndexOf("#issuecomment-");
+                    replyId = long.Parse(comm.Body.Substring(index + 14, 10));
+                }
+
                 if (!comm.Body.Contains("<!--Using HubReview-->"))
                 {
                     var commentObj = new IssueCommentInfo
@@ -550,15 +602,16 @@ public class GitHubController : ControllerBase
                         createdAt = comm.CreatedAt,
                         updatedAt = comm.UpdatedAt,
                         association = comm.AuthorAssociation.StringValue,
-                        url = comm.HtmlUrl
+                        url = comm.HtmlUrl,
+                        replyToId = (replyId == 0) ? null : replyId
                     };
 
                     result.Add(commentObj);
                 }
                 else
                 {
-                    int index = comm.Body.IndexOf(':');
-                    string parsed_message = comm.Body[(index + 2)..];
+                    int index = (replyId == 0) ? comm.Body.IndexOf(':') : comm.Body.IndexOf("\n\n");
+                    string parsed_message = (replyId == 0) ? comm.Body[(index + 2)..] : comm.Body[(index + 1)..];
 
                     await connection.OpenAsync();
                     string query = $"SELECT label, decoration, status FROM comments WHERE commentid = {comm.Id}";
@@ -578,7 +631,8 @@ public class GitHubController : ControllerBase
                             createdAt = comm.CreatedAt,
                             updatedAt = comm.UpdatedAt,
                             association = comm.AuthorAssociation.StringValue,
-                            url = comm.HtmlUrl
+                            url = comm.HtmlUrl,
+                            replyToId = (replyId == 0) ? null : replyId
                         };
 
                         result.Add(commentObj);
@@ -587,7 +641,6 @@ public class GitHubController : ControllerBase
                     await connection.CloseAsync();
                 }
 
-                // Add the comment ID to the set of processed IDs
                 processedCommentIds.Add(comm.Id);
             }
         }
@@ -925,17 +978,22 @@ public class GitHubController : ControllerBase
     [HttpGet("getRepoAssignees/{owner}/{repoName}")]
     public async Task<ActionResult> GetRepoAssignees(string owner, string repoName)
     {
+        var result = new List<AssigneeInfo>();
+
         try
         {
-            var assignees = await GitHubUserClient.Issue.Assignee.GetAllForRepository(owner, repoName);
+            var assignees = await GitHubUserClient.Repository.Collaborator.GetAll(owner, repoName);
 
-            var result = assignees.Select(assignee => new AssigneeInfo
+            foreach (var assignee in assignees)
             {
-                id = assignee.Id,
-                login = assignee.Login,
-                avatar_url = assignee.AvatarUrl,
-                url = assignee.Url
-            });
+                result.Add(new AssigneeInfo
+                {
+                    id = assignee.Id,
+                    login = assignee.Login,
+                    avatarUrl = assignee.AvatarUrl,
+                    url = assignee.Url
+                });
+            }
 
             return Ok(result);
         }
@@ -1491,7 +1549,7 @@ public class GitHubController : ControllerBase
                             {
                                 login = obj,
                                 state = "PENDING",
-                                avatar = user.AvatarUrl
+                                avatarUrl = user.AvatarUrl
                             });
                         }
 
@@ -1504,7 +1562,7 @@ public class GitHubController : ControllerBase
                                 {
                                     login = name.login,
                                     state = name.state,
-                                    avatar = user.AvatarUrl
+                                    avatarUrl = user.AvatarUrl
                                 });
                             }
                         }
@@ -1694,7 +1752,7 @@ public class GitHubController : ControllerBase
                             {
                                 login = obj,
                                 state = "PENDING",
-                                avatar = user.AvatarUrl
+                                avatarUrl = user.AvatarUrl
                             });
                         }
 
@@ -1707,7 +1765,7 @@ public class GitHubController : ControllerBase
                                 {
                                     login = name.login,
                                     state = name.state,
-                                    avatar = user.AvatarUrl
+                                    avatarUrl = user.AvatarUrl
                                 });
                             }
                         }
@@ -1898,7 +1956,7 @@ public class GitHubController : ControllerBase
                             {
                                 login = obj,
                                 state = "PENDING",
-                                avatar = user.AvatarUrl
+                                avatarUrl = user.AvatarUrl
                             });
                         }
 
@@ -1911,7 +1969,7 @@ public class GitHubController : ControllerBase
                                 {
                                     login = name.login,
                                     state = name.state,
-                                    avatar = user.AvatarUrl
+                                    avatarUrl = user.AvatarUrl
                                 });
                             }
                         }
@@ -2097,7 +2155,7 @@ public class GitHubController : ControllerBase
                             {
                                 login = obj,
                                 state = "PENDING",
-                                avatar = user.AvatarUrl
+                                avatarUrl = user.AvatarUrl
                             });
                         }
 
@@ -2110,7 +2168,7 @@ public class GitHubController : ControllerBase
                                 {
                                     login = name.login,
                                     state = name.state,
-                                    avatar = user.AvatarUrl
+                                    avatarUrl = user.AvatarUrl
                                 });
                             }
                         }
@@ -2299,7 +2357,7 @@ public class GitHubController : ControllerBase
                             {
                                 login = obj,
                                 state = "PENDING",
-                                avatar = user.AvatarUrl
+                                avatarUrl = user.AvatarUrl
                             });
                         }
 
@@ -2312,7 +2370,7 @@ public class GitHubController : ControllerBase
                                 {
                                     login = name.login,
                                     state = name.state,
-                                    avatar = user.AvatarUrl
+                                    avatarUrl = user.AvatarUrl
                                 });
                             }
                         }
@@ -2504,7 +2562,7 @@ public class GitHubController : ControllerBase
                             {
                                 login = obj,
                                 state = "PENDING",
-                                avatar = user.AvatarUrl
+                                avatarUrl = user.AvatarUrl
                             });
                         }
 
@@ -2517,7 +2575,7 @@ public class GitHubController : ControllerBase
                                 {
                                     login = name.login,
                                     state = name.state,
-                                    avatar = user.AvatarUrl
+                                    avatarUrl = user.AvatarUrl
                                 });
                             }
                         }
@@ -3541,6 +3599,448 @@ public class GitHubController : ControllerBase
             return Ok("Assignee(s) could not be removed.");
         }
         return Ok("Assignee(s) are removed.");
+    }
+
+    [HttpGet("user/savedreplies")]
+    public async Task<ActionResult> GetUserSavedReplies()
+    {
+        var query = new Query()
+            .User(_httpContextAccessor?.HttpContext?.Session.GetString("UserLogin"))
+            .SavedReplies(100, null, null, null, null)
+            .Nodes
+            .Select(reply => new
+            {
+                reply.Body,
+                reply.Title,
+            })
+            .Compile();
+
+        var response = await GitHubUserGraphQLConnection.Run(query);
+
+        return Ok(response);
+    }
+
+    [HttpGet("analytics/{owner}/{repoName}")]
+    public async Task<ActionResult> GetPriorityDistribution(string owner, string repoName)
+    {
+        //last index highest priority
+        //first index lowest priority
+        List<int> result = [0, 0, 0, 0, 0];
+
+        using (NpgsqlConnection conn = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
+        {
+            await conn.OpenAsync();
+
+            string selects = "priority, COUNT(*) as amount";
+            string q = "SELECT " + selects + " FROM pullrequestinfo WHERE repoowner=@ownerLogin AND reponame=@repoName AND state='open' GROUP BY priority";
+            using (NpgsqlCommand command = new NpgsqlCommand(q, conn))
+            {
+                command.Parameters.AddWithValue("@ownerLogin", owner);
+                command.Parameters.AddWithValue("@repoName", repoName);
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        var pri = reader.GetInt32(0);
+                        result[pri] = reader.GetInt32(1);
+                    }
+                }
+            }
+
+            await conn.CloseAsync();
+        }
+
+        return Ok(result);
+    }
+
+    [HttpGet("analytics/{owner}/{repoName}/avg_merged_time")]
+    public async Task<ActionResult> GetAvgMergedTime(string owner, string repoName)
+    {
+        var states = new List<PullRequestState> { PullRequestState.Merged };
+
+        var query = new Query()
+            .Repository(Var("repoName"), Var("owner"))
+            .PullRequests(last: 100, states: new Arg<IEnumerable<PullRequestState>>(states))
+            .Nodes
+            .Select(pr => new
+            {
+                CreatedDate = pr.CreatedAt,
+                MergedDate = pr.MergedAt
+            })
+            .Compile();
+
+        var mergedPrs = await GitHubUserGraphQLConnection.Run(query, new Dictionary<string, object>
+        {
+            { "owner", owner },
+            { "repoName", repoName },
+        });
+
+        var lastWeek = DateTime.Today.AddDays(-7);
+
+        var groupedByMergedDate = mergedPrs
+            .Where(x => x.MergedDate <= DateTime.Today && x.MergedDate >= lastWeek)
+            .GroupBy(pr => DateTimeOffset.Parse(pr.MergedDate.ToString()!).ToString("yyyy-MM-dd"))
+            .Select(group => new
+            {
+                MergedDate = group.Key,
+                PrCount = group.Count(),
+                AvgMergeTime = group.Average(pr => (long?)(pr.MergedDate - pr.CreatedDate)?.TotalMinutes)
+            })
+            .ToList()
+            .Select(group => new
+            {
+                group.MergedDate,
+                group.PrCount,
+                AvgMergeTime = group.AvgMergeTime.HasValue ? TimeSpan.FromMinutes(group.AvgMergeTime.Value).ToString(@"dd\.hh\:mm") : "00.00:00"
+            })
+            .ToList();
+
+        return Ok(groupedByMergedDate);
+    }
+
+    /*[HttpGet("analytics/{owner}/{repoName}/waiting_review")]
+    public async Task<ActionResult> GetWaitTimeForReview(string owner, string repoName)
+    {
+
+
+        return Ok();
+    }*/
+
+    [HttpGet("analytics/{owner}/{repoName}/review_statuses")]
+    public async Task<ActionResult> GetReviewStatuses(string owner, string repoName)
+    {
+        //var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
+        //var connection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
+
+        /*var states = new List<PullRequestState> { PullRequestState.Open };
+
+        var reviews = new List<Octokit.GraphQL.Model.PullRequestReviewState> {
+            Octokit.GraphQL.Model.PullRequestReviewState.Commented,
+            Octokit.GraphQL.Model.PullRequestReviewState.Pending,
+            Octokit.GraphQL.Model.PullRequestReviewState.Approved,
+            Octokit.GraphQL.Model.PullRequestReviewState.ChangesRequested
+        };
+
+        var query = new Query()
+            .Repository(Var("repoName"), Var("owner"))
+            .PullRequests(last: 100, states: new Arg<IEnumerable<PullRequestState>>(states))
+            .Nodes
+            .Select(pr => new
+            {
+                pr.Id,
+                Reviews = pr.Reviews(null, null, null, null, null, new Arg<IEnumerable<Octokit.GraphQL.Model.PullRequestReviewState>>(reviews))
+                .Nodes
+                .Select( r => new {r.Id, r.State})
+                .ToList()
+            })
+            .Compile();
+
+        Console.WriteLine(query);
+
+        var prs = await connection.Run(query, new Dictionary<string, object>
+        {
+            { "owner", owner },
+            { "repoName", repoName },
+        });*/
+
+        var result = new List<ReviewStats>();
+        List<RevStatusObj> prReviewsCombined = [];
+        int[][] prnumbers = new int[3][];
+
+        var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
+
+        var weeks = new List<(DateTime start, DateTime end)>();
+        DateTime today = DateTime.Today;
+
+        // Calculate the start and end dates for the last 4 weeks
+        for (int i = 0; i < 3; i++)
+        {
+            DateTime startOfWeek = today.AddDays(-(int)today.DayOfWeek + 1 - (i * 7)); // Start from Monday
+            DateTime endOfWeek = startOfWeek.AddDays(6); // End on Sunday
+            weeks.Add((startOfWeek, endOfWeek));
+
+            result.Add(new ReviewStats
+            {
+                FirstDay = startOfWeek.ToString("yyyy-MM-dd"),
+                LastDay = endOfWeek.ToString("yyyy-MM-dd"),
+                ApprovedCount = 0,
+                CommentedCount = 0,
+                ChangesReqCount = 0,
+                PendingCount = 0
+            });
+
+            string query = $"SELECT pullnumber FROM pullrequestinfo WHERE reponame = '{repoName}' AND updatedat BETWEEN '{startOfWeek:yyyy-MM-dd}' AND '{endOfWeek:yyyy-MM-dd}'";
+            connection.Open();
+            using (var command = new NpgsqlCommand(query, connection))
+            {
+                var reader = await command.ExecuteReaderAsync();
+                List<int> prNumbersList = new List<int>();
+                while (await reader.ReadAsync())
+                {
+                    prNumbersList.Add(reader.GetFieldValue<int>(0));
+                }
+                prnumbers[i] = prNumbersList.ToArray();
+            }
+            connection.Close();
+        }
+
+        //var prs = await client.PullRequest.GetAllForRepository(owner, repoName);
+
+        for (int i = 0; i < 3; i++)
+        {
+            foreach (var pr in prnumbers[i])
+            {
+                var reviews = GitHubUserClient.PullRequest.Review.GetAll(owner, repoName, pr)
+                    .Result
+                    .Select(r => new RevStatusObjHelper
+                    {
+                        reviewId = r.Id,
+                        reviewState = r.State.StringValue,
+                        submissionDate = r.SubmittedAt.DateTime
+                    })
+                    .ToArray();
+
+                /*var reviewStateCounts = reviews
+                    .GroupBy(r => r.reviewState)
+                    .Select(group => new {
+                        ReviewState = group.Key,
+                        Count = group.Count()
+                    })
+                    .ToList();*/
+
+
+                prReviewsCombined.Add(new RevStatusObj
+                {
+                    pr = pr,
+                    reviews = reviews
+                });
+            }
+        }
+
+        foreach (RevStatusObj item in prReviewsCombined)
+        {
+            if (item.reviews == null || item.reviews.Length == 0)
+            {
+                continue;
+            }
+
+            foreach (var rev in item.reviews)
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    if (rev.submissionDate >= weeks[i].start && rev.submissionDate <= weeks[i].end)
+                    {
+                        switch (rev.reviewState)
+                        {
+                            case "APPROVED":
+                                result[i].ApprovedCount++;
+                                break;
+                            case "COMMENTED":
+                                result[i].CommentedCount++;
+                                break;
+                            case "CHANGES_REQUESTED":
+                                result[i].ChangesReqCount++;
+                                break;
+                            default:
+                                result[i].PendingCount++;
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+
+        return Ok(result);
+    }
+
+    [HttpGet("repository/{owner}/{repo}/{branch}/protection/{prnumber}")]
+    public async Task<ActionResult> GetBranchProtection(string owner, string repo, string branch, long prnumber)
+    {
+        var protection = await GitHubUserClient.Repository.Branch.GetBranchProtection(owner, repo, branch);
+
+        List<string> required_checks = new List<string>();
+        if (protection.RequiredStatusChecks.Strict)
+        {
+            foreach (var check in protection.RequiredStatusChecks.Contexts)
+            {
+                required_checks.Add(check);
+            }
+        }
+
+        var requiredApprovals = protection.RequiredPullRequestReviews.RequiredApprovingReviewCount;
+
+        var pull = await GitHubUserClient.PullRequest.Get(owner, repo, (int)prnumber);
+
+        var isConflict = false;
+        if (pull.MergeableState == "dirty")
+        {
+            isConflict = true;
+        }
+
+        var result = new
+        {
+            required_checks,
+            requiredApprovals,
+            isConflict
+        };
+
+        return Ok(result);
+    }
+
+    [HttpPatch("pullrequest/{owner}/{repoName}/{prnumber}/close")]
+    public async Task<ActionResult> ClosePullRequest(string owner, string repoName, long prnumber)
+    {
+        try
+        {
+            await GitHubUserClient.PullRequest.Update(owner, repoName, (int)prnumber, new PullRequestUpdate
+            {
+                State = ItemState.Closed
+            });
+
+            using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
+            connection.Open();
+
+            string query = $"UPDATE pullrequestinfo SET updatedat = '{DateTime.Today:yyyy-MM-dd}' WHERE reponame = '{repoName}' AND pullnumber = {prnumber}";
+
+            using (var command = new NpgsqlCommand(query, connection))
+            {
+                command.ExecuteNonQuery();
+            }
+
+            connection.Close();
+
+            return Ok($"Pull request #{prnumber} in repository {repoName} is closed.");
+        }
+        catch (NotFoundException)
+        {
+            return NotFound($"Pull request with number {prnumber} not found in repository {repoName}.");
+        }
+    }
+
+    // everyone can assign priority option olsun eğer seçiliyse repodaki herkes ekleyebilir, yoksa sadece aşağıdakiler
+    // user type usersa direkt sahibi döndür.
+    // userın type ı organizasyonsa, https://api.github.com/orgs/hubreviewapp/members?role=admin request.
+
+    [HttpGet("{repoOwner}/{repoName}/repoadmins")]
+    public async Task<ActionResult> GetRepoAdmins(string repoOwner, string repoName)
+    {
+        List<string> result = new List<string>();
+
+        var user = await GitHubUserClient.User.Get(repoOwner);
+
+        if (user.Type.ToString() == "Organization")
+        {
+            var role = OrganizationMembersRole.Admin; // Set the role to Admin
+
+            var members = await GitHubUserClient.Organization.Member.GetAll(repoOwner, role);
+
+            result.AddRange(members.Select(member => member.Login));
+        }
+        else
+        {
+            result.Add(repoOwner);
+        }
+
+        return Ok(result);
+    }
+
+    [HttpGet("{repoOwner}/{repoName}/repoprioritysetters")]
+    public async Task<ActionResult> GetRepoPrioritySetters(string repoOwner, string repoName)
+    {
+        List<string> result = new List<string>();
+
+        var user = await GitHubUserClient.User.Get(repoOwner);
+
+        var onlyAdmin = false;
+        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
+        {
+            await connection.OpenAsync();
+
+            string selects = "onlyAdmin";
+            string query = "SELECT " + selects + " FROM repositoryinfo WHERE ownerLogin = @repoOwner AND name = @repoName ";
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@repoOwner", repoOwner);
+                command.Parameters.AddWithValue("@repoName", repoName);
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        Console.WriteLine(reader.GetBoolean(0));
+                        onlyAdmin = reader.GetBoolean(0);
+                    }
+                }
+            }
+
+            await connection.CloseAsync();
+        }
+
+        if (onlyAdmin)
+        {
+            if (user.Type.ToString() == "Organization")
+            {
+
+                var role = OrganizationMembersRole.Admin; // Set the role to Admin
+
+                var members = await GitHubUserClient.Organization.Member.GetAll(repoOwner, role);
+
+                result.AddRange(members.Select(member => member.Login));
+            }
+            else
+            {
+                result.Add(repoOwner);
+            }
+        }
+        else
+        {
+            result = await GetRepoCollaborators(repoOwner, repoName);
+        }
+
+        return Ok(result);
+    }
+
+    public async Task<List<string>> GetRepoCollaborators(string repoOwner, string repoName)
+    {
+        List<string> result = new List<string>();
+
+        var collaborators = await GitHubUserClient.Repository.Collaborator.GetAll(repoOwner, repoName);
+        result.AddRange(collaborators.Select(collaborator => collaborator.Login));
+
+        return result;
+    }
+
+    [HttpPatch("{repoOwner}/{repoName}/changeonlyadmin/{onlyAdmin}")]
+    public async Task<ActionResult> GetRepoPrioritySetters(string repoOwner, string repoName, bool onlyAdmin)
+    {
+        List<string> result = new List<string>();
+
+        var user = await GitHubUserClient.User.Get(repoOwner);
+
+        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
+        {
+            await connection.OpenAsync();
+
+            string query = "UPDATE repositoryinfo SET onlyAdmin = @onlyAdmin WHERE ownerLogin = @repoOwner AND name = @repoName ";
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@repoOwner", repoOwner);
+                command.Parameters.AddWithValue("@repoName", repoName);
+                command.Parameters.AddWithValue("@onlyAdmin", onlyAdmin);
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        onlyAdmin = reader.GetBoolean(0);
+                    }
+                }
+            }
+
+            await connection.CloseAsync();
+        }
+        return Ok("Successfully updated");
     }
 }
 

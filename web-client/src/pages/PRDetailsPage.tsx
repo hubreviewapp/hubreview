@@ -1,9 +1,9 @@
+import { IconGitPullRequest } from "@tabler/icons-react";
 import ModifiedFilesTab from "../tabs/ModifiedFilesTab";
 import CommentsTab from "../tabs/CommentsTab.tsx";
 import CommitsTab from "../tabs/CommitsTab.tsx";
 import { Box, Badge, rem, Group, UnstyledButton, Anchor, Center, Loader, Text } from "@mantine/core";
 import TabComp from "../components/Tab.tsx";
-import { IconGitPullRequest } from "@tabler/icons-react";
 import PrDetailTab from "../tabs/PrDetailTab.tsx";
 import { Params, useParams } from "react-router-dom";
 import PRSummaryBox from "../components/PRCreate/PRSummaryBox";

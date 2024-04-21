@@ -4,7 +4,7 @@ namespace CS.Core.Entities
     {
         public int id { get; set; }
         public string? login { get; set; }
-        public string? avatar_url { get; set; }
+        public string? avatarUrl { get; set; }
         public string? url { get; set; }
     }
 }

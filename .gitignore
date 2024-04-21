@@ -1,2 +1,4 @@
 # for ignore rules that are better here than in {web-client,api-server}/.gitignore
 
+.idea
+
