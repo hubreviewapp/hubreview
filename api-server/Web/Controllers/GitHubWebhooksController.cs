@@ -44,7 +44,6 @@ namespace CS.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> Webhook()
         {
-            Console.WriteLine("aaaaaaaaaaa");
             string requestBody;
             using (var reader = new StreamReader(Request.Body, Encoding.UTF8))
             {
