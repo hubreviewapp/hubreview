@@ -313,6 +313,10 @@ public class GitHubController : ControllerBase
             { "prNumber", prNumber },
         });
 
+        var restApiPR = await GitHubUserClient.Repository.PullRequest.Get(owner, repoName, (int)prNumber);
+
+        pullRequestDetails.MergeStateStatus = PullRequestDetails.MergeStateStatusEnum.From(restApiPR.MergeableState?.Value);
+
         return Ok(pullRequestDetails);
     }
 

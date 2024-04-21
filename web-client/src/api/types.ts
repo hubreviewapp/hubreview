@@ -137,7 +137,7 @@ export interface APIPullRequestDetails {
   }[];
   isDraft: boolean;
   mergeable: APIMergeableState;
-  mergeStateStatus: APIMergeStateStatus;
+  mergeStateStatus: APIMergeStateStatus | null;
   merged: boolean;
   updatedAt: Date;
   closedAt: Date | null;

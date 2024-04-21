@@ -111,6 +111,37 @@ public class PullRequestDetails
         public required WorkflowRunDetails? WorkflowRun { get; set; }
     }
 
+    public static class MergeStateStatusEnum
+    {
+        [JsonConverter(typeof(StringEnumConverter))]
+        public enum Enum
+        {
+            BEHIND,
+            BLOCKED,
+            CLEAN,
+            DIRTY,
+            DRAFT,
+            HAS_HOOKS,
+            UNKNOWN,
+            UNSTABLE
+        }
+
+        public static Enum? From(Octokit.MergeableState? restApiEnum) => restApiEnum is null ?
+            null :
+            restApiEnum switch
+            {
+                Octokit.MergeableState.Behind => Enum.BEHIND,
+                Octokit.MergeableState.Blocked => Enum.BLOCKED,
+                Octokit.MergeableState.Clean => Enum.CLEAN,
+                Octokit.MergeableState.Dirty => Enum.DIRTY,
+                Octokit.MergeableState.Draft => Enum.DRAFT,
+                Octokit.MergeableState.HasHooks => Enum.HAS_HOOKS,
+                Octokit.MergeableState.Unknown => Enum.UNKNOWN,
+                Octokit.MergeableState.Unstable => Enum.UNSTABLE,
+                _ => throw new ArgumentOutOfRangeException(nameof(restApiEnum), $"Unknown value {restApiEnum}")
+            };
+    }
+
     public required string Title { get; set; }
     public required AuthorDetails Author { get; set; }
     public required string BaseRefName { get; set; }
@@ -123,6 +154,7 @@ public class PullRequestDetails
     public required List<CheckSuiteDetails> CheckSuites { get; set; }
     public required bool IsDraft { get; set; }
     public required Octokit.GraphQL.Model.MergeableState Mergeable { get; set; }
+    public required MergeStateStatusEnum.Enum? MergeStateStatus { get; set; }
     public required bool Merged { get; set; }
     public required DateTimeOffset UpdatedAt { get; set; }
     public required DateTimeOffset? ClosedAt { get; set; }
@@ -240,6 +272,7 @@ public class PullRequestDetails
                     ).ToList().SelectMany(x => x).ToList(),
                 IsDraft = pr.IsDraft,
                 Mergeable = pr.Mergeable,
+                MergeStateStatus = PullRequestDetails.MergeStateStatusEnum.Enum.UNKNOWN, // Updated through REST API
                 Merged = pr.Merged,
                 UpdatedAt = pr.UpdatedAt,
                 ClosedAt = pr.ClosedAt,

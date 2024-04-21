@@ -9,7 +9,7 @@ import { APIMergeableState, APIMergeStateStatus } from "../api/types.ts";
 export interface SplitButtonProps {
   mergeInfo: MergeInfo | null;
   mergeableState: APIMergeableState;
-  mergeStateStatus: APIMergeStateStatus;
+  mergeStateStatus: APIMergeStateStatus | null;
 }
 
 function SplitButton({ mergeInfo, mergeableState, mergeStateStatus }: SplitButtonProps) {
