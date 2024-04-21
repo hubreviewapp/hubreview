@@ -256,22 +256,42 @@ public class GitHubController : ControllerBase
     [HttpGet("getRepository")]
     public async Task<ActionResult> GetRepositories()
     {
-        // Note: A user's repositories are immediately visible upon authorization.
-        // However, organization repository access requires that the HubReview OAuth app is authorized to
-        // access the organization's resources.
-        // For details: https://docs.github.com/en/organizations/managing-oauth-access-to-your-organizations-data/about-oauth-app-access-restrictions
-        var repositories = await GitHubUserClient.Repository.GetAllForCurrent();
+        var organizations = await GitHubUserClient.Organization.GetAllForCurrent();
+        var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
-        return Ok(new
+        List<RepoInfo> allRepos = new List<RepoInfo>();
+        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
-            RepoNames = repositories.Select(r => new RepoInfo
+            await connection.OpenAsync();
+
+            string query = "SELECT id, name, ownerLogin, created_at FROM repositoryinfo WHERE ownerLogin = @ownerLogin OR ownerLogin = ANY(@organizationLogins) ORDER BY name ASC";
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
-                Id = r.Id,
-                Name = r.FullName,
-                CreatedAt = DateOnly.FromDateTime(r.CreatedAt.DateTime),
-                OwnerLogin = r.Owner.Login,
-            })
-        });
+                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
+                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
+                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        var repo = new RepoInfo
+                        {
+                            Id = reader.GetInt64(0),
+                            Name = reader.GetString(1),
+                            OwnerLogin = reader.GetString(2),
+                            CreatedAt = reader.GetFieldValue<DateOnly>(3),
+                            IsAdmin = await GetRepoAdmins(reader.GetString(2), reader.GetString(1), UserLogin)
+                        };
+                        allRepos.Add(repo);
+                    }
+                }
+            }
+
+            await connection.CloseAsync();
+        }
+
+        return Ok(new { RepoNames = allRepos });
     }
 
     [HttpGet("getRepository/{id}")]
@@ -4047,8 +4067,8 @@ public class GitHubController : ControllerBase
     // user type usersa direkt sahibi döndür.
     // userın type ı organizasyonsa, https://api.github.com/orgs/hubreviewapp/members?role=admin request.
 
-    [HttpGet("{repoOwner}/{repoName}/repoadmins")]
-    public async Task<ActionResult> GetRepoAdmins(string repoOwner, string repoName)
+    //[HttpGet("{repoOwner}/{repoName}/repoadmins/{userLogin}")]
+    public async Task<bool> GetRepoAdmins(string repoOwner, string repoName, string userLogin)
     {
         List<string> result = new List<string>();
 
@@ -4067,7 +4087,7 @@ public class GitHubController : ControllerBase
             result.Add(repoOwner);
         }
 
-        return Ok(result);
+        return result.Contains(userLogin);
     }
 
     [HttpGet("{repoOwner}/{repoName}/repoprioritysetters/{userLogin}")]

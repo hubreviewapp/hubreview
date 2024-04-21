@@ -8,6 +8,9 @@ import PrDetailTab from "../tabs/PrDetailTab.tsx";
 import { Params, useParams } from "react-router-dom";
 import PRSummaryBox from "../components/PRCreate/PRSummaryBox";
 import { apiHooks } from "../api/apiHooks.ts";
+import { useEffect, useState } from "react";
+import { BASE_URL } from "../env.ts";
+import axios from "axios";
 
 export type PRDetailsPageTabName = "comments" | "commits" | "details" | "reviews";
 const tabs: PRDetailsPageTabName[] = ["comments", "commits", "details", "reviews"];
@@ -32,6 +35,12 @@ export interface PRDetailsPageProps {
   tab?: PRDetailsPageTabName;
 }
 
+export interface MergeInfo {
+  isConflict: boolean;
+  requiredApprovals: number;
+  requiredChecks: string[];
+}
+
 function PRDetailsPage(props: PRDetailsPageProps) {
   const { owner, repoName, prNumber } = processParams(useParams());
   const currentTab = props.tab ?? tabs[0];
@@ -42,6 +51,28 @@ function PRDetailsPage(props: PRDetailsPageProps) {
     prNumber,
   );
   const pullRequestDetails = pullRequestData?.data;
+
+  const [mergeInfo, setMergeInfo] = useState<MergeInfo | null>(null);
+
+  //[HttpGet("repository/{owner}/{repo}/{branch}/protection/{prnumber}")]
+  useEffect(() => {
+    const fetchMergeInfo = async (branch: string) => {
+      try {
+        const apiUrl = `${BASE_URL}/api/github/repository/${owner}/${repoName}/${branch}/protection/${prNumber}`;
+        const res = await axios.get(apiUrl, {
+          withCredentials: true,
+        });
+        if (res) {
+          setMergeInfo(res.data);
+          console.log("protection", res.data);
+        }
+      } catch (error) {
+        console.error("Error fetching merge info:", error);
+      }
+    };
+    if (pullRequestDetails)
+      fetchMergeInfo(pullRequestDetails.baseRefName);
+  }, [owner, prNumber, repoName]);
 
   if (isLoadingPullRequestData)
     return (
@@ -108,12 +139,12 @@ function PRDetailsPage(props: PRDetailsPageProps) {
         <br />
         <Box>
           {currentTab === "reviews" && <ModifiedFilesTab />}
-          {currentTab === "comments" && <CommentsTab pullRequestDetails={pullRequestDetails} />}
+          {currentTab === "comments" && <CommentsTab pullRequestDetails={pullRequestDetails} mergeInfo={mergeInfo} />}
           {currentTab === "details" && <PrDetailTab pullRequestDetails={pullRequestDetails} />}
           {currentTab === "commits" && <CommitsTab />}
-        </Box>
-      </Box>
-    </div>
+        </Box >
+      </Box >
+    </div >
   );
 }
 

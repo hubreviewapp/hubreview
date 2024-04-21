@@ -193,7 +193,7 @@ function TextEditor({ content, addComment, setIsEditActive, editComment, comment
         <Box style={{ textAlign: "center", marginTop: "20px" }}>
           <Button component="a" href="https://github.com/settings/replies?return_to=1" color="indigo">
             {" "}
-            Create new one{" "}
+            Create a new one{" "}
           </Button>
         </Box>
 

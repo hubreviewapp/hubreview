@@ -46,7 +46,7 @@ function MergeButton(props: MergeButtonProps) {
           Merge Pull Request
         </Button>
       ) : (
-        <Button leftSection={icon} disabled>
+        <Button style={{ border: "1px groove gray" }} leftSection={icon} disabled>
           Not able to merge
         </Button>
       )}

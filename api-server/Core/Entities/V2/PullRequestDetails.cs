@@ -113,6 +113,7 @@ public class PullRequestDetails
 
     public required string Title { get; set; }
     public required AuthorDetails Author { get; set; }
+    public required string BaseRefName { get; set; }
     public required ChangedFileDetails ChangedFiles { get; set; }
     public required int CommitCount { get; set; }
     public required List<LabelDetails> Labels { get; set; }
@@ -141,6 +142,7 @@ public class PullRequestDetails
                     Url = pr.Author.Url,
                     Login = pr.Author.Login,
                 },
+                BaseRefName = pr.BaseRef.Name,
                 ChangedFiles = new()
                 {
                     FileCount = pr.ChangedFiles,

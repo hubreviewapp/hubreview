@@ -89,6 +89,7 @@ export interface APIPullRequestDetails {
     url: string;
     login: string;
   };
+  baseRefName: string;
   changedFiles: {
     fileCount: number;
     lineAdditions: number;

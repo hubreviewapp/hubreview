@@ -7,9 +7,10 @@ import Comment from "../components/Comment.tsx";
 import TextEditor from "../components/TextEditor.tsx";
 import { APIPullRequestDetails } from "../api/types.ts";
 import PRDetailSideBar from "../components/PRDetailSideBar";
+import { MergeInfo } from "../pages/PRDetailsPage.tsx";
 import { useUser } from "../providers/context-utilities";
-import MergeButton from "../components/MergeButton";
 import ClosePRButton from "../components/ClosePRButton.tsx";
+import SplitButton from "../components/SplitButton.tsx";
 
 interface CreateReplyRequestModel {
   body: string;
@@ -31,9 +32,10 @@ interface CommentProps {
 
 export interface CommentsTabProps {
   pullRequestDetails: APIPullRequestDetails;
+  mergeInfo: MergeInfo | null;
 }
 
-function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
+function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
   const { owner, repoName, prnumber } = useParams();
   const { user } = useUser();
   const [isLoading, setIsLoading] = useState(true);
@@ -72,10 +74,10 @@ function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
         },
         withCredentials: true,
       })
-      .then(function () {
+      .then(function() {
         fetchPRComments();
       })
-      .catch(function (error) {
+      .catch(function(error) {
         console.log(error);
       });
   }
@@ -87,10 +89,10 @@ function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
       .delete(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${commentId}/deleteComment`, {
         withCredentials: true,
       })
-      .then(function () {
+      .then(function() {
         fetchPRComments();
       })
-      .catch(function (error) {
+      .catch(function(error) {
         console.log(error);
       });
   }
@@ -105,10 +107,10 @@ function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
         },
         withCredentials: true,
       })
-      .then(function () {
+      .then(function() {
         fetchPRComments();
       })
-      .catch(function (error) {
+      .catch(function(error) {
         console.log(error);
       });
   }
@@ -126,10 +128,10 @@ function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
         },
         withCredentials: true,
       })
-      .then(function () {
+      .then(function() {
         fetchPRComments();
       })
-      .catch(function (error) {
+      .catch(function(error) {
         console.log(error);
       });
   }
@@ -142,10 +144,10 @@ function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
       .post(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addCommentReply`, data, {
         withCredentials: true,
       })
-      .then(function () {
+      .then(function() {
         fetchPRComments();
       })
-      .catch(function (error) {
+      .catch(function(error) {
         console.log(error);
       });
   }
@@ -201,23 +203,23 @@ function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
               "All Comments (" + apiComments.length + ")",
               "My Comments (" + apiComments.filter((comment) => comment.author === user?.login).length + ")",
               "Active (" +
-                apiComments.filter(
-                  (comment) =>
-                    comment.status === null ||
-                    comment.status === "Active" ||
-                    comment.status === "ACTIVE" ||
-                    comment.status === "Pending",
-                ).length +
-                ")",
+              apiComments.filter(
+                (comment) =>
+                  comment.status === null ||
+                  comment.status === "Active" ||
+                  comment.status === "ACTIVE" ||
+                  comment.status === "Pending",
+              ).length +
+              ")",
               "Resolved (" +
-                apiComments.filter(
-                  (comment) =>
-                    comment.status === "Resolved" ||
-                    comment.status === "Outdated" ||
-                    comment.status === "Closed" ||
-                    comment.status === "Duplicate",
-                ).length +
-                ")",
+              apiComments.filter(
+                (comment) =>
+                  comment.status === "Resolved" ||
+                  comment.status === "Outdated" ||
+                  comment.status === "Closed" ||
+                  comment.status === "Duplicate",
+              ).length +
+              ")",
             ]}
             checkIconPosition="left"
             onChange={(val) => handleSelect(val)}
@@ -268,11 +270,14 @@ function CommentsTab({ pullRequestDetails }: CommentsTabProps) {
           </Box>
         )}
         <br></br>
+        {pullRequestDetails.merged === false && (
+          <SplitButton mergeInfo={mergeInfo} mergeableState={pullRequestDetails.mergeable}></SplitButton>
+        )}
+
         <Flex justify="right">
           {pullRequestDetails.merged === false && (
             <>
               <ClosePRButton isClosed={pullRequestDetails.closedAt !== null} />
-              <MergeButton mergeableState={pullRequestDetails.mergeable} />
             </>
           )}
         </Flex>
