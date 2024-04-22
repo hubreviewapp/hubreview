@@ -3624,7 +3624,11 @@ public class GitHubController : ControllerBase
 
         allLabels = allLabels.OrderBy(label => label).ToHashSet();
 
-        return Ok(new { Authors = allAuthors, Labels = allLabels, Assignees = allAssignees });
+
+        var authorsWithAvatars = allAuthors.Select(author => new { Login = author, AvatarUrl = $"https://github.com/{author}.png" });
+        var assigneesWithAvatars = allAssignees.Select(assignee => new { Login = assignee, AvatarUrl = $"https://github.com/{assignee}.png" });
+
+        return Ok(new { Authors = authorsWithAvatars, Labels = allLabels, Assignees = assigneesWithAvatars });
     }
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/merge")]
