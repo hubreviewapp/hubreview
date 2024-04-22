@@ -586,7 +586,7 @@ public class GitHubController : ControllerBase
                 before = comment.Body[..(comment.Body.IndexOf(':') + 2)];
                 new_body = before + body;
             }
-            
+
             res2 = await GitHubUserClient.Issue.Comment.Update(owner, repoName, comment_id, new_body);
 
         }
