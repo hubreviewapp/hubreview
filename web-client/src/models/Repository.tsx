@@ -3,6 +3,6 @@ export interface Repository {
   name: string;
   ownerLogin: string;
   createdAt: string;
-  isAdmin:boolean;
-  onlyAdmin:boolean;
+  isAdmin: boolean;
+  onlyAdmin: boolean;
 }
