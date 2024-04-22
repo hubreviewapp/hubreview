@@ -1,4 +1,4 @@
-import { Paper, Title } from "@mantine/core";
+import { Center, Paper, Title } from "@mantine/core";
 import { AreaChart } from "@mantine/charts";
 import { AnalyticsProps } from "./ReviewStatusAnalytics.tsx";
 import { useEffect, useState } from "react";
@@ -34,7 +34,10 @@ function AverageMergeTimePR({ repoName, owner }: AnalyticsProps) {
           withCredentials: true,
         });
         if (res) {
-          setRepoData(res.data.map((itm: MergedTime) => toDate(itm)));
+          if (res.data.length == 0) {
+            setRepoData([]);
+          } else setRepoData(res.data.map((itm: MergedTime) => toDate(itm)));
+          console.log("repodat", repoData);
         }
       } catch (error) {
         console.error("Error fetching AverageMergeTimePR info:", error);
@@ -48,14 +51,22 @@ function AverageMergeTimePR({ repoName, owner }: AnalyticsProps) {
       <Title order={4} mb="sm">
         Average Merge Times of PRs
       </Title>
-      <AreaChart
-        h={300}
-        data={repoData}
-        dataKey="mergedDate"
-        series={[{ name: "speedInHours", color: "blue.6" }]}
-        unit=" days"
-        curveType="linear"
-      />
+      {repoData.length == 0 ? (
+        <Center>
+          <Paper m="xl" p="md" withBorder>
+            No Data Available.
+          </Paper>
+        </Center>
+      ) : (
+        <AreaChart
+          h={300}
+          data={repoData}
+          dataKey="mergedDate"
+          series={[{ name: "speedInHours", color: "blue.6" }]}
+          unit=" days"
+          curveType="linear"
+        />
+      )}
     </Paper>
   );
 }
