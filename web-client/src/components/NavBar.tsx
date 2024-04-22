@@ -3,18 +3,17 @@ import { Container, Button, Title, Grid, Box, rem, Avatar, Space } from "@mantin
 import { useState, useEffect } from "react";
 import { IconLogout } from "@tabler/icons-react";
 import { useUser } from "../providers/context-utilities";
-import axios from "axios";
-import { BASE_URL } from "../env";
 
 function NavBar() {
   const location = useLocation();
+  const { logOut } = useUser();
+
   const [isActive, setIsActive] = useState(0);
   const iconLogout = <IconLogout style={{ width: rem(15), height: rem(15) }} />;
   const handleClick = (buttonId: number) => {
     setIsActive(buttonId);
     if (buttonId == 0) {
-      localStorage.clear();
-      axios.get(`${BASE_URL}/api/github/logoutUser`);
+      logOut();
     }
   };
 
@@ -80,13 +79,7 @@ function NavBar() {
               </Button>
             )}
 
-            <Button
-              rightSection={iconLogout}
-              component={Link}
-              variant="transparent"
-              to="/signIn"
-              onClick={() => handleClick(0)}
-            >
+            <Button rightSection={iconLogout} variant="transparent" onClick={() => handleClick(0)}>
               Log out
             </Button>
           </Grid.Col>

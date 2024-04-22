@@ -2,10 +2,14 @@ import { Grid, Box, Text, Card, Button, Stack, Group, Image, Title } from "@mant
 import GitHubLogo from "../assets/icons/github-mark-white.png";
 import SignIn from "../assets/icons/signin.png";
 import { GITHUB_OAUTH_CLIENT_ID } from "../env";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useUser } from "../providers/context-utilities";
+import { useEffect } from "react";
 
 function SignInPage() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user } = useUser();
 
   const loginWithGithub = () => {
     // Note: This shouldn't be necessary since the apps have one callback URI each...
@@ -21,6 +25,12 @@ function SignInPage() {
 
     return window.location.assign(`https://github.com/login/oauth/authorize?${queryParams}`);
   };
+
+  useEffect(() => {
+    if (user !== null) {
+      navigate("/");
+    }
+  }, [user, navigate]);
 
   return (
     <Box h={600} p={5} m={0} w="100%">
