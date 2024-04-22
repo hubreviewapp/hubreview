@@ -6,6 +6,7 @@ import { IconArrowBarDown, IconDots, IconSparkles, IconMessageCheck } from "@tab
 import classes from "../styles/comment.module.css";
 import convertHtmlToMarkdown from "../utility/convertHtmlToMarkdown";
 import TextEditor from "./TextEditor.tsx";
+import { LoadingOverlay } from "@mantine/core";
 
 interface CommentProps {
   id: number;
@@ -15,8 +16,8 @@ interface CommentProps {
   isResolved?: boolean;
   isAIGenerated?: boolean;
   deletePRComment: (id: number) => void;
-  editPRComment: (id: number, body: string) => void;
-  updatePRCommentStatus: (id: number, status: string | null) => void;
+  editPRComment: (id: number, body: string, setCommentLoading: (isLoading: boolean) => void) => void;
+  updatePRCommentStatus: (id: number, status: string | null, setCommentLoading: (isLoading: boolean) => void) => void;
   replyComment: (id: number, body: string) => void;
   status: string;
   avatar: string;
@@ -52,6 +53,8 @@ export function Comment({
   });
   const iconSparkles = <IconSparkles style={{ width: rem(22), height: rem(22) }} />;
   const [replyValue, setReplyValue] = useState("");
+  const [commentLoading, setCommentLoading] = useState<boolean>(false);
+
   const icon = (
     <IconMessageCheck
       style={{
@@ -143,7 +146,16 @@ export function Comment({
           PR Summary
         </Badge>
       )}
-      {!isEditActive && !isResolved && (
+      {commentLoading && (
+        <Box pos="relative" h="50">
+          <LoadingOverlay
+            visible={true}
+            overlayProps={{ radius: "sm", blur: 0 }}
+            loaderProps={{ color: "pink", type: "bars" }}
+          />
+        </Box>
+      )}
+      {!isEditActive && !isResolved && !commentLoading && (
         <Box
           id={id + ""}
           className={classes.comment}
@@ -180,7 +192,7 @@ export function Comment({
                   //active , pending  --> active
                   // closed --> spam, abuse, off topic
                   data={["Active", "Pending", "Closed", "Outdated", "Resolved", "Duplicate"]}
-                  onChange={(val) => updatePRCommentStatus(id, val)}
+                  onChange={(val) => updatePRCommentStatus(id, val, setCommentLoading)}
                   checkIconPosition="left"
                   defaultValue={status ? status : null}
                   //defaultValue="Open"
@@ -229,7 +241,7 @@ export function Comment({
           </>
         </Box>
       )}
-      {!isEditActive && isResolved && (
+      {!isEditActive && isResolved && !commentLoading && (
         <Accordion
           chevronPosition="right"
           variant="separated"
@@ -268,7 +280,7 @@ export function Comment({
                         key={id}
                         placeholder="Mark as resolved"
                         data={["Active", "Pending", "Closed", "Outdated", "Resolved", "Duplicate"]}
-                        onChange={(val) => updatePRCommentStatus(id, val)}
+                        onChange={(val) => updatePRCommentStatus(id, val, setCommentLoading)}
                         checkIconPosition="left"
                         defaultValue={status ? status : null}
                         allowDeselect={false}
@@ -312,7 +324,13 @@ export function Comment({
       )}
 
       {isEditActive && (
-        <TextEditor content={text} editComment={editPRComment} setIsEditActive={setIsEditActive} commentId={id} />
+        <TextEditor
+          content={text}
+          editComment={editPRComment}
+          setIsEditActive={setIsEditActive}
+          commentId={id}
+          setCommentLoading={setCommentLoading}
+        />
       )}
     </>
   );
