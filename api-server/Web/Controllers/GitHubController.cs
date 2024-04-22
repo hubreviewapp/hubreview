@@ -4089,7 +4089,7 @@ public class GitHubController : ControllerBase
     // user type usersa direkt sahibi döndür.
     // userın type ı organizasyonsa, https://api.github.com/orgs/hubreviewapp/members?role=admin request.
 
-    //[HttpGet("{repoOwner}/{repoName}/repoadmins/{userLogin}")]
+    [HttpGet("{repoOwner}/{repoName}/repoadmins/{userLogin}")]
     public async Task<bool> GetRepoAdmins(string repoOwner, string repoName, string userLogin)
     {
         List<string> result = new List<string>();
