@@ -7,5 +7,6 @@ namespace CS.Core.Entities
         public string? OwnerLogin { get; set; }
         public DateOnly? CreatedAt { get; set; }
         public bool IsAdmin { get; set; }
+        public bool onlyAdmin { get; set; }
     }
 }
