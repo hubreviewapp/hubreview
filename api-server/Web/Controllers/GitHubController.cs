@@ -4017,46 +4017,37 @@ public class GitHubController : ControllerBase
     [HttpGet("repository/{owner}/{repo}/{branch}/protection/{prnumber}")]
     public async Task<ActionResult> GetBranchProtection(string owner, string repo, string branch, long prnumber)
     {
+
         var pull = await GitHubUserClient.PullRequest.Get(owner, repo, (int)prnumber);
 
         var isConflict = pull.MergeableState == "dirty";
 
-        try
-        {
-            var protection = await GitHubUserClient.Repository.Branch.GetBranchProtection(owner, repo, branch);
-
-            List<string> required_checks = new List<string>();
-            if (protection.RequiredStatusChecks.Strict)
-            {
-                foreach (var check in protection.RequiredStatusChecks.Contexts)
+        var query = new Query()
+            .RepositoryOwner(owner)
+            .Repository(repo)
+            .BranchProtectionRules(null, null, null, null)
+            .AllPages()
+            .Select(
+                r => new
                 {
-                    required_checks.Add(check);
-                }
-            }
+                    // For this code, use the output of the loop above.
+                    required_checks = r.RequiredStatusCheckContexts,
+                    requiredApprovals = r.RequiredApprovingReviewCount,
+                    requiredConversationResolution = r.RequiresConversationResolution,
+                    pattern = r.Pattern
+                })
+            .Compile();
 
-            var requiredApprovals = protection.RequiredPullRequestReviews.RequiredApprovingReviewCount;
+        var response = await GitHubUserGraphQLConnection.Run(query);
 
-            var requiredConversationResolution = protection.RequiredConversationResolution.Enabled;
-            var result = new
-            {
-                required_checks,
-                requiredApprovals,
-                isConflict,
-                requiredConversationResolution
-            };
-            return Ok(result);
-        }
-        catch (NotFoundException)
+        var result = response.FirstOrDefault(r => r.pattern == branch);
+
+        if (result != null)
         {
-            var result = new
-            {
-                required_checks = new List<string>(),
-                requiredApprovals = 0,
-                isConflict,
-                requiredConversationResolution = false
-            };
-            return Ok(result);
+            return Ok(new { required_checks = result.required_checks, requiredApprovals = result.requiredApprovals, isConflict = isConflict, requiredConversationResolution = result.requiredConversationResolution });
         }
+
+        return Ok(new { required_checks = new List<string>(), requiredApprovals = 0, isConflict = isConflict, requiredConversationResolution = false });
     }
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/{state}")]
