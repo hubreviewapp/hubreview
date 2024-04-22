@@ -11,7 +11,7 @@ import {
   Title,
   TextInput,
   Loader,
-  Container,
+  Container, SegmentedControl, Tooltip,
 } from "@mantine/core";
 import { IconCirclePlus, IconSearch } from "@tabler/icons-react";
 import { useState, useEffect } from "react";
@@ -50,15 +50,30 @@ function RepositoriesPage() {
     window.location.assign(`https://github.com/apps/${GITHUB_APP_NAME}/installations/new`);
   }
 
-  async function getPulls(id: number) {
-    console.log(id);
-    await axios
-      .create({
+  function changeAdminSetting(repoOwner:string, repoName:string, value:boolean) {
+    //[HttpPatch("{repoOwner}/{repoName}/changeonlyadmin/{onlyAdmin}")]
+    //
+    // Bu repo sayfasındaki ayarı değiştirmek için atacağın request
+    // onlyAdmin kısmı false verirsen,  all collaborators can assign priority
+    //
+    // true verirsen only admins can assign priority
+
+    const patchAdmin = async () => {
+      const axiosInstance = axios.create({
         withCredentials: true,
         baseURL: `${BASE_URL}/api/github`,
-      })
-      .get(`/getRepository/${id}`);
+      });
+
+      const res = await axiosInstance.get(`/${repoOwner}/${repoName}/changeonlyadmin/${!value}`);
+      console.log(res);
+    }
+
+
+    patchAdmin();
+
+
   }
+
 
   const rows = filteredRepos.map((element) => (
     <Table.Tr key={element.id}>
@@ -70,9 +85,22 @@ function RepositoriesPage() {
         {element.createdAt.toString()}
       </Table.Td>
       <Table.Td>
-        <Button variant="light" onClick={() => getPulls(element.id)}>
-          Configure
-        </Button>
+        <Tooltip label="Select who can assign priority to Pull Requests">
+          <Text c="dimmed" size="sm" fw={500} mt={3}>
+            Priority assignment:
+          </Text>
+        </Tooltip>
+        <Tooltip disabled={element.isAdmin} label="Only repo admins can change this configuration">
+          <SegmentedControl color="cyan.9"
+            value={element.onlyAdmin ? "admin" : "all"}
+            onChange={()=>changeAdminSetting(element.ownerLogin, element.name, element.onlyAdmin)}
+            data={[
+              { label: 'All Contributors', value: 'all' },
+              { label: 'Only Admins', value: 'admin' },
+            ]}
+            disabled={!element.isAdmin}
+          />
+        </Tooltip>
       </Table.Td>
     </Table.Tr>
   ));
