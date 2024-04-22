@@ -47,6 +47,7 @@ import {
   APIPullRequestReviewerActorType,
 } from "../api/types.ts";
 import { useQueryClient } from "@tanstack/react-query";
+import { useUser } from "../providers/context-utilities.ts";
 
 export interface Contributor {
   id: string;
@@ -82,6 +83,8 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
   const [query, setQuery] = useState("");
   const filteredReviewers = contributors.filter((item) => item.login.toLowerCase().includes(query.toLowerCase()));
 
+  const { user } = useUser();
+
   const reviewsPerReviewer = pullRequestDetails.reviews.reduce(
     function (result, review) {
       (result[review.author.login] = result[review.author.login] || []).push(review);
@@ -111,11 +114,31 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
   const [assigneeQuery, setAssigneeQuery] = useState("");
   const [assigneeList, setAssigneeList] = useState<APIPullRequestAssignee[]>([]);
   const removedAssignees = assigneeList.filter(
-    (assignee) => !addedAssigneesList.some((addedItem) => addedItem.id === assignee.id),
+    (assignee) => !addedAssigneesList.some((addedItem) => addedItem.login === assignee.login),
   );
   const filteredAssignees = removedAssignees.filter((item) =>
     item.login.toLowerCase().includes(assigneeQuery.toLowerCase()),
   );
+
+  const [canChangePriority, setCanChangePriority] = useState(true);
+
+  useEffect(() => {
+    //[HttpGet("{repoOwner}/{repoName}/repoprioritysetters/{userLogin}")]
+
+    const query = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/api/github/${owner}/${repoName}/repoprioritysetters/${user?.login}`, {
+          withCredentials: true,
+        });
+        if (res.data != null) {
+          setCanChangePriority(res.data);
+        } else console.log(res);
+      } catch (error) {
+        console.error("Error fetching can change priority:", error);
+      }
+    };
+    query();
+  }, [pullRequestDetails.author.login, owner, repoName, user]);
 
   useEffect(() => {
     const fetchContributors = async () => {
@@ -208,7 +231,6 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
           withCredentials: true,
         });
         if (res.data) {
-          console.log("sdvfb", res.data);
           setAssigneeList(res.data);
         }
       } catch (error) {
@@ -526,7 +548,9 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
         <Divider mt="md" />
         <Box mt="sm">
           <Select
+            disabled={!canChangePriority}
             label="Assign Priority"
+            description={canChangePriority ? "" : "Only repo admins can assign priority."}
             value={priority}
             onChange={(val) => changePriority(val as PriorityBadgeLabel)}
             placeholder="Assign Priority"
@@ -534,6 +558,7 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
             clearable
             mb="sm"
           />
+
           <PriorityBadge label={priority} size="md" />
         </Box>
         <Divider mt="md" />
