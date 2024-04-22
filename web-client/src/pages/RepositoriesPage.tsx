@@ -62,7 +62,7 @@ function RepositoriesPage() {
     setConfigList(newList);
 
     console.log(configList);
-  }, [repositories]);
+  }, [repositories]); // eslint-disable-line
   function selectRepositories() {
     console.log("Button clicked");
     window.location.assign(`https://github.com/apps/${GITHUB_APP_NAME}/installations/new`);
