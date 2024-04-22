@@ -106,7 +106,7 @@ export function Comment({
           console.log("GitHub değeri:", githubValue);
           return githubValue;
         } else {
-          console.log("Metin içinde 'github' ifadesi bulunsa da '10' değeri içermiyor.");
+          console.log("Could not modified");
         }
       }
     }
