@@ -1,18 +1,10 @@
-import { Flex, Paper, SegmentedControl, Text, Title } from "@mantine/core";
+import { Center, Flex, Paper, SegmentedControl, Text, Title } from "@mantine/core";
 import { DonutChart } from "@mantine/charts";
 import { AnalyticsProps } from "./ReviewStatusAnalytics.tsx";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { BASE_URL } from "../../../env.ts";
 
-interface UpdateValues {
-  refactoring: number;
-  suggestion: number;
-  bug: number;
-  enhancement: number;
-  documentation: number;
-  question: number;
-}
 function RepoLabel({ repoName, owner }: AnalyticsProps) {
   const data = [
     { name: "refactoring", value: 0, color: "violet.6" },
@@ -23,15 +15,12 @@ function RepoLabel({ repoName, owner }: AnalyticsProps) {
     { name: "suggestion", value: 0, color: "green.6" },
   ];
 
-  function handlePriority(resData: UpdateValues) {
-    data[0].value = resData.refactoring;
-    data[1].value = resData.bug;
-    data[2].value = resData.enhancement;
-    data[3].value = resData.question;
-    data[4].value = resData.documentation;
-    data[5].value = resData.suggestion;
-
-    return data;
+  function handlePriority(obj: { [x: string]: never }) {
+    return Object.keys(obj).map((key) => ({
+      name: key,
+      value: obj[key],
+      color: data.find((item) => item.name === key)?.color || "gray.6",
+    }));
   }
 
   //[HttpGet("analytics/{owner}/{repoName}/label/all")]
@@ -47,7 +36,11 @@ function RepoLabel({ repoName, owner }: AnalyticsProps) {
           withCredentials: true,
         });
         if (res) {
-          setRepoData(handlePriority(res.data));
+          if (Object.keys(res.data).length === 0) {
+            setRepoData([]);
+          } else setRepoData(handlePriority(res.data));
+
+          console.log(repoData);
         }
       } catch (error) {
         console.error("Error fetching Priority Info info:", error);
@@ -70,11 +63,19 @@ function RepoLabel({ repoName, owner }: AnalyticsProps) {
         ]}
       />
       <Flex justify="center">
-        {repoData.map((itm) => (
-          <Text c="dimmed" key={itm.name} mr="sm">
-            {itm.name}:{itm.value}
-          </Text>
-        ))}
+        {repoData.length == 0 ? (
+          <Center>
+            <Paper m="xl" p="md" withBorder>
+              No Data Available.
+            </Paper>
+          </Center>
+        ) : (
+          repoData.map((itm) => (
+            <Text c="dimmed" key={itm.name} mr="sm">
+              {itm.name}:{itm.value}
+            </Text>
+          ))
+        )}
       </Flex>
       <DonutChart mt="md" data={repoData} tooltipDataSource="segment" mx="auto" />
     </Paper>
