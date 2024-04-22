@@ -141,30 +141,33 @@ export type GetAllPatchesResponse = {
 };
 
 export type ReviewResponseTemp = {
-  mainComment: {
-    state: {
-      stringValue: string;
+  reviews: {
+    mainComment: {
+      state: {
+        stringValue: string;
+      };
+      user: {
+        login: string;
+        avatarUrl?: string;
+      };
+      body: string;
+      submittedAt: string;
     };
-    user: {
-      login: string;
-      avatarUrl?: string;
-    };
-    body: string;
-    submittedAt: string;
-  };
-  childComments: {
-    id: number;
-    nodeId: string;
-    inReplyToId?: number;
-    path: string;
-    position: number;
-    user: {
-      login: string;
-      avatarUrl?: string;
-    };
-    createdAt: string;
-    body: string;
+    childComments: {
+      id: number;
+      nodeId: string;
+      inReplyToId?: number;
+      path: string;
+      position: number;
+      user: {
+        login: string;
+        avatarUrl?: string;
+      };
+      createdAt: string;
+      body: string;
+    }[];
   }[];
+  resolvedTopCommentNodeIds: string[];
 };
 
 export type CreateReviewRequest = {
@@ -196,6 +199,7 @@ export interface ReviewComment {
   id?: number;
   nodeId?: string;
   inReplyToId?: number;
+  isResolved: boolean;
 }
 
 export type ReviewVerdict = "comment" | "approve" | "reject";
@@ -255,7 +259,7 @@ function ModifiedFilesTab() {
     queryFn: () =>
       fetch(`${BASE_URL}/api/github/pullrequests/${owner}/${repoName}/${prnumber}/reviews`, {
         credentials: "include",
-      }).then(async (r) => (await r.json()) as ReviewResponseTemp[]),
+      }).then(async (r) => (await r.json()) as ReviewResponseTemp),
     retry: false,
   });
 
@@ -276,7 +280,7 @@ function ModifiedFilesTab() {
 
     if (reviewsQueryStatus === "success" && reviewData) {
       setMainComments(
-        reviewData
+        reviewData.reviews
           .filter((r) => !(r.childComments.length === 1 && r.childComments[0].inReplyToId))
           .map((r): ReviewMainComment => {
             const mainComment = r.mainComment;
@@ -293,7 +297,7 @@ function ModifiedFilesTab() {
       );
 
       setComments(
-        reviewData
+        reviewData.reviews
           .map((r): ReviewComment[] => {
             const comments = r.childComments;
 
@@ -325,6 +329,7 @@ function ModifiedFilesTab() {
                 id: c.id,
                 nodeId: c.nodeId,
                 inReplyToId: c.inReplyToId,
+                isResolved: reviewData.resolvedTopCommentNodeIds.includes(c.nodeId),
               };
             });
           })

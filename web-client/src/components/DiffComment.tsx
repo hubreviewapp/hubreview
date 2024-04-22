@@ -72,8 +72,7 @@ function DiffComment({ comment, replies, isPending, onReplyCreated }: DiffCommen
       ),
   });
 
-  // FIXME: this needs to be part of the `comment` object, but that requires significant backend changes
-  const [isResolved, setIsResolved] = useState(false);
+  const [isResolved, setIsResolved] = useState(comment.isResolved);
 
   const handleToggleResolution = async () => {
     await toggleResolutionMutation.mutateAsync(comment.nodeId as string);

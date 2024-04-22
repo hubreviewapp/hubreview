@@ -76,6 +76,7 @@ function DiffCommentEditor({ onAdd, onCancel }: DiffCommentEditorProps) {
       author: {
         login: "",
       },
+      isResolved: false,
     });
   };
 
