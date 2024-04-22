@@ -45,7 +45,7 @@ export function Comment({
   selectedComment,
   setSelectedComment,
 }: CommentProps) {
-  const settings = ["Copy Link", "Edit", "Delete", "Quote Reply"];
+  const settings = ["Copy Link", "Edit", "Delete"];
   const [, setSelectedItem] = useState<string | null>(null);
   const [isEditActive, setIsEditActive] = useState<boolean>(false);
   const combobox = useCombobox({
