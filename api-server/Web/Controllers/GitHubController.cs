@@ -4179,7 +4179,7 @@ public class GitHubController : ControllerBase
         return result;
     }
 
-    [HttpPatch("{repoOwner}/{repoName}/changeonlyadmin/{onlyAdmin}")]
+    [HttpGet("{repoOwner}/{repoName}/changeonlyadmin/{onlyAdmin}")]
     public async Task<ActionResult> SetRepoSetting(string repoOwner, string repoName, bool onlyAdmin)
     {
         List<string> result = new List<string>();
