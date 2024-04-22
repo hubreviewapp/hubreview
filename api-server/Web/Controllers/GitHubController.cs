@@ -569,9 +569,26 @@ public class GitHubController : ControllerBase
         else
         {
             var comment = await GitHubUserClient.Issue.Comment.Get(owner, repoName, comment_id);
-            var before_colon = comment.Body[..(comment.Body.IndexOf(':') + 2)];
-            string new_body = before_colon + body;
+
+            long replyId = 0;
+            string before = "";
+            string new_body = "";
+
+            if (comment.Body.Contains("#issuecomment-"))
+            {
+                int index = comment.Body.IndexOf("#issuecomment-");
+                replyId = long.Parse(comment.Body.Substring(index + 14, 10));
+                before = comment.Body[..(comment.Body.IndexOf(replyId.ToString()) + 11)];
+                new_body = before + "\n\n" + body;
+            }
+            else
+            {
+                before = comment.Body[..(comment.Body.IndexOf(':') + 2)];
+                new_body = before + body;
+            }
+            
             res2 = await GitHubUserClient.Issue.Comment.Update(owner, repoName, comment_id, new_body);
+
         }
 
         connection.Open();
