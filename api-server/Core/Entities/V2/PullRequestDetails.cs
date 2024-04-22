@@ -143,6 +143,7 @@ public class PullRequestDetails
     }
 
     public required string Title { get; set; }
+    public required string Body { get; set; }
     public required AuthorDetails Author { get; set; }
     public required string BaseRefName { get; set; }
     public required ChangedFileDetails ChangedFiles { get; set; }
@@ -169,6 +170,7 @@ public class PullRequestDetails
             .Select(pr => new PullRequestDetails
             {
                 Title = pr.Title,
+                Body = pr.Body,
                 Author = new()
                 {
                     Url = pr.Author.Url,
