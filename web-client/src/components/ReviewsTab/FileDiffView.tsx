@@ -218,6 +218,7 @@ function FileDiffView({
               author: {
                 login: "",
               },
+              isResolved: false,
             });
           }}
           onReplyCreated={onReplyCreated}

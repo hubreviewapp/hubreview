@@ -716,11 +716,11 @@ public class GitHubController : ControllerBase
         return Ok(result);
     }
 
-    [HttpGet("pullrequests/{owner}/{repoName}/{prnumber}/reviews")]
-    public async Task<ActionResult> GetPullRequestReviews(string owner, string repoName, int prnumber)
+    [HttpGet("pullrequests/{owner}/{repoName}/{prNumber}/reviews")]
+    public async Task<ActionResult> GetPullRequestReviews(string owner, string repoName, int prNumber)
     {
-        var reviews = await GitHubUserClient.PullRequest.Review.GetAll(owner, repoName, prnumber);
-        var reviewComments = await GitHubUserClient.PullRequest.ReviewComment.GetAll(owner, repoName, prnumber);
+        var reviews = await GitHubUserClient.PullRequest.Review.GetAll(owner, repoName, prNumber);
+        var reviewComments = await GitHubUserClient.PullRequest.ReviewComment.GetAll(owner, repoName, prNumber);
         var publishedReviewComments = reviewComments.Where(rc => rc.PullRequestReviewId is not null).ToList();
         var reviewCommentDict = publishedReviewComments
             .GroupBy(rc => (long)rc.PullRequestReviewId!)
@@ -734,7 +734,28 @@ public class GitHubController : ControllerBase
             }
         );
 
-        return Ok(reviewsWithComments);
+        var query = new Query()
+            .Repository(Var("repoName"), Var("owner"))
+            .PullRequest(Var("prNumber"))
+            .ReviewThreads()
+            .AllPages()
+            .Select(rt => new
+            {
+                rt.Id,
+                rt.IsResolved,
+                TopCommentId = rt.Comments(1, null, null, null, null).Nodes.Select(c => c.Id).ToList().Single(),
+            })
+            .Compile();
+
+        var reviewThreads = await GitHubUserGraphQLConnection.Run(query, new Dictionary<string, object>
+        {
+            { "owner", owner },
+            { "repoName", repoName },
+            { "prNumber", prNumber },
+        });
+        var resolvedTopCommentNodeIds = reviewThreads.Where(rt => rt.IsResolved).Select(rt => rt.TopCommentId).ToArray();
+
+        return Ok(new { Reviews = reviewsWithComments, ResolvedTopCommentNodeIds = resolvedTopCommentNodeIds });
     }
 
     [HttpPost("pullrequests/{owner}/{repoName}/{prnumber}/reviews")]
