@@ -56,7 +56,7 @@ function AppRoutes() {
             <Route path="/:owner/:repoName/pull/:prnumber">
               <Route path="reviews" element={<PRDetailsPage tab="reviews" />} />
               <Route path="commits" element={<PRDetailsPage tab="commits" />} />
-              <Route path="details" element={<PRDetailsPage tab="details" />} />
+              <Route path="summary" element={<PRDetailsPage tab="summary" />} />
               <Route path="" element={<PRDetailsPage />} />
             </Route>
             {/* TODO

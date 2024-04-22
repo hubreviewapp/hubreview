@@ -12,8 +12,8 @@ import PRSummaryBox from "../components/PRCreate/PRSummaryBox";
 import { apiHooks } from "../api/apiHooks.ts";
 import { BASE_URL } from "../env.ts";
 
-export type PRDetailsPageTabName = "comments" | "commits" | "details" | "reviews";
-const tabs: PRDetailsPageTabName[] = ["comments", "commits", "details", "reviews"];
+export type PRDetailsPageTabName = "comments" | "commits" | "summary" | "reviews";
+const tabs: PRDetailsPageTabName[] = ["comments", "commits", "summary", "reviews"];
 
 export interface PRDetailsPageParams {
   owner: string;
@@ -144,7 +144,7 @@ function PRDetailsPage(props: PRDetailsPageProps) {
         <Box>
           {currentTab === "reviews" && <ModifiedFilesTab />}
           {currentTab === "comments" && <CommentsTab pullRequestDetails={pullRequestDetails} mergeInfo={mergeInfo} />}
-          {currentTab === "details" && <PrDetailTab pullRequestDetails={pullRequestDetails} />}
+          {currentTab === "summary" && <PrDetailTab pullRequestDetails={pullRequestDetails} />}
           {currentTab === "commits" && <CommitsTab />}
         </Box>
       </Box>

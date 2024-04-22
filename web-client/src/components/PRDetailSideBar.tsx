@@ -111,7 +111,7 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
   const [assigneeQuery, setAssigneeQuery] = useState("");
   const [assigneeList, setAssigneeList] = useState<APIPullRequestAssignee[]>([]);
   const removedAssignees = assigneeList.filter(
-    (assignee) => !addedAssigneesList.some((addedItem) => addedItem.id === assignee.id),
+    (assignee) => !addedAssigneesList.some((addedItem) => addedItem.login === assignee.login),
   );
   const filteredAssignees = removedAssignees.filter((item) =>
     item.login.toLowerCase().includes(assigneeQuery.toLowerCase()),
