@@ -263,7 +263,7 @@ public class GitHubController : ControllerBase
         {
             await connection.OpenAsync();
 
-            string query = "SELECT id, name, ownerLogin, created_at FROM repositoryinfo WHERE id = ANY(@repos) ORDER BY name ASC";
+            string query = "SELECT id, name, ownerLogin, created_at, onlyadmin FROM repositoryinfo WHERE id = ANY(@repos) ORDER BY name ASC";
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
                 command.Parameters.AddWithValue("@repos", repos);
@@ -278,7 +278,8 @@ public class GitHubController : ControllerBase
                             Name = reader.GetString(1),
                             OwnerLogin = reader.GetString(2),
                             CreatedAt = reader.GetFieldValue<DateOnly>(3),
-                            IsAdmin = await GetRepoAdmins(reader.GetString(2), reader.GetString(1), UserLogin!)
+                            IsAdmin = await GetRepoAdmins(reader.GetString(2), reader.GetString(1), UserLogin!),
+                            onlyAdmin = reader.GetBoolean(4)
                         };
                         allRepos.Add(repo);
                     }
