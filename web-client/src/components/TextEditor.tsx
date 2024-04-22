@@ -20,8 +20,9 @@ interface TextEditorProps {
   content: string;
   addComment?: (content: string) => void;
   setIsEditActive?: (isEditActive: boolean) => void;
-  editComment?: (id: number, body: string) => void;
+  editComment?: (id: number, body: string, setCommentLoading: (isLoading: boolean) => void) => void;
   commentId?: number;
+  setCommentLoading?: (isLoading: boolean) => void;
 }
 
 interface SavedReplyProps {
@@ -29,7 +30,14 @@ interface SavedReplyProps {
   title: string;
 }
 
-function TextEditor({ content, addComment, setIsEditActive, editComment, commentId }: TextEditorProps) {
+function TextEditor({
+  content,
+  addComment,
+  setIsEditActive,
+  editComment,
+  commentId,
+  setCommentLoading,
+}: TextEditorProps) {
   const [editorContent, setEditorContent] = useState(content);
   const isAddComment = !!addComment;
   const [savedReplies, setSavedReplies] = useState<SavedReplyProps[]>([]);
@@ -57,8 +65,8 @@ function TextEditor({ content, addComment, setIsEditActive, editComment, comment
       addComment(editorContent);
       editor?.commands.clearContent();
       setEditorContent("");
-    } else if (editComment && commentId && setIsEditActive) {
-      editComment(commentId, editorContent);
+    } else if (editComment && commentId && setIsEditActive && setCommentLoading) {
+      editComment(commentId, editorContent, setCommentLoading);
 
       setIsEditActive(false);
     }

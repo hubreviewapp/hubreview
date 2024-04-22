@@ -98,8 +98,8 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
   }
 
   //[HttpPatch("pullrequest/{owner}/{repoName}/{comment_id}/updateComment")]
-  function editPRComment(commentId: number, content: string) {
-    setIsLoading(true);
+  function editPRComment(commentId: number, content: string, setCommentLoading: (isLoading: boolean) => void) {
+    setCommentLoading(true);
     axios
       .patch(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${commentId}/updateComment`, content, {
         headers: {
@@ -109,6 +109,7 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
       })
       .then(function () {
         fetchPRComments();
+        setCommentLoading(false);
       })
       .catch(function (error) {
         console.log(error);
@@ -116,11 +117,15 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
   }
 
   //[HttpPatch("pullrequest/{owner}/{repoName}/{comment_id}/updateCommentStatus")]
-  function updatePRCommentStatus(commentId: number, content: string | null) {
+  function updatePRCommentStatus(
+    commentId: number,
+    content: string | null,
+    setCommentLoading: (isLoading: boolean) => void,
+  ) {
     if (content === null) {
       return;
     }
-    setIsLoading(true);
+    setCommentLoading(true);
     axios
       .patch(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${commentId}/updateCommentStatus`, content, {
         headers: {
@@ -129,7 +134,10 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
         withCredentials: true,
       })
       .then(function () {
-        fetchPRComments();
+        return fetchPRComments();
+      })
+      .then(function () {
+        setCommentLoading(false);
       })
       .catch(function (error) {
         console.log(error);
