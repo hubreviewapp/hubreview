@@ -46,6 +46,7 @@ import {
   APIPullRequestReviewer,
   APIPullRequestReviewerActorType,
 } from "../api/types.ts";
+import { useQueryClient } from "@tanstack/react-query";
 
 export interface Contributor {
   id: string;
@@ -71,6 +72,7 @@ export interface PRDetailSideBarProps {
 }
 
 function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
+  const queryClient = useQueryClient();
   const { owner, repoName, prnumber } = useParams();
 
   const [contributors, setContributors] = useState<Contributor[]>([]);
@@ -161,8 +163,10 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
       .post(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/request_review`, [reviewer.login], {
         withCredentials: true,
       })
-      .then(function () {})
-      .catch(function (error) {
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: [`/pullrequests/${owner}/${repoName}/${prnumber}`], exact: true });
+      })
+      .catch((error) => {
         console.log(error);
       });
   }
