@@ -1,5 +1,12 @@
-import { rem, Flex, MultiSelect, Select } from "@mantine/core";
-import { IconUser, IconTag, IconCalendarTime, IconChartArrows, IconSortDescending } from "@tabler/icons-react";
+import { rem, Flex, MultiSelect, Select, Avatar, SelectProps, Group } from "@mantine/core";
+import {
+  IconUser,
+  IconTag,
+  IconCalendarTime,
+  IconChartArrows,
+  IconSortDescending,
+  IconCheck,
+} from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { FilterList } from "../../pages/ReviewQueuePage.tsx";
@@ -10,14 +17,24 @@ import { BASE_URL } from "../../env.ts";
  * Similar to filter inputs used on GitHub, and many other platforms.
  */
 
+export interface AuthorProps {
+  login: string;
+  avatarUrl: string;
+}
+
+export interface AssigneeProps {
+  login: string;
+  avatarUrl: string;
+}
+
 export interface FilterInputProps {
   filterList: FilterList;
   setFilterList: (filterList: FilterList) => void;
 }
 function FilterInput({ filterList, setFilterList }: FilterInputProps) {
   //const [filterValues, setFilterValues] = useState(["review-requested:@me", "sort-by:priority:desc"]);
-  const [assignees, setAssignees] = useState<string[]>([]);
-  const [authors, setAuthors] = useState<string[]>([]);
+  const [assignees, setAssignees] = useState<AssigneeProps[]>([]);
+  const [authors, setAuthors] = useState<AuthorProps[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
 
   useEffect(() => {
@@ -37,14 +54,50 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
     fetchGetFilterLists().then();
   }, []);
 
+  const iconProps = {
+    stroke: 1.5,
+    color: "currentColor",
+    opacity: 0.6,
+    size: 18,
+  };
+
+  const renderSelectOptionAuthor: SelectProps["renderOption"] = ({ option, checked }) => {
+    const author = authors.find((author) => author.login === option.value);
+    if (!author) return null;
+    return (
+      <Group flex="1" gap="xs" wrap="nowrap">
+        <Avatar src={author.avatarUrl} size="sm" />
+        {option.label}
+        {checked && <IconCheck style={{ marginInlineStart: "auto" }} {...iconProps} />}
+      </Group>
+    );
+  };
+
+  const renderSelectOptionAssignee: SelectProps["renderOption"] = ({ option, checked }) => {
+    const author = authors.find((author) => author.login === option.value);
+    if (!author) return null;
+    return (
+      <Group flex="1" gap="xs" wrap="nowrap">
+        <Avatar src={author.avatarUrl} size="sm" />
+        {option.label}
+        {checked && <IconCheck style={{ marginInlineStart: "auto" }} {...iconProps} />}
+      </Group>
+    );
+  };
+
   return (
     <>
       <Flex my="md">
         <Select
           radius="xl"
           placeholder="Author"
+          checkIconPosition="right"
           leftSection={<IconUser width={rem(15)} />}
-          data={authors}
+          data={authors.map((author) => ({
+            value: author.login,
+            label: author.login,
+          }))}
+          styles={{ dropdown: { width: 300, maxHeight: "200" } }}
           searchable
           onChange={(val) =>
             setFilterList({
@@ -52,6 +105,7 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
               author: val,
             })
           }
+          renderOption={renderSelectOptionAuthor}
         />
 
         <MultiSelect
@@ -107,14 +161,19 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
         <Select
           radius="xl"
           placeholder="Assignee"
+          checkIconPosition="right"
           leftSection={<IconUser width={rem(15)} />}
-          data={assignees}
+          data={assignees.map((assignee) => ({
+            value: assignee.login,
+            label: assignee.login,
+          }))}
           onChange={(val) =>
             setFilterList({
               ...filterList,
               assignee: val,
             })
           }
+          renderOption={renderSelectOptionAssignee}
         />
 
         <Select
