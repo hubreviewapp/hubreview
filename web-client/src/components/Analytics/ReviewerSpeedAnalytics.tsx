@@ -6,7 +6,7 @@ function ReviewerSpeedAnalytics(data: ReviewLineChartProps) {
   return (
     <Paper p="md" ta="center">
       <Title order={4} mb="sm">
-        Reviewer Speed
+        Reviewer Response Time
       </Title>
       <LineChart
         h={300}
@@ -15,6 +15,7 @@ function ReviewerSpeedAnalytics(data: ReviewLineChartProps) {
         series={[{ name: "speedInHours", color: "pink.6" }]}
         curveType="monotone"
         unit=" hours"
+        connectNulls
       />
     </Paper>
   );
