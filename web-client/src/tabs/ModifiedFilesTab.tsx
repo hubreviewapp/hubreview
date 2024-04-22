@@ -25,18 +25,19 @@ import { useParams } from "react-router-dom";
 import { BASE_URL } from "../env";
 
 const parseDiffMarker = (markerLine: string): DiffMarker => {
-  const match = /^@@ -(\d*),(\d*) \+(\d*),(\d*) @@(.*)$/.exec(markerLine);
+  // See: https://en.wikipedia.org/wiki/Diff#Unified_format
+  const match = /^@@ -(\d*),?(\d*) \+(\d*),?(\d*) @@(.*)$/.exec(markerLine);
 
   if (match === null) throw Error(`Failed to execute regexp on marker line content: ${markerLine}`);
 
   return {
     deletion: {
       startLine: parseInt(match[1]),
-      lineCount: parseInt(match[2]),
+      lineCount: match[2] === "" ? 1 : parseInt(match[2]),
     },
     addition: {
       startLine: parseInt(match[3]),
-      lineCount: parseInt(match[4]),
+      lineCount: match[4] === "" ? 1 : parseInt(match[4]),
     },
     contextContent: match[5],
   };
