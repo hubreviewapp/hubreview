@@ -5,13 +5,12 @@ import axios from "axios";
 import { BASE_URL } from "../env.ts";
 import Comment from "../components/Comment.tsx";
 import TextEditor from "../components/TextEditor.tsx";
-//import CommentList from "../components/DiffComment/CommentList";
+import { APIPullRequestDetails } from "../api/types.ts";
 import PRDetailSideBar from "../components/PRDetailSideBar";
-import { MergeInfo, PullRequest } from "../pages/PRDetailsPage.tsx";
+import { MergeInfo } from "../pages/PRDetailsPage.tsx";
 import { useUser } from "../providers/context-utilities";
-import { Review } from "../models/PRInfo.tsx";
-import SplitButton from "../components/SplitButton.tsx";
 import ClosePRButton from "../components/ClosePRButton.tsx";
+import SplitButton from "../components/SplitButton.tsx";
 
 interface CreateReplyRequestModel {
   body: string;
@@ -32,14 +31,13 @@ interface CommentProps {
 }
 
 export interface CommentsTabProps {
-  pullRequest: PullRequest;
-  reviews: Review[];
+  pullRequestDetails: APIPullRequestDetails;
   mergeInfo: MergeInfo | null;
 }
-//[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/get_comments")]
-function CommentsTab({ pullRequest, reviews, mergeInfo }: CommentsTabProps) {
+
+function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
   const { owner, repoName, prnumber } = useParams();
-  const userLogin = useUser().userLogin;
+  const { user } = useUser();
   const [isLoading, setIsLoading] = useState(true);
 
   const [apiComments, setApiComments] = useState<CommentProps[] | []>([]);
@@ -163,7 +161,7 @@ function CommentsTab({ pullRequest, reviews, mergeInfo }: CommentsTabProps) {
         setFilteredComments(apiComments);
       }
       if (selected.startsWith("My Comments")) {
-        setFilteredComments(apiComments.filter((comment) => comment.author === userLogin));
+        setFilteredComments(apiComments.filter((comment) => comment.author === user?.login));
       }
       if (selected.startsWith("Active")) {
         setFilteredComments(
@@ -203,7 +201,7 @@ function CommentsTab({ pullRequest, reviews, mergeInfo }: CommentsTabProps) {
             data={[
               "Show Everything (" + apiComments.length + ")",
               "All Comments (" + apiComments.length + ")",
-              "My Comments (" + apiComments.filter((comment) => comment.author === userLogin).length + ")",
+              "My Comments (" + apiComments.filter((comment) => comment.author === user?.login).length + ")",
               "Active (" +
                 apiComments.filter(
                   (comment) =>
@@ -272,16 +270,20 @@ function CommentsTab({ pullRequest, reviews, mergeInfo }: CommentsTabProps) {
           </Box>
         )}
         <br></br>
-        {pullRequest?.merged === false && (
+        {pullRequestDetails.merged === false && (
           <SplitButton
             mergeInfo={mergeInfo}
-            isMergeable={pullRequest?.mergeable}
-            mergeableState={pullRequest?.mergeableState.stringValue}
-          ></SplitButton>
+            mergeStateStatus={pullRequestDetails.mergeStateStatus}
+            mergeableState={pullRequestDetails.mergeable}
+          />
         )}
 
         <Flex justify="right">
-          <ClosePRButton isClosed={pullRequest?.closedAt != null} />
+          {pullRequestDetails.merged === false && (
+            <>
+              <ClosePRButton isClosed={pullRequestDetails.closedAt !== null} />
+            </>
+          )}
         </Flex>
         <br />
         <Box style={{ border: "2px groove gray", borderRadius: 10, padding: "10px" }}>
@@ -290,12 +292,7 @@ function CommentsTab({ pullRequest, reviews, mergeInfo }: CommentsTabProps) {
       </Grid.Col>
       <Grid.Col span={3}>
         <Box m="md">
-          <PRDetailSideBar
-            labels={pullRequest?.labels ?? []}
-            addedReviewers={reviews ?? []}
-            addedAssignees={pullRequest?.assignees ?? []}
-            author={pullRequest?.user.login}
-          />
+          <PRDetailSideBar pullRequestDetails={pullRequestDetails} />
         </Box>
       </Grid.Col>
     </Grid>

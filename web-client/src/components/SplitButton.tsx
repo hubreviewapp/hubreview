@@ -4,14 +4,17 @@ import { Box, Popover } from "@mantine/core";
 import { IconGitMerge, IconX, IconCheck } from "@tabler/icons-react";
 import { MergeInfo } from "../pages/PRDetailsPage.tsx";
 import MergeButton from "./MergeButton.tsx";
+import { APIMergeableState, APIMergeStateStatus } from "../api/types.ts";
 
 export interface SplitButtonProps {
   mergeInfo: MergeInfo | null;
-  isMergeable: boolean | null;
-  mergeableState: string;
+  mergeableState: APIMergeableState;
+  mergeStateStatus: APIMergeStateStatus | null;
 }
 
-function SplitButton({ mergeInfo, isMergeable, mergeableState }: SplitButtonProps) {
+function SplitButton({ mergeInfo, mergeableState, mergeStateStatus }: SplitButtonProps) {
+  const isMergeable = mergeableState === APIMergeableState.MERGEABLE;
+
   return (
     <div>
       <Popover
@@ -26,13 +29,13 @@ function SplitButton({ mergeInfo, isMergeable, mergeableState }: SplitButtonProp
           <Box
             style={{
               position: "relative",
-              backgroundColor: isMergeable && mergeableState === "clean" ? "green" : "gray",
+              backgroundColor: isMergeable && mergeStateStatus === APIMergeStateStatus.CLEAN ? "green" : "gray",
               width: 140,
               borderRadius: 10,
               display: "flex",
             }}
           >
-            {(!isMergeable || mergeableState !== "clean") && (
+            {(!isMergeable || mergeStateStatus !== APIMergeStateStatus.CLEAN) && (
               <>
                 <IconGitMerge
                   color="darkred"
@@ -44,7 +47,7 @@ function SplitButton({ mergeInfo, isMergeable, mergeableState }: SplitButtonProp
                 </Text>
               </>
             )}
-            {isMergeable && mergeableState === "clean" && (
+            {isMergeable && mergeStateStatus === APIMergeStateStatus.CLEAN && (
               <>
                 <IconGitMerge style={{ width: rem(50), height: rem(50), marginTop: 0, marginLeft: 10 }} />
                 <Text size="sm" fw={700}>
@@ -62,7 +65,7 @@ function SplitButton({ mergeInfo, isMergeable, mergeableState }: SplitButtonProp
                 <Box>
                   <IconX color="red" style={{ width: rem(30), height: rem(30), marginLeft: 5, marginTop: 10 }} />
                 </Box>
-                <Text color="red" fw={700} style={{ marginTop: 15 }}>
+                <Text c="red" fw={700} style={{ marginTop: 15 }}>
                   Review required (2/ {mergeInfo?.requiredApprovals})
                 </Text>
               </Box>
@@ -80,7 +83,7 @@ function SplitButton({ mergeInfo, isMergeable, mergeableState }: SplitButtonProp
                 <Box>
                   <IconCheck color="green" style={{ width: rem(30), height: rem(30), marginLeft: 5, marginTop: 10 }} />
                 </Box>
-                <Text color="white" fw={700} style={{ marginTop: 15 }}>
+                <Text c="white" fw={700} style={{ marginTop: 15 }}>
                   Approval not required
                 </Text>
               </Box>
@@ -112,7 +115,7 @@ function SplitButton({ mergeInfo, isMergeable, mergeableState }: SplitButtonProp
                 <Box>
                   <IconX color="red" style={{ width: rem(30), height: rem(30), marginLeft: 5, marginTop: 10 }} />
                 </Box>
-                <Text color="red" style={{ marginTop: 15, marginRight: 30 }}>
+                <Text c="red" style={{ marginTop: 15, marginRight: 30 }}>
                   This branch has conflicts that must be resolved
                 </Text>
                 <Button color="gray"> Resolve Conflicts </Button>
@@ -125,7 +128,7 @@ function SplitButton({ mergeInfo, isMergeable, mergeableState }: SplitButtonProp
                 <Box>
                   <IconCheck color="green" style={{ width: rem(30), height: rem(30), marginLeft: 5, marginTop: 10 }} />
                 </Box>
-                <Text color="white" style={{ marginTop: 15 }}>
+                <Text c="white" style={{ marginTop: 15 }}>
                   This branch has no conflicts with the base branch
                 </Text>
               </Box>
@@ -133,17 +136,17 @@ function SplitButton({ mergeInfo, isMergeable, mergeableState }: SplitButtonProp
             </>
           )}
           <hr></hr>
-          {(!isMergeable || mergeableState !== "clean") && (
+          {(!isMergeable || mergeStateStatus !== APIMergeStateStatus.CLEAN) && (
             <Box style={{ display: "flex" }}>
               <Box>
                 <IconX color="red" style={{ width: rem(30), height: rem(30), marginLeft: 5, marginTop: 10 }} />
               </Box>
-              <Text color="red" style={{ marginTop: 15 }}>
+              <Text c="red" style={{ marginTop: 15 }}>
                 Merging is blocked
               </Text>
             </Box>
           )}
-          {isMergeable && mergeableState === "clean" && (
+          {isMergeable && mergeStateStatus === APIMergeStateStatus.CLEAN && (
             <Box style={{ display: "flex" }}>
               <Box>
                 <IconCheck color="green" style={{ width: rem(30), height: rem(30), marginLeft: 5, marginTop: 10 }} />
@@ -152,7 +155,7 @@ function SplitButton({ mergeInfo, isMergeable, mergeableState }: SplitButtonProp
             </Box>
           )}
           <br />
-          <MergeButton isMergeable={isMergeable && mergeableState === "clean"} />
+          <MergeButton isMergeable={isMergeable && mergeStateStatus === APIMergeStateStatus.CLEAN} />
           <br />
         </Popover.Dropdown>
       </Popover>

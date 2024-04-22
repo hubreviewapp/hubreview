@@ -38,6 +38,15 @@ import axios from "axios";
 import SelectLabel from "./SelectLabel";
 import BarColor from "../utility/WorkloadBarColor.ts";
 import { BASE_URL } from "../env.ts";
+import {
+  APIPullRequestAssignee,
+  APIPullRequestDetails,
+  APIPullRequestReviewMetadata,
+  APIPullRequestReviewState,
+  APIPullRequestReviewer,
+  APIPullRequestReviewerActorType,
+} from "../api/types.ts";
+import { useQueryClient } from "@tanstack/react-query";
 
 export interface Contributor {
   id: string;
@@ -51,43 +60,58 @@ export interface Label {
   name: string;
 }
 
-export interface Reviewer {
-  login: string;
-  state: string;
-  avatarUrl: string;
-}
-
-export interface Assignee {
-  id: string;
-  login: string;
-  avatarUrl: string;
-}
-
-export interface PRDetailSideBarProps {
-  addedReviewers: Reviewer[];
-  addedAssignees: Assignee[];
-  labels: Label[];
-  author: string;
-}
-
 interface AssigneesRequest {
   assignees: string[];
 }
 
-function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRDetailSideBarProps) {
+const iconInfo = <IconInfoCircle style={{ width: rem(18), height: rem(18) }} />;
+const iconSearch = <IconSearch style={{ width: rem(16), height: rem(16) }} />;
+
+export interface PRDetailSideBarProps {
+  pullRequestDetails: APIPullRequestDetails;
+}
+
+function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
+  const queryClient = useQueryClient();
   const { owner, repoName, prnumber } = useParams();
-  const iconInfo = <IconInfoCircle style={{ width: rem(18), height: rem(18) }} />;
-  const iconSearch = <IconSearch style={{ width: rem(16), height: rem(16) }} />;
+
   const [contributors, setContributors] = useState<Contributor[]>([]);
-  const [addedReviewer, setAddedReviewer] = useState<Reviewer[]>([]);
-  const [addedAssigneesList, setAddedAssigneesList] = useState<Assignee[]>([]);
-  const [priority, setPriority] = useState<PriorityBadgeLabel>(null);
+
+  const [addedReviewers, setAddedReviewers] = useState<APIPullRequestReviewer[]>([]);
+
   const [query, setQuery] = useState("");
-  const [assigneeQuery, setAssigneeQuery] = useState("");
-  const [assigneeList, setAssigneeList] = useState<Assignee[]>([]);
   const filteredReviewers = contributors.filter((item) => item.login.toLowerCase().includes(query.toLowerCase()));
+
+  const reviewsPerReviewer = pullRequestDetails.reviews.reduce(
+    function (result, review) {
+      (result[review.author.login] = result[review.author.login] || []).push(review);
+      return result;
+    },
+    {} as { [key: string]: APIPullRequestReviewMetadata[] },
+  );
+  const latestReviewsPerReviewer = Object.values(reviewsPerReviewer).map(
+    (reviews) => reviews.sort((a, b) => +b.createdAt - +a.createdAt)[0],
+  );
+
+  const pendingReviewerReviews = addedReviewers.map((r) => ({
+    id: r.id,
+    author:
+      r.actor.type === APIPullRequestReviewerActorType.USER
+        ? {
+            login: r.actor.login,
+            avatarUrl: r.actor.avatarUrl,
+          }
+        : null!, // TODO: support team reviewers
+    state: APIPullRequestReviewState.PENDING,
+  }));
+
+  const [priority, setPriority] = useState<PriorityBadgeLabel>(null);
+
+  const [addedAssigneesList, setAddedAssigneesList] = useState<APIPullRequestAssignee[]>([]);
+  const [assigneeQuery, setAssigneeQuery] = useState("");
+  const [assigneeList, setAssigneeList] = useState<APIPullRequestAssignee[]>([]);
   const removedAssignees = assigneeList.filter(
-    (assignee) => !addedAssigneesList.some((addedItem) => addedItem.login === assignee.login),
+    (assignee) => !addedAssigneesList.some((addedItem) => addedItem.id === assignee.id),
   );
   const filteredAssignees = removedAssignees.filter((item) =>
     item.login.toLowerCase().includes(assigneeQuery.toLowerCase()),
@@ -96,9 +120,12 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
   useEffect(() => {
     const fetchContributors = async () => {
       try {
-        const res = await axios.get(`${BASE_URL}/api/github/GetPRReviewerSuggestion/${owner}/${repoName}/${author}`, {
-          withCredentials: true,
-        });
+        const res = await axios.get(
+          `${BASE_URL}/api/github/GetPRReviewerSuggestion/${owner}/${repoName}/${pullRequestDetails.author.login}`,
+          {
+            withCredentials: true,
+          },
+        );
         if (res.data) {
           setContributors(res.data);
         }
@@ -107,60 +134,66 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
       }
     };
     fetchContributors();
-  }, [author, owner, repoName]);
+  }, [pullRequestDetails.author.login, owner, repoName]);
 
   useEffect(() => {
-    if (addedReviewers.length != 0) {
-      setAddedReviewer(addedReviewers);
+    if (pullRequestDetails.reviewers.length !== 0) {
+      setAddedReviewers(pullRequestDetails.reviewers);
     }
-  }, [addedReviewers]);
+  }, [pullRequestDetails.reviewers]);
 
   useEffect(() => {
-    if (addedAssignees.length != 0) {
-      setAddedAssigneesList(addedAssignees);
+    if (pullRequestDetails.assignees.length !== 0) {
+      setAddedAssigneesList(pullRequestDetails.assignees);
     }
-  }, [addedAssignees]);
+  }, [pullRequestDetails.assignees]);
 
   useEffect(() => {
-    if (labels.length != 0) {
-      const temp = labels.find((itm) => itm.name.includes("Priority"));
+    if (pullRequestDetails.labels.length !== 0) {
+      const temp = pullRequestDetails.labels.find((itm) => itm.name.includes("Priority"));
       if (temp != undefined) {
-        labels.filter((itm) => itm !== temp);
+        pullRequestDetails.labels.filter((itm) => itm !== temp);
         setPriority(temp.name.slice("Priority: ".length) as PriorityBadgeLabel);
       }
     }
-  }, [labels]);
-
-  useEffect(() => {
-    if (addedReviewers.length != 0) {
-      setAddedReviewer(addedReviewers);
-    }
-  }, [addedReviewers]);
+  }, [pullRequestDetails.labels]);
 
   function addReviewer(reviewer: Contributor) {
-    const newReviewer = {
-      login: reviewer.login,
-      state: "PENDING",
-      avatarUrl: reviewer.avatarUrl,
-    };
-    setAddedReviewer([newReviewer, ...addedReviewer]);
     axios
       .post(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/request_review`, [reviewer.login], {
         withCredentials: true,
       })
-      .then(function () {})
-      .catch(function (error) {
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: [`/pullrequests/${owner}/${repoName}/${prnumber}`], exact: true });
+      })
+      .catch((error) => {
         console.log(error);
       });
   }
 
   //HttpDelete("pullrequest/{owner}/{repoName}/{prnumber}/remove_reviewer/{reviewer}")]
-  const deleteReviewer = (reviewer: string) => {
-    setAddedReviewer(addedReviewer.filter((item) => item.login.toString() != reviewer));
+  const deleteReviewer = (reviewerId: string) => {
+    const reviewer = addedReviewers.find((r) => r.id === reviewerId);
+    if (reviewer === undefined) {
+      console.warn(`Couldn't find reviewer with ID ${reviewerId}`);
+      return;
+    }
+
+    const reviewerAPIIdentifier =
+      reviewer.actor.type === APIPullRequestReviewerActorType.USER ? reviewer.actor.login : null;
+    if (reviewerAPIIdentifier === undefined) {
+      console.error(`Couldn't find API-side reviewer ID`);
+      return;
+    }
+
+    setAddedReviewers(addedReviewers.filter((item) => item.id !== reviewerId));
     axios
-      .delete(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/remove_reviewer/${reviewer}`, {
-        withCredentials: true,
-      })
+      .delete(
+        `${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/remove_reviewer/${reviewerAPIIdentifier}`,
+        {
+          withCredentials: true,
+        },
+      )
       .then(function () {})
       .catch(function (error) {
         console.log(error);
@@ -186,16 +219,11 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
   }, [owner, repoName]);
 
   //[HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/addAssignees")]
-  function addAssignee(assignee: Assignee) {
-    const newAssignee = {
-      login: assignee.login,
-      avatarUrl: assignee.avatarUrl,
-      id: assignee.id,
-    };
+  function addAssignee(assignee: APIPullRequestAssignee) {
     const assigneesRequest: AssigneesRequest = {
-      assignees: [assignee.login.toString()],
+      assignees: [assignee.login],
     };
-    setAddedAssigneesList([newAssignee, ...addedAssigneesList]);
+    setAddedAssigneesList([assignee, ...addedAssigneesList]);
     axios
       .post(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/addAssignees`, assigneesRequest, {
         withCredentials: true,
@@ -210,8 +238,8 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
   }
 
   //[HttpPost("pullrequest/{owner}/{repoName}/{prnumber}/removeAssignees")]
-  const deleteAssignee = (assignee: Assignee) => {
-    setAddedAssigneesList(addedAssigneesList.filter((item) => item != assignee));
+  const deleteAssignee = (assignee: APIPullRequestAssignee) => {
+    setAddedAssigneesList(addedAssigneesList.filter((item) => item.id !== assignee.id));
     const assigneesRequest: AssigneesRequest = {
       assignees: [assignee.login.toString()],
     };
@@ -263,8 +291,9 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
         console.log(error);
       });
   }
-  function stateToMessage(state: string) {
-    if (state == "APPROVED") {
+
+  function stateToMessage(state: APIPullRequestReviewState) {
+    if (state === APIPullRequestReviewState.APPROVED) {
       return (
         <Text c="dimmed">
           <Tooltip label="Approved">
@@ -272,19 +301,19 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
           </Tooltip>
         </Text>
       );
-    } else if (state == "COMMENTED") {
+    } else if (state === APIPullRequestReviewState.COMMENTED) {
       return (
         <Tooltip label="Commented">
           <IconMessage color="#40B5AD" style={{ width: rem(22), height: rem(22) }} />
         </Tooltip>
       );
-    } else if (state == "PENDING") {
+    } else if (state === APIPullRequestReviewState.PENDING) {
       return (
         <Tooltip label="Pending">
           <IconHourglassHigh color="#40B5AD" style={{ width: rem(22), height: rem(22) }} />
         </Tooltip>
       );
-    } else if (state == "CHANGES_REQUESTED") {
+    } else if (state === APIPullRequestReviewState.CHANGES_REQUESTED) {
       return (
         <Tooltip label="Changes requested">
           <IconFilePencil color="#40B5AD" style={{ width: rem(22), height: rem(22) }} />
@@ -292,6 +321,7 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
       );
     }
   }
+
   return (
     <Box w="300px">
       <Paper p="sm" withBorder>
@@ -301,28 +331,55 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
               <Text fw={500} size="md" mb="sm">
                 Reviewers
               </Text>
-              {addedReviewer.length == 0 ? (
+              {latestReviewsPerReviewer.length === 0 && addedReviewers.length === 0 && (
                 <Text c="dimmed">No reviewer added</Text>
-              ) : (
-                addedReviewer.map((reviewer) => (
-                  <Grid key={reviewer.login} mb="sm">
-                    <Grid.Col span={2}>
-                      <Avatar src={reviewer.avatarUrl} size="sm" />
-                    </Grid.Col>
-                    <Grid.Col span={7}>
-                      <Text size="sm"> {reviewer.login} </Text>
-                    </Grid.Col>
-                    <Grid.Col span={2}>{stateToMessage(reviewer.state)}</Grid.Col>
-                    <Grid.Col span={1}>
+              )}
+              {latestReviewsPerReviewer.map((review) => (
+                <Grid key={review.id} mb="sm">
+                  <Grid.Col span={2}>
+                    <Avatar src={review.author.avatarUrl} size="sm" />
+                  </Grid.Col>
+                  <Grid.Col span={7}>
+                    <Text size="sm"> {review.author.login} </Text>
+                  </Grid.Col>
+                  <Grid.Col span={2}>{stateToMessage(review.state)}</Grid.Col>
+                  <Grid.Col span={1}>
+                    {review.state === APIPullRequestReviewState.PENDING && (
                       <Tooltip label="Delete">
                         <CloseButton
-                          onClick={() => deleteReviewer(reviewer.login)}
+                          onClick={() => deleteReviewer(review.id)}
                           icon={<IconXboxX color="gray" size={18} stroke={1.5} />}
                         />
                       </Tooltip>
-                    </Grid.Col>
-                  </Grid>
-                ))
+                    )}
+                  </Grid.Col>
+                </Grid>
+              ))}
+              {addedReviewers.length !== 0 && (
+                <Box>
+                  <Text ta="center" size="xs" c="dimmed" mb="sm">
+                    Pending Reviewers
+                  </Text>
+                  {pendingReviewerReviews.map((review) => (
+                    <Grid key={review.id} mb="sm">
+                      <Grid.Col span={2}>
+                        <Avatar src={review.author.avatarUrl} size="sm" />
+                      </Grid.Col>
+                      <Grid.Col span={7}>
+                        <Text size="sm"> {review.author.login} </Text>
+                      </Grid.Col>
+                      <Grid.Col span={2}>{stateToMessage(review.state)}</Grid.Col>
+                      <Grid.Col span={1}>
+                        <Tooltip label="Delete">
+                          <CloseButton
+                            onClick={() => deleteReviewer(review.id)}
+                            icon={<IconXboxX color="gray" size={18} stroke={1.5} />}
+                          />
+                        </Tooltip>
+                      </Grid.Col>
+                    </Grid>
+                  ))}
+                </Box>
               )}
             </Grid.Col>
             <Grid.Col span={6}></Grid.Col>
@@ -381,7 +438,7 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
                   </Tooltip>
                 </Grid.Col>
                 <Grid.Col span={1}>
-                  {addedReviewer.find((itm2) => itm.login == itm2.login) == undefined ? (
+                  {addedReviewers.find((itm2) => itm.id == itm2.id) == undefined ? (
                     <UnstyledButton onClick={() => addReviewer(itm)} style={{ fontSize: "12px" }}>
                       <IconCirclePlus size={18} stroke={1.5} />
                     </UnstyledButton>
@@ -480,7 +537,9 @@ function PRDetailSideBar({ addedReviewers, labels, addedAssignees, author }: PRD
           <PriorityBadge label={priority} size="md" />
         </Box>
         <Divider mt="md" />
-        <SelectLabel githubAddedLabels={labels.map(({ name }) => ({ name, key: name, color: "ffffff" }))} />
+        <SelectLabel
+          githubAddedLabels={pullRequestDetails.labels.map(({ name }) => ({ name, key: name, color: "ffffff" }))}
+        />
       </Paper>
     </Box>
   );

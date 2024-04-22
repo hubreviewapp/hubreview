@@ -1,5 +1,5 @@
 import { Button, SimpleGrid, Grid, Paper, Title, Container, Divider, Flex, Center } from "@mantine/core";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import ReviewSummaryAnalytics from "../components/Analytics/ReviewSummaryAnalytics";
 import ReviewLineChart from "../components/Analytics/ReviewLineChart";
@@ -15,7 +15,6 @@ export interface WeekData {
   speed: string;
 }
 function AnalyticsPage() {
-  const navigate = useNavigate();
   const [repoList, setRepoList] = useState<RepoListResponse>({ repoNames: [] });
 
   type Repo = {
@@ -28,11 +27,6 @@ function AnalyticsPage() {
     repoNames: [];
   }
 
-  useEffect(() => {
-    if (localStorage.getItem("userLogin") === null) {
-      navigate("/signIn");
-    }
-  }, [navigate]);
   useEffect(() => {
     const getRepos = async () => {
       try {

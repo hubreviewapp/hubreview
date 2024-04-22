@@ -58,7 +58,7 @@ module.exports = {
       },
       {
         selector: "enumMember",
-        format: ["PascalCase"],
+        format: ["PascalCase", "UPPER_CASE"],
       },
       {
         selector: [

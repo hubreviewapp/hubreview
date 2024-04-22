@@ -7,8 +7,9 @@ import { BASE_URL } from "../env";
 
 //[HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/merge")]
 export interface MergeButtonProps {
-  isMergeable: boolean | null;
+  isMergeable: boolean;
 }
+
 function MergeButton(props: MergeButtonProps) {
   const [opened, { open, close }] = useDisclosure(false);
   const { owner, repoName, prnumber } = useParams();

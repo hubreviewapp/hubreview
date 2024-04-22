@@ -1,30 +1,36 @@
 import { Grid, Box, Text, Card, Button, Stack, Group, Image, Title } from "@mantine/core";
 import GitHubLogo from "../assets/icons/github-mark-white.png";
 import SignIn from "../assets/icons/signin.png";
-import axios from "axios";
-import { BASE_URL, GITHUB_OAUTH_CLIENT_ID } from "../env";
+import { GITHUB_OAUTH_CLIENT_ID } from "../env";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useUser } from "../providers/context-utilities";
+import { useEffect } from "react";
 
 function SignInPage() {
-  async function loginWithGithub() {
-    const axiosInstance = axios.create({
-      withCredentials: true,
-      baseURL: `${BASE_URL}/api/github`,
-    });
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { user } = useUser();
 
-    try {
-      const res = await axiosInstance.get("/getUserInfo");
-      localStorage.setItem("userLogin", res.data.userLogin);
-      console.log(res.data.userLogin);
-    } catch (error) {
-      console.error("Error fetching data:", error);
+  const loginWithGithub = () => {
+    // Note: This shouldn't be necessary since the apps have one callback URI each...
+    // but leaving it here: `redirect_uri=${GITHUB_OAUTH_REDIRECT_URI}`
+
+    const queryParams = [
+      ["client_id", GITHUB_OAUTH_CLIENT_ID],
+      ["scope", "user,repo,admin:org"],
+      ["state", encodeURIComponent(JSON.stringify({ from: location.state?.previousLocation ?? "/" }))],
+    ]
+      .map(([key, val]) => `${key}=${val}`)
+      .join("&");
+
+    return window.location.assign(`https://github.com/login/oauth/authorize?${queryParams}`);
+  };
+
+  useEffect(() => {
+    if (user !== null) {
+      navigate("/");
     }
-
-    window.location.assign(
-      // Note: This shouldn't be necessary since the apps have one callback URI each...
-      // but leaving it here: `redirect_uri=${GITHUB_OAUTH_REDIRECT_URI}`
-      `https://github.com/login/oauth/authorize?client_id=${GITHUB_OAUTH_CLIENT_ID}&scope=user,repo,admin:org`,
-    );
-  }
+  }, [user, navigate]);
 
   return (
     <Box h={600} p={5} m={0} w="100%">

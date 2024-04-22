@@ -1,27 +1,17 @@
-using System.Web;
 using CS.Core.Configuration;
-using CS.Core.Entities;
-using GitHubJwt;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using Npgsql;
-using Octokit;
 
 namespace CS.Web.Controllers;
 
 [Route("api/db")]
 [ApiController]
-
 public class DbConnectionController : ControllerBase
 {
 
     [HttpGet("connect")]
-    public async Task<ActionResult> connect()
+    public ActionResult connect()
     {
-
-
         var config = new CoreConfiguration();
         string connectionString = config.DbConnectionString;
 

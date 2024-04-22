@@ -1,42 +1,28 @@
-import { useState, useEffect, ReactNode } from "react";
-import UserContext, { User } from "./contexts.tsx"; // Assuming you have defined the User interface
-import axios from "axios";
+import { ReactNode } from "react";
+import UserContext from "./contexts.tsx";
+import { apiHooks } from "../api/apiHooks.ts";
 import { BASE_URL } from "../env.ts";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 interface UserProviderProps {
   children: ReactNode;
 }
 
 function UserProvider({ children }: UserProviderProps) {
-  const [user, setUser] = useState<User | undefined>(undefined);
+  const navigate = useNavigate();
 
-  const setUserInfo = (userInfo: User) => {
-    setUser({
-      userLogin: userInfo.userLogin,
-      userAvatarUrl: userInfo.userAvatarUrl,
-    });
+  const { data, isLoading: isLoadingUser } = apiHooks.user.useGetCurrentQuery();
+
+  const logOut = async () => {
+    localStorage.clear();
+    await axios.get(`${BASE_URL}/api/github/logoutUser`, { withCredentials: true });
+    navigate(0);
   };
 
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      const res = await axios
-        .create({
-          withCredentials: true,
-          baseURL: `${BASE_URL}/api/github`,
-        })
-        .get("getUserInfo");
-      if (res) {
-        setUserInfo(res.data);
-      }
-    };
-    fetchUserInfo();
-  }, []);
-
-  if (user === undefined) {
-    return null;
-  }
-
-  return <UserContext.Provider value={user}>{children}</UserContext.Provider>;
+  return (
+    <UserContext.Provider value={{ user: data?.data ?? null, isLoadingUser, logOut }}>{children}</UserContext.Provider>
+  );
 }
 
 export default UserProvider;

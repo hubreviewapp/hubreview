@@ -2,21 +2,18 @@ import { Link, useLocation } from "react-router-dom";
 import { Container, Button, Title, Grid, Box, rem, Avatar, Space } from "@mantine/core";
 import { useState, useEffect } from "react";
 import { IconLogout } from "@tabler/icons-react";
-import { useNavigate } from "react-router-dom";
 import { useUser } from "../providers/context-utilities";
-import axios from "axios";
-import { BASE_URL } from "../env";
 
 function NavBar() {
   const location = useLocation();
+  const { logOut } = useUser();
+
   const [isActive, setIsActive] = useState(0);
-  const navigate = useNavigate();
   const iconLogout = <IconLogout style={{ width: rem(15), height: rem(15) }} />;
   const handleClick = (buttonId: number) => {
     setIsActive(buttonId);
     if (buttonId == 0) {
-      localStorage.clear();
-      axios.get(`${BASE_URL}/api/github/logoutUser`);
+      logOut();
     }
   };
 
@@ -38,13 +35,7 @@ function NavBar() {
         setIsActive(0);
     }
   }, [location.pathname]);
-  const { userLogin, userAvatarUrl } = useUser();
-
-  useEffect(() => {
-    if (localStorage.getItem("userLogin") === null || userLogin === null) {
-      navigate("/signIn");
-    }
-  }, [navigate, userLogin]);
+  const { user } = useUser();
 
   return (
     <Box bg="#0D1B2A" p="20px">
@@ -80,21 +71,15 @@ function NavBar() {
             >
               Analytics
             </Button>
-            {location.pathname !== "/signIn" && userLogin && (
-              <Button variant="transparent" component="a" href={"https://github.com/" + userLogin} target="_blank">
-                <Avatar src={userAvatarUrl} radius="xl" size="2rem" />
+            {location.pathname !== "/signIn" && user && (
+              <Button variant="transparent" component="a" href={"https://github.com/" + user.login} target="_blank">
+                <Avatar src={user.avatarUrl} radius="xl" size="2rem" />
                 <Space w="xs" />
-                {userLogin}
+                {user.login}
               </Button>
             )}
 
-            <Button
-              rightSection={iconLogout}
-              component={Link}
-              variant="transparent"
-              to="/signIn"
-              onClick={() => handleClick(0)}
-            >
+            <Button rightSection={iconLogout} variant="transparent" onClick={() => handleClick(0)}>
               Log out
             </Button>
           </Grid.Col>

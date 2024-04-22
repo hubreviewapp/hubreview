@@ -14,6 +14,7 @@ import {
   Avatar,
   Badge,
   Loader,
+  Tooltip,
 } from "@mantine/core";
 import FileDiffView from "../components/ReviewsTab/FileDiffView";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -42,6 +43,25 @@ const parseDiffMarker = (markerLine: string): DiffMarker => {
 };
 
 const parseRawDiff = (getAllPatchesResponse: GetAllPatchesResponse): FileDiff => {
+  if (getAllPatchesResponse.content === null) {
+    return {
+      sha: getAllPatchesResponse.sha,
+      status: getAllPatchesResponse.status,
+      diffstat: {
+        additions: getAllPatchesResponse.adds,
+        deletions: getAllPatchesResponse.dels,
+      },
+      fileName: getAllPatchesResponse.name,
+      lines: [
+        {
+          type: DiffLineType.Context,
+          content: "This file is not viewable from HubReview",
+          lineNumber: {},
+        },
+      ],
+    };
+  }
+
   const trimmedRawDiff = getAllPatchesResponse.content.trim();
   const rawDiffLines = trimmedRawDiff.split("\n");
 
@@ -201,6 +221,12 @@ function ModifiedFilesTab() {
   const [pendingComments, setPendingComments] = useState<ReviewComment[]>([]);
   const [comments, setComments] = useState<ReviewComment[]>([]);
   const [mainComments, setMainComments] = useState<ReviewMainComment[]>([]);
+
+  const requestChangesDisabled = pendingComments.length === 0 && editorContent.length === 0;
+
+  if (requestChangesDisabled && reviewVerdict === "reject") {
+    setReviewVerdict("comment");
+  }
 
   const onAddPendingComment = useCallback(
     (comment: ReviewComment) => {
@@ -405,11 +431,18 @@ function ModifiedFilesTab() {
                 label="Approve"
                 styles={{ label: { color: "lime" }, radio: { border: "1px solid lime" } }}
               />
-              <Radio
-                value="reject"
-                label="Request changes"
-                styles={{ label: { color: "crimson" }, radio: { border: "1px solid crimson" } }}
-              />
+              <Tooltip
+                label="You must add at least a review body or comment to request changes"
+                disabled={!requestChangesDisabled}
+                refProp="rootRef"
+              >
+                <Radio
+                  value="reject"
+                  label="Request changes"
+                  styles={{ label: { color: "crimson" }, radio: { border: "1px solid crimson" } }}
+                  disabled={requestChangesDisabled}
+                />
+              </Tooltip>
             </Stack>
           </Radio.Group>
 

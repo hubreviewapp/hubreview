@@ -2,20 +2,22 @@ import { Badge, Box, rem, Text, Card, Group, Anchor, Title, Loader, Center, Butt
 import { IconCheckupList, IconSparkles } from "@tabler/icons-react";
 import { IconCircleCheck, IconXboxX } from "@tabler/icons-react";
 
-import { PRDetail } from "../pages/PRDetailsPage.tsx";
+import { APICheckConclusionState, APIPullRequestDetails } from "../api/types.ts";
+
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { BASE_URL } from "../env.ts";
 import Markdown from "react-markdown";
 
+const iconCheckupList = <IconCheckupList style={{ width: rem(27), height: rem(27) }} />;
+
 export interface PRDetailTabProps {
-  pull: PRDetail;
+  pullRequestDetails: APIPullRequestDetails;
 }
 
-export default function PrDetailTab({ pull }: PRDetailTabProps) {
-  const iconCheckupList = <IconCheckupList style={{ width: rem(27), height: rem(27) }} />;
-  const checks = pull.checks;
+export default function PrDetailTab({ pullRequestDetails }: PRDetailTabProps) {
+  const checkSuites = pullRequestDetails.checkSuites.filter((cs) => cs.workflowRun !== null);
 
   //http get pullrequest/{owner}/{repoName}/{prnumber}/summary
   const { owner, repoName, prnumber } = useParams();
@@ -60,21 +62,22 @@ export default function PrDetailTab({ pull }: PRDetailTabProps) {
     };
 
     fetchData().then();
-  }, []); // eslint-disable-line
+  }, [owner, repoName, prnumber, setAiSummary, setIsLoading]);
 
   return (
     <Box>
       <Badge leftSection={iconCheckupList} size="lg" mb={10} variant="gradient" style={{ visibility: "visible" }}>
-        Checks ( {pull.checksSuccess} / {pull.checks.length} )
+        Checks ( {checkSuites.filter((cs) => cs.conclusion === APICheckConclusionState.SUCCESS).length} /{" "}
+        {checkSuites.length} )
       </Badge>
       <Box display="flex" style={{ flexWrap: "wrap" }}>
-        {checks.map((check) => (
+        {checkSuites.map((checkSuite) => (
           <Card
-            key={check.id}
+            key={checkSuite.id}
             shadow="sm"
             component="a"
             padding="sm"
-            href={check?.url}
+            href={checkSuite.workflowRun?.url}
             target="_blank"
             withBorder
             w="30%"
@@ -82,17 +85,17 @@ export default function PrDetailTab({ pull }: PRDetailTabProps) {
           >
             <Group>
               <Text fw={500} size="lg" mt="md" style={{ marginBottom: "10px" }}>
-                {check.name}
+                {checkSuite.workflowRun?.workflow.name}
               </Text>
 
               <Text fw={500} size="lg" mt="md">
-                {check.conclusion?.StringValue === "success" && (
+                {checkSuite.conclusion === APICheckConclusionState.SUCCESS && (
                   <IconCircleCheck
                     color="green"
                     style={{ width: rem(22), height: rem(22), color: "green", marginLeft: "auto" }}
                   />
                 )}
-                {check.conclusion?.StringValue === "failure" && (
+                {checkSuite.conclusion === APICheckConclusionState.FAILURE && (
                   <IconXboxX
                     color="red"
                     style={{ width: rem(22), height: rem(22), color: "red", marginLeft: "auto" }}
@@ -101,7 +104,7 @@ export default function PrDetailTab({ pull }: PRDetailTabProps) {
               </Text>
 
               <Anchor
-                href={check?.url}
+                href={checkSuite.workflowRun?.url}
                 target="_blank"
                 c="blue"
                 style={{ position: "absolute", right: "15px", display: "flex" }}

@@ -7,16 +7,18 @@ export interface DiffCommentEditorSubmitButtonProps {
   decoration: ReviewCommentDecoration;
   onDecorationChange: (decoration: ReviewCommentDecoration) => void;
   onSubmit: () => void;
+  canSubmitDiffComment: boolean;
 }
 
 function DiffCommentEditorSubmitButton({
   decoration,
   onDecorationChange,
   onSubmit,
+  canSubmitDiffComment,
 }: DiffCommentEditorSubmitButtonProps) {
   return (
     <Group gap={0}>
-      <Button color="green" onClick={onSubmit}>
+      <Button color="green" onClick={onSubmit} disabled={!canSubmitDiffComment}>
         Add {decoration} comment
       </Button>
       <Menu>
@@ -105,6 +107,7 @@ function DiffCommentEditor({ onAdd, onCancel }: DiffCommentEditorProps) {
           decoration={decorationType}
           onDecorationChange={(decoration) => setDecorationType(decoration)}
           onSubmit={handleSubmit}
+          canSubmitDiffComment={editorContent.length !== 0}
         />
       </Group>
     </Paper>
