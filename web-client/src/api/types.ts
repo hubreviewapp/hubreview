@@ -96,6 +96,7 @@ export interface APIPullRequestAssignee {
 
 export interface APIPullRequestDetails {
   title: string;
+  body: string;
   author: {
     url: string;
     login: string;
