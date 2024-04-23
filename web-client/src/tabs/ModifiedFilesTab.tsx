@@ -399,6 +399,19 @@ function ModifiedFilesTab() {
     await refetchReviewData();
   };
 
+  useEffect(() => {
+    // See: https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event
+    const unloadCallback: EventListenerOrEventListenerObject = (event) => {
+      if (hasStartedReview) {
+        event.preventDefault();
+        event.returnValue = true;
+      }
+    };
+
+    window.addEventListener("beforeunload", unloadCallback);
+    return () => window.removeEventListener("beforeunload", unloadCallback);
+  }, [hasStartedReview]);
+
   const isLoading = diffsAreLoading || reviewsAreLoading || createReviewMutation.isPending;
   if (isLoading) {
     return (
