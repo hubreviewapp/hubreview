@@ -11,6 +11,8 @@ import { MergeInfo } from "../pages/PRDetailsPage.tsx";
 import { useUser } from "../providers/context-utilities";
 import ClosePRButton from "../components/ClosePRButton.tsx";
 import SplitButton from "../components/SplitButton.tsx";
+import convertHtmlToMarkdown from "../utility/convertHtmlToMarkdown.ts";
+import Markdown from "react-markdown";
 
 interface CreateReplyRequestModel {
   body: string;
@@ -109,6 +111,8 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
       })
       .then(function () {
         fetchPRComments();
+      })
+      .then(function () {
         setCommentLoading(false);
       })
       .catch(function (error) {
@@ -162,9 +166,6 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
 
   const handleSelect = (selected: string | null) => {
     if (selected != null) {
-      if (selected.startsWith("Show Everything")) {
-        setFilteredComments(apiComments);
-      }
       if (selected.startsWith("All Comments")) {
         setFilteredComments(apiComments);
       }
@@ -207,7 +208,6 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
             style={{ flex: 0.2 }}
             placeholder="Filter comments"
             data={[
-              "Show Everything (" + apiComments.length + ")",
               "All Comments (" + apiComments.length + ")",
               "My Comments (" + apiComments.filter((comment) => comment.author === user?.login).length + ")",
               "Active (" +
@@ -233,6 +233,16 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
             onChange={(val) => handleSelect(val)}
           />
         </Box>
+        {pullRequestDetails.body.toString() && (
+          <Box style={{ border: "1px groove gray", borderRadius: 10, padding: "10px" }}>
+            <Text fw={700} size="md">
+              {" "}
+              Description:{" "}
+            </Text>
+            <Markdown>{convertHtmlToMarkdown(pullRequestDetails.body.toString())}</Markdown>
+          </Box>
+        )}
+        <br></br>
         {!isLoading &&
           filteredComments.map((comment, index) => (
             <Box key={index}>
@@ -278,7 +288,7 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
           </Box>
         )}
         <br></br>
-        {pullRequestDetails.merged === false && (
+        {!pullRequestDetails.merged && (
           <SplitButton
             mergeInfo={mergeInfo}
             mergeStateStatus={pullRequestDetails.mergeStateStatus}
@@ -287,7 +297,7 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
         )}
 
         <Flex justify="right">
-          {pullRequestDetails.merged === false && (
+          {!pullRequestDetails.merged && (
             <>
               <ClosePRButton isClosed={pullRequestDetails.closedAt !== null} />
             </>

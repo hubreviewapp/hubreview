@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import { RichTextEditor, Link } from "@mantine/tiptap";
 import { useDisclosure } from "@mantine/hooks";
-import { Button, Box, Badge, Modal, Table } from "@mantine/core";
+import { Button, Box, Badge, Modal, Table, Text } from "@mantine/core";
 import { rem } from "@mantine/core";
 import { useEditor } from "@tiptap/react";
 import Highlight from "@tiptap/extension-highlight";
@@ -184,20 +184,23 @@ function TextEditor({
           blur: 3,
         }}
       >
-        <Table.ScrollContainer minWidth={300}>
-          <Table striped highlightOnHover withColumnBorders>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th></Table.Th>
-                <Table.Th style={{ fontSize: "18px" }}>Reply Title</Table.Th>
-                <Table.Th style={{ fontSize: "18px" }}>Reply Body</Table.Th>
-                <Table.Th> Add to comment</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>{rows}</Table.Tbody>
-          </Table>
-        </Table.ScrollContainer>
+        {savedReplies.length > 0 && (
+          <Table.ScrollContainer minWidth={300}>
+            <Table striped highlightOnHover withColumnBorders>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th></Table.Th>
+                  <Table.Th style={{ fontSize: "18px" }}>Reply Title</Table.Th>
+                  <Table.Th style={{ fontSize: "18px" }}>Reply Body</Table.Th>
+                  <Table.Th> Add to comment</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>{rows}</Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
+        )}
 
+        {savedReplies.length === 0 && <Text> There are no saved replies</Text>}
         <Box style={{ textAlign: "center", marginTop: "20px" }}>
           <Button component="a" href="https://github.com/settings/replies?return_to=1" color="indigo">
             {" "}
