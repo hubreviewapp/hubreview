@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import { RichTextEditor, Link } from "@mantine/tiptap";
 import { useDisclosure } from "@mantine/hooks";
-import { Button, Box, Badge, Modal, Table } from "@mantine/core";
+import { Button, Box, Badge, Modal, Table, Text } from "@mantine/core";
 import { rem } from "@mantine/core";
 import { useEditor } from "@tiptap/react";
 import Highlight from "@tiptap/extension-highlight";
@@ -184,6 +184,7 @@ function TextEditor({
           blur: 3,
         }}
       >
+        {savedReplies.length > 0 &&
         <Table.ScrollContainer minWidth={300}>
           <Table striped highlightOnHover withColumnBorders>
             <Table.Thead>
@@ -197,8 +198,12 @@ function TextEditor({
             <Table.Tbody>{rows}</Table.Tbody>
           </Table>
         </Table.ScrollContainer>
+        }
 
-        <Box style={{ textAlign: "center", marginTop: "20px" }}>
+        {savedReplies.length === 0 &&
+          <Text> There are no saved replies</Text>
+        }
+          <Box style={{ textAlign: "center", marginTop: "20px" }}>
           <Button component="a" href="https://github.com/settings/replies?return_to=1" color="indigo">
             {" "}
             Create a new one{" "}

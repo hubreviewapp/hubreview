@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Group, Accordion, Box, rem, TextInput, Text, ScrollArea, Button } from "@mantine/core";
 import { Checkbox } from "@mantine/core";
-import { IconBellRinging, IconNotebook, IconSearch, IconCirclePlus } from "@tabler/icons-react";
+import { IconNotebook, IconSearch, IconCirclePlus } from "@tabler/icons-react";
 import axios from "axios";
 import classes from "../../styles/NavbarSimple.module.css";
 import { Repository } from "../../models/Repository.tsx";
@@ -11,7 +11,7 @@ import { SelectedRepos } from "../../pages/ReviewQueuePage.tsx";
 import { BASE_URL, GITHUB_APP_NAME } from "../../env";
 
 const data = [
-  { link: "", label: "New PRs", icon: IconBellRinging },
+  //{ link: "", label: "New PRs", icon: IconBellRinging },
   { link: "", label: "Needs your review" },
   { link: "", label: "Your PRs" },
   { link: "", label: "Waiting for author" },
@@ -140,7 +140,7 @@ export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSe
       key={item.label}
       onClick={() => setActiveSection(item.label)}
     >
-      {item.icon && <item.icon className={classes.linkIcon} stroke={1.5} />}
+      {/*{item.icon && <item.icon className={classes.linkIcon} stroke={1.5} />} */}
       <span>{item.label}</span>
     </Link>
   ));

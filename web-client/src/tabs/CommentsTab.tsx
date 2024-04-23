@@ -109,6 +109,8 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
       })
       .then(function () {
         fetchPRComments();
+      })
+      .then(function () {
         setCommentLoading(false);
       })
       .catch(function (error) {
@@ -162,9 +164,6 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
 
   const handleSelect = (selected: string | null) => {
     if (selected != null) {
-      if (selected.startsWith("Show Everything")) {
-        setFilteredComments(apiComments);
-      }
       if (selected.startsWith("All Comments")) {
         setFilteredComments(apiComments);
       }
@@ -207,7 +206,6 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
             style={{ flex: 0.2 }}
             placeholder="Filter comments"
             data={[
-              "Show Everything (" + apiComments.length + ")",
               "All Comments (" + apiComments.length + ")",
               "My Comments (" + apiComments.filter((comment) => comment.author === user?.login).length + ")",
               "Active (" +
