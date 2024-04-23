@@ -373,11 +373,11 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
                   <Grid.Col span={7}>
                     <Text size="sm"> {review.author.login} </Text>
                   </Grid.Col>
-                  <Grid.Col span={3}>
-                    {stateToMessage(review.state)}
+                  <Grid.Col span={1}>{stateToMessage(review.state)}</Grid.Col>
+                  <Grid.Col span={1}>
                     {pendingReviewerReviews.find((r) => r.author.login === review.author.login) && (
                       <Tooltip label="Stale">
-                        <IconClockExclamation size={18} color="#f54b42" />
+                        <IconClockExclamation size={20} color="#f54b42" />
                       </Tooltip>
                     )}
                   </Grid.Col>
