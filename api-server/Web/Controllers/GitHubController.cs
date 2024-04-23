@@ -2547,9 +2547,7 @@ public class GitHubController : ControllerBase
     [HttpGet("user/monthlysummary")]
     public async Task<ActionResult> GetReviewsForUserInLastMonth()
     {
-        // Get organizations for the current user
-        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+        var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
         var weeks = new List<(DateTime start, DateTime end)>();
         DateTime today = DateTime.Today;
@@ -2573,12 +2571,12 @@ public class GitHubController : ControllerBase
         {
             await connection.OpenAsync();
 
-            string query = "SELECT pullnumber, reponame, repoowner FROM pullrequestinfo WHERE (repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins)) AND updatedat >= @startOfWeek AND EXISTS (SELECT 1 FROM json_array_elements(reviews) AS elem WHERE elem->>'login' = @ownerLogin)";
+            string query = "SELECT pullnumber, reponame, repoowner FROM pullrequestinfo WHERE repoid = ANY(@repos) AND updatedat >= @startOfWeek AND EXISTS (SELECT 1 FROM json_array_elements(reviews) AS elem WHERE elem->>'login' = @ownerLogin)";
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@repos", repos);
                 command.Parameters.AddWithValue("@startOfWeek", weeks[3].start);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
