@@ -1133,10 +1133,17 @@ namespace CS.Web.Controllers
 
                     if (issueCommentPayload.action == "created")
                     {
-                        //
                         string query = $"INSERT INTO comments (commentid, reponame, prnumber, is_review) VALUES ({issueCommentPayload.comment.id}, '{issueCommentPayload.repository.name}', {issueCommentPayload.issue.number}, {false})";
                         connection.Open();
                         using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+                        connection.Close();
+
+                        query = $"UPDATE pullrequestinfo SET comments = comments + 1 WHERE reponame = '{issueCommentPayload.repository.name}' AND pullnumber = {issueCommentPayload.issue.number} AND repoowner = '{issueCommentPayload.repository.owner.login}'";
+                        connection.Open();
+                        using (var command = new NpgsqlCommand(query, connection))
                         {
                             command.ExecuteNonQuery();
                         }
@@ -1149,6 +1156,14 @@ namespace CS.Web.Controllers
                         string query = $"DELETE FROM comments WHERE commentid = {issueCommentPayload.comment.id}";
                         connection.Open();
                         using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+                        connection.Close();
+
+                        query = $"UPDATE pullrequestinfo SET comments = comments - 1 WHERE reponame = '{issueCommentPayload.repository.name}' AND pullnumber = {issueCommentPayload.issue.number} AND repoowner = '{issueCommentPayload.repository.owner.login}'";
+                        connection.Open();
+                        using (var command = new NpgsqlCommand(query, connection))
                         {
                             command.ExecuteNonQuery();
                         }
