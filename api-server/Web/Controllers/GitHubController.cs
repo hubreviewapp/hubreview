@@ -263,7 +263,7 @@ public class GitHubController : ControllerBase
         {
             await connection.OpenAsync();
 
-            string query = "SELECT id, name, ownerLogin, created_at FROM repositoryinfo WHERE id = ANY(@repos) ORDER BY name ASC";
+            string query = "SELECT id, name, ownerLogin, created_at, onlyadmin FROM repositoryinfo WHERE id = ANY(@repos) ORDER BY name ASC";
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
                 command.Parameters.AddWithValue("@repos", repos);
@@ -278,7 +278,8 @@ public class GitHubController : ControllerBase
                             Name = reader.GetString(1),
                             OwnerLogin = reader.GetString(2),
                             CreatedAt = reader.GetFieldValue<DateOnly>(3),
-                            IsAdmin = await GetRepoAdmins(reader.GetString(2), reader.GetString(1), UserLogin!)
+                            IsAdmin = await GetRepoAdmins(reader.GetString(2), reader.GetString(1), UserLogin!),
+                            onlyAdmin = reader.GetBoolean(4)
                         };
                         allRepos.Add(repo);
                     }
@@ -3641,7 +3642,11 @@ public class GitHubController : ControllerBase
 
         allLabels = allLabels.OrderBy(label => label).ToHashSet();
 
-        return Ok(new { Authors = allAuthors, Labels = allLabels, Assignees = allAssignees });
+
+        var authorsWithAvatars = allAuthors.Select(author => new { Login = author, AvatarUrl = $"https://github.com/{author}.png" });
+        var assigneesWithAvatars = allAssignees.Select(assignee => new { Login = assignee, AvatarUrl = $"https://github.com/{assignee}.png" });
+
+        return Ok(new { Authors = authorsWithAvatars, Labels = allLabels, Assignees = assigneesWithAvatars });
     }
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/merge")]
@@ -4030,46 +4035,37 @@ public class GitHubController : ControllerBase
     [HttpGet("repository/{owner}/{repo}/{branch}/protection/{prnumber}")]
     public async Task<ActionResult> GetBranchProtection(string owner, string repo, string branch, long prnumber)
     {
+
         var pull = await GitHubUserClient.PullRequest.Get(owner, repo, (int)prnumber);
 
         var isConflict = pull.MergeableState == "dirty";
 
-        try
-        {
-            var protection = await GitHubUserClient.Repository.Branch.GetBranchProtection(owner, repo, branch);
-
-            List<string> required_checks = new List<string>();
-            if (protection.RequiredStatusChecks.Strict)
-            {
-                foreach (var check in protection.RequiredStatusChecks.Contexts)
+        var query = new Query()
+            .RepositoryOwner(owner)
+            .Repository(repo)
+            .BranchProtectionRules(null, null, null, null)
+            .AllPages()
+            .Select(
+                r => new
                 {
-                    required_checks.Add(check);
-                }
-            }
+                    // For this code, use the output of the loop above.
+                    required_checks = r.RequiredStatusCheckContexts,
+                    requiredApprovals = r.RequiredApprovingReviewCount,
+                    requiredConversationResolution = r.RequiresConversationResolution,
+                    pattern = r.Pattern
+                })
+            .Compile();
 
-            var requiredApprovals = protection.RequiredPullRequestReviews.RequiredApprovingReviewCount;
+        var response = await GitHubUserGraphQLConnection.Run(query);
 
-            var requiredConversationResolution = protection.RequiredConversationResolution.Enabled;
-            var result = new
-            {
-                required_checks,
-                requiredApprovals,
-                isConflict,
-                requiredConversationResolution
-            };
-            return Ok(result);
-        }
-        catch (NotFoundException)
+        var result = response.FirstOrDefault(r => r.pattern == branch);
+
+        if (result != null)
         {
-            var result = new
-            {
-                required_checks = new List<string>(),
-                requiredApprovals = 0,
-                isConflict,
-                requiredConversationResolution = false
-            };
-            return Ok(result);
+            return Ok(new { required_checks = result.required_checks, requiredApprovals = result.requiredApprovals, isConflict = isConflict, requiredConversationResolution = result.requiredConversationResolution });
         }
+
+        return Ok(new { required_checks = new List<string>(), requiredApprovals = 0, isConflict = isConflict, requiredConversationResolution = false });
     }
 
     [HttpGet("pullrequest/{owner}/{repoName}/{prnumber}/{state}")]
@@ -4106,7 +4102,7 @@ public class GitHubController : ControllerBase
     // user type usersa direkt sahibi döndür.
     // userın type ı organizasyonsa, https://api.github.com/orgs/hubreviewapp/members?role=admin request.
 
-    //[HttpGet("{repoOwner}/{repoName}/repoadmins/{userLogin}")]
+    [HttpGet("{repoOwner}/{repoName}/repoadmins/{userLogin}")]
     public async Task<bool> GetRepoAdmins(string repoOwner, string repoName, string userLogin)
     {
         List<string> result = new List<string>();
@@ -4195,7 +4191,7 @@ public class GitHubController : ControllerBase
         return result;
     }
 
-    [HttpPatch("{repoOwner}/{repoName}/changeonlyadmin/{onlyAdmin}")]
+    [HttpGet("{repoOwner}/{repoName}/changeonlyadmin/{onlyAdmin}")]
     public async Task<ActionResult> SetRepoSetting(string repoOwner, string repoName, bool onlyAdmin)
     {
         List<string> result = new List<string>();

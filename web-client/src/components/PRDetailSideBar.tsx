@@ -23,13 +23,14 @@ import {
   IconInfoCircle,
   IconCirclePlus,
   IconCheck,
-  IconXboxX,
   IconThumbUp,
   IconMessage,
   IconHourglassHigh,
   IconFilePencil,
   IconSearch,
   IconUserPlus,
+  IconCircleX,
+  IconClockExclamation,
 } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import PriorityBadge, { PriorityBadgeLabel } from "./PriorityBadge";
@@ -47,6 +48,7 @@ import {
   APIPullRequestReviewerActorType,
 } from "../api/types.ts";
 import { useQueryClient } from "@tanstack/react-query";
+import { useUser } from "../providers/context-utilities.ts";
 
 export interface Contributor {
   id: string;
@@ -80,7 +82,17 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
   const [addedReviewers, setAddedReviewers] = useState<APIPullRequestReviewer[]>([]);
 
   const [query, setQuery] = useState("");
-  const filteredReviewers = contributors.filter((item) => item.login.toLowerCase().includes(query.toLowerCase()));
+  const filteredReviewers = contributors
+    .filter(
+      // Filter out reviewers already in pending state
+      (c) =>
+        addedReviewers.find(
+          (r) => r.actor.type === APIPullRequestReviewerActorType.USER && r.actor.login === c.login,
+        ) === undefined,
+    )
+    .filter((item) => item.login.toLowerCase().includes(query.toLowerCase()));
+
+  const { user } = useUser();
 
   const reviewsPerReviewer = pullRequestDetails.reviews.reduce(
     function (result, review) {
@@ -116,6 +128,26 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
   const filteredAssignees = removedAssignees.filter((item) =>
     item.login.toLowerCase().includes(assigneeQuery.toLowerCase()),
   );
+
+  const [canChangePriority, setCanChangePriority] = useState(true);
+
+  useEffect(() => {
+    //[HttpGet("{repoOwner}/{repoName}/repoprioritysetters/{userLogin}")]
+
+    const query = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/api/github/${owner}/${repoName}/repoprioritysetters/${user?.login}`, {
+          withCredentials: true,
+        });
+        if (res.data != null) {
+          setCanChangePriority(res.data);
+        } else console.log(res);
+      } catch (error) {
+        console.error("Error fetching can change priority:", error);
+      }
+    };
+    query();
+  }, [pullRequestDetails.author.login, owner, repoName, user]);
 
   useEffect(() => {
     const fetchContributors = async () => {
@@ -208,7 +240,6 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
           withCredentials: true,
         });
         if (res.data) {
-          console.log("sdvfb", res.data);
           setAssigneeList(res.data);
         }
       } catch (error) {
@@ -327,7 +358,7 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
       <Paper p="sm" withBorder>
         <Box>
           <Grid>
-            <Grid.Col span={10}>
+            <Grid.Col span={12}>
               <Text fw={500} size="md" mb="sm">
                 Reviewers
               </Text>
@@ -342,20 +373,17 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
                   <Grid.Col span={7}>
                     <Text size="sm"> {review.author.login} </Text>
                   </Grid.Col>
-                  <Grid.Col span={2}>{stateToMessage(review.state)}</Grid.Col>
+                  <Grid.Col span={1}>{stateToMessage(review.state)}</Grid.Col>
                   <Grid.Col span={1}>
-                    {review.state === APIPullRequestReviewState.PENDING && (
-                      <Tooltip label="Delete">
-                        <CloseButton
-                          onClick={() => deleteReviewer(review.id)}
-                          icon={<IconXboxX color="gray" size={18} stroke={1.5} />}
-                        />
+                    {pendingReviewerReviews.find((r) => r.author.login === review.author.login) && (
+                      <Tooltip label="Stale">
+                        <IconClockExclamation size={20} color="#f54b42" />
                       </Tooltip>
                     )}
                   </Grid.Col>
                 </Grid>
               ))}
-              {addedReviewers.length !== 0 && (
+              {pendingReviewerReviews.length !== 0 && (
                 <Box>
                   <Text ta="center" size="xs" c="dimmed" mb="sm">
                     Pending Reviewers
@@ -368,12 +396,12 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
                       <Grid.Col span={7}>
                         <Text size="sm"> {review.author.login} </Text>
                       </Grid.Col>
-                      <Grid.Col span={2}>{stateToMessage(review.state)}</Grid.Col>
+                      <Grid.Col span={1}>{stateToMessage(review.state)}</Grid.Col>
                       <Grid.Col span={1}>
                         <Tooltip label="Delete">
                           <CloseButton
                             onClick={() => deleteReviewer(review.id)}
-                            icon={<IconXboxX color="gray" size={18} stroke={1.5} />}
+                            icon={<IconCircleX color="gray" size={18} stroke={1.5} />}
                           />
                         </Tooltip>
                       </Grid.Col>
@@ -382,7 +410,6 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
                 </Box>
               )}
             </Grid.Col>
-            <Grid.Col span={6}></Grid.Col>
           </Grid>
           <Divider mb="md" />
           <Grid my="sm">
@@ -438,7 +465,7 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
                   </Tooltip>
                 </Grid.Col>
                 <Grid.Col span={1}>
-                  {addedReviewers.find((itm2) => itm.id == itm2.id) == undefined ? (
+                  {addedReviewers.find((itm2) => itm.id == itm2.id) === undefined ? (
                     <UnstyledButton onClick={() => addReviewer(itm)} style={{ fontSize: "12px" }}>
                       <IconCirclePlus size={18} stroke={1.5} />
                     </UnstyledButton>
@@ -457,7 +484,7 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
               <Text fw={500} size="md">
                 Assignees
               </Text>
-              <Tooltip label="assign up to 10 person" style={{ marginLeft: -50 }}>
+              <Tooltip label="assign up to 10 people" style={{ marginLeft: -50 }}>
                 <Badge leftSection={iconInfo} variant="transparent" />
               </Tooltip>
             </Flex>
@@ -517,7 +544,7 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
               <Text size="sm"> {itm.login} </Text>
               <CloseButton
                 onClick={() => deleteAssignee(itm)}
-                icon={<IconXboxX color="gray" size={18} stroke={1.5} />}
+                icon={<IconCircleX color="gray" size={18} stroke={1.5} />}
               />
             </Group>
           ))
@@ -526,7 +553,9 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
         <Divider mt="md" />
         <Box mt="sm">
           <Select
+            disabled={!canChangePriority}
             label="Assign Priority"
+            description={canChangePriority ? "" : "Only repo admins can assign priority."}
             value={priority}
             onChange={(val) => changePriority(val as PriorityBadgeLabel)}
             placeholder="Assign Priority"
@@ -534,6 +563,7 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
             clearable
             mb="sm"
           />
+
           <PriorityBadge label={priority} size="md" />
         </Box>
         <Divider mt="md" />
