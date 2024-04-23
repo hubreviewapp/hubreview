@@ -1133,6 +1133,7 @@ namespace CS.Web.Controllers
 
                     if (issueCommentPayload.action == "created")
                     {
+                        //
                         string query = $"INSERT INTO comments (commentid, reponame, prnumber, is_review) VALUES ({issueCommentPayload.comment.id}, '{issueCommentPayload.repository.name}', {issueCommentPayload.issue.number}, {false})";
                         connection.Open();
                         using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
