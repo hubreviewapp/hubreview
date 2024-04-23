@@ -1146,372 +1146,6 @@ public class GitHubController : ControllerBase
         return Ok(result.SuggestedReviewers);
     }
 
-    [HttpGet("prs/needsreview")]
-    public async Task<ActionResult> GetNeedsYourReview()
-    {
-        List<PRInfo> allPRs = new List<PRInfo>();
-        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
-        {
-            await connection.OpenAsync();
-
-            string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
-            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'open' AND @ownerLogin = ANY(reviewers)";
-            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
-            {
-                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
-                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-
-                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
-                {
-                    while (await reader.ReadAsync())
-                    {
-                        PRInfo pr = new PRInfo
-                        {
-                            Id = reader.GetInt64(0),
-                            Title = reader.GetString(1),
-                            PRNumber = reader.GetInt32(2),
-                            Author = reader.GetString(3),
-                            AuthorAvatarURL = reader.GetString(4),
-                            CreatedAt = reader.GetFieldValue<DateOnly>(5),
-                            UpdatedAt = reader.GetFieldValue<DateOnly>(6),
-                            RepoName = reader.GetString(7),
-                            Additions = reader.GetInt32(8),
-                            Deletions = reader.GetInt32(9),
-                            Files = reader.GetInt32(10),
-                            Comments = reader.GetInt32(11),
-                            Labels = JsonConvert.DeserializeObject<object[]>(reader.GetString(12)),
-                            RepoOwner = reader.GetString(13),
-                            Checks = JsonConvert.DeserializeObject<object[]>(reader.GetString(14)),
-                            ChecksComplete = reader.GetInt32(15),
-                            ChecksIncomplete = reader.GetInt32(16),
-                            ChecksSuccess = reader.GetInt32(17),
-                            ChecksFail = reader.GetInt32(18),
-                            Assignees = reader.IsDBNull(19) ? new string[] { } : ((object[])reader.GetValue(19)).Select(obj => obj.ToString()).ToArray(),
-                            Reviews = JsonConvert.DeserializeObject<object[]>(reader.GetString(20)),
-                            Reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray()
-
-                        };
-
-                        allPRs.Add(pr);
-                    }
-                }
-            }
-
-            await connection.CloseAsync();
-        }
-
-        return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
-    }
-
-    [HttpGet("prs/userprs")]
-    public async Task<ActionResult> GetUserPRs()
-    {
-        List<PRInfo> allPRs = new List<PRInfo>();
-        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
-        {
-            await connection.OpenAsync();
-
-            string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
-            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'open' AND author = @ownerLogin";
-            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
-            {
-                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
-                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-
-                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
-                {
-                    while (await reader.ReadAsync())
-                    {
-                        PRInfo pr = new PRInfo
-                        {
-                            Id = reader.GetInt64(0),
-                            Title = reader.GetString(1),
-                            PRNumber = reader.GetInt32(2),
-                            Author = reader.GetString(3),
-                            AuthorAvatarURL = reader.GetString(4),
-                            CreatedAt = reader.GetFieldValue<DateOnly>(5),
-                            UpdatedAt = reader.GetFieldValue<DateOnly>(6),
-                            RepoName = reader.GetString(7),
-                            Additions = reader.GetInt32(8),
-                            Deletions = reader.GetInt32(9),
-                            Files = reader.GetInt32(10),
-                            Comments = reader.GetInt32(11),
-                            Labels = JsonConvert.DeserializeObject<object[]>(reader.GetString(12)),
-                            RepoOwner = reader.GetString(13),
-                            Checks = JsonConvert.DeserializeObject<object[]>(reader.GetString(14)),
-                            ChecksComplete = reader.GetInt32(15),
-                            ChecksIncomplete = reader.GetInt32(16),
-                            ChecksSuccess = reader.GetInt32(17),
-                            ChecksFail = reader.GetInt32(18),
-                            Assignees = reader.IsDBNull(19) ? new string[] { } : ((object[])reader.GetValue(19)).Select(obj => obj.ToString()).ToArray(),
-                            Reviews = JsonConvert.DeserializeObject<object[]>(reader.GetString(20)),
-                            Reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray()
-
-                        };
-
-                        allPRs.Add(pr);
-                    }
-                }
-            }
-
-            await connection.CloseAsync();
-        }
-
-        return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
-    }
-
-    [HttpGet("prs/waitingauthor")]
-    public async Task<ActionResult> GetWaitingAuthors()
-    {
-        List<PRInfo> allPRs = new List<PRInfo>();
-
-        // Get organizations for the current user
-        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
-        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
-        {
-            await connection.OpenAsync();
-
-            string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
-            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE ( @ownerLogin != ANY(reviewers) AND EXISTS ( SELECT 1 FROM json_array_elements(reviews) AS review WHERE review->>'login' = @ownerLogin) ) AND state='open' AND @ownerLogin != author AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
-            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
-            {
-                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
-                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
-
-                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
-                {
-                    while (await reader.ReadAsync())
-                    {
-                        PRInfo pr = new PRInfo
-                        {
-                            Id = reader.GetInt64(0),
-                            Title = reader.GetString(1),
-                            PRNumber = reader.GetInt32(2),
-                            Author = reader.GetString(3),
-                            AuthorAvatarURL = reader.GetString(4),
-                            CreatedAt = reader.GetFieldValue<DateOnly>(5),
-                            UpdatedAt = reader.GetFieldValue<DateOnly>(6),
-                            RepoName = reader.GetString(7),
-                            Additions = reader.GetInt32(8),
-                            Deletions = reader.GetInt32(9),
-                            Files = reader.GetInt32(10),
-                            Comments = reader.GetInt32(11),
-                            Labels = JsonConvert.DeserializeObject<object[]>(reader.GetString(12)),
-                            RepoOwner = reader.GetString(13),
-                            Checks = JsonConvert.DeserializeObject<object[]>(reader.GetString(14)),
-                            ChecksComplete = reader.GetInt32(15),
-                            ChecksIncomplete = reader.GetInt32(16),
-                            ChecksSuccess = reader.GetInt32(17),
-                            ChecksFail = reader.GetInt32(18),
-                            Assignees = reader.IsDBNull(19) ? new string[] { } : ((object[])reader.GetValue(19)).Select(obj => obj.ToString()).ToArray(),
-                            Reviews = JsonConvert.DeserializeObject<object[]>(reader.GetString(20)),
-                            Reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray()
-
-                        };
-
-                        allPRs.Add(pr);
-                    }
-                }
-            }
-
-            await connection.CloseAsync();
-        }
-
-        return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
-    }
-
-    [HttpGet("prs/open")]
-    public async Task<ActionResult> GetOpenPRs()
-    {
-        List<PRInfo> allPRs = new List<PRInfo>();
-
-        // Get organizations for the current user
-        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
-        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
-        {
-            await connection.OpenAsync();
-
-            string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
-            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'open' AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
-            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
-            {
-                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
-                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
-
-                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
-                {
-                    while (await reader.ReadAsync())
-                    {
-                        PRInfo pr = new PRInfo
-                        {
-                            Id = reader.GetInt64(0),
-                            Title = reader.GetString(1),
-                            PRNumber = reader.GetInt32(2),
-                            Author = reader.GetString(3),
-                            AuthorAvatarURL = reader.GetString(4),
-                            CreatedAt = reader.GetFieldValue<DateOnly>(5),
-                            UpdatedAt = reader.GetFieldValue<DateOnly>(6),
-                            RepoName = reader.GetString(7),
-                            Additions = reader.GetInt32(8),
-                            Deletions = reader.GetInt32(9),
-                            Files = reader.GetInt32(10),
-                            Comments = reader.GetInt32(11),
-                            Labels = JsonConvert.DeserializeObject<object[]>(reader.GetString(12)),
-                            RepoOwner = reader.GetString(13),
-                            Checks = JsonConvert.DeserializeObject<object[]>(reader.GetString(14)),
-                            ChecksComplete = reader.GetInt32(15),
-                            ChecksIncomplete = reader.GetInt32(16),
-                            ChecksSuccess = reader.GetInt32(17),
-                            ChecksFail = reader.GetInt32(18),
-                            Assignees = reader.IsDBNull(19) ? new string[] { } : ((object[])reader.GetValue(19)).Select(obj => obj.ToString()).ToArray(),
-                            Reviews = JsonConvert.DeserializeObject<object[]>(reader.GetString(20)),
-                            Reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray()
-
-                        };
-
-                        allPRs.Add(pr);
-                    }
-                }
-            }
-
-            await connection.CloseAsync();
-        }
-
-        return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
-    }
-
-    [HttpGet("prs/merged")]
-    public async Task<ActionResult> GetMergedPRs()
-    {
-        List<PRInfo> allPRs = new List<PRInfo>();
-
-        // Get organizations for the current user
-        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
-        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
-        {
-            await connection.OpenAsync();
-
-            string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
-            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE merged = true AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
-            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
-            {
-                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
-                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
-
-                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
-                {
-                    while (await reader.ReadAsync())
-                    {
-                        PRInfo pr = new PRInfo
-                        {
-                            Id = reader.GetInt64(0),
-                            Title = reader.GetString(1),
-                            PRNumber = reader.GetInt32(2),
-                            Author = reader.GetString(3),
-                            AuthorAvatarURL = reader.GetString(4),
-                            CreatedAt = reader.GetFieldValue<DateOnly>(5),
-                            UpdatedAt = reader.GetFieldValue<DateOnly>(6),
-                            RepoName = reader.GetString(7),
-                            Additions = reader.GetInt32(8),
-                            Deletions = reader.GetInt32(9),
-                            Files = reader.GetInt32(10),
-                            Comments = reader.GetInt32(11),
-                            Labels = JsonConvert.DeserializeObject<object[]>(reader.GetString(12)),
-                            RepoOwner = reader.GetString(13),
-                            Checks = JsonConvert.DeserializeObject<object[]>(reader.GetString(14)),
-                            ChecksComplete = reader.GetInt32(15),
-                            ChecksIncomplete = reader.GetInt32(16),
-                            ChecksSuccess = reader.GetInt32(17),
-                            ChecksFail = reader.GetInt32(18),
-                            Assignees = reader.IsDBNull(19) ? new string[] { } : ((object[])reader.GetValue(19)).Select(obj => obj.ToString()).ToArray(),
-                            Reviews = JsonConvert.DeserializeObject<object[]>(reader.GetString(20)),
-                            Reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray()
-
-                        };
-
-                        allPRs.Add(pr);
-                    }
-                }
-            }
-
-            await connection.CloseAsync();
-        }
-
-        return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
-    }
-
-    [HttpGet("prs/closed")]
-    public async Task<ActionResult> GetClosedPRs()
-    {
-        List<PRInfo> allPRs = new List<PRInfo>();
-
-        // Get organizations for the current user
-        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
-        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
-        {
-            await connection.OpenAsync();
-
-            string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
-            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'closed' AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
-            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
-            {
-                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
-                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
-
-                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
-                {
-                    while (await reader.ReadAsync())
-                    {
-                        PRInfo pr = new PRInfo
-                        {
-                            Id = reader.GetInt64(0),
-                            Title = reader.GetString(1),
-                            PRNumber = reader.GetInt32(2),
-                            Author = reader.GetString(3),
-                            AuthorAvatarURL = reader.GetString(4),
-                            CreatedAt = reader.GetFieldValue<DateOnly>(5),
-                            UpdatedAt = reader.GetFieldValue<DateOnly>(6),
-                            RepoName = reader.GetString(7),
-                            Additions = reader.GetInt32(8),
-                            Deletions = reader.GetInt32(9),
-                            Files = reader.GetInt32(10),
-                            Comments = reader.GetInt32(11),
-                            Labels = JsonConvert.DeserializeObject<object[]>(reader.GetString(12)),
-                            RepoOwner = reader.GetString(13),
-                            Checks = JsonConvert.DeserializeObject<object[]>(reader.GetString(14)),
-                            ChecksComplete = reader.GetInt32(15),
-                            ChecksIncomplete = reader.GetInt32(16),
-                            ChecksSuccess = reader.GetInt32(17),
-                            ChecksFail = reader.GetInt32(18),
-                            Assignees = reader.IsDBNull(19) ? new string[] { } : ((object[])reader.GetValue(19)).Select(obj => obj.ToString()).ToArray(),
-                            Reviews = JsonConvert.DeserializeObject<object[]>(reader.GetString(20)),
-                            Reviewers = reader.IsDBNull(21) ? new string[] { } : ((object[])reader.GetValue(21)).Select(obj => obj.ToString()).ToArray()
-
-                        };
-
-                        allPRs.Add(pr);
-                    }
-                }
-            }
-
-            await connection.CloseAsync();
-        }
-
-        return allPRs.Count != 0 ? Ok(allPRs) : NotFound("There are no pull requests visible to this user in the database.");
-    }
-
     [HttpPost("prs/needsreview/filter")]
     public async Task<ActionResult> FilterNeedsYourReviewPRs([FromBody] PRFilter filter)
     {
@@ -1525,10 +1159,6 @@ public class GitHubController : ControllerBase
         */
 
         List<object> allPRs = [];
-
-        // Get organizations for the current user
-        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
 
         if (filter.repositories == null)
         {
@@ -1617,7 +1247,6 @@ public class GitHubController : ControllerBase
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
                 if (!string.IsNullOrEmpty(filter.author))
                 {
                     command.Parameters.AddWithValue("@author", filter.author);
@@ -1723,10 +1352,6 @@ public class GitHubController : ControllerBase
 
         List<object> allPRs = [];
 
-        // Get organizations for the current user
-        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
         if (filter.repositories == null)
         {
             // FIXME: ???
@@ -1820,7 +1445,6 @@ public class GitHubController : ControllerBase
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
                 if (!string.IsNullOrEmpty(filter.author))
                 {
                     command.Parameters.AddWithValue("@author", filter.author);
@@ -1925,12 +1549,9 @@ public class GitHubController : ControllerBase
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
-
         List<object> allPRs = new List<object>();
 
-        // Get organizations for the current user
-        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+        var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
         if (filter.repositories == null)
         {
@@ -1944,7 +1565,7 @@ public class GitHubController : ControllerBase
 
             string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
 
-            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE ( @ownerLogin != ANY(reviewers) AND EXISTS ( SELECT 1 FROM json_array_elements(reviews) AS review WHERE review->>'login' = @ownerLogin) ) AND state='open' AND @ownerLogin != author AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
+            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE ( NOT @ownerLogin = ANY(reviewers) AND EXISTS ( SELECT 1 FROM json_array_elements(reviews) AS review WHERE review->>'login' = @ownerLogin) ) AND state='open' AND @ownerLogin != author AND repoid = ANY(@repos)";
             if (!string.IsNullOrEmpty(filter.author))
             {
                 query += " AND author = @author";
@@ -2024,7 +1645,7 @@ public class GitHubController : ControllerBase
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@repos", repos);
                 if (!string.IsNullOrEmpty(filter.author))
                 {
                     command.Parameters.AddWithValue("@author", filter.author);
@@ -2117,6 +1738,7 @@ public class GitHubController : ControllerBase
 
         return Ok(allPRs);
     }
+
     [HttpPost("prs/open/filter")]
     public async Task<ActionResult> FilterOpenPRs([FromBody] PRFilter filter)
     {
@@ -2131,9 +1753,7 @@ public class GitHubController : ControllerBase
 
         List<object> allPRs = [];
 
-        // Get organizations for the current user
-        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+        var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
         if (filter.repositories == null)
         {
@@ -2147,7 +1767,7 @@ public class GitHubController : ControllerBase
 
             string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
 
-            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'open' AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
+            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'open' AND repoid = ANY(@repos)";
             if (!string.IsNullOrEmpty(filter.author))
             {
                 query += " AND author = @author";
@@ -2229,7 +1849,7 @@ public class GitHubController : ControllerBase
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@repos", repos);
                 if (!string.IsNullOrEmpty(filter.author))
                 {
                     command.Parameters.AddWithValue("@author", filter.author);
@@ -2330,9 +1950,7 @@ public class GitHubController : ControllerBase
 
         List<object> allPRs = new List<object>();
 
-        // Get organizations for the current user
-        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+        var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
         if (filter.repositories == null)
         {
@@ -2345,7 +1963,7 @@ public class GitHubController : ControllerBase
 
             string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
 
-            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'closed' AND merged = true AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
+            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'closed' AND merged = true AND repoid = ANY(@repos)";
             if (!string.IsNullOrEmpty(filter.author))
             {
                 query += " AND author = @author";
@@ -2425,7 +2043,7 @@ public class GitHubController : ControllerBase
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@repos", repos);
                 if (!string.IsNullOrEmpty(filter.author))
                 {
                     command.Parameters.AddWithValue("@author", filter.author);
@@ -2533,9 +2151,7 @@ public class GitHubController : ControllerBase
 
         List<object> allPRs = new List<object>();
 
-        // Get organizations for the current user
-        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+        var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
         if (filter.repositories == null)
         {
@@ -2549,7 +2165,7 @@ public class GitHubController : ControllerBase
 
             string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
 
-            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'closed' AND merged = false AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
+            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'closed' AND merged = false AND repoid = ANY(@repos)";
             if (!string.IsNullOrEmpty(filter.author))
             {
                 query += " AND author = @author";
@@ -2630,7 +2246,7 @@ public class GitHubController : ControllerBase
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@repos", repos);
                 if (!string.IsNullOrEmpty(filter.author))
                 {
                     command.Parameters.AddWithValue("@author", filter.author);
@@ -2729,9 +2345,7 @@ public class GitHubController : ControllerBase
     {
         List<PRInfo> allPRs = new List<PRInfo>();
 
-        // Get organizations for the current user
-        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+        var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
         var lastWeek = DateTime.Today.AddDays(-7);
 
@@ -2740,12 +2354,12 @@ public class GitHubController : ControllerBase
             await connection.OpenAsync();
 
             string selects = "pullnumber, reponame, repoowner";
-            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) ) AND updatedat >= @lastWeek AND EXISTS (SELECT 1 FROM json_array_elements(reviews) AS elem WHERE elem->>'login' = @ownerLogin)";
+            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE repoid = ANY(@repos) AND updatedat >= @lastWeek AND EXISTS (SELECT 1 FROM json_array_elements(reviews) AS elem WHERE elem->>'login' = @ownerLogin)";
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@repos", repos);
                 command.Parameters.AddWithValue("@lastWeek", lastWeek);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
@@ -2801,9 +2415,7 @@ public class GitHubController : ControllerBase
     {
         List<PRInfo> allPRs = new List<PRInfo>();
 
-        // Get organizations for the current user
-        var organizations = await github.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+        var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
         var lastWeek = DateTime.Today.AddDays(-7);
 
@@ -2812,12 +2424,12 @@ public class GitHubController : ControllerBase
             await conn.OpenAsync();
 
             string selects = "pullnumber, reponame, repoowner";
-            string q = "SELECT " + selects + " FROM pullrequestinfo WHERE ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) ) AND updatedat >= @lastWeek";
+            string q = "SELECT " + selects + " FROM pullrequestinfo WHERE repoid = ANY(@repos) AND updatedat >= @lastWeek";
             using (NpgsqlCommand command = new NpgsqlCommand(q, conn))
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@repos", repos);
                 command.Parameters.AddWithValue("@lastWeek", lastWeek);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
@@ -2935,9 +2547,7 @@ public class GitHubController : ControllerBase
     [HttpGet("user/monthlysummary")]
     public async Task<ActionResult> GetReviewsForUserInLastMonth()
     {
-        // Get organizations for the current user
-        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+        var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
         var weeks = new List<(DateTime start, DateTime end)>();
         DateTime today = DateTime.Today;
@@ -2961,12 +2571,12 @@ public class GitHubController : ControllerBase
         {
             await connection.OpenAsync();
 
-            string query = "SELECT pullnumber, reponame, repoowner FROM pullrequestinfo WHERE (repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins)) AND updatedat >= @startOfWeek AND EXISTS (SELECT 1 FROM json_array_elements(reviews) AS elem WHERE elem->>'login' = @ownerLogin)";
+            string query = "SELECT pullnumber, reponame, repoowner FROM pullrequestinfo WHERE repoid = ANY(@repos) AND updatedat >= @startOfWeek AND EXISTS (SELECT 1 FROM json_array_elements(reviews) AS elem WHERE elem->>'login' = @ownerLogin)";
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@repos", repos);
                 command.Parameters.AddWithValue("@startOfWeek", weeks[3].start);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
@@ -3283,9 +2893,7 @@ public class GitHubController : ControllerBase
     {
         List<PRInfo> allPRs = new List<PRInfo>();
 
-        // Get organizations for the current user
-        var organizations = await github.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+        var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
         var weeks = new List<(DateTime start, DateTime end)>();
         DateTime today = DateTime.Today;
@@ -3303,12 +2911,12 @@ public class GitHubController : ControllerBase
             await conn.OpenAsync();
 
             string selects = "pullnumber, reponame, repoowner";
-            string q = "SELECT " + selects + " FROM pullrequestinfo WHERE ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) ) AND updatedat >= @lastWeek";
+            string q = "SELECT " + selects + " FROM pullrequestinfo WHERE repoid = ANY(@repos) AND updatedat >= @lastWeek";
             using (NpgsqlCommand command = new NpgsqlCommand(q, conn))
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@repos", repos);
                 command.Parameters.AddWithValue("@lastWeek", weeks[3].start);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
@@ -3409,145 +3017,10 @@ public class GitHubController : ControllerBase
         return requestedThisWeek;
     }
 
-    /* Saldım şimdilik
-        public async Task<int[]> GetMonthlyWaitingReviews(GitHubClient github)
-        {
-
-            List<PRInfo> allPRs = new List<PRInfo>();
-
-            var weeks = new List<(DateTime start, DateTime end)>();
-            DateTime today = DateTime.Today;
-
-            var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
-
-            // Get organizations for the current user
-            var organizations = await github.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-            var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
-            var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
-            var Gconnection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
-
-            // Calculate the start and end dates for the last 4 weeks
-            for (int i = 0; i < 4; i++)
-            {
-                DateTime startOfWeek = today.AddDays(-(int)today.DayOfWeek + 1 - (i * 7)); // Start from Monday
-                DateTime endOfWeek = startOfWeek.AddDays(6); // End on Sunday
-                weeks.Add((startOfWeek, endOfWeek));
-            }
-
-            var waitingReviewsThisWeek = new int[] { 0, 0, 0, 0 };
-
-            try
-            {
-                using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
-                {
-                    await connection.OpenAsync();
-
-                    string query = "SELECT reponame, repoowner, pullnumber FROM pullrequestinfo WHERE state = 'open' AND @ownerLogin = ANY(reviewers)";
-
-                    using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
-                    {
-                        // Assuming _httpContextAccessor.HttpContext.Session.GetString("UserLogin") returns the login string
-                        command.Parameters.AddWithValue("@ownerLogin", userLogin);
-
-                        using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
-                        {
-                            while (await reader.ReadAsync())
-                            {
-                                PRInfo pr = new PRInfo
-                                {
-                                    PRNumber = reader.GetInt32(2),
-                                    RepoName = reader.GetString(0),
-                                    RepoOwner = reader.GetString(1),
-                                };
-
-                                allPRs.Add(pr);
-                            }
-                        }
-                        //return (int)waitingReviewsCount;
-
-
-                    }
-                }
-
-                waitingReviewsThisWeek[0] = allPRs.Count();
-
-                foreach (var pr in allPRs)
-                {
-                    var query = new Query()
-                    .Repository(Var("name"), Var("owner"))
-                    .PullRequest(Var("prnumber"))
-                    .TimelineItems(40, null, null, null, null, null, null)
-                    .Nodes
-                    .Select(node => node.Switch<object>(when => when
-                    .ReviewRequestedEvent(y => new
-                    {
-                        Actor = y.Actor.Select(actor => new
-                        {
-                            AvatarUrl = actor.AvatarUrl(500),
-                            Login = actor.Login,
-                        })
-                        .SingleOrDefault(),
-
-                        RequestedReviewer = y.RequestedReviewer.Select(reviewer => new
-                        {
-
-                            User = reviewer.Switch<Core.Entities.User>(whenUser => whenUser
-                                    .User(user => new Core.Entities.User
-                                    {
-                                        AvatarUrl = user.AvatarUrl(100),
-                                        Login = user.Login,
-                                    })),
-                        })
-                        .SingleOrDefault(),
-
-                        CreatedAt = y.CreatedAt,
-                    })
-                    )).Compile();
-
-
-                    var vars = new Dictionary<string, object>
-                    {
-                        { "owner", pr.RepoOwner },
-                        { "name", pr.RepoName },
-                        { "prnumber", pr.PRNumber },
-                    };
-
-                    var result = await Gconnection.Run(query, vars);
-
-
-
-                    foreach (var node in result)
-                    {
-                        var reviewRequestedEvent = node as dynamic;
-                        var requestedReviewer = reviewRequestedEvent?.RequestedReviewer;
-                        var user = requestedReviewer?.User?.Login;
-                        var created = reviewRequestedEvent?.CreatedAt;
-
-                        if (user == userLogin && created <= weeks[1].end)
-                        {
-                            waitingReviewsThisWeek[1]++;
-                        }
-                    }
-                }
-
-                return waitingReviewsThisWeek;
-            }
-            catch (Exception ex)
-            {
-                // Handle exceptions appropriately
-                Console.WriteLine($"An error occurred: {ex.Message}");
-                throw; // Rethrow the exception or handle it as necessary
-            }
-        }
-    */
-
     [HttpGet("GetFilterLists")]
     public async Task<ActionResult> GetRepositoryAssignees()
     {
-        // Get organizations for the current user
-        var organizations = await GitHubUserClient.Organization.GetAllForCurrent();
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+        var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
         HashSet<string> allAssignees = new HashSet<string>();
         HashSet<string> allLabels = new HashSet<string>();
@@ -3558,12 +3031,12 @@ public class GitHubController : ControllerBase
         {
             await connection.OpenAsync();
 
-            string query = "SELECT id, name, ownerLogin, created_at FROM repositoryinfo WHERE ownerLogin = @ownerLogin OR ownerLogin = ANY(@organizationLogins) ORDER BY name ASC";
+            string query = "SELECT id, name, ownerLogin, created_at FROM repositoryinfo WHERE id = ANY(@repos) ORDER BY name ASC";
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@repos", repos);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
@@ -3605,12 +3078,12 @@ public class GitHubController : ControllerBase
 
             await Task.WhenAll(labelTasks);
 
-            string query2 = "SELECT DISTINCT author FROM pullrequestinfo WHERE repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) ORDER BY author ASC";
+            string query2 = "SELECT DISTINCT author FROM pullrequestinfo WHERE repoid = ANY(@repos) ORDER BY author ASC";
             using (NpgsqlCommand command = new NpgsqlCommand(query2, connection))
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@repos", repos);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
@@ -3621,12 +3094,12 @@ public class GitHubController : ControllerBase
                 }
             }
 
-            string query3 = "SELECT DISTINCT unnest(assignees) as assignee FROM pullrequestinfo WHERE repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) ORDER BY assignee ASC";
+            string query3 = "SELECT DISTINCT unnest(assignees) as assignee FROM pullrequestinfo WHERE repoid = ANY(@repos) ORDER BY assignee ASC";
             using (NpgsqlCommand command = new NpgsqlCommand(query3, connection))
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@repos", repos);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
@@ -4148,7 +3621,6 @@ public class GitHubController : ControllerBase
                 {
                     while (await reader.ReadAsync())
                     {
-                        Console.WriteLine(reader.GetBoolean(0));
                         onlyAdmin = reader.GetBoolean(0);
                     }
                 }

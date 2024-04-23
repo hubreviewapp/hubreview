@@ -56,13 +56,11 @@ namespace CS.Web.Controllers
 
             AccessToken response;
             GitHubClient installationClient;
-
             switch (eventType)
             {
                 case "check_run": // DONE :D
                     //CheckRunPayload
                     var checkRunPayload = JsonConvert.DeserializeObject<CheckRunPayload>(requestBody);
-                    Console.WriteLine("action: " + checkRunPayload.action);
                     response = await _client.GitHubApps.CreateInstallationToken(checkRunPayload.installation.id);
                     installationClient = GetNewClient(response.Token);
                     if (checkRunPayload.action == "created")
@@ -123,7 +121,6 @@ namespace CS.Web.Controllers
                         string fail = (checks_fail == 0) ? "" : " checks_fail = 0,";
 
                         string query2 = $"UPDATE pullrequestinfo SET{complete}{success}{fail} checks_incomplete = checks_incomplete + 1  WHERE repoid = {checkRunPayload.repository.id} AND pullid = {checkRunPayload.check_run.pull_requests[0].id}";
-                        Console.WriteLine("check action: created \n" + query2);
                         connection.Open();
                         using (var command = new NpgsqlCommand(query2, connection))
                         {
@@ -191,7 +188,6 @@ namespace CS.Web.Controllers
                         string where = $"repoid = {checkRunPayload.repository.id} AND pullid = {checkRunPayload.check_run.pull_requests[0].id}";
 
                         string query = $"UPDATE pullrequestinfo SET {set_checks},{set_checks_incomplete} {set_checks_complete}, {set_checks_conclusion} WHERE {where}";
-                        Console.WriteLine($"check action: completed \n SET{set_checks_incomplete} {set_checks_complete}, {set_checks_conclusion}");
 
                         connection.Open();
                         using (var command = new NpgsqlCommand(query, connection))
@@ -1002,7 +998,7 @@ namespace CS.Web.Controllers
                     connection.Close();
                     Console.WriteLine("PR Reviews Updated");
                     break;
-                case "pull_request_review_thread": // resolved unresolved olayı. Gösterceksek faydalı yoksa gerek yok
+                case "pull_request_review_thread": // DONE
                     var pullRequestReviewThreadPayload = JsonConvert.DeserializeObject<PullRequestReviewThreadPayload>(requestBody);
                     if (pullRequestReviewThreadPayload.action == "resolved")
                     {
@@ -1029,9 +1025,7 @@ namespace CS.Web.Controllers
                             command.ExecuteNonQuery();
                         }
 
-
                         string sel_query = $"SELECT COUNT(*) FROM reviewhead WHERE review_id = {comment.pull_request_review_id}";
-
 
                         using (var command = new NpgsqlCommand(sel_query, connection))
                         {
@@ -1046,7 +1040,6 @@ namespace CS.Web.Controllers
 
                         if (row_exists == 0)
                         {
-                            Console.WriteLine("in if");
                             comment_ids.Add(comment.id);
                             string new_query = $"INSERT INTO reviewhead (review_id, reponame, prnumber, comments) VALUES ({comment.pull_request_review_id}, '{pullRequestReviewCommentPayload.repository.name}', {pullRequestReviewCommentPayload.pull_request.number}, @comments)";
                             using (var command = new NpgsqlCommand(new_query, connection))
@@ -1057,7 +1050,6 @@ namespace CS.Web.Controllers
                         }
                         else
                         {
-                            Console.WriteLine("in else");
                             string new_query = $"SELECT comments FROM reviewhead WHERE review_id = {comment.pull_request_review_id}";
                             using (var command = new NpgsqlCommand(new_query, connection))
                             {
@@ -1138,6 +1130,7 @@ namespace CS.Web.Controllers
                     break;
                 case "issue_comment":
                     var issueCommentPayload = JsonConvert.DeserializeObject<Core.Entities.Payloads.IssueCommentPayload>(requestBody);
+
                     if (issueCommentPayload.action == "created")
                     {
                         string query = $"INSERT INTO comments (commentid, reponame, prnumber, is_review) VALUES ({issueCommentPayload.comment.id}, '{issueCommentPayload.repository.name}', {issueCommentPayload.issue.number}, {false})";
@@ -1159,6 +1152,7 @@ namespace CS.Web.Controllers
                             command.ExecuteNonQuery();
                         }
                         connection.Close();
+
                         Console.WriteLine("issue comment deleted");
                     }
                     break;
