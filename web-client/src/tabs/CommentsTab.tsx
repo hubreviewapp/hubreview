@@ -233,13 +233,15 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
             onChange={(val) => handleSelect(val)}
           />
         </Box>
-        <Box style={{ border: "1px groove gray", borderRadius: 10, padding: "10px" }}>
-          <Text fw={700} size="md">
-            {" "}
-            Description:{" "}
-          </Text>
-          <Markdown>{convertHtmlToMarkdown(pullRequestDetails.body.toString())}</Markdown>
-        </Box>
+        {pullRequestDetails.body.toString() && (
+          <Box style={{ border: "1px groove gray", borderRadius: 10, padding: "10px" }}>
+            <Text fw={700} size="md">
+              {" "}
+              Description:{" "}
+            </Text>
+            <Markdown>{convertHtmlToMarkdown(pullRequestDetails.body.toString())}</Markdown>
+          </Box>
+        )}
         <br></br>
         {!isLoading &&
           filteredComments.map((comment, index) => (
