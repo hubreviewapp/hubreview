@@ -15,7 +15,7 @@ function ClosePRButton({ isClosed }: ClosePRButtonProps) {
   const { owner, repoName, prnumber } = useParams();
   const icon = <IconGitPullRequestClosed style={{ width: rem(30), height: rem(30), marginTop: 0, marginLeft: 5 }} />;
   const closeModal = () => {
-    window.location.href = "/";
+    window.location.reload();
     close();
   };
 
