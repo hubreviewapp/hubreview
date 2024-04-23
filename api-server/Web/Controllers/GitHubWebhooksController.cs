@@ -96,7 +96,6 @@ namespace CS.Web.Controllers
 
                         foreach (var check in checks.CheckRuns)
                         {
-                            Console.WriteLine($"Check Name: {check.Name}, Conclusion: {check.Conclusion}, Status: {check.Status}");
                             checksList.Add(new
                             {
                                 id = check.Id,
@@ -159,7 +158,6 @@ namespace CS.Web.Controllers
 
                         foreach (var check in checks.CheckRuns)
                         {
-                            Console.WriteLine($"Check Name: {check.Name}, Conclusion: {check.Conclusion}, Status: {check.Status}");
                             checksList.Add(new
                             {
                                 id = check.Id,
@@ -359,8 +357,6 @@ namespace CS.Web.Controllers
                                     var installationLatestReviews = new List<object>();
                                     foreach (var review in installationLatestReviewsByUser)
                                     {
-                                        //Console.WriteLine($"Latest Review State: {review.State}, User: {review.User.Login}");
-
                                         installationLatestReviews.Add(
                                             new
                                             {
@@ -404,7 +400,6 @@ namespace CS.Web.Controllers
                                 }
 
                                 review_head_query = review_head_query[..^1];
-                                Console.WriteLine(review_head_query);
                                 using (var command = new NpgsqlCommand(review_head_query, connection))
                                 {
                                     command.ExecuteNonQuery();
@@ -652,8 +647,6 @@ namespace CS.Web.Controllers
                                     var installationLatestReviews = new List<object>();
                                     foreach (var review in installationLatestReviewsByUser)
                                     {
-                                        //Console.WriteLine($"Latest Review State: {review.State}, User: {review.User.Login}");
-
                                         installationLatestReviews.Add(
                                             new
                                             {
@@ -756,7 +749,6 @@ namespace CS.Web.Controllers
                     break;
                 case "pull_request": // DONE
                     var pullRequestPayload = JsonConvert.DeserializeObject<PullRequestPayload>(requestBody);
-                    Console.WriteLine(pullRequestPayload.action);
                     if (pullRequestPayload.action == "assigned" || pullRequestPayload.action == "unassigned")
                     {
                         var requestedReviewers = pullRequestPayload.pull_request.assignees.Any()
@@ -947,10 +939,7 @@ namespace CS.Web.Controllers
                     break;
                 case "pull_request_review": // DONE
                     var pullRequestReviewPayload = JsonConvert.DeserializeObject<PullRequestReviewPayload>(requestBody);
-                    //Console.WriteLine(pullRequestReviewPayload.review.state);
-                    //Console.WriteLine(pullRequestReviewPayload.review.user.login);
 
-                    Console.WriteLine("PR review " + pullRequestReviewPayload.action);
 
                     response = await _client.GitHubApps.CreateInstallationToken(pullRequestReviewPayload.installation.id);
                     installationClient = GetNewClient(response.Token);
@@ -969,7 +958,6 @@ namespace CS.Web.Controllers
                     var latestReviews = new List<object>();
                     foreach (var review in latestReviewsByUser)
                     {
-                        //Console.WriteLine($"Latest Review State: {review.State}, User: {review.User.Login}");
 
                         latestReviews.Add(
                             new
@@ -1101,8 +1089,6 @@ namespace CS.Web.Controllers
                                 }
                             }
                         }
-
-                        Console.WriteLine("comment_ids count: " + comment_ids.Count);
 
                         if (comment_ids.Count <= 1)
                         {
