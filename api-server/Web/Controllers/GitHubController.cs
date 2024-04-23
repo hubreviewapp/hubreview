@@ -2893,9 +2893,7 @@ public class GitHubController : ControllerBase
     {
         List<PRInfo> allPRs = new List<PRInfo>();
 
-        // Get organizations for the current user
-        var organizations = await github.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+        var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
         var weeks = new List<(DateTime start, DateTime end)>();
         DateTime today = DateTime.Today;
@@ -2913,12 +2911,12 @@ public class GitHubController : ControllerBase
             await conn.OpenAsync();
 
             string selects = "pullnumber, reponame, repoowner";
-            string q = "SELECT " + selects + " FROM pullrequestinfo WHERE ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) ) AND updatedat >= @lastWeek";
+            string q = "SELECT " + selects + " FROM pullrequestinfo WHERE repoid = ANY(@repos) AND updatedat >= @lastWeek";
             using (NpgsqlCommand command = new NpgsqlCommand(q, conn))
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@repos", repos);
                 command.Parameters.AddWithValue("@lastWeek", weeks[3].start);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
@@ -3018,139 +3016,6 @@ public class GitHubController : ControllerBase
 
         return requestedThisWeek;
     }
-
-    /* Saldım şimdilik
-        public async Task<int[]> GetMonthlyWaitingReviews(GitHubClient github)
-        {
-
-            List<PRInfo> allPRs = new List<PRInfo>();
-
-            var weeks = new List<(DateTime start, DateTime end)>();
-            DateTime today = DateTime.Today;
-
-            var userLogin = _httpContextAccessor?.HttpContext?.Session.GetString("UserLogin");
-
-            // Get organizations for the current user
-            var organizations = await github.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-            var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
-            var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
-            var Gconnection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
-
-            // Calculate the start and end dates for the last 4 weeks
-            for (int i = 0; i < 4; i++)
-            {
-                DateTime startOfWeek = today.AddDays(-(int)today.DayOfWeek + 1 - (i * 7)); // Start from Monday
-                DateTime endOfWeek = startOfWeek.AddDays(6); // End on Sunday
-                weeks.Add((startOfWeek, endOfWeek));
-            }
-
-            var waitingReviewsThisWeek = new int[] { 0, 0, 0, 0 };
-
-            try
-            {
-                using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
-                {
-                    await connection.OpenAsync();
-
-                    string query = "SELECT reponame, repoowner, pullnumber FROM pullrequestinfo WHERE state = 'open' AND @ownerLogin = ANY(reviewers)";
-
-                    using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
-                    {
-                        // Assuming _httpContextAccessor.HttpContext.Session.GetString("UserLogin") returns the login string
-                        command.Parameters.AddWithValue("@ownerLogin", userLogin);
-
-                        using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
-                        {
-                            while (await reader.ReadAsync())
-                            {
-                                PRInfo pr = new PRInfo
-                                {
-                                    PRNumber = reader.GetInt32(2),
-                                    RepoName = reader.GetString(0),
-                                    RepoOwner = reader.GetString(1),
-                                };
-
-                                allPRs.Add(pr);
-                            }
-                        }
-                        //return (int)waitingReviewsCount;
-
-
-                    }
-                }
-
-                waitingReviewsThisWeek[0] = allPRs.Count();
-
-                foreach (var pr in allPRs)
-                {
-                    var query = new Query()
-                    .Repository(Var("name"), Var("owner"))
-                    .PullRequest(Var("prnumber"))
-                    .TimelineItems(40, null, null, null, null, null, null)
-                    .Nodes
-                    .Select(node => node.Switch<object>(when => when
-                    .ReviewRequestedEvent(y => new
-                    {
-                        Actor = y.Actor.Select(actor => new
-                        {
-                            AvatarUrl = actor.AvatarUrl(500),
-                            Login = actor.Login,
-                        })
-                        .SingleOrDefault(),
-
-                        RequestedReviewer = y.RequestedReviewer.Select(reviewer => new
-                        {
-
-                            User = reviewer.Switch<Core.Entities.User>(whenUser => whenUser
-                                    .User(user => new Core.Entities.User
-                                    {
-                                        AvatarUrl = user.AvatarUrl(100),
-                                        Login = user.Login,
-                                    })),
-                        })
-                        .SingleOrDefault(),
-
-                        CreatedAt = y.CreatedAt,
-                    })
-                    )).Compile();
-
-
-                    var vars = new Dictionary<string, object>
-                    {
-                        { "owner", pr.RepoOwner },
-                        { "name", pr.RepoName },
-                        { "prnumber", pr.PRNumber },
-                    };
-
-                    var result = await Gconnection.Run(query, vars);
-
-
-
-                    foreach (var node in result)
-                    {
-                        var reviewRequestedEvent = node as dynamic;
-                        var requestedReviewer = reviewRequestedEvent?.RequestedReviewer;
-                        var user = requestedReviewer?.User?.Login;
-                        var created = reviewRequestedEvent?.CreatedAt;
-
-                        if (user == userLogin && created <= weeks[1].end)
-                        {
-                            waitingReviewsThisWeek[1]++;
-                        }
-                    }
-                }
-
-                return waitingReviewsThisWeek;
-            }
-            catch (Exception ex)
-            {
-                // Handle exceptions appropriately
-                Console.WriteLine($"An error occurred: {ex.Message}");
-                throw; // Rethrow the exception or handle it as necessary
-            }
-        }
-    */
 
     [HttpGet("GetFilterLists")]
     public async Task<ActionResult> GetRepositoryAssignees()
