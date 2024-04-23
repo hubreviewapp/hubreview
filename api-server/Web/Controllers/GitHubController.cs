@@ -1160,10 +1160,6 @@ public class GitHubController : ControllerBase
 
         List<object> allPRs = [];
 
-        // Get organizations for the current user
-        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
-
         if (filter.repositories == null)
         {
             // FIXME: ???
@@ -1251,7 +1247,6 @@ public class GitHubController : ControllerBase
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
                 if (!string.IsNullOrEmpty(filter.author))
                 {
                     command.Parameters.AddWithValue("@author", filter.author);
@@ -1751,6 +1746,7 @@ public class GitHubController : ControllerBase
 
         return Ok(allPRs);
     }
+    
     [HttpPost("prs/open/filter")]
     public async Task<ActionResult> FilterOpenPRs([FromBody] PRFilter filter)
     {
