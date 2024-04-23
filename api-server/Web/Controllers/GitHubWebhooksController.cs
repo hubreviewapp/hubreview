@@ -188,7 +188,7 @@ namespace CS.Web.Controllers
                         string where = $"repoid = {checkRunPayload.repository.id} AND pullid = {checkRunPayload.check_run.pull_requests[0].id}";
 
                         string query = $"UPDATE pullrequestinfo SET {set_checks},{set_checks_incomplete} {set_checks_complete}, {set_checks_conclusion} WHERE {where}";
-                        
+
                         connection.Open();
                         using (var command = new NpgsqlCommand(query, connection))
                         {
