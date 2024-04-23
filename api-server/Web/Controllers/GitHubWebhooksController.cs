@@ -1002,7 +1002,7 @@ namespace CS.Web.Controllers
                     connection.Close();
                     Console.WriteLine("PR Reviews Updated");
                     break;
-                case "pull_request_review_thread": // resolved unresolved olayı. Gösterceksek faydalı yoksa gerek yok
+                case "pull_request_review_thread": // DONE
                     var pullRequestReviewThreadPayload = JsonConvert.DeserializeObject<PullRequestReviewThreadPayload>(requestBody);
                     if (pullRequestReviewThreadPayload.action == "resolved")
                     {
@@ -1029,6 +1029,11 @@ namespace CS.Web.Controllers
                             command.ExecuteNonQuery();
                         }
 
+                        query = $"UPDATE pullrequestinfo SET comments = comments + 1 WHERE reponame = '{pullRequestReviewCommentPayload.repository.name}' and pullnumber = {pullRequestReviewCommentPayload.pull_request.number}";
+                        using (var command = new NpgsqlCommand(query, connection))
+                        {
+                            command.ExecuteNonQuery();
+                        }
 
                         string sel_query = $"SELECT COUNT(*) FROM reviewhead WHERE review_id = {comment.pull_request_review_id}";
 
@@ -1090,11 +1095,17 @@ namespace CS.Web.Controllers
                         List<long> comment_ids = [];
 
                         string del_comment = $"DELETE FROM comments WHERE commentid = {pullRequestReviewCommentPayload.comment.id}";
+                        string query = $"UPDATE pullrequestinfo SET comments = comments - 1 WHERE reponame = '{pullRequestReviewCommentPayload.repository.name}' and pullnumber = {pullRequestReviewCommentPayload.pull_request.number}";
                         string sel_comm_array = $"SELECT comments FROM reviewhead WHERE review_id = {pullRequestReviewCommentPayload.comment.pull_request_review_id}";
 
                         connection.Open();
 
                         using (var command = new NpgsqlCommand(del_comment, connection))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+
+                        using (var command = new NpgsqlCommand(query, connection))
                         {
                             command.ExecuteNonQuery();
                         }
@@ -1148,6 +1159,14 @@ namespace CS.Web.Controllers
                         }
                         connection.Close();
 
+                        query = $"UPDATE pullrequestinfo SET comments = comments + 1 WHERE reponame = '{issueCommentPayload.repository.name}' and pullnumber = {issueCommentPayload.issue.number}";
+                        connection.Open();
+                        using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+                        connection.Close();
+
                         Console.WriteLine("issue comment created");
                     }
                     else if (issueCommentPayload.action == "deleted")
@@ -1159,6 +1178,15 @@ namespace CS.Web.Controllers
                             command.ExecuteNonQuery();
                         }
                         connection.Close();
+
+                        query = $"UPDATE pullrequestinfo SET comments = comments - 1 WHERE reponame = '{issueCommentPayload.repository.name}' and pullnumber = {issueCommentPayload.issue.number}";
+                        connection.Open();
+                        using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                        {
+                            command.ExecuteNonQuery();
+                        }
+                        connection.Close();
+
                         Console.WriteLine("issue comment deleted");
                     }
                     break;
