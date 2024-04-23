@@ -1738,7 +1738,7 @@ public class GitHubController : ControllerBase
 
         return Ok(allPRs);
     }
-    
+
     [HttpPost("prs/open/filter")]
     public async Task<ActionResult> FilterOpenPRs([FromBody] PRFilter filter)
     {
