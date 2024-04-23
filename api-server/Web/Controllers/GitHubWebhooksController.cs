@@ -1134,7 +1134,7 @@ namespace CS.Web.Controllers
                         }
                         connection.Close();
 
-                        if( comment_sel == 0 )
+                        if (comment_sel == 0)
                         {
                             string insert_query = $"INSERT INTO comments (commentid, reponame, prnumber, is_review) VALUES ({issueCommentPayload.comment.id}, '{issueCommentPayload.repository.name}', {issueCommentPayload.issue.number}, {false})";
                             connection.Open();
