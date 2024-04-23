@@ -1951,9 +1951,7 @@ public class GitHubController : ControllerBase
 
         List<object> allPRs = new List<object>();
 
-        // Get organizations for the current user
-        var organizations = await GitHubUserClient.Organization.GetAllForCurrent(); // organization.Login gibi data çekebiliyoruz
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+        var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
         if (filter.repositories == null)
         {
@@ -1966,7 +1964,7 @@ public class GitHubController : ControllerBase
 
             string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
 
-            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'closed' AND merged = true AND ( repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) )";
+            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'closed' AND merged = true AND repoid = ANY(@repos)";
             if (!string.IsNullOrEmpty(filter.author))
             {
                 query += " AND author = @author";
@@ -2046,7 +2044,7 @@ public class GitHubController : ControllerBase
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@repos", repos);
                 if (!string.IsNullOrEmpty(filter.author))
                 {
                     command.Parameters.AddWithValue("@author", filter.author);
