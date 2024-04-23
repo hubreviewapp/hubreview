@@ -3031,7 +3031,7 @@ public class GitHubController : ControllerBase
         {
             await connection.OpenAsync();
 
-            string query = "SELECT id, name, ownerLogin, created_at FROM repositoryinfo WHERE repoid = ANY(@repos) ORDER BY name ASC";
+            string query = "SELECT id, name, ownerLogin, created_at FROM repositoryinfo WHERE id = ANY(@repos) ORDER BY name ASC";
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
