@@ -1130,10 +1130,9 @@ namespace CS.Web.Controllers
                     break;
                 case "issue_comment":
                     var issueCommentPayload = JsonConvert.DeserializeObject<Core.Entities.Payloads.IssueCommentPayload>(requestBody);
-                    Console.WriteLine(issueCommentPayload.action);
+
                     if (issueCommentPayload.action == "created")
                     {
-                        Console.WriteLine("CREATE THE FUCKING COMMENT THANK YOU");
                         string query = $"INSERT INTO comments (commentid, reponame, prnumber, is_review) VALUES ({issueCommentPayload.comment.id}, '{issueCommentPayload.repository.name}', {issueCommentPayload.issue.number}, {false})";
                         connection.Open();
                         using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
