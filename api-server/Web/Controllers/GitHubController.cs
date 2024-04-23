@@ -3764,7 +3764,6 @@ public class GitHubController : ControllerBase
                 {
                     while (await reader.ReadAsync())
                     {
-                        Console.WriteLine(reader.GetBoolean(0));
                         onlyAdmin = reader.GetBoolean(0);
                     }
                 }
