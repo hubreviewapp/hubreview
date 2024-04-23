@@ -15,7 +15,7 @@ import {
   Badge,
   Loader,
   Tooltip,
-  CheckIcon
+  CheckIcon,
 } from "@mantine/core";
 import FileDiffView from "../components/ReviewsTab/FileDiffView";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -432,7 +432,12 @@ function ModifiedFilesTab() {
           <Title order={5}>Verdict</Title>
           <Radio.Group value={reviewVerdict} onChange={(val) => setReviewVerdict(val as ReviewVerdict)}>
             <Stack mt="sm">
-              <Radio icon={CheckIcon} value="comment" label="Comment indifferently" styles={{ label: { color: "lightgray" } }} />
+              <Radio
+                icon={CheckIcon}
+                value="comment"
+                label="Comment indifferently"
+                styles={{ label: { color: "lightgray" } }}
+              />
               <Radio
                 icon={CheckIcon}
                 value="approve"

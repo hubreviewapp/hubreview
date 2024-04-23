@@ -11,6 +11,8 @@ import { MergeInfo } from "../pages/PRDetailsPage.tsx";
 import { useUser } from "../providers/context-utilities";
 import ClosePRButton from "../components/ClosePRButton.tsx";
 import SplitButton from "../components/SplitButton.tsx";
+import convertHtmlToMarkdown from "../utility/convertHtmlToMarkdown.ts";
+import Markdown from "react-markdown";
 
 interface CreateReplyRequestModel {
   body: string;
@@ -231,6 +233,14 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
             onChange={(val) => handleSelect(val)}
           />
         </Box>
+        <Box style={{ border: "1px groove gray", borderRadius: 10, padding: "10px" }}>
+          <Text fw={700} size="md">
+            {" "}
+            Description:{" "}
+          </Text>
+          <Markdown>{convertHtmlToMarkdown(pullRequestDetails.body.toString())}</Markdown>
+        </Box>
+        <br></br>
         {!isLoading &&
           filteredComments.map((comment, index) => (
             <Box key={index}>
@@ -276,7 +286,7 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
           </Box>
         )}
         <br></br>
-        {pullRequestDetails.merged === false && (
+        {!pullRequestDetails.merged && (
           <SplitButton
             mergeInfo={mergeInfo}
             mergeStateStatus={pullRequestDetails.mergeStateStatus}
@@ -285,7 +295,7 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
         )}
 
         <Flex justify="right">
-          {pullRequestDetails.merged === false && (
+          {!pullRequestDetails.merged && (
             <>
               <ClosePRButton isClosed={pullRequestDetails.closedAt !== null} />
             </>
