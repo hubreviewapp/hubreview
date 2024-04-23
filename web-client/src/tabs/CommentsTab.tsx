@@ -293,6 +293,7 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
             mergeInfo={mergeInfo}
             mergeStateStatus={pullRequestDetails.mergeStateStatus}
             mergeableState={pullRequestDetails.mergeable}
+            conflictUrl={pullRequestDetails.pullRequestUrl}
           />
         )}
 

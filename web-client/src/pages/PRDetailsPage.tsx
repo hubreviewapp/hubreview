@@ -39,6 +39,7 @@ export interface MergeInfo {
   isConflict: boolean;
   requiredApprovals: number;
   requiredChecks: string[];
+  requiredConversationResolution: boolean;
 }
 
 function PRDetailsPage(props: PRDetailsPageProps) {
