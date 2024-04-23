@@ -2,6 +2,7 @@ import { IconCaretDownFilled, IconX } from "@tabler/icons-react";
 import { Button, Divider, Group, ActionIcon, Paper, Select, Textarea, Menu, Title } from "@mantine/core";
 import { useState } from "react";
 import { ReviewComment, ReviewCommentDecoration } from "../../tabs/ModifiedFilesTab";
+import { useUser } from "../../providers/context-utilities";
 
 export interface DiffCommentEditorSubmitButtonProps {
   decoration: ReviewCommentDecoration;
@@ -49,6 +50,9 @@ export interface DiffCommentEditorProps {
 }
 
 function DiffCommentEditor({ onAdd, onCancel }: DiffCommentEditorProps) {
+  const { user } = useUser();
+  if (!user) throw Error("Unauthenticated");
+
   const [editorContent, setEditorContent] = useState("");
   const [commentLabel, setCommentLabel] = useState("None");
   const [decorationType, setDecorationType] = useState<ReviewCommentDecoration>("non-blocking");
@@ -74,7 +78,8 @@ function DiffCommentEditor({ onAdd, onCancel }: DiffCommentEditorProps) {
       content: editorContent,
       createdAt: new Date().toString(),
       author: {
-        login: "",
+        login: user.login,
+        avatarUrl: user.avatarUrl,
       },
       isResolved: false,
     });

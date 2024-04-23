@@ -215,9 +215,7 @@ function FileDiffView({
               decoration: partialComment.decoration,
               content: partialComment.content,
               createdAt: new Date().toString(),
-              author: {
-                login: "",
-              },
+              author: partialComment.author,
               isResolved: false,
             });
           }}
