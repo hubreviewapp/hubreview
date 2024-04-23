@@ -1119,31 +1119,14 @@ namespace CS.Web.Controllers
 
                     if (issueCommentPayload.action == "created")
                     {
-                        string sel_query = $"SELECT COUNT(*) FROM comments WHERE commentid = {issueCommentPayload.comment.id}";
-                        int comment_sel = 0;
+
+                        string insert_query = $"INSERT INTO comments (commentid, reponame, prnumber, is_review) VALUES ({issueCommentPayload.comment.id}, '{issueCommentPayload.repository.name}', {issueCommentPayload.issue.number}, {false}) ON CONFLICT (commentid) DO NOTHING";
                         connection.Open();
-                        using (var command = new NpgsqlCommand(sel_query, connection))
+                        using (NpgsqlCommand command = new NpgsqlCommand(insert_query, connection))
                         {
-                            using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
-                            {
-                                while (await reader.ReadAsync())
-                                {
-                                    comment_sel = reader.GetFieldValue<int>(0);
-                                }
-                            }
+                            command.ExecuteNonQuery();
                         }
                         connection.Close();
-
-                        if (comment_sel == 0)
-                        {
-                            string insert_query = $"INSERT INTO comments (commentid, reponame, prnumber, is_review) VALUES ({issueCommentPayload.comment.id}, '{issueCommentPayload.repository.name}', {issueCommentPayload.issue.number}, {false})";
-                            connection.Open();
-                            using (NpgsqlCommand command = new NpgsqlCommand(insert_query, connection))
-                            {
-                                command.ExecuteNonQuery();
-                            }
-                            connection.Close();
-                        }
 
                         string query = $"UPDATE pullrequestinfo SET comments = comments + 1 WHERE reponame = '{issueCommentPayload.repository.name}' AND pullnumber = {issueCommentPayload.issue.number} AND repoowner = '{issueCommentPayload.repository.owner.login}'";
                         connection.Open();
