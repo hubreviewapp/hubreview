@@ -10,10 +10,12 @@ export interface SplitButtonProps {
   mergeInfo: MergeInfo | null;
   mergeableState: APIMergeableState;
   mergeStateStatus: APIMergeStateStatus | null;
+  conflictUrl: string;
 }
 
-function SplitButton({ mergeInfo, mergeableState, mergeStateStatus }: SplitButtonProps) {
+function SplitButton({ mergeInfo, mergeableState, mergeStateStatus, conflictUrl }: SplitButtonProps) {
   const isMergeable = mergeableState === APIMergeableState.MERGEABLE;
+  const resolveConflictUrl = conflictUrl + "/conflicts";
 
   return (
     <div>
@@ -59,6 +61,19 @@ function SplitButton({ mergeInfo, mergeableState, mergeStateStatus }: SplitButto
           </Box>
         </Popover.Target>
         <Popover.Dropdown style={{ width: 770 }}>
+          {mergeInfo?.requiredConversationResolution && (
+            <>
+              <Box style={{ display: "flex", padding: "5px" }}>
+                <Box>
+                  <IconX color="red" style={{ width: rem(30), height: rem(30), marginLeft: 5, marginTop: 15 }} />
+                </Box>
+                <Text fw={700} size="lg" style={{ marginTop: 15, color: "red" }}>
+                  Unresolved conversations
+                </Text>
+              </Box>
+              <hr></hr>
+            </>
+          )}
           {mergeInfo?.requiredApprovals !== 0 && (
             <>
               <Box style={{ display: "flex" }}>
@@ -72,9 +87,11 @@ function SplitButton({ mergeInfo, mergeableState, mergeStateStatus }: SplitButto
               <Text size="sm">
                 At least {mergeInfo?.requiredApprovals} approving review is required by reviewers with write access.
               </Text>
+              {/*
               <Text size="sm" td="underline" c="blue">
                 See all reviewers
               </Text>
+              */}
             </>
           )}
           {mergeInfo?.requiredApprovals === 0 && (
@@ -88,9 +105,11 @@ function SplitButton({ mergeInfo, mergeableState, mergeStateStatus }: SplitButto
                 </Text>
               </Box>
               <Text size="sm">This pull request may be merged without approvals.</Text>
+              {/*
               <Text size="sm" td="underline" c="blue">
                 See all reviewers
               </Text>
+              */}
             </>
           )}
           <hr></hr>
@@ -115,10 +134,13 @@ function SplitButton({ mergeInfo, mergeableState, mergeStateStatus }: SplitButto
                 <Box>
                   <IconX color="red" style={{ width: rem(30), height: rem(30), marginLeft: 5, marginTop: 10 }} />
                 </Box>
-                <Text c="red" style={{ marginTop: 15, marginRight: 30 }}>
+                <Text style={{ marginTop: 15, marginRight: 30, color: "red" }}>
                   This branch has conflicts that must be resolved
                 </Text>
-                <Button color="gray"> Resolve Conflicts </Button>
+                <Button component="a" target="_blank" href={resolveConflictUrl} color="gray">
+                  {" "}
+                  Resolve Conflicts{" "}
+                </Button>
               </Box>
             </>
           )}
@@ -141,9 +163,7 @@ function SplitButton({ mergeInfo, mergeableState, mergeStateStatus }: SplitButto
               <Box>
                 <IconX color="red" style={{ width: rem(30), height: rem(30), marginLeft: 5, marginTop: 10 }} />
               </Box>
-              <Text c="red" style={{ marginTop: 15 }}>
-                Merging is blocked
-              </Text>
+              <Text style={{ marginTop: 15, color: "red" }}>Merging is blocked</Text>
             </Box>
           )}
           {isMergeable && mergeStateStatus === APIMergeStateStatus.CLEAN && (
