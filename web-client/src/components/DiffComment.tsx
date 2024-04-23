@@ -99,7 +99,7 @@ function DiffComment({ comment, replies, isPending, onReplyCreated }: DiffCommen
       <Group>
         <Avatar src={comment.author.avatarUrl ?? UserLogo} alt="Jacob Warnhalter" radius="xl" />
         <div>
-          <Text fz="sm">{comment.author?.login ?? "--"}</Text>
+          <Text fz="sm">{comment.author.login}</Text>
           <Text fz="xs" c="dimmed">
             {new Date(comment.createdAt).toLocaleString("en-US", {
               day: "numeric",
