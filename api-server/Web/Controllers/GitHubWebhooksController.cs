@@ -1119,15 +1119,16 @@ namespace CS.Web.Controllers
 
                     if (issueCommentPayload.action == "created")
                     {
-                        string query = $"INSERT INTO comments (commentid, reponame, prnumber, is_review) VALUES ({issueCommentPayload.comment.id}, '{issueCommentPayload.repository.name}', {issueCommentPayload.issue.number}, {false})";
+
+                        string insert_query = $"INSERT INTO comments (commentid, reponame, prnumber, is_review) VALUES ({issueCommentPayload.comment.id}, '{issueCommentPayload.repository.name}', {issueCommentPayload.issue.number}, {false}) ON CONFLICT (commentid) DO NOTHING";
                         connection.Open();
-                        using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+                        using (NpgsqlCommand command = new NpgsqlCommand(insert_query, connection))
                         {
                             command.ExecuteNonQuery();
                         }
                         connection.Close();
 
-                        query = $"UPDATE pullrequestinfo SET comments = comments + 1 WHERE reponame = '{issueCommentPayload.repository.name}' AND pullnumber = {issueCommentPayload.issue.number} AND repoowner = '{issueCommentPayload.repository.owner.login}'";
+                        string query = $"UPDATE pullrequestinfo SET comments = comments + 1 WHERE reponame = '{issueCommentPayload.repository.name}' AND pullnumber = {issueCommentPayload.issue.number} AND repoowner = '{issueCommentPayload.repository.owner.login}'";
                         connection.Open();
                         using (var command = new NpgsqlCommand(query, connection))
                         {
