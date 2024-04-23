@@ -1549,7 +1549,6 @@ public class GitHubController : ControllerBase
         string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
 
         */
-
         List<object> allPRs = new List<object>();
 
         var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
@@ -1566,7 +1565,7 @@ public class GitHubController : ControllerBase
 
             string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
 
-            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE ( @ownerLogin != ANY(reviewers) AND EXISTS ( SELECT 1 FROM json_array_elements(reviews) AS review WHERE review->>'login' = @ownerLogin) ) AND state='open' AND @ownerLogin != author AND repoid = ANY(@repos)";
+            string query = "SELECT " + selects + " FROM pullrequestinfo WHERE ( NOT @ownerLogin = ANY(reviewers) AND EXISTS ( SELECT 1 FROM json_array_elements(reviews) AS review WHERE review->>'login' = @ownerLogin) ) AND state='open' AND @ownerLogin != author AND repoid = ANY(@repos)";
             if (!string.IsNullOrEmpty(filter.author))
             {
                 query += " AND author = @author";
