@@ -3020,9 +3020,7 @@ public class GitHubController : ControllerBase
     [HttpGet("GetFilterLists")]
     public async Task<ActionResult> GetRepositoryAssignees()
     {
-        // Get organizations for the current user
-        var organizations = await GitHubUserClient.Organization.GetAllForCurrent();
-        var organizationLogins = organizations.Select(org => org.Login).ToArray();
+        var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
         HashSet<string> allAssignees = new HashSet<string>();
         HashSet<string> allLabels = new HashSet<string>();
@@ -3033,12 +3031,12 @@ public class GitHubController : ControllerBase
         {
             await connection.OpenAsync();
 
-            string query = "SELECT id, name, ownerLogin, created_at FROM repositoryinfo WHERE ownerLogin = @ownerLogin OR ownerLogin = ANY(@organizationLogins) ORDER BY name ASC";
+            string query = "SELECT id, name, ownerLogin, created_at FROM repositoryinfo WHERE repoid = ANY(@repos) ORDER BY name ASC";
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@repos", repos);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
@@ -3080,12 +3078,12 @@ public class GitHubController : ControllerBase
 
             await Task.WhenAll(labelTasks);
 
-            string query2 = "SELECT DISTINCT author FROM pullrequestinfo WHERE repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) ORDER BY author ASC";
+            string query2 = "SELECT DISTINCT author FROM pullrequestinfo WHERE repoid = ANY(@repos) ORDER BY author ASC";
             using (NpgsqlCommand command = new NpgsqlCommand(query2, connection))
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@repos", repos);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
@@ -3096,12 +3094,12 @@ public class GitHubController : ControllerBase
                 }
             }
 
-            string query3 = "SELECT DISTINCT unnest(assignees) as assignee FROM pullrequestinfo WHERE repoowner = @ownerLogin OR repoowner = ANY(@organizationLogins) ORDER BY assignee ASC";
+            string query3 = "SELECT DISTINCT unnest(assignees) as assignee FROM pullrequestinfo WHERE repoid = ANY(@repos) ORDER BY assignee ASC";
             using (NpgsqlCommand command = new NpgsqlCommand(query3, connection))
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                command.Parameters.AddWithValue("@organizationLogins", organizationLogins);
+                command.Parameters.AddWithValue("@repos", repos);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
