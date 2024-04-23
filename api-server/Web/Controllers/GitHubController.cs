@@ -7,6 +7,7 @@ using CS.Core.Entities;
 using CS.Core.Entities.V2;
 using CS.Web.Models.Api.Request;
 using CS.Web.Models.Api.Response;
+using Dapper;
 using GitHubJwt;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -816,6 +817,20 @@ public class GitHubController : ControllerBase
         string decorated_body = replied_to.Body.Contains("<!--Using HubReview-->") ? $"<!--Using HubReview-->\n> {replied_to.Body.Remove(0, 22)}\n> {replied_to.HtmlUrl} \n\n{req.body}" : $"<!--Using HubReview-->\n> {replied_to.Body}\n> {replied_to.HtmlUrl} \n\n{req.body}";
 
         var comment = await GitHubUserClient.Issue.Comment.Create(owner, repoName, prnumber, decorated_body);
+
+        await using var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString);
+        await connection.OpenAsync();
+
+        await connection.ExecuteScalarAsync(
+            @"INSERT INTO comments (commentid, reponame, prnumber, is_review)
+            VALUES (@CommentId, @RepoName, @PRNumber, @IsReview)",
+            new
+            {
+                CommentId = comment.Id,
+                RepoName = repoName,
+                PRNumber = prnumber,
+                IsReview = false
+            });
 
         return Ok(comment);
     }
