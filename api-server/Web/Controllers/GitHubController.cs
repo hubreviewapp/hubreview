@@ -672,7 +672,7 @@ public class GitHubController : ControllerBase
 
                 if (comm.Body.Contains("#issuecomment-"))
                 {
-                    int index = comm.Body.IndexOf("#issuecomment-");
+                    int index = comm.Body.LastIndexOf("#issuecomment-");
                     replyId = long.Parse(comm.Body.Substring(index + 14, 10));
                 }
 
@@ -697,7 +697,7 @@ public class GitHubController : ControllerBase
                 }
                 else
                 {
-                    int index = (replyId == 0) ? comm.Body.IndexOf(':') : comm.Body.IndexOf("\n\n");
+                    int index = (replyId == 0) ? comm.Body.IndexOf(':') : comm.Body.LastIndexOf("\n\n");
                     string parsed_message = (replyId == 0) ? comm.Body[(index + 2)..] : comm.Body[(index + 1)..];
 
                     await connection.OpenAsync();
