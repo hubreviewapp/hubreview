@@ -1105,7 +1105,7 @@ public class GitHubController : ControllerBase
             ";
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
-            {       
+            {
                 await command.ExecuteScalarAsync();
             }
 
