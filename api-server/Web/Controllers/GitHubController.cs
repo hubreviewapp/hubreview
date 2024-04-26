@@ -15,6 +15,7 @@ using Npgsql;
 using Octokit;
 using Octokit.GraphQL;
 using Octokit.GraphQL.Core;
+using Octokit.GraphQL.Core.Introspection;
 using Octokit.GraphQL.Model;
 using static Octokit.GraphQL.Variable;
 
@@ -1039,6 +1040,7 @@ public class GitHubController : ControllerBase
     public async Task<Workload> GetUserWorkload(string userName)
     {
         long result;
+        int maxWorkload = 1000;
 
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
@@ -1058,16 +1060,58 @@ public class GitHubController : ControllerBase
                 result = (long)await command.ExecuteScalarAsync();
             }
 
+            query = @"SELECT workload FROM userinfo where @userName = login";
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@userName", userName);
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        maxWorkload = reader.GetInt32(0);
+                    }
+                }
+            }
+
             await connection.CloseAsync();
         }
 
         var workload = new Workload
         {
             currentLoad = result,
-            maxLoad = 1000
+            maxLoad = maxWorkload
         };
 
         return workload;
+    }
+
+    [HttpPost("user/{userLogin}/workload")]
+    public async Task<ActionResult> SetUserWorkload(string userLogin, [FromBody] int workload)
+    {
+        using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
+        {
+            await connection.OpenAsync();
+
+            string query = $@"
+                DO $$
+                BEGIN
+                    IF EXISTS (SELECT 1 FROM userinfo WHERE login = '{userLogin}') THEN
+                        UPDATE userinfo SET workload = {workload} WHERE login = '{userLogin}';
+                    ELSE
+                        INSERT INTO userinfo (login, workload) VALUES ('{userLogin}', {workload});
+                    END IF;
+                END $$;
+            ";
+
+            using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
+            {       
+                await command.ExecuteScalarAsync();
+            }
+
+            await connection.CloseAsync();
+        }
+        return Ok("Workload successfully updated.");
     }
 
     [HttpGet("getRepoLabels/{owner}/{repoName}")]
