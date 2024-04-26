@@ -11,6 +11,8 @@ using Dapper;
 using GitHubJwt;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using NotificationApi.Server;
+using NotificationApi.Server.Models;
 using Npgsql;
 using Octokit;
 using Octokit.GraphQL;
@@ -3752,6 +3754,35 @@ public class GitHubController : ControllerBase
             await connection.CloseAsync();
         }
         return Ok("Successfully updated");
+    }
+
+    [HttpGet("notification")]
+    public async Task<ActionResult> SendNotification()
+    {
+
+        var notificationApi = new NotificationApiServer("3m2tcjmd1jt3ffdmhu7a69baru", "1m72pho012vbm6savd9gdk9ko0e2o8clftc5snu5rrnuhpf2am1u", false);
+
+        var user = new NotificationUser("ece.kahraman@ug.bilkent.edu.tr")
+        {
+            Email = "ece.kahraman@ug.bilkent.edu.tr"
+        };
+
+        var mergeTags = new Dictionary<string, object>
+        {
+            { "item", "Krabby Patty Burger" },
+            { "address", "124 Conch Street" },
+            { "orderId", "1234567890" },
+            { "commentId", "123456" }, // Example comment ID
+            { "comment", "This is a sample comment." } // Example comment text
+        };
+
+        var result = await notificationApi.Send(new SendNotificationData("new_comment", user)
+        {
+            MergeTags = mergeTags
+        });
+
+        Console.WriteLine("hello");
+        return Ok(result);
     }
 }
 
