@@ -1206,7 +1206,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpPost("prs/needsreview/filter")]
-    public async Task<ActionResult> FilterNeedsYourReviewPRs([FromBody] PRFilter filter, int page = 1)
+    public async Task<ActionResult> FilterNeedsYourReviewPRs([FromBody] PRFilter filter)
     {
         /*
         filter.assignee string
@@ -1302,7 +1302,7 @@ public class GitHubController : ControllerBase
             }
 
             int pageSize = 7;
-            int offset = (page - 1) * pageSize;
+            int offset = (filter.page - 1) * pageSize;
             query += $" OFFSET {offset} LIMIT {pageSize}";
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
@@ -1503,7 +1503,7 @@ public class GitHubController : ControllerBase
              */
 
             int pageSize = 7;
-            int offset = (page - 1) * pageSize;
+            int offset = (filter.page - 1) * pageSize;
             query += $" OFFSET {offset} LIMIT {pageSize}";
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
@@ -1707,7 +1707,7 @@ public class GitHubController : ControllerBase
              */
 
             int pageSize = 7;
-            int offset = (page - 1) * pageSize;
+            int offset = (filter.page - 1) * pageSize;
             query += $" OFFSET {offset} LIMIT {pageSize}";
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
@@ -1914,7 +1914,7 @@ public class GitHubController : ControllerBase
              */
 
             int pageSize = 7;
-            int offset = (page - 1) * pageSize;
+            int offset = (filter.page - 1) * pageSize;
             query += $" OFFSET {offset} LIMIT {pageSize}";
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
@@ -2112,7 +2112,7 @@ public class GitHubController : ControllerBase
              */
             // Calculate OFFSET based on the page number and page size
             int pageSize = 7;
-            int offset = (page - 1) * pageSize;
+            int offset = (filter.page - 1) * pageSize;
 
             // Append OFFSET and LIMIT to the query
             query += $" OFFSET {offset} LIMIT {pageSize}";
@@ -2320,7 +2320,7 @@ public class GitHubController : ControllerBase
              */
 
             int pageSize = 7;
-            int offset = (page - 1) * pageSize;
+            int offset = (filter.page - 1) * pageSize;
 
             query += $" OFFSET {offset} LIMIT {pageSize}";
 
