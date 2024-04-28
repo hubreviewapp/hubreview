@@ -1206,7 +1206,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpPost("prs/needsreview/filter")]
-    public async Task<ActionResult> FilterNeedsYourReviewPRs([FromBody] PRFilter filter)
+    public async Task<ActionResult> FilterNeedsYourReviewPRs([FromBody] PRFilter filter, int page = 1)
     {
         /*
         filter.assignee string
@@ -1301,6 +1301,9 @@ public class GitHubController : ControllerBase
                 }
             }
 
+            int pageSize = 7;
+            int offset = (page - 1) * pageSize;
+            query += $" OFFSET {offset} LIMIT {pageSize}";
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
@@ -1398,7 +1401,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpPost("prs/userprs/filter")]
-    public async Task<ActionResult> FilterUserPRs([FromBody] PRFilter filter)
+    public async Task<ActionResult> FilterUserPRs([FromBody] PRFilter filter, int page = 1)
     {
         /*
         filter.assignee string
@@ -1499,6 +1502,9 @@ public class GitHubController : ControllerBase
             }
              */
 
+            int pageSize = 7;
+            int offset = (page - 1) * pageSize;
+            query += $" OFFSET {offset} LIMIT {pageSize}";
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
@@ -1598,7 +1604,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpPost("prs/waitingauthor/filter")]
-    public async Task<ActionResult> FilterWaitingAuthors([FromBody] PRFilter filter)
+    public async Task<ActionResult> FilterWaitingAuthors([FromBody] PRFilter filter, int page = 1)
     {
         /*
         filter.assignee string
@@ -1700,6 +1706,10 @@ public class GitHubController : ControllerBase
             }
              */
 
+            int pageSize = 7;
+            int offset = (page - 1) * pageSize;
+            query += $" OFFSET {offset} LIMIT {pageSize}";
+
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
@@ -1799,7 +1809,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpPost("prs/open/filter")]
-    public async Task<ActionResult> FilterOpenPRs([FromBody] PRFilter filter)
+    public async Task<ActionResult> FilterOpenPRs([FromBody] PRFilter filter, int page = 1)
     {
         /*
         filter.assignee string
@@ -1903,6 +1913,9 @@ public class GitHubController : ControllerBase
             }
              */
 
+            int pageSize = 7;
+            int offset = (page - 1) * pageSize;
+            query += $" OFFSET {offset} LIMIT {pageSize}";
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
@@ -1996,7 +2009,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpPost("prs/merged/filter")]
-    public async Task<ActionResult> FilterMergedPRs([FromBody] PRFilter filter)
+    public async Task<ActionResult> FilterMergedPRs([FromBody] PRFilter filter, int page = 1)
     {
         /*
         filter.assignee string
@@ -2097,7 +2110,13 @@ public class GitHubController : ControllerBase
                 query += " AND labels @> @labels";
             }
              */
+            // Calculate OFFSET based on the page number and page size
+            int pageSize = 7;
+            int offset = (page - 1) * pageSize;
 
+            // Append OFFSET and LIMIT to the query
+            query += $" OFFSET {offset} LIMIT {pageSize}";
+            
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
@@ -2197,7 +2216,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpPost("prs/closed/filter")]
-    public async Task<ActionResult> FilterClosedPRs([FromBody] PRFilter filter)
+    public async Task<ActionResult> FilterClosedPRs([FromBody] PRFilter filter, int page = 1)
     {
         /*
         filter.assignee string
@@ -2300,6 +2319,10 @@ public class GitHubController : ControllerBase
             }
              */
 
+            int pageSize = 7;
+            int offset = (page - 1) * pageSize;
+
+            query += $" OFFSET {offset} LIMIT {pageSize}";
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
