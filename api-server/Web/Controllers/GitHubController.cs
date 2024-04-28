@@ -2116,7 +2116,7 @@ public class GitHubController : ControllerBase
 
             // Append OFFSET and LIMIT to the query
             query += $" OFFSET {offset} LIMIT {pageSize}";
-            
+
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
