@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Container, Button, Title, Grid, Box, rem, Avatar, Space, Image } from "@mantine/core";
+import { Button, Grid, Box, rem, Avatar, Space, Image } from "@mantine/core";
 import { useState, useEffect } from "react";
 import { IconLogout } from "@tabler/icons-react";
 import { useUser } from "../providers/context-utilities";
