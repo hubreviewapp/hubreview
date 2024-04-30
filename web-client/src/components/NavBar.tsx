@@ -1,8 +1,10 @@
 import { Link, useLocation } from "react-router-dom";
-import { Container, Button, Title, Grid, Box, rem, Avatar, Space } from "@mantine/core";
+import { Container, Button, Title, Grid, Box, rem, Avatar, Space, Image } from "@mantine/core";
 import { useState, useEffect } from "react";
 import { IconLogout } from "@tabler/icons-react";
 import { useUser } from "../providers/context-utilities";
+import Logo from "../assets/icons/logo-color.svg";
+import SignIn from "../assets/icons/signin.png";
 
 function NavBar() {
   const location = useLocation();
@@ -39,14 +41,16 @@ function NavBar() {
 
   return (
     <Box bg="#0D1B2A" p="20px">
-      <Container size="xl">
+
         <Grid>
-          <Grid.Col span={5}>
+          <Grid.Col span={2.5}>
             <Link to="/" style={{ color: "white", textDecoration: "none" }}>
-              <Title order={2}>HubReview </Title>
+              <Image h={50} src={Logo} />
             </Link>
           </Grid.Col>
-          <Grid.Col span={7} style={{ display: "flex", justifyContent: "space-evenly" }}>
+          <Grid.Col span={2.5}>
+          </Grid.Col>
+          <Grid.Col span={7} style={{ display: "flex", justifyContent: "space-evenly", marginTop: "10px"}}>
             <Button
               component={Link}
               variant={isActive == 1 ? "outline" : "transparent"}
@@ -84,7 +88,7 @@ function NavBar() {
             </Button>
           </Grid.Col>
         </Grid>
-      </Container>
+
     </Box>
   );
 }
