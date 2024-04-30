@@ -1277,6 +1277,7 @@ public class GitHubController : ControllerBase
                         break;
                     default:
                         // Handle unsupported date filter value
+                        query += " AND createdat >= '" + filter.fromDate + "'";
                         break;
                 }
             }
@@ -1300,7 +1301,10 @@ public class GitHubController : ControllerBase
                         // Add more cases for other sorting options
                 }
             }
-
+            if (!string.IsNullOrEmpty(filter.name))
+            {
+                query += " AND title ILIKE '%" + filter.name + "%'";
+            }
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
@@ -1469,6 +1473,7 @@ public class GitHubController : ControllerBase
                         break;
                     default:
                         // Handle unsupported date filter value
+                        query += " AND createdat >= '" + filter.fromDate + "'";
                         break;
                 }
             }
@@ -1498,7 +1503,10 @@ public class GitHubController : ControllerBase
                 query += " AND labels @> @labels";
             }
              */
-
+            if (!string.IsNullOrEmpty(filter.name))
+            {
+                query += " AND title ILIKE '%" + filter.name + "%'";
+            }
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
@@ -1669,7 +1677,7 @@ public class GitHubController : ControllerBase
                         query += " AND createdat >= date_trunc('year', CURRENT_DATE) AND createdat < date_trunc('year', CURRENT_DATE) + INTERVAL '1 year'";
                         break;
                     default:
-                        // Handle unsupported date filter value
+                        query += " AND createdat >= '" + filter.fromDate + "'";
                         break;
                 }
             }
@@ -1699,6 +1707,10 @@ public class GitHubController : ControllerBase
                 query += " AND labels @> @labels";
             }
              */
+            if (!string.IsNullOrEmpty(filter.name))
+            {
+                query += " AND title ILIKE '%" + filter.name + "%'";
+            }
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
@@ -1873,6 +1885,7 @@ public class GitHubController : ControllerBase
                         break;
                     default:
                         // Handle unsupported date filter value
+                        query += " AND createdat >= '" + filter.fromDate + "'";
                         break;
                 }
             }
@@ -1902,7 +1915,10 @@ public class GitHubController : ControllerBase
                 query += " AND labels @> @labels";
             }
              */
-
+            if (!string.IsNullOrEmpty(filter.name))
+            {
+                query += " AND title ILIKE '%" + filter.name + "%'";
+            }
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
@@ -2068,6 +2084,7 @@ public class GitHubController : ControllerBase
                         break;
                     default:
                         // Handle unsupported date filter value
+                        query += " AND createdat >= '" + filter.fromDate + "'";
                         break;
                 }
             }
@@ -2097,6 +2114,10 @@ public class GitHubController : ControllerBase
                 query += " AND labels @> @labels";
             }
              */
+            if (!string.IsNullOrEmpty(filter.name))
+            {
+                query += " AND title ILIKE '%" + filter.name + "%'";
+            }
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
@@ -2270,6 +2291,7 @@ public class GitHubController : ControllerBase
                         break;
                     default:
                         // Handle unsupported date filter value
+                        query += " AND createdat >= '" + filter.fromDate + "'";
                         break;
                 }
             }
@@ -2299,7 +2321,10 @@ public class GitHubController : ControllerBase
                 query += " AND labels @> @labels";
             }
              */
-
+            if (!string.IsNullOrEmpty(filter.name))
+            {
+                query += " AND title ILIKE '%" + filter.name + "%'";
+            }
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
