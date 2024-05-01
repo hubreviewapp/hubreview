@@ -234,7 +234,7 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
           />
         </Box>
         {pullRequestDetails.body.toString() && (
-          <Box style={{ border: "1px groove gray", borderRadius: 10, padding: "10px" }}>
+          <Box style={{ border: "0.5px groove gray", borderRadius: 10, padding: "10px" }}>
             <Text fw={700} size="md">
               {" "}
               Description:{" "}
@@ -288,21 +288,21 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
           </Box>
         )}
         <br></br>
-        {!pullRequestDetails.merged && (
-          <SplitButton
-            mergeInfo={mergeInfo}
-            mergeStateStatus={pullRequestDetails.mergeStateStatus}
-            mergeableState={pullRequestDetails.mergeable}
-            conflictUrl={pullRequestDetails.pullRequestUrl}
-          />
-        )}
 
         <Flex justify="right">
-          {!pullRequestDetails.merged && (
-            <>
-              <ClosePRButton isClosed={pullRequestDetails.closedAt !== null} />
-            </>
-          )}
+          <Box>
+            {!pullRequestDetails.merged && (
+              <Flex justify="right" mb="sm">
+                <SplitButton
+                  mergeInfo={mergeInfo}
+                  mergeStateStatus={pullRequestDetails.mergeStateStatus}
+                  mergeableState={pullRequestDetails.mergeable}
+                  conflictUrl={pullRequestDetails.pullRequestUrl}
+                />
+              </Flex>
+            )}
+            {!pullRequestDetails.merged && <ClosePRButton isClosed={pullRequestDetails.closedAt !== null} />}
+          </Box>
         </Flex>
         <br />
         <Box style={{ border: "2px groove gray", borderRadius: 10, padding: "10px" }}>
