@@ -98,7 +98,7 @@ function PRCard({ data: pr }: PullRequestCardProps) {
           </Group>
         </Group>
       </Link>
-      <Flex justify="space-between">
+      <Flex justify="space-between" style={{ marginBottom: "-15px" }}>
         <Box my="sm">
           <IconMessages style={{ width: rem(18), height: rem(18) }} />
           {pr.comments} comments, {"  "}
