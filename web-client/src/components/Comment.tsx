@@ -1,7 +1,7 @@
 import Markdown from "react-markdown";
 import { useState } from "react";
 import { Text, Avatar, Group, Select, Box, rem, Badge, Anchor } from "@mantine/core";
-import { Combobox, useCombobox, Input, Button, Accordion } from "@mantine/core";
+import { Combobox, useCombobox, Button, Accordion, Textarea } from "@mantine/core";
 import { IconArrowBarDown, IconDots, IconSparkles, IconMessageCheck } from "@tabler/icons-react";
 import classes from "../styles/comment.module.css";
 import convertHtmlToMarkdown from "../utility/convertHtmlToMarkdown";
@@ -163,7 +163,7 @@ export function Comment({
             position: "relative",
             width: "100%",
             border:
-              selectedComment === id ? "solid 0.5px cyan" : isAIGenerated ? "solid 0.5px cyan" : "1px groove gray",
+              selectedComment === id ? "solid 0.5px cyan" : isAIGenerated ? "solid 0.5px cyan" : "0.5px groove gray",
             borderRadius: 20,
           }}
         >
@@ -230,11 +230,14 @@ export function Comment({
             )}
             <Markdown>{convertHtmlToMarkdown(convertedText.toString())}</Markdown>
             <Box style={{ display: "flex" }}>
-              <Input
+              <Textarea
                 radius="xl"
                 style={{ marginTop: "5px", marginBottom: "5px", marginRight: "5px", flex: 0.9 }}
                 placeholder="Reply"
                 onChange={(e) => setReplyValue(e.target.value)}
+                autosize
+                minRows={1}
+                maxRows={4}
               />
               <Button onClick={() => replyComment(id, replyValue)}>Submit </Button>
             </Box>

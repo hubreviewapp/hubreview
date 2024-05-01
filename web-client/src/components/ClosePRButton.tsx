@@ -47,7 +47,7 @@ function ClosePRButton({ isClosed }: ClosePRButtonProps) {
           Reopen Pull Request
         </Button>
       ) : (
-        <Button variant="outline" leftSection={icon} onClick={handleButtonClick}>
+        <Button color="gray" variant="outline" leftSection={icon} onClick={handleButtonClick}>
           Close Pull Request
         </Button>
       )}
