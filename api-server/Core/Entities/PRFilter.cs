@@ -8,4 +8,6 @@ public class PRFilter
     public string? orderBy { get; set; }
     public string? state { get; set; }
     public string[]? repositories { get; set; }
+
+    public string name { get; set; }
 }

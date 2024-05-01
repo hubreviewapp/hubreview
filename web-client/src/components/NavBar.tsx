@@ -3,7 +3,7 @@ import { Button, Grid, Box, rem, Avatar, Space, Image } from "@mantine/core";
 import { useState, useEffect } from "react";
 import { IconLogout } from "@tabler/icons-react";
 import { useUser } from "../providers/context-utilities";
-import Logo from "../../assets/icons/logo-color.svg";
+import Logo from "../assets/icons/logo-color.svg";
 
 function NavBar() {
   const location = useLocation();
