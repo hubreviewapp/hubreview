@@ -1037,6 +1037,7 @@ public class GitHubController : ControllerBase
         }
     }
 
+    [HttpGet("user/{userName}/workload")]
     public async Task<Workload> GetUserWorkload(string userName)
     {
         long result;
