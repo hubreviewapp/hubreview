@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Group, Accordion, Box, rem, TextInput, Text, ScrollArea, Button } from "@mantine/core";
+import { Group, Accordion, Box, rem, TextInput, Text, ScrollArea, Button, Popover, NumberInput } from "@mantine/core";
 import { Checkbox } from "@mantine/core";
-import { IconNotebook, IconSearch, IconCirclePlus } from "@tabler/icons-react";
+import { IconNotebook, IconSearch, IconCirclePlus, IconSettings } from "@tabler/icons-react";
 import axios from "axios";
 import classes from "../../styles/NavbarSimple.module.css";
 import { Repository } from "../../models/Repository.tsx";
@@ -9,6 +9,7 @@ import { Link } from "react-scroll";
 import { UseListStateHandlers } from "@mantine/hooks";
 import { SelectedRepos } from "../../pages/ReviewQueuePage.tsx";
 import { BASE_URL, GITHUB_APP_NAME } from "../../env";
+import { useUser } from "../../providers/context-utilities";
 
 const data = [
   //{ link: "", label: "New PRs", icon: IconBellRinging },
@@ -29,9 +30,29 @@ interface PRNavbarProps {
 
 export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSelectedRepos }: PRNavbarProps) {
   //const [repository, setRepository] = useState<Repository[]>([]);
+  const { user } = useUser();
   const iconSearch = <IconSearch style={{ width: rem(16), height: rem(16) }} />;
   const iconPlus = <IconCirclePlus style={{ width: rem(16), height: rem(16) }} />;
   const [query, setQuery] = useState("");
+  const [prWorkload, setPrWorkload] = useState<string | number>("");
+  const [opened, setOpened] = useState<boolean>(false);
+  //[HttpPost("user/{userLogin}/workload")]
+  function editWorkload() {
+    setOpened(false);
+    if (typeof prWorkload === "string") {
+      return;
+    }
+    axios
+      .post(`${BASE_URL}/api/github/user/${user?.login}/workload`, prWorkload * 100, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        withCredentials: true,
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  }
 
   useEffect(() => {
     const getRepos = async () => {
@@ -156,20 +177,41 @@ export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSe
         {links}
       </div>
 
-      {/*
       <div className={classes.footer}>
+        {/*
         <a href="#" className={classes.link} onClick={(event) => event.preventDefault()}>
           <IconActivity className={classes.linkIcon} stroke={1.5} />
           <span> Insights / Activity</span>
         </a>
-
-        <a href="#" className={classes.link} onClick={(event) => event.preventDefault()}>
-          <IconSettings className={classes.linkIcon} stroke={1.5} />
-          <span> Settings </span>
-        </a>
+        */}
+        <Popover
+          opened={opened}
+          width={300}
+          trapFocus
+          position="bottom"
+          withArrow
+          shadow="md"
+          clickOutsideEvents={["mouseup", "touchend"]}
+        >
+          <Popover.Target>
+            <a href="#" className={classes.link} onClick={() => setOpened(true)}>
+              <IconSettings className={classes.linkIcon} stroke={1.5} />
+              <span> Set your workload </span>
+            </a>
+          </Popover.Target>
+          <Popover.Dropdown>
+            <NumberInput
+              label="Workload"
+              placeholder="Enter PR workload"
+              size="sm"
+              value={prWorkload}
+              onChange={setPrWorkload}
+            />
+            <br></br>
+            <Button onClick={editWorkload}> Update </Button>
+          </Popover.Dropdown>
+        </Popover>
       </div>
-
-      */}
     </nav>
   );
 }
