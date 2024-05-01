@@ -73,6 +73,7 @@ export interface FilterList {
   fromDate: string | null | undefined;
   orderBy: string | null | undefined;
   repositories: string[];
+  name: string;
 }
 
 const API = `${BASE_URL}/api/github/prs`;
@@ -97,6 +98,7 @@ function ReviewQueuePage() {
     fromDate: null,
     orderBy: "priority",
     repositories: [],
+    name: "",
   });
 
   useEffect(() => {
