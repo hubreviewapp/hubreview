@@ -3314,10 +3314,10 @@ public class GitHubController : ControllerBase
         {
             var pr = await GitHubUserClient.PullRequest.Get(repoid, pullnumber);
 
-            if( pr.State.StringValue == "open" ) open++;
-            else if ( pr.State.StringValue == "closed" && !pr.Merged ) closed++;
-            else if ( pr.State.StringValue == "closed" && pr.Merged ) merged++;
-        }        
+            if (pr.State.StringValue == "open") open++;
+            else if (pr.State.StringValue == "closed" && !pr.Merged) closed++;
+            else if (pr.State.StringValue == "closed" && pr.Merged) merged++;
+        }
 
         List<int> result = [open, closed, merged];
 
