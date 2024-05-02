@@ -3276,6 +3276,50 @@ public class GitHubController : ControllerBase
         return Ok(response);
     }
 
+    [HttpGet("user/weeklypulls")]
+    public async Task<ActionResult> GetWeeklyPulls()
+    {
+
+        List<(int pullnumber, long repoid)> pulls = [];
+
+        int open = 0, closed = 0, merged = 0;
+
+        var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
+
+        var lastWeek = DateTime.Today.AddDays(-7);
+
+        var query = $@"SELECT 
+            COUNT(CASE WHEN state = 'open' THEN 1 END) AS open_count,
+            COUNT(CASE WHEN state = 'closed' AND merged = FALSE THEN 1 END) AS closed_unmerged_count,
+            COUNT(CASE WHEN state = 'closed' AND merged = TRUE THEN 1 END) AS closed_merged_count
+        FROM pullrequestinfo
+        WHERE repoid = ANY(@repos) AND createdat >= '{lastWeek:yyyy-MM-dd}' AND author = '{UserLogin}'";
+
+        using (var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
+        {
+            await connection.OpenAsync();
+
+            using (var command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@repos", repos);
+
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    open = reader.GetInt32(0);
+                    closed = reader.GetInt32(1);
+                    merged = reader.GetInt32(2);
+                }
+            }
+
+            await connection.CloseAsync();
+        }
+
+        List<int> result = [open, closed, merged];
+
+        return Ok(result);
+    }
+
     [HttpGet("analytics/{owner}/{repoName}")]
     public async Task<ActionResult> GetPriorityDistribution(string owner, string repoName)
     {
@@ -3400,9 +3444,6 @@ public class GitHubController : ControllerBase
     [HttpGet("analytics/{owner}/{repoName}/review_statuses")]
     public async Task<ActionResult> GetReviewStatuses(string owner, string repoName)
     {
-        //var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
-        //var connection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
-
         /*var states = new List<PullRequestState> { PullRequestState.Open };
 
         var reviews = new List<Octokit.GraphQL.Model.PullRequestReviewState> {
