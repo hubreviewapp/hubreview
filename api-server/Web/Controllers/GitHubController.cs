@@ -3315,9 +3315,7 @@ public class GitHubController : ControllerBase
             await connection.CloseAsync();
         }
 
-        List<int> result = [open, closed, merged];
-
-        return Ok(result);
+        return Ok([open, closed, merged]);
     }
 
     [HttpGet("analytics/{owner}/{repoName}")]
