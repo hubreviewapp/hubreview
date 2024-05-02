@@ -10,6 +10,7 @@ import axios from "axios";
 import { BASE_URL } from "../env.ts";
 import Markdown from "react-markdown";
 
+
 const iconCheckupList = <IconCheckupList style={{ width: rem(27), height: rem(27) }} />;
 
 export interface PRDetailTabProps {
@@ -36,6 +37,33 @@ export default function PrDetailTab({ pullRequestDetails }: PRDetailTabProps) {
 
   function regenerate() {
     setIsLoading(true);
+    let diff = "" ;
+
+    //get diff
+    const fetchDiffFile= async () => {
+      try {
+        const res = await axios.get(
+          `${BASE_URL}/api/github/pullrequests/${owner}/${repoName}/${prnumber}/files`,
+          {
+            withCredentials: true,
+          },
+        );
+        if (res) {
+          diff = res.data[0].content;
+          console.log(diff)
+          setAiSummary(diff);
+        }
+      } catch (error) {
+        console.error("Error fetching ai summary:", error);
+      }
+    };
+
+    fetchDiffFile();
+    setIsLoading(false);
+
+
+
+
     const fetchData = async () => {
       try {
         const res = await axios.get(
@@ -53,7 +81,8 @@ export default function PrDetailTab({ pullRequestDetails }: PRDetailTabProps) {
       }
     };
 
-    fetchData().then();
+
+    //fetchData().then();
   }
 
   useEffect(() => {
