@@ -3288,35 +3288,31 @@ public class GitHubController : ControllerBase
 
         var lastWeek = DateTime.Today.AddDays(-7);
 
-        var select = $"SELECT pullnumber, repoid FROM pullrequestinfo WHERE repoid = ANY(@repos) AND createdat >= '{lastWeek:yyyy-MM-dd}' AND author = '{UserLogin}'";
+        var query = $@"SELECT 
+            COUNT(CASE WHEN state = 'open' THEN 1 END) AS open_count,
+            COUNT(CASE WHEN state = 'closed' AND merged = FALSE THEN 1 END) AS closed_unmerged_count,
+            COUNT(CASE WHEN state = 'closed' AND merged = TRUE THEN 1 END) AS closed_merged_count
+        FROM pullrequestinfo
+        WHERE repoid = ANY(@repos) AND createdat >= '{lastWeek:yyyy-MM-dd}' AND author = '{UserLogin}'";
 
         using (var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await connection.OpenAsync();
 
-            using (var command = new NpgsqlCommand(select, connection))
+            using (var command = new NpgsqlCommand(query, connection))
             {
                 command.Parameters.AddWithValue("@repos", repos);
 
-                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
                 {
-                    while (await reader.ReadAsync())
-                    {
-                        pulls.Add((reader.GetInt32(0), reader.GetInt64(1)));
-                    }
+                    open = reader.GetInt32(0);
+                    closed = reader.GetInt32(1);
+                    merged = reader.GetInt32(2);
                 }
             }
 
             await connection.CloseAsync();
-        }
-
-        foreach (var (pullnumber, repoid) in pulls)
-        {
-            var pr = await GitHubUserClient.PullRequest.Get(repoid, pullnumber);
-
-            if (pr.State.StringValue == "open") open++;
-            else if (pr.State.StringValue == "closed" && !pr.Merged) closed++;
-            else if (pr.State.StringValue == "closed" && pr.Merged) merged++;
         }
 
         List<int> result = [open, closed, merged];
