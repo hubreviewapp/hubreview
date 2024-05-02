@@ -3276,6 +3276,54 @@ public class GitHubController : ControllerBase
         return Ok(response);
     }
 
+    [HttpGet("user/weeklypulls")]
+    public async Task<ActionResult> GetWeeklyPulls()
+    {
+
+        List<(int pullnumber, long repoid)> pulls = [];
+
+        int open = 0, closed = 0, merged = 0;
+
+        var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
+
+        var lastWeek = DateTime.Today.AddDays(-7);
+
+        var select = $"SELECT pullnumber, repoid FROM pullrequestinfo WHERE repoid = ANY(@repos) AND createdat >= '{lastWeek:yyyy-MM-dd}' AND author = '{UserLogin}'";
+
+        using (var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
+        {
+            await connection.OpenAsync();
+
+            using (var command = new NpgsqlCommand(select, connection))
+            {
+                command.Parameters.AddWithValue("@repos", repos);
+
+                using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        pulls.Add((reader.GetInt32(0), reader.GetInt64(1)));
+                    }
+                }
+            }
+
+            await connection.CloseAsync();
+        }
+
+        foreach (var (pullnumber, repoid) in pulls)
+        {
+            var pr = await GitHubUserClient.PullRequest.Get(repoid, pullnumber);
+
+            if( pr.State.StringValue == "open" ) open++;
+            else if ( pr.State.StringValue == "closed" && !pr.Merged ) closed++;
+            else if ( pr.State.StringValue == "closed" && pr.Merged ) merged++;
+        }        
+
+        List<int> result = [open, closed, merged];
+
+        return Ok(result);
+    }
+
     [HttpGet("analytics/{owner}/{repoName}")]
     public async Task<ActionResult> GetPriorityDistribution(string owner, string repoName)
     {
@@ -3400,9 +3448,6 @@ public class GitHubController : ControllerBase
     [HttpGet("analytics/{owner}/{repoName}/review_statuses")]
     public async Task<ActionResult> GetReviewStatuses(string owner, string repoName)
     {
-        //var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
-        //var connection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
-
         /*var states = new List<PullRequestState> { PullRequestState.Open };
 
         var reviews = new List<Octokit.GraphQL.Model.PullRequestReviewState> {
