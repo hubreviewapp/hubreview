@@ -1,5 +1,19 @@
-import { useEffect, useState } from "react";
-import { Group, Accordion, Box, rem, TextInput, Text, ScrollArea, Button, Popover, NumberInput } from "@mantine/core";
+import { useCallback, useEffect, useState } from "react";
+import {
+  Group,
+  Accordion,
+  Box,
+  rem,
+  TextInput,
+  Text,
+  ScrollArea,
+  Button,
+  Popover,
+  NumberInput,
+  Progress,
+  Tooltip,
+  Center,
+} from "@mantine/core";
 import { Checkbox } from "@mantine/core";
 import { IconNotebook, IconSearch, IconCirclePlus, IconSettings } from "@tabler/icons-react";
 import axios from "axios";
@@ -28,14 +42,44 @@ interface PRNavbarProps {
   selectedRepos: SelectedRepos[];
 }
 
+interface Workload {
+  currentLoad: number;
+  maxLoad: number;
+}
+
+function barColor(capacity: number, waiting: number) {
+  const workload = (waiting / capacity) * 100;
+  return workload > 80 ? "red" : workload > 60 ? "orange" : workload > 40 ? "yellow" : "green";
+}
+
 export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSelectedRepos }: PRNavbarProps) {
   //const [repository, setRepository] = useState<Repository[]>([]);
   const { user } = useUser();
   const iconSearch = <IconSearch style={{ width: rem(16), height: rem(16) }} />;
   const iconPlus = <IconCirclePlus style={{ width: rem(16), height: rem(16) }} />;
   const [query, setQuery] = useState("");
-  const [prWorkload, setPrWorkload] = useState<string | number>("");
+  const [prWorkload, setPrWorkload] = useState<string | number>(10);
   const [opened, setOpened] = useState<boolean>(false);
+  const [userWorkload, setUserWorkload] = useState<Workload>({ currentLoad: 0, maxLoad: 1000 });
+
+  //[HttpGet("user/{userName}/workload")]
+  const getWorkload = useCallback(async () => {
+    try {
+      const res = await axios.get(`${BASE_URL}/api/github/user/${user?.login}/workload`, {
+        withCredentials: true,
+      });
+      if (res) {
+        setUserWorkload(res.data);
+      }
+    } catch (error) {
+      console.error("Error getting user workload:", error);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    getWorkload();
+  }, [getWorkload]);
+
   //[HttpPost("user/{userLogin}/workload")]
   function editWorkload() {
     setOpened(false);
@@ -48,6 +92,9 @@ export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSe
           "Content-Type": "application/json",
         },
         withCredentials: true,
+      })
+      .then(function () {
+        getWorkload();
       })
       .catch(function (error) {
         console.log(error);
@@ -200,15 +247,33 @@ export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSe
             </a>
           </Popover.Target>
           <Popover.Dropdown>
+            <Text>
+              {" "}
+              Current Workload: {userWorkload.currentLoad} / {userWorkload.maxLoad}{" "}
+            </Text>
+            <Tooltip label={Math.ceil((userWorkload.currentLoad / userWorkload.maxLoad) * 100) + "%"}>
+              <Progress.Root m="5px" size="lg">
+                <Progress.Section
+                  color={barColor(userWorkload.maxLoad, userWorkload.currentLoad)}
+                  value={(userWorkload.currentLoad / userWorkload.maxLoad) * 100}
+                ></Progress.Section>
+              </Progress.Root>
+            </Tooltip>
+            <br />
             <NumberInput
-              label="Workload"
+              label="Set Workload"
               placeholder="Enter PR workload"
               size="sm"
               value={prWorkload}
               onChange={setPrWorkload}
             />
-            <br></br>
-            <Button onClick={editWorkload}> Update </Button>
+            <br />
+            <Center>
+              <Button size="sm" onClick={editWorkload}>
+                {" "}
+                Update{" "}
+              </Button>
+            </Center>
           </Popover.Dropdown>
         </Popover>
       </div>

@@ -3288,7 +3288,7 @@ public class GitHubController : ControllerBase
 
         var lastWeek = DateTime.Today.AddDays(-7);
 
-        var query = $@"SELECT 
+        var query = $@"SELECT
             COUNT(CASE WHEN state = 'open' THEN 1 END) AS open_count,
             COUNT(CASE WHEN state = 'closed' AND merged = FALSE THEN 1 END) AS closed_unmerged_count,
             COUNT(CASE WHEN state = 'closed' AND merged = TRUE THEN 1 END) AS closed_merged_count

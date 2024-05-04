@@ -11,6 +11,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { FilterList } from "../../pages/ReviewQueuePage.tsx";
 import { BASE_URL } from "../../env.ts";
+import { DatePickerInput } from "@mantine/dates";
+import "@mantine/dates/styles.css";
 
 /**
  * This component should allow easy manipulation of filters in a keyboard-oriented flow.
@@ -175,16 +177,29 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
           }
           renderOption={renderSelectOptionAssignee}
         />
-
+        {/*
         <Select
           radius="xl"
           placeholder="Date"
           leftSection={<IconCalendarTime width={rem(15)} />}
-          data={["Today", "This week", "This Month", "This year"]}
+          data={["Today", "This week", "This Month", "This year", "Specific Date"]}
           onChange={(val) =>
             setFilterList({
               ...filterList,
               fromDate: val?.toLowerCase().replace(/\s/g, ""),
+            })
+          }
+        />  */}
+
+        <DatePickerInput
+          w={200}
+          radius="xl"
+          placeholder="Date"
+          leftSection={<IconCalendarTime width={rem(15)} />}
+          onChange={(val) =>
+            setFilterList({
+              ...filterList,
+              fromDate: val?.toISOString(),
             })
           }
         />
