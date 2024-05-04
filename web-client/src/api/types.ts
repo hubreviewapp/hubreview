@@ -102,6 +102,9 @@ export interface APIPullRequestDetails {
     login: string;
   };
   baseRefName: string;
+  headCommit: {
+    treeUrl: string;
+  };
   changedFiles: {
     fileCount: number;
     lineAdditions: number;

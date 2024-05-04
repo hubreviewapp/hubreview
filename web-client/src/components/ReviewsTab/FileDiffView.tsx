@@ -1,21 +1,26 @@
-import { Box, Group, Text, ActionIcon, Tooltip, Textarea, Paper, Title } from "@mantine/core";
-import { useHover } from "@mantine/hooks";
-import { IconPlus, IconX } from "@tabler/icons-react";
+import { Box, Group, Text, ActionIcon, Tooltip, Textarea, Paper, Title, Anchor, Collapse } from "@mantine/core";
+import { useDisclosure, useHover } from "@mantine/hooks";
+import { IconExternalLink, IconMaximize, IconMinimize, IconPlus, IconX } from "@tabler/icons-react";
 import { useState } from "react";
 import { DiffLine, DiffLineType, FileDiff } from "../../utility/diff-types";
 import DiffCommentEditor from "./DiffCommentEditor";
 import DiffComment from "../DiffComment";
 import { ReviewComment } from "../../tabs/ModifiedFilesTab";
+import { APIPullRequestDetails } from "../../api/types";
+import { parseDiffMarker } from "../../utility/diff-utilities";
 
 export interface DiffLineMarkerViewProps {
   diffLine: DiffLine;
+  githubPermalink: string;
 }
 
-function DiffLineMarkerView({ diffLine: l }: DiffLineMarkerViewProps) {
+function DiffLineMarkerView({ diffLine: l, githubPermalink }: DiffLineMarkerViewProps) {
   return (
     <Group gap={0}>
       <Box w="64px" style={{ borderRight: "1px solid gray" }} ta="center">
-        EXPAND
+        <ActionIcon component="a" href={githubPermalink} variant="default" size="xs">
+          <IconExternalLink />
+        </ActionIcon>
       </Box>
       <Box px="sm">
         <code>{l.content}</code>
@@ -134,6 +139,8 @@ function DiffLineNonMarkerView({
 }
 
 export interface DiffLineViewProps {
+  pullRequestDetails: APIPullRequestDetails;
+  fileDiff: FileDiff;
   diffLine: DiffLine;
   comments: ReviewComment[];
   pendingComments: ReviewComment[];
@@ -143,6 +150,8 @@ export interface DiffLineViewProps {
 }
 
 function DiffLineView({
+  pullRequestDetails,
+  fileDiff,
   diffLine: l,
   comments,
   pendingComments,
@@ -151,7 +160,15 @@ function DiffLineView({
   onReplyCreated,
 }: DiffLineViewProps) {
   if (l.type === DiffLineType.Marker) {
-    return <DiffLineMarkerView diffLine={l} />;
+    const diffMarker = parseDiffMarker(l.content);
+    const githubPermalinkLineRangeStart = diffMarker.addition.startLine;
+    const githubPermalinkLineRangeEnd = githubPermalinkLineRangeStart + diffMarker.addition.lineCount - 1;
+    return (
+      <DiffLineMarkerView
+        diffLine={l}
+        githubPermalink={`${pullRequestDetails.headCommit.treeUrl}/${fileDiff.fileName}#L${githubPermalinkLineRangeStart}-L${githubPermalinkLineRangeEnd}`}
+      />
+    );
   } else if (
     l.type === DiffLineType.Context ||
     l.type === DiffLineType.Addition ||
@@ -174,6 +191,7 @@ function DiffLineView({
 }
 
 export interface FileDiffViewProps {
+  pullRequestDetails: APIPullRequestDetails;
   fileDiff: FileDiff;
   comments: ReviewComment[];
   pendingComments: ReviewComment[];
@@ -183,6 +201,7 @@ export interface FileDiffViewProps {
 }
 
 function FileDiffView({
+  pullRequestDetails,
   fileDiff: f,
   comments,
   pendingComments,
@@ -190,38 +209,55 @@ function FileDiffView({
   onAddPendingComment,
   onReplyCreated,
 }: FileDiffViewProps) {
+  const [fileContentsOpened, { toggle: toggleFileOpened }] = useDisclosure(true);
+
   return (
-    <Box mb="md" style={{ border: "1px solid gray", borderRadius: "5px", fontSize: "12px" }} p="sm">
-      <Box style={{ borderBottom: "1px solid gray" }}>
-        <Text>
-          {f.fileName} +{f.diffstat.additions} -{f.diffstat.deletions}
-        </Text>
+    <Box mb="md" style={{ border: "1px solid gray", borderRadius: "5px", fontSize: "12px" }}>
+      <Box style={{ borderBottom: "1px solid gray" }} bg="#001835" p="sm">
+        <Group justify="space-between">
+          <Text>
+            <Anchor href={`${pullRequestDetails.headCommit.treeUrl}/${f.fileName}`}>{f.fileName}</Anchor>{" "}
+            <Text span c="green">
+              +{f.diffstat.additions}
+            </Text>{" "}
+            <Text span c="red">
+              -{f.diffstat.deletions}
+            </Text>
+          </Text>
+          <ActionIcon variant="default" onClick={toggleFileOpened}>
+            {fileContentsOpened ? <IconMinimize /> : <IconMaximize />}
+          </ActionIcon>
+        </Group>
       </Box>
 
-      {f.lines.map((l, i) => (
-        <DiffLineView
-          key={i}
-          diffLine={l}
-          comments={comments.filter((c) => c.key.absoluteLineNumber === i)}
-          pendingComments={pendingComments.filter((c) => c.key.absoluteLineNumber === i)}
-          hasStartedReview={hasStartedReview}
-          onAddPendingComment={(partialComment) => {
-            onAddPendingComment({
-              key: {
-                fileName: f.fileName,
-                absoluteLineNumber: i,
-              },
-              label: partialComment.label,
-              decoration: partialComment.decoration,
-              content: partialComment.content,
-              createdAt: new Date().toString(),
-              author: partialComment.author,
-              isResolved: false,
-            });
-          }}
-          onReplyCreated={onReplyCreated}
-        />
-      ))}
+      <Collapse in={fileContentsOpened}>
+        {f.lines.map((l, i) => (
+          <DiffLineView
+            key={i}
+            pullRequestDetails={pullRequestDetails}
+            fileDiff={f}
+            diffLine={l}
+            comments={comments.filter((c) => c.key.absoluteLineNumber === i)}
+            pendingComments={pendingComments.filter((c) => c.key.absoluteLineNumber === i)}
+            hasStartedReview={hasStartedReview}
+            onAddPendingComment={(partialComment) => {
+              onAddPendingComment({
+                key: {
+                  fileName: f.fileName,
+                  absoluteLineNumber: i,
+                },
+                label: partialComment.label,
+                decoration: partialComment.decoration,
+                content: partialComment.content,
+                createdAt: new Date().toString(),
+                author: partialComment.author,
+                isResolved: false,
+              });
+            }}
+            onReplyCreated={onReplyCreated}
+          />
+        ))}
+      </Collapse>
     </Box>
   );
 }
