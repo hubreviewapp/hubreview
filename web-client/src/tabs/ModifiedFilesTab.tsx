@@ -28,6 +28,7 @@ import { APIPullRequestDetails } from "../api/types";
 import convertHtmlToMarkdown from "../utility/convertHtmlToMarkdown";
 import Markdown from "react-markdown";
 import { parseRawDiff } from "../utility/diff-utilities";
+import { useUser } from "../providers/context-utilities";
 
 export type GetAllPatchesResponse = {
   name: string;
@@ -118,6 +119,7 @@ export interface ModifiedFilesTabProps {
 
 function ModifiedFilesTab({ pullRequestDetails }: ModifiedFilesTabProps) {
   const { owner, repoName, prnumber } = useParams();
+  const { user } = useUser();
 
   const [hasStartedReview, setHasStartedReview] = useState(false);
   const [isSubmitReviewEditorOpen, setIsSubmitReviewEditorOpen] = useState(false);
@@ -130,11 +132,8 @@ function ModifiedFilesTab({ pullRequestDetails }: ModifiedFilesTabProps) {
   const [comments, setComments] = useState<ReviewComment[]>([]);
   const [mainComments, setMainComments] = useState<ReviewMainComment[]>([]);
 
-  const requestChangesDisabled = pendingComments.length === 0 && editorContent.length === 0;
-
-  if (requestChangesDisabled && reviewVerdict === "reject") {
-    setReviewVerdict("comment");
-  }
+  const isReviewEmpty = pendingComments.length === 0 && editorContent.length === 0;
+  const isSelfReview = pullRequestDetails.author.login === user?.login;
 
   const onAddPendingComment = useCallback(
     (comment: ReviewComment) => {
@@ -362,15 +361,18 @@ function ModifiedFilesTab({ pullRequestDetails }: ModifiedFilesTabProps) {
                 label="Comment indifferently"
                 styles={{ label: { color: "lightgray" } }}
               />
-              <Radio
-                icon={CheckIcon}
-                value="approve"
-                label="Approve"
-                styles={{ label: { color: "lime" }, radio: { border: "1px solid lime" } }}
-              />
+              <Tooltip label="You cannot approve your own pull request" disabled={!isSelfReview} refProp="rootRef">
+                <Radio
+                  icon={CheckIcon}
+                  value="approve"
+                  label="Approve"
+                  styles={{ label: { color: "lime" }, radio: { border: "1px solid lime" } }}
+                  disabled={isSelfReview}
+                />
+              </Tooltip>
               <Tooltip
-                label="You must add at least a review body or comment to request changes"
-                disabled={!requestChangesDisabled}
+                label="You cannot request changes on your own pull request"
+                disabled={!isSelfReview}
                 refProp="rootRef"
               >
                 <Radio
@@ -378,7 +380,7 @@ function ModifiedFilesTab({ pullRequestDetails }: ModifiedFilesTabProps) {
                   value="reject"
                   label="Request changes"
                   styles={{ label: { color: "crimson" }, radio: { border: "1px solid crimson" } }}
-                  disabled={requestChangesDisabled}
+                  disabled={isSelfReview}
                 />
               </Tooltip>
             </Stack>
@@ -387,9 +389,20 @@ function ModifiedFilesTab({ pullRequestDetails }: ModifiedFilesTabProps) {
           <Divider my={10} />
           <Group justify="end" mt={5}>
             <Text fs="italic">Including {pendingComments.length} comments</Text>
-            <Button size="sm" color="green" onClick={submitPendingComments}>
-              Submit
-            </Button>
+            <Tooltip
+              label="You must add at least a review body or comment to submit a review besides approval"
+              disabled={!isReviewEmpty || reviewVerdict === "approve"}
+              withArrow
+            >
+              <Button
+                size="sm"
+                color="green"
+                onClick={submitPendingComments}
+                disabled={isReviewEmpty && reviewVerdict !== "approve"}
+              >
+                Submit
+              </Button>
+            </Tooltip>
           </Group>
         </Box>
       </Collapse>
