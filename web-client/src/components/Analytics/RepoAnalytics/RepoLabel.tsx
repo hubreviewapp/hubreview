@@ -1,4 +1,4 @@
-import { Center, Flex, Paper, SegmentedControl, Text, Title } from "@mantine/core";
+import { Button, Center, Group, Paper, Popover, SegmentedControl, Text, Title } from "@mantine/core";
 import { DonutChart } from "@mantine/charts";
 import { AnalyticsProps } from "./ReviewStatusAnalytics.tsx";
 import { useEffect, useState } from "react";
@@ -62,7 +62,7 @@ function RepoLabel({ repoName, owner }: AnalyticsProps) {
           { label: "Active PRs", value: "active" },
         ]}
       />
-      <Flex justify="center">
+      <Group>
         {repoData.length == 0 ? (
           <Center>
             <Paper m="xl" p="md" withBorder>
@@ -70,13 +70,24 @@ function RepoLabel({ repoName, owner }: AnalyticsProps) {
             </Paper>
           </Center>
         ) : (
-          repoData.map((itm) => (
+          <></>
+        )}
+      </Group>
+
+      <Popover width={200} position="bottom" withArrow shadow="md">
+        <Popover.Target>
+          <Button mt="sm" variant="light">
+            See Labels
+          </Button>
+        </Popover.Target>
+        <Popover.Dropdown>
+          {repoData.map((itm) => (
             <Text c="dimmed" key={itm.name} mr="sm">
               {itm.name}:{itm.value}
             </Text>
-          ))
-        )}
-      </Flex>
+          ))}
+        </Popover.Dropdown>
+      </Popover>
       <DonutChart mt="md" data={repoData} tooltipDataSource="segment" mx="auto" />
     </Paper>
   );
