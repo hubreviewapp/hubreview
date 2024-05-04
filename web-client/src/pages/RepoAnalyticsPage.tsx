@@ -30,30 +30,33 @@ function RepoAnalyticsPage() {
                 Reviewer Workloads
               </Title>
             </Center>
-
             <RepoWorkloadAnalytics owner={owner} repoName={repoName} />
           </Grid.Col>
           <Divider orientation="vertical" />
-          <Grid.Col span={6}>
-            <ReviewStatusAnalytics owner={owner} repoName={repoName} />
-          </Grid.Col>
-        </Grid>
-        <Divider />
-        <Grid gutter="md">
-          <Grid.Col span={5}>
+          <Grid.Col span={3}>
             <Paper p="md" ta="center">
               <PriorityDataAnalytics owner={owner} repoName={repoName} />
             </Paper>
           </Grid.Col>
           <Divider orientation="vertical" />
+          <Grid.Col span={3}>
+            <Paper p="md" ta="center">
+              <RepoLabel repoName={repoName} owner={owner} />
+            </Paper>
+          </Grid.Col>
+        </Grid>
+        <Divider />
+        <Grid gutter="md">
+          <Grid.Col span={5}>
+            <ReviewStatusAnalytics owner={owner} repoName={repoName} />
+          </Grid.Col>
+          <Divider orientation="vertical" />
           <Grid.Col span={6}>
-            <RepoLabel repoName={repoName} owner={owner} />
+            <AverageMergeTimePR owner={owner} repoName={repoName} />
           </Grid.Col>
         </Grid>
       </SimpleGrid>
-      <Container mt="md">
-        <AverageMergeTimePR owner={owner} repoName={repoName} />
-      </Container>
+      <Container mt="md"></Container>
     </Container>
   );
 }

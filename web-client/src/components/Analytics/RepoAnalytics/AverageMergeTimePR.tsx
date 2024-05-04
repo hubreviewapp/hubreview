@@ -37,7 +37,6 @@ function AverageMergeTimePR({ repoName, owner }: AnalyticsProps) {
           if (res.data.length == 0) {
             setRepoData([]);
           } else setRepoData(res.data.map((itm: MergedTime) => toDate(itm)));
-          console.log("repodat", repoData);
         }
       } catch (error) {
         console.error("Error fetching AverageMergeTimePR info:", error);
