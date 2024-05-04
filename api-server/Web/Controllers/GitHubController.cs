@@ -1283,6 +1283,11 @@ public class GitHubController : ControllerBase
                 }
             }
 
+            if (!string.IsNullOrEmpty(filter.name))
+            {
+                query += " AND title ILIKE '%" + filter.name + "%'";
+            }
+
             if (!string.IsNullOrEmpty(filter.orderBy))
             {
                 switch (filter.orderBy.ToLower())
@@ -1301,10 +1306,6 @@ public class GitHubController : ControllerBase
                         break;
                         // Add more cases for other sorting options
                 }
-            }
-            if (!string.IsNullOrEmpty(filter.name))
-            {
-                query += " AND title ILIKE '%" + filter.name + "%'";
             }
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
@@ -1478,7 +1479,10 @@ public class GitHubController : ControllerBase
                         break;
                 }
             }
-
+            if (!string.IsNullOrEmpty(filter.name))
+            {
+                query += " AND title ILIKE '%" + filter.name + "%'";
+            }
             if (!string.IsNullOrEmpty(filter.orderBy))
             {
                 switch (filter.orderBy.ToLower())
@@ -1504,10 +1508,6 @@ public class GitHubController : ControllerBase
                 query += " AND labels @> @labels";
             }
              */
-            if (!string.IsNullOrEmpty(filter.name))
-            {
-                query += " AND title ILIKE '%" + filter.name + "%'";
-            }
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
@@ -1682,6 +1682,10 @@ public class GitHubController : ControllerBase
                         break;
                 }
             }
+            if (!string.IsNullOrEmpty(filter.name))
+            {
+                query += " AND title ILIKE '%" + filter.name + "%'";
+            }
 
             if (!string.IsNullOrEmpty(filter.orderBy))
             {
@@ -1708,10 +1712,6 @@ public class GitHubController : ControllerBase
                 query += " AND labels @> @labels";
             }
              */
-            if (!string.IsNullOrEmpty(filter.name))
-            {
-                query += " AND title ILIKE '%" + filter.name + "%'";
-            }
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
@@ -1890,7 +1890,10 @@ public class GitHubController : ControllerBase
                         break;
                 }
             }
-
+            if (!string.IsNullOrEmpty(filter.name))
+            {
+                query += " AND title ILIKE '%" + filter.name + "%'";
+            }
             if (!string.IsNullOrEmpty(filter.orderBy))
             {
                 switch (filter.orderBy.ToLower())
@@ -1916,10 +1919,7 @@ public class GitHubController : ControllerBase
                 query += " AND labels @> @labels";
             }
              */
-            if (!string.IsNullOrEmpty(filter.name))
-            {
-                query += " AND title ILIKE '%" + filter.name + "%'";
-            }
+
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
@@ -2089,7 +2089,10 @@ public class GitHubController : ControllerBase
                         break;
                 }
             }
-
+            if (!string.IsNullOrEmpty(filter.name))
+            {
+                query += " AND title ILIKE '%" + filter.name + "%'";
+            }
             if (!string.IsNullOrEmpty(filter.orderBy))
             {
                 switch (filter.orderBy.ToLower())
@@ -2115,10 +2118,7 @@ public class GitHubController : ControllerBase
                 query += " AND labels @> @labels";
             }
              */
-            if (!string.IsNullOrEmpty(filter.name))
-            {
-                query += " AND title ILIKE '%" + filter.name + "%'";
-            }
+
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
@@ -2296,7 +2296,10 @@ public class GitHubController : ControllerBase
                         break;
                 }
             }
-
+            if (!string.IsNullOrEmpty(filter.name))
+            {
+                query += " AND title ILIKE '%" + filter.name + "%'";
+            }
             if (!string.IsNullOrEmpty(filter.orderBy))
             {
                 switch (filter.orderBy.ToLower())
@@ -2322,10 +2325,7 @@ public class GitHubController : ControllerBase
                 query += " AND labels @> @labels";
             }
              */
-            if (!string.IsNullOrEmpty(filter.name))
-            {
-                query += " AND title ILIKE '%" + filter.name + "%'";
-            }
+
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
