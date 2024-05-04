@@ -1,4 +1,5 @@
-import { rem, Flex, MultiSelect, Select, Avatar, SelectProps, Group } from "@mantine/core";
+import { useEffect, useState } from "react";
+import { rem, Flex, MultiSelect, Select, Avatar, SelectProps, Group, TextInput } from "@mantine/core";
 import {
   IconUser,
   IconTag,
@@ -7,13 +8,12 @@ import {
   IconSortDescending,
   IconCheck,
 } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useDebouncedValue } from '@mantine/hooks';
 import axios from "axios";
 import { FilterList } from "../../pages/ReviewQueuePage.tsx";
 import { BASE_URL } from "../../env.ts";
 import { DatePickerInput } from "@mantine/dates";
 import "@mantine/dates/styles.css";
-
 /**
  * This component should allow easy manipulation of filters in a keyboard-oriented flow.
  * Similar to filter inputs used on GitHub, and many other platforms.
@@ -38,6 +38,8 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
   const [assignees, setAssignees] = useState<AssigneeProps[]>([]);
   const [authors, setAuthors] = useState<AuthorProps[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
+  const [value, setValue] = useState('');
+  const [debounced] = useDebouncedValue(value, 200);
 
   useEffect(() => {
     const fetchGetFilterLists = async () => {
@@ -62,6 +64,15 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
     opacity: 0.6,
     size: 18,
   };
+
+  useEffect(() => {
+    console.log('search filter değişti:', debounced);
+
+    setFilterList({
+      ...filterList,
+      name: debounced.toString(),
+    })
+  }, [debounced]);
 
   const renderSelectOptionAuthor: SelectProps["renderOption"] = ({ option, checked }) => {
     const author = authors.find((author) => author.login === option.value);
@@ -218,8 +229,14 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
         />
       </Flex>
 
+      <TextInput
+        label="Enter value to see debounce"
+        value={value}
+        onChange={(event) => setValue(event.currentTarget.value)}
+      />
+
       {/*
-      <TagsInput
+      <TextInput
         value={filterValues}
         onChange={setFilterValues}
         leftSection={<IconSearch width={rem(18)} />}
