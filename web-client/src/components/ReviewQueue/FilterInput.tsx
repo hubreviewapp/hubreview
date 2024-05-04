@@ -207,12 +207,13 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
           radius="xl"
           placeholder="Date"
           leftSection={<IconCalendarTime width={rem(15)} />}
-          onChange={(val) =>
+          onChange={(val) => {
+            const formattedDate = val?.toISOString().split('T')[0]; // Get only the date part
             setFilterList({
               ...filterList,
-              fromDate: val?.toISOString(),
-            })
-          }
+              fromDate: formattedDate,
+            });
+          }}
         />
 
         <Select
