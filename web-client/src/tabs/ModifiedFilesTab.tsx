@@ -20,116 +20,14 @@ import {
 import FileDiffView from "../components/ReviewsTab/FileDiffView";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import UserLogo from "../assets/icons/user.png";
-import { DiffLine, DiffLineType, DiffMarker, FileDiff } from "../utility/diff-types";
+import { FileDiff } from "../utility/diff-types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { BASE_URL } from "../env";
-
-const parseDiffMarker = (markerLine: string): DiffMarker => {
-  // See: https://en.wikipedia.org/wiki/Diff#Unified_format
-  const match = /^@@ -(\d*),?(\d*) \+(\d*),?(\d*) @@(.*)$/.exec(markerLine);
-
-  if (match === null) throw Error(`Failed to execute regexp on marker line content: ${markerLine}`);
-
-  return {
-    deletion: {
-      startLine: parseInt(match[1]),
-      lineCount: match[2] === "" ? 1 : parseInt(match[2]),
-    },
-    addition: {
-      startLine: parseInt(match[3]),
-      lineCount: match[4] === "" ? 1 : parseInt(match[4]),
-    },
-    contextContent: match[5],
-  };
-};
-
-const parseRawDiff = (getAllPatchesResponse: GetAllPatchesResponse): FileDiff => {
-  if (getAllPatchesResponse.content === null) {
-    return {
-      sha: getAllPatchesResponse.sha,
-      status: getAllPatchesResponse.status,
-      diffstat: {
-        additions: getAllPatchesResponse.adds,
-        deletions: getAllPatchesResponse.dels,
-      },
-      fileName: getAllPatchesResponse.name,
-      lines: [
-        {
-          type: DiffLineType.Context,
-          content: "This file is not viewable from HubReview",
-          lineNumber: {},
-        },
-      ],
-    };
-  }
-
-  const trimmedRawDiff = getAllPatchesResponse.content.trim();
-  const rawDiffLines = trimmedRawDiff.split("\n");
-
-  const nextLineNumbers = {
-    before: -1,
-    after: -1,
-  };
-  const diffLines: DiffLine[] = rawDiffLines.map((l): DiffLine => {
-    if (l[0] === "@") {
-      const diffMarker = parseDiffMarker(l);
-      nextLineNumbers.before = diffMarker.deletion.startLine;
-      nextLineNumbers.after = diffMarker.addition.startLine;
-
-      return {
-        type: DiffLineType.Marker,
-        content: l,
-        lineNumber: {},
-      };
-    } else if (l[0] === "+") {
-      return {
-        type: DiffLineType.Addition,
-        content: l.slice(1),
-        lineNumber: {
-          before: undefined,
-          after: nextLineNumbers.after++,
-        },
-      };
-    } else if (l[0] === "-") {
-      return {
-        type: DiffLineType.Deletion,
-        content: l.slice(1),
-        lineNumber: {
-          before: nextLineNumbers.before++,
-          after: undefined,
-        },
-      };
-    } else if (l[0] === " ") {
-      return {
-        type: DiffLineType.Context,
-        content: l.slice(1),
-        lineNumber: {
-          before: nextLineNumbers.before++,
-          after: nextLineNumbers.after++,
-        },
-      };
-    } else if (l[0] === "\\") {
-      return {
-        type: DiffLineType.NoNewlineAtEOF,
-        content: "No newline",
-        lineNumber: {},
-      };
-    }
-    throw Error("Unexpected line in diff");
-  });
-
-  return {
-    fileName: getAllPatchesResponse.name,
-    sha: getAllPatchesResponse.sha,
-    status: getAllPatchesResponse.status,
-    diffstat: {
-      additions: getAllPatchesResponse.adds,
-      deletions: getAllPatchesResponse.dels,
-    },
-    lines: diffLines,
-  };
-};
+import { APIPullRequestDetails } from "../api/types";
+import convertHtmlToMarkdown from "../utility/convertHtmlToMarkdown";
+import Markdown from "react-markdown";
+import { parseRawDiff } from "../utility/diff-utilities";
 
 export type GetAllPatchesResponse = {
   name: string;
@@ -214,7 +112,11 @@ export interface ReviewMainComment {
   submittedAt: string;
 }
 
-function ModifiedFilesTab() {
+export interface ModifiedFilesTabProps {
+  pullRequestDetails: APIPullRequestDetails;
+}
+
+function ModifiedFilesTab({ pullRequestDetails }: ModifiedFilesTabProps) {
   const { owner, repoName, prnumber } = useParams();
 
   const [hasStartedReview, setHasStartedReview] = useState(false);
@@ -348,6 +250,7 @@ function ModifiedFilesTab() {
     return fileDiffs.map((f) => (
       <FileDiffView
         key={f.fileName}
+        pullRequestDetails={pullRequestDetails}
         fileDiff={f}
         comments={comments.filter((c) => c.key.fileName === f.fileName)}
         pendingComments={pendingComments.filter((c) => c.key.fileName === f.fileName)}
@@ -356,7 +259,15 @@ function ModifiedFilesTab() {
         onReplyCreated={refetchReviewData}
       />
     ));
-  }, [fileDiffs, comments, pendingComments, hasStartedReview, onAddPendingComment, refetchReviewData]);
+  }, [
+    fileDiffs,
+    comments,
+    pendingComments,
+    hasStartedReview,
+    onAddPendingComment,
+    refetchReviewData,
+    pullRequestDetails,
+  ]);
 
   const createReviewMutation = useMutation({
     mutationFn: (req: { req: CreateReviewRequest }) =>
@@ -504,7 +415,9 @@ function ModifiedFilesTab() {
             </Badge>
           </Group>
 
-          <Text py="sm">{c.content}</Text>
+          <Text>
+            <Markdown>{convertHtmlToMarkdown(c.content)}</Markdown>
+          </Text>
         </Paper>
       ))}
       {mainComments.length === 0 && <Text>No reviews have been made yet</Text>}

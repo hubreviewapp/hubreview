@@ -114,7 +114,11 @@ function ReviewQueuePage() {
   const [closedMax, setClosedMax] = useState(0);
   const [mergedMax, setMergedMax] = useState(0);
 
+  // By `ignore`ing stale effects below, race conditions are prevented.
+  // See for details: https://react.dev/reference/react/useEffect#fetching-data-with-effects
+
   useEffect(() => {
+    let ignore = false;
     const fetchClosed = async () => {
       try {
         const res = await axios.post(`${API}/closed/filter`, filterList, {
@@ -123,7 +127,7 @@ function ReviewQueuePage() {
           },
           withCredentials: true,
         });
-        if (res.data != undefined) {
+        if (res.data !== undefined && !ignore) {
           setClosedMax(res.data.length);
           setClosedPRs(res.data.slice(0, closedLimit));
         }
@@ -131,10 +135,15 @@ function ReviewQueuePage() {
         console.error("Error fetching data:", error);
       }
     };
-    fetchClosed().then();
+    fetchClosed();
+
+    return () => {
+      ignore = true;
+    };
   }, [closedLimit, filterList]);
 
   useEffect(() => {
+    let ignore = false;
     const fetchMerged = async () => {
       try {
         const res = await axios.post(`${API}/merged/filter`, filterList, {
@@ -143,7 +152,7 @@ function ReviewQueuePage() {
           },
           withCredentials: true,
         });
-        if (res.data != undefined) {
+        if (res.data !== undefined && !ignore) {
           setMergedMax(res.data.length);
           setMergedPRs(res.data.slice(0, mergedLimit));
         }
@@ -151,9 +160,14 @@ function ReviewQueuePage() {
         console.error("Error fetching data:", error);
       }
     };
-    fetchMerged().then();
+    fetchMerged();
+
+    return () => {
+      ignore = true;
+    };
   }, [mergedLimit, filterList]);
   useEffect(() => {
+    let ignore = false;
     const fetchNeedsYourReviewPRs = async () => {
       try {
         const res = await axios.post(`${API}/needsreview/filter`, filterList, {
@@ -162,17 +176,22 @@ function ReviewQueuePage() {
           },
           withCredentials: true,
         });
-        if (res.data != undefined) {
+        if (res.data !== undefined && !ignore) {
           setNeedsYourReviewPRs(res.data);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
-    fetchNeedsYourReviewPRs().then();
+    fetchNeedsYourReviewPRs();
+
+    return () => {
+      ignore = true;
+    };
   }, [filterList]);
 
   useEffect(() => {
+    let ignore = false;
     const fetchUserPrs = async () => {
       try {
         const res = await axios.post(`${API}/userprs/filter`, filterList, {
@@ -181,17 +200,22 @@ function ReviewQueuePage() {
           },
           withCredentials: true,
         });
-        if (res.data != undefined) {
+        if (res.data !== undefined && !ignore) {
           setYourPrs(res.data);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
-    fetchUserPrs().then();
+    fetchUserPrs();
+
+    return () => {
+      ignore = true;
+    };
   }, [filterList]);
 
   useEffect(() => {
+    let ignore = false;
     const fetchWaitingAuthor = async () => {
       try {
         const res = await axios.post(`${API}/waitingauthor/filter`, filterList, {
@@ -200,17 +224,22 @@ function ReviewQueuePage() {
           },
           withCredentials: true,
         });
-        if (res.data != undefined) {
+        if (res.data !== undefined && !ignore) {
           setWaitingAuthorPRs(res.data);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
-    fetchWaitingAuthor().then();
+    fetchWaitingAuthor();
+
+    return () => {
+      ignore = true;
+    };
   }, [filterList]);
 
   useEffect(() => {
+    let ignore = false;
     const fetchOpenPRs = async () => {
       try {
         const res = await axios.post(`${API}/open/filter`, filterList, {
@@ -219,7 +248,7 @@ function ReviewQueuePage() {
           },
           withCredentials: true,
         });
-        if (res.data != undefined) {
+        if (res.data !== undefined && !ignore) {
           setOpenPRs(res.data);
         }
       } catch (error) {
@@ -227,7 +256,11 @@ function ReviewQueuePage() {
       }
     };
 
-    fetchOpenPRs().then();
+    fetchOpenPRs();
+
+    return () => {
+      ignore = true;
+    };
   }, [filterList]);
 
   return (
