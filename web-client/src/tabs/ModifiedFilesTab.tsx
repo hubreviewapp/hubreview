@@ -15,7 +15,6 @@ import {
   Badge,
   Loader,
   Tooltip,
-  CheckIcon,
 } from "@mantine/core";
 import FileDiffView from "../components/ReviewsTab/FileDiffView";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -355,17 +354,12 @@ function ModifiedFilesTab({ pullRequestDetails }: ModifiedFilesTabProps) {
           <Title order={5}>Verdict</Title>
           <Radio.Group value={reviewVerdict} onChange={(val) => setReviewVerdict(val as ReviewVerdict)}>
             <Stack mt="sm">
-              <Radio
-                icon={CheckIcon}
-                value="comment"
-                label="Comment indifferently"
-                styles={{ label: { color: "lightgray" } }}
-              />
+              <Radio value="comment" label="Comment indifferently" styles={{ label: { color: "lightgray" } }} />
               <Tooltip label="You cannot approve your own pull request" disabled={!isSelfReview} refProp="rootRef">
                 <Radio
-                  icon={CheckIcon}
                   value="approve"
                   label="Approve"
+                  color="lime"
                   styles={{ label: { color: "lime" }, radio: { border: "1px solid lime" } }}
                   disabled={isSelfReview}
                 />
@@ -376,9 +370,9 @@ function ModifiedFilesTab({ pullRequestDetails }: ModifiedFilesTabProps) {
                 refProp="rootRef"
               >
                 <Radio
-                  icon={CheckIcon}
                   value="reject"
                   label="Request changes"
+                  color="crimson"
                   styles={{ label: { color: "crimson" }, radio: { border: "1px solid crimson" } }}
                   disabled={isSelfReview}
                 />
