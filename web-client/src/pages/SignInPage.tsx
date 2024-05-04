@@ -1,10 +1,11 @@
-import { Grid, Box, Text, Card, Button, Stack, Group, Image, Title } from "@mantine/core";
+import { Grid, Box, Text, Card, Button, Stack, Group, Image } from "@mantine/core";
 import GitHubLogo from "../assets/icons/github-mark-white.png";
 import SignIn from "../assets/icons/signin.png";
 import { GITHUB_OAUTH_CLIENT_ID } from "../env";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useUser } from "../providers/context-utilities";
 import { useEffect } from "react";
+import Logo from "../assets/icons/logo-color.svg";
 
 function SignInPage() {
   const location = useLocation();
@@ -35,7 +36,9 @@ function SignInPage() {
   return (
     <Box h={600} p={5} m={0} w="100%">
       <Group p="20px">
-        <Title order={2}>HubReview</Title>
+        <Box>
+          <Image h={36} src={Logo} alt="HubReview" />
+        </Box>
         <Text>The NextGen Code Review Hub</Text>
       </Group>
       <Grid m="30px">
