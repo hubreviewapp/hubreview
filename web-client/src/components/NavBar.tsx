@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Button, Grid, Box, rem, Avatar, Space, Image } from "@mantine/core";
+import { Button, Grid, Box, rem, Avatar, Space, Image, Center } from "@mantine/core";
 import { useState, useEffect } from "react";
 import { IconLogout } from "@tabler/icons-react";
 import { useUser } from "../providers/context-utilities";
@@ -42,12 +42,14 @@ function NavBar() {
     <Box bg="#0D1B2A" p="20px">
       <Grid>
         <Grid.Col span={2.5}>
-          <Link to="/" style={{ color: "white", textDecoration: "none" }}>
-            <Image h={50} src={Logo} />
-          </Link>
+          <Center h="100%" w="100%">
+            <Link to="/" style={{ color: "white", textDecoration: "none" }}>
+              <Image h={28} src={Logo} />
+            </Link>
+          </Center>
         </Grid.Col>
         <Grid.Col span={2.5}></Grid.Col>
-        <Grid.Col span={7} style={{ display: "flex", justifyContent: "space-evenly", marginTop: "10px" }}>
+        <Grid.Col span={7} style={{ display: "flex", justifyContent: "space-evenly" }}>
           <Button
             component={Link}
             variant={isActive == 1 ? "outline" : "transparent"}
