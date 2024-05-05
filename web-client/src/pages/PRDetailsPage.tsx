@@ -143,7 +143,7 @@ function PRDetailsPage(props: PRDetailsPageProps) {
         <TabComp tabs={tabs} currentTab={currentTab} />
         <br />
         <Box>
-          {currentTab === "reviews" && <ModifiedFilesTab />}
+          {currentTab === "reviews" && <ModifiedFilesTab pullRequestDetails={pullRequestDetails} />}
           {currentTab === "comments" && <CommentsTab pullRequestDetails={pullRequestDetails} mergeInfo={mergeInfo} />}
           {currentTab === "summary" && <PrDetailTab pullRequestDetails={pullRequestDetails} />}
           {currentTab === "commits" && <CommitsTab />}
