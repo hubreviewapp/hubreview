@@ -16,7 +16,17 @@ import {
   Flex,
 } from "@mantine/core";
 import { Checkbox } from "@mantine/core";
-import { IconNotebook, IconSearch, IconCirclePlus, IconSettings, IconInfoCircle } from "@tabler/icons-react";
+import {
+  IconNotebook,
+  IconSearch,
+  IconCirclePlus,
+  IconSettings,
+  IconInfoCircle,
+  IconGitPullRequestClosed,
+  IconGitMerge,
+  IconGitPullRequest,
+  IconAlarm,
+} from "@tabler/icons-react";
 import axios from "axios";
 import classes from "../../styles/NavbarSimple.module.css";
 import { Repository } from "../../models/Repository.tsx";
@@ -30,10 +40,10 @@ const data = [
   //{ link: "", label: "New PRs", icon: IconBellRinging },
   { link: "", label: "Needs your review" },
   { link: "", label: "Your PRs" },
-  { link: "", label: "Waiting for author" },
-  { link: "", label: "All open PRs" },
-  { link: "", label: "Merged" },
-  { link: "", label: "Closed" },
+  { link: "", label: "Waiting for author", icon: IconAlarm },
+  { link: "", label: "All open PRs", icon: IconGitPullRequest },
+  { link: "", label: "Merged", icon: IconGitMerge },
+  { link: "", label: "Closed", icon: IconGitPullRequestClosed },
 ];
 
 interface PRNavbarProps {
@@ -210,8 +220,10 @@ export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSe
       key={item.label}
       onClick={() => setActiveSection(item.label)}
     >
-      {/*{item.icon && <item.icon className={classes.linkIcon} stroke={1.5} />} */}
-      <span>{item.label}</span>
+      <Flex justify="space-evenly">
+        <span>{item.label}</span>
+        {item.icon && <item.icon className={classes.linkIcon} stroke={1.5} />}
+      </Flex>
     </Link>
   ));
 
