@@ -1313,12 +1313,11 @@ public class GitHubController : ControllerBase
 
                         foreach (var obj in reviewers)
                         {
-                            var user = await GitHubUserClient.User.Get(obj);
                             combined_revs.Add(new ReviewObjDB
                             {
                                 login = obj,
                                 state = "PENDING",
-                                avatarUrl = user.AvatarUrl
+                                avatarUrl = "https://github.com/" + obj + ".png"
                             });
                         }
 
@@ -1326,12 +1325,11 @@ public class GitHubController : ControllerBase
                         {
                             if (!reviewers.Contains(name.login))
                             {
-                                var user = await GitHubUserClient.User.Get(name.login);
                                 combined_revs.Add(new ReviewObjDB
                                 {
                                     login = name.login,
                                     state = name.state,
-                                    avatarUrl = user.AvatarUrl
+                                    avatarUrl = "https://github.com/" + name.login + ".png"
                                 });
                             }
                         }
@@ -1477,12 +1475,11 @@ public class GitHubController : ControllerBase
 
                         foreach (var obj in reviewers)
                         {
-                            var user = await GitHubUserClient.User.Get(obj);
                             combined_revs.Add(new ReviewObjDB
                             {
                                 login = obj,
                                 state = "PENDING",
-                                avatarUrl = user.AvatarUrl
+                                avatarUrl = "https://github.com/" + obj + ".png"
                             });
                         }
 
@@ -1490,12 +1487,11 @@ public class GitHubController : ControllerBase
                         {
                             if (!reviewers.Contains(name.login))
                             {
-                                var user = await GitHubUserClient.User.Get(name.login);
                                 combined_revs.Add(new ReviewObjDB
                                 {
                                     login = name.login,
                                     state = name.state,
-                                    avatarUrl = user.AvatarUrl
+                                    avatarUrl = "https://github.com/" + name.login + ".png"
                                 });
                             }
                         }
@@ -1644,12 +1640,11 @@ public class GitHubController : ControllerBase
 
                         foreach (var obj in reviewers)
                         {
-                            var user = await GitHubUserClient.User.Get(obj);
                             combined_revs.Add(new ReviewObjDB
                             {
                                 login = obj,
                                 state = "PENDING",
-                                avatarUrl = user.AvatarUrl
+                                avatarUrl = "https://github.com/" + obj + ".png"
                             });
                         }
 
@@ -1657,12 +1652,11 @@ public class GitHubController : ControllerBase
                         {
                             if (!reviewers.Contains(name.login))
                             {
-                                var user = await GitHubUserClient.User.Get(name.login);
                                 combined_revs.Add(new ReviewObjDB
                                 {
                                     login = name.login,
                                     state = name.state,
-                                    avatarUrl = user.AvatarUrl
+                                    avatarUrl = "https://github.com/" + name.login + ".png"
                                 });
                             }
                         }
@@ -1814,12 +1808,11 @@ public class GitHubController : ControllerBase
 
                         foreach (var obj in reviewers)
                         {
-                            var user = await GitHubUserClient.User.Get(obj);
                             combined_revs.Add(new ReviewObjDB
                             {
                                 login = obj,
                                 state = "PENDING",
-                                avatarUrl = user.AvatarUrl
+                                avatarUrl = "https://github.com/" + obj + ".png"
                             });
                         }
 
@@ -1827,12 +1820,11 @@ public class GitHubController : ControllerBase
                         {
                             if (!reviewers.Contains(name.login))
                             {
-                                var user = await GitHubUserClient.User.Get(name.login);
                                 combined_revs.Add(new ReviewObjDB
                                 {
                                     login = name.login,
                                     state = name.state,
-                                    avatarUrl = user.AvatarUrl
+                                    avatarUrl = "https://github.com/" + name.login + ".png"
                                 });
                             }
                         }
@@ -1983,12 +1975,11 @@ public class GitHubController : ControllerBase
 
                         foreach (var obj in reviewers)
                         {
-                            var user = await GitHubUserClient.User.Get(obj);
                             combined_revs.Add(new ReviewObjDB
                             {
                                 login = obj,
                                 state = "PENDING",
-                                avatarUrl = user.AvatarUrl
+                                avatarUrl = "https://github.com/" + obj + ".png"
                             });
                         }
 
@@ -1996,12 +1987,11 @@ public class GitHubController : ControllerBase
                         {
                             if (!reviewers.Contains(name.login))
                             {
-                                var user = await GitHubUserClient.User.Get(name.login);
                                 combined_revs.Add(new ReviewObjDB
                                 {
                                     login = name.login,
                                     state = name.state,
-                                    avatarUrl = user.AvatarUrl
+                                    avatarUrl = "https://github.com/" + name.login + ".png"
                                 });
                             }
                         }
@@ -2153,12 +2143,11 @@ public class GitHubController : ControllerBase
 
                         foreach (var obj in reviewers)
                         {
-                            var user = await GitHubUserClient.User.Get(obj);
                             combined_revs.Add(new ReviewObjDB
                             {
                                 login = obj,
                                 state = "PENDING",
-                                avatarUrl = user.AvatarUrl
+                                avatarUrl = "https://github.com/" + obj + ".png"
                             });
                         }
 
@@ -2166,12 +2155,11 @@ public class GitHubController : ControllerBase
                         {
                             if (!reviewers.Contains(name.login))
                             {
-                                var user = await GitHubUserClient.User.Get(name.login);
                                 combined_revs.Add(new ReviewObjDB
                                 {
                                     login = name.login,
                                     state = name.state,
-                                    avatarUrl = user.AvatarUrl
+                                    avatarUrl = "https://github.com/" + name.login + ".png"
                                 });
                             }
                         }
