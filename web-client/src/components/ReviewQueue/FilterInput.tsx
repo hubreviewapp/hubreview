@@ -7,8 +7,9 @@ import {
   IconChartArrows,
   IconSortDescending,
   IconCheck,
+  IconSearch,
 } from "@tabler/icons-react";
-import { useDebouncedValue } from '@mantine/hooks';
+import { useDebouncedValue } from "@mantine/hooks";
 import axios from "axios";
 import { FilterList } from "../../pages/ReviewQueuePage.tsx";
 import { BASE_URL } from "../../env.ts";
@@ -38,7 +39,7 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
   const [assignees, setAssignees] = useState<AssigneeProps[]>([]);
   const [authors, setAuthors] = useState<AuthorProps[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState("");
   const [debounced] = useDebouncedValue(value, 200);
 
   useEffect(() => {
@@ -66,13 +67,11 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
   };
 
   useEffect(() => {
-    console.log('search filter değişti:', debounced);
-
     setFilterList({
       ...filterList,
       name: debounced.toString(),
-    })
-  }, [debounced]);
+    });
+  }, [debounced]); // eslint-disable-line
 
   const renderSelectOptionAuthor: SelectProps["renderOption"] = ({ option, checked }) => {
     const author = authors.find((author) => author.login === option.value);
@@ -209,10 +208,11 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
           leftSection={<IconCalendarTime width={rem(15)} />}
           maxDate={new Date()}
           onChange={(val) => {
-            const formattedDate = val?.toISOString().split('T')[0]; // Get only the date part
+            const dateObject = new Date(val ? val : "");
+            dateObject.setDate(dateObject.getDate() + 1);
             setFilterList({
               ...filterList,
-              fromDate: formattedDate,
+              fromDate: val ? dateObject.toISOString().split("T")[0] : null,
             });
           }}
         />
@@ -232,9 +232,10 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
       </Flex>
 
       <TextInput
-        label="Enter value to see debounce"
+        leftSection={<IconSearch width={rem(18)} />}
         value={value}
         onChange={(event) => setValue(event.currentTarget.value)}
+        placeholder="Search..."
       />
 
       {/*
