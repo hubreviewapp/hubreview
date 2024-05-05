@@ -1222,8 +1222,7 @@ public class GitHubController : ControllerBase
 
         if (filter.repositories == null)
         {
-            // FIXME: ???
-            filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
+            return Ok(allPRs);
         }
 
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
@@ -1419,8 +1418,7 @@ public class GitHubController : ControllerBase
 
         if (filter.repositories == null)
         {
-            // FIXME: ???
-            filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
+            return Ok(allPRs);
         }
 
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
@@ -1623,8 +1621,7 @@ public class GitHubController : ControllerBase
 
         if (filter.repositories == null)
         {
-            // FIXME: ???
-            filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
+            return Ok(allPRs);
         }
 
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
@@ -1829,8 +1826,7 @@ public class GitHubController : ControllerBase
 
         if (filter.repositories == null)
         {
-            // FIXME: ???
-            filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
+            return Ok(allPRs);
         }
 
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
@@ -2030,7 +2026,7 @@ public class GitHubController : ControllerBase
 
         if (filter.repositories == null)
         {
-            filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
+            return Ok(allPRs);
         }
 
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
@@ -2236,8 +2232,7 @@ public class GitHubController : ControllerBase
 
         if (filter.repositories == null)
         {
-            // FIXME: ???
-            filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
+            return Ok(allPRs);
         }
 
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
