@@ -1229,7 +1229,7 @@ public class GitHubController : ControllerBase
             }
             if (!string.IsNullOrEmpty(filter.assignee))
             {
-                query += " AND '"+ filter.assignee + "' = ANY(assignees)";
+                query += " AND '" + filter.assignee + "' = ANY(assignees)";
             }
             query += " AND reponame = ANY(@repositories)";
             if (!string.IsNullOrEmpty(filter.priority))
@@ -1394,7 +1394,7 @@ public class GitHubController : ControllerBase
             }
             if (!string.IsNullOrEmpty(filter.assignee))
             {
-                query += " AND '"+ filter.assignee + "' = ANY(assignees)";
+                query += " AND '" + filter.assignee + "' = ANY(assignees)";
             }
             query += " AND reponame = ANY(@repositories)";
             if (!string.IsNullOrEmpty(filter.priority))
@@ -1562,7 +1562,7 @@ public class GitHubController : ControllerBase
             }
             if (!string.IsNullOrEmpty(filter.assignee))
             {
-                query += " AND '"+ filter.assignee + "' = ANY(assignees)";
+                query += " AND '" + filter.assignee + "' = ANY(assignees)";
             }
             query += " AND reponame = ANY(@repositories)";
             if (!string.IsNullOrEmpty(filter.priority))
@@ -1729,7 +1729,7 @@ public class GitHubController : ControllerBase
             }
             if (!string.IsNullOrEmpty(filter.assignee))
             {
-                query += " AND '"+ filter.assignee + "' = ANY(assignees)";
+                query += " AND '" + filter.assignee + "' = ANY(assignees)";
             }
             query += " AND reponame = ANY(@repositories)";
             if (!string.IsNullOrEmpty(filter.priority))
@@ -1899,7 +1899,7 @@ public class GitHubController : ControllerBase
             }
             if (!string.IsNullOrEmpty(filter.assignee))
             {
-                query += " AND '"+ filter.assignee + "' = ANY(assignees)";
+                query += " AND '" + filter.assignee + "' = ANY(assignees)";
             }
             query += " AND reponame = ANY(@repositories)";
             if (!string.IsNullOrEmpty(filter.priority))
@@ -2068,7 +2068,7 @@ public class GitHubController : ControllerBase
             }
             if (!string.IsNullOrEmpty(filter.assignee))
             {
-                query += " AND '"+ filter.assignee + "' = ANY(assignees)";
+                query += " AND '" + filter.assignee + "' = ANY(assignees)";
             }
             query += " AND reponame = ANY(@repositories)";
             if (!string.IsNullOrEmpty(filter.priority))
