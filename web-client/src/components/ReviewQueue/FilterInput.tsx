@@ -1,4 +1,5 @@
-import { rem, Flex, MultiSelect, Select, Avatar, SelectProps, Group } from "@mantine/core";
+import { useEffect, useState } from "react";
+import { rem, Flex, MultiSelect, Select, Avatar, SelectProps, Group, TextInput } from "@mantine/core";
 import {
   IconUser,
   IconTag,
@@ -6,14 +7,14 @@ import {
   IconChartArrows,
   IconSortDescending,
   IconCheck,
+  IconSearch,
 } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useDebouncedValue } from "@mantine/hooks";
 import axios from "axios";
 import { FilterList } from "../../pages/ReviewQueuePage.tsx";
 import { BASE_URL } from "../../env.ts";
 import { DatePickerInput } from "@mantine/dates";
 import "@mantine/dates/styles.css";
-
 /**
  * This component should allow easy manipulation of filters in a keyboard-oriented flow.
  * Similar to filter inputs used on GitHub, and many other platforms.
@@ -38,6 +39,8 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
   const [assignees, setAssignees] = useState<AssigneeProps[]>([]);
   const [authors, setAuthors] = useState<AuthorProps[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
+  const [value, setValue] = useState("");
+  const [debounced] = useDebouncedValue(value, 200);
 
   useEffect(() => {
     const fetchGetFilterLists = async () => {
@@ -63,6 +66,13 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
     size: 18,
   };
 
+  useEffect(() => {
+    setFilterList({
+      ...filterList,
+      name: debounced.toString(),
+    });
+  }, [debounced]); // eslint-disable-line
+
   const renderSelectOptionAuthor: SelectProps["renderOption"] = ({ option, checked }) => {
     const author = authors.find((author) => author.login === option.value);
     if (!author) return null;
@@ -76,11 +86,11 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
   };
 
   const renderSelectOptionAssignee: SelectProps["renderOption"] = ({ option, checked }) => {
-    const author = authors.find((author) => author.login === option.value);
-    if (!author) return null;
+    const assignee = assignees.find((assignee) => assignee.login === option.value);
+    if (!assignee) return null;
     return (
       <Group flex="1" gap="xs" wrap="nowrap">
-        <Avatar src={author.avatarUrl} size="sm" />
+        <Avatar src={assignee.avatarUrl} size="sm" />
         {option.label}
         {checked && <IconCheck style={{ marginInlineStart: "auto" }} {...iconProps} />}
       </Group>
@@ -196,12 +206,15 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
           radius="xl"
           placeholder="Date"
           leftSection={<IconCalendarTime width={rem(15)} />}
-          onChange={(val) =>
+          maxDate={new Date()}
+          onChange={(val) => {
+            const dateObject = new Date(val ? val : "");
+            dateObject.setDate(dateObject.getDate() + 1);
             setFilterList({
               ...filterList,
-              fromDate: val?.toISOString(),
-            })
-          }
+              fromDate: val ? dateObject.toISOString().split("T")[0] : null,
+            });
+          }}
         />
 
         <Select
@@ -218,8 +231,15 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
         />
       </Flex>
 
+      <TextInput
+        leftSection={<IconSearch width={rem(18)} />}
+        value={value}
+        onChange={(event) => setValue(event.currentTarget.value)}
+        placeholder="Search..."
+      />
+
       {/*
-      <TagsInput
+      <TextInput
         value={filterValues}
         onChange={setFilterValues}
         leftSection={<IconSearch width={rem(18)} />}
