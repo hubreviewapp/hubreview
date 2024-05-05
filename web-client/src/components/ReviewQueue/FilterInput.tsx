@@ -101,6 +101,7 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
     <>
       <Flex my="md">
         <Select
+          clearable
           radius="xl"
           placeholder="Author"
           checkIconPosition="right"
@@ -138,6 +139,7 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
         />
 
         <Select
+          clearable
           radius="xl"
           placeholder="Priority"
           leftSection={<IconChartArrows width={rem(15)} />}
@@ -171,6 +173,7 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
         />
 
         <Select
+          clearable
           radius="xl"
           placeholder="Assignee"
           checkIconPosition="right"
@@ -202,6 +205,7 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
         />  */}
 
         <DatePickerInput
+          clearable
           w={200}
           radius="xl"
           placeholder="Date"
@@ -218,6 +222,7 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
         />
 
         <Select
+          clearable
           radius="xl"
           placeholder="Sort"
           leftSection={<IconSortDescending width={rem(15)} />}
@@ -237,17 +242,6 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
         onChange={(event) => setValue(event.currentTarget.value)}
         placeholder="Search..."
       />
-
-      {/*
-      <TextInput
-        value={filterValues}
-        onChange={setFilterValues}
-        leftSection={<IconSearch width={rem(18)} />}
-        description="Filter"
-        placeholder="Tags"
-        w="100%"
-      />
-      */}
     </>
   );
 }

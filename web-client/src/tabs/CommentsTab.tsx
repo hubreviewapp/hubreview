@@ -85,14 +85,16 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
   }
 
   //[HttpDelete("pullrequest/{owner}/{repoName}/{comment_id}/deleteComment")]
-  function deletePRComment(commentId: number) {
-    setIsLoading(true);
+  function deletePRComment(commentId: number, setCommentLoading: (isLoading: boolean) => void) {
+    setCommentLoading(true);
     axios
       .delete(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${commentId}/deleteComment`, {
         withCredentials: true,
       })
       .then(function () {
-        fetchPRComments();
+        fetchPRComments().then(function () {
+          setCommentLoading(false);
+        });
       })
       .catch(function (error) {
         console.log(error);
@@ -110,10 +112,9 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
         withCredentials: true,
       })
       .then(function () {
-        fetchPRComments();
-      })
-      .then(function () {
-        setCommentLoading(false);
+        fetchPRComments().then(function () {
+          setCommentLoading(false);
+        });
       })
       .catch(function (error) {
         console.log(error);
@@ -138,10 +139,9 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
         withCredentials: true,
       })
       .then(function () {
-        return fetchPRComments();
-      })
-      .then(function () {
-        setCommentLoading(false);
+        return fetchPRComments().then(function () {
+          setCommentLoading(false);
+        });
       })
       .catch(function (error) {
         console.log(error);
@@ -259,7 +259,7 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
                   comment.status === "Duplicate"
                 }
                 isAIGenerated={false}
-                deletePRComment={() => deletePRComment(comment.id)}
+                deletePRComment={deletePRComment}
                 editPRComment={editPRComment}
                 replyComment={replyComment}
                 status={comment.status}

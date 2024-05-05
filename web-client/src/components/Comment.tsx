@@ -15,7 +15,7 @@ interface CommentProps {
   date: Date;
   isResolved?: boolean;
   isAIGenerated?: boolean;
-  deletePRComment: (id: number) => void;
+  deletePRComment: (id: number, setCommentLoading: (isLoading: boolean) => void) => void;
   editPRComment: (id: number, body: string, setCommentLoading: (isLoading: boolean) => void) => void;
   updatePRCommentStatus: (id: number, status: string | null, setCommentLoading: (isLoading: boolean) => void) => void;
   replyComment: (id: number, body: string) => void;
@@ -120,7 +120,7 @@ export function Comment({
       key={item}
       onClick={() => {
         if (item === "Delete") {
-          deletePRComment(id);
+          deletePRComment(id, setCommentLoading);
         }
         if (item === "Edit") {
           setIsEditActive(true);
