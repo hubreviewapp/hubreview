@@ -489,8 +489,7 @@ function PRDetailSideBar({ pullRequestDetails }: PRDetailSideBarProps) {
               </Tooltip>
             </Flex>
           </Grid.Col>
-          <Grid.Col span={3}></Grid.Col>
-          <Grid.Col span={2}></Grid.Col>
+          <Grid.Col span={5}></Grid.Col>
           <Grid.Col span={2}>
             <Popover width={250} position="bottom" clickOutsideEvents={["mouseup", "touchend"]}>
               <Popover.Target>
