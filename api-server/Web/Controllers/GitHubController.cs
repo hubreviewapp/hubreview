@@ -277,9 +277,12 @@ public class GitHubController : ControllerBase
                         var ownerlog = reader.GetString(2);
 
                         bool isAdmin;
-                        if (repoAdminsCache.ContainsKey(ownerlog)){
+                        if (repoAdminsCache.ContainsKey(ownerlog))
+                        {
                             isAdmin = repoAdminsCache[ownerlog];
-                        }else {
+                        }
+                        else
+                        {
                             isAdmin = await GetRepoAdmins(ownerlog, UserLogin);
                             repoAdminsCache[ownerlog] = isAdmin;
                         }
