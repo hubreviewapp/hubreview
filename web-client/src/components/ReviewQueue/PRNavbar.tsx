@@ -13,9 +13,20 @@ import {
   Progress,
   Tooltip,
   Center,
+  Flex,
 } from "@mantine/core";
 import { Checkbox } from "@mantine/core";
-import { IconNotebook, IconSearch, IconCirclePlus, IconSettings } from "@tabler/icons-react";
+import {
+  IconNotebook,
+  IconSearch,
+  IconCirclePlus,
+  IconSettings,
+  IconInfoCircle,
+  IconGitPullRequestClosed,
+  IconGitMerge,
+  IconGitPullRequest,
+  IconAlarm,
+} from "@tabler/icons-react";
 import axios from "axios";
 import classes from "../../styles/NavbarSimple.module.css";
 import { Repository } from "../../models/Repository.tsx";
@@ -29,10 +40,10 @@ const data = [
   //{ link: "", label: "New PRs", icon: IconBellRinging },
   { link: "", label: "Needs your review" },
   { link: "", label: "Your PRs" },
-  { link: "", label: "Waiting for author" },
-  { link: "", label: "All open PRs" },
-  { link: "", label: "Merged" },
-  { link: "", label: "Closed" },
+  { link: "", label: "Waiting for author", icon: IconAlarm },
+  { link: "", label: "All open PRs", icon: IconGitPullRequest },
+  { link: "", label: "Merged", icon: IconGitMerge },
+  { link: "", label: "Closed", icon: IconGitPullRequestClosed },
 ];
 
 interface PRNavbarProps {
@@ -61,6 +72,7 @@ export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSe
   const [prWorkload, setPrWorkload] = useState<string | number>(10);
   const [opened, setOpened] = useState<boolean>(false);
   const [userWorkload, setUserWorkload] = useState<Workload>({ currentLoad: 0, maxLoad: 1000 });
+  const iconInfoCircle = <IconInfoCircle style={{ width: rem(20), height: rem(20) }} />;
 
   //[HttpGet("user/{userName}/workload")]
   const getWorkload = useCallback(async () => {
@@ -208,8 +220,10 @@ export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSe
       key={item.label}
       onClick={() => setActiveSection(item.label)}
     >
-      {/*{item.icon && <item.icon className={classes.linkIcon} stroke={1.5} />} */}
-      <span>{item.label}</span>
+      <Flex justify="space-evenly">
+        <span>{item.label}</span>
+        {item.icon && <item.icon className={classes.linkIcon} stroke={1.5} />}
+      </Flex>
     </Link>
   ));
 
@@ -260,14 +274,12 @@ export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSe
               </Progress.Root>
             </Tooltip>
             <br />
-            <NumberInput
-              label="Set Workload"
-              placeholder="Enter PR workload"
-              size="sm"
-              value={prWorkload}
-              onChange={setPrWorkload}
-            />
-            <br />
+
+            <Flex justify="space-between">
+              <Text> Set Workload </Text>
+              <Tooltip label="Specify the capacity for the number of pull request reviews">{iconInfoCircle}</Tooltip>
+            </Flex>
+            <NumberInput placeholder="Enter PR workload" size="sm" value={prWorkload} onChange={setPrWorkload} />
             <Center>
               <Button size="sm" onClick={editWorkload}>
                 {" "}
