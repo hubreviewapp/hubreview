@@ -87,11 +87,11 @@ function FilterInput({ filterList, setFilterList }: FilterInputProps) {
   };
 
   const renderSelectOptionAssignee: SelectProps["renderOption"] = ({ option, checked }) => {
-    const author = authors.find((author) => author.login === option.value);
-    if (!author) return null;
+    const assignee = assignees.find((assignee) => assignee.login === option.value);
+    if (!assignee) return null;
     return (
       <Group flex="1" gap="xs" wrap="nowrap">
-        <Avatar src={author.avatarUrl} size="sm" />
+        <Avatar src={assignee.avatarUrl} size="sm" />
         {option.label}
         {checked && <IconCheck style={{ marginInlineStart: "auto" }} {...iconProps} />}
       </Group>
