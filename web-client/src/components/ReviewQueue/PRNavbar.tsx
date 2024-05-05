@@ -13,9 +13,10 @@ import {
   Progress,
   Tooltip,
   Center,
+  Flex,
 } from "@mantine/core";
 import { Checkbox } from "@mantine/core";
-import { IconNotebook, IconSearch, IconCirclePlus, IconSettings } from "@tabler/icons-react";
+import { IconNotebook, IconSearch, IconCirclePlus, IconSettings, IconInfoCircle } from "@tabler/icons-react";
 import axios from "axios";
 import classes from "../../styles/NavbarSimple.module.css";
 import { Repository } from "../../models/Repository.tsx";
@@ -61,6 +62,7 @@ export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSe
   const [prWorkload, setPrWorkload] = useState<string | number>(10);
   const [opened, setOpened] = useState<boolean>(false);
   const [userWorkload, setUserWorkload] = useState<Workload>({ currentLoad: 0, maxLoad: 1000 });
+  const iconInfoCircle = <IconInfoCircle style={{ width: rem(20), height: rem(20) }} />;
 
   //[HttpGet("user/{userName}/workload")]
   const getWorkload = useCallback(async () => {
@@ -260,14 +262,12 @@ export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSe
               </Progress.Root>
             </Tooltip>
             <br />
-            <NumberInput
-              label="Set Workload"
-              placeholder="Enter PR workload"
-              size="sm"
-              value={prWorkload}
-              onChange={setPrWorkload}
-            />
-            <br />
+
+            <Flex justify="space-between">
+              <Text> Set Workload </Text>
+              <Tooltip label="Specify the capacity for the number of pull request reviews">{iconInfoCircle}</Tooltip>
+            </Flex>
+            <NumberInput placeholder="Enter PR workload" size="sm" value={prWorkload} onChange={setPrWorkload} />
             <Center>
               <Button size="sm" onClick={editWorkload}>
                 {" "}
