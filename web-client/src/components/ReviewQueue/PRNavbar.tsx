@@ -99,7 +99,7 @@ export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSe
       return;
     }
     axios
-      .post(`${BASE_URL}/api/github/user/${user?.login}/workload`, prWorkload * 100, {
+      .post(`${BASE_URL}/api/github/user/${user?.login}/workload`, prWorkload, {
         headers: {
           "Content-Type": "application/json",
         },

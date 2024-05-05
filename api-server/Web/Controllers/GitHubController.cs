@@ -19,7 +19,6 @@ using Octokit.GraphQL.Core.Introspection;
 using Octokit.GraphQL.Model;
 using static Octokit.GraphQL.Variable;
 
-
 namespace CS.Web.Controllers;
 
 [Route("api/github")]
@@ -260,6 +259,7 @@ public class GitHubController : ControllerBase
     {
         var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
+        Dictionary<string, bool> repoAdminsCache = new Dictionary<string, bool>();
         List<RepoInfo> allRepos = new List<RepoInfo>();
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
@@ -274,13 +274,26 @@ public class GitHubController : ControllerBase
                 {
                     while (await reader.ReadAsync())
                     {
+                        var ownerlog = reader.GetString(2);
+
+                        bool isAdmin;
+                        if (repoAdminsCache.ContainsKey(ownerlog))
+                        {
+                            isAdmin = repoAdminsCache[ownerlog];
+                        }
+                        else
+                        {
+                            isAdmin = await GetRepoAdmins(ownerlog, UserLogin);
+                            repoAdminsCache[ownerlog] = isAdmin;
+                        }
+
                         var repo = new RepoInfo
                         {
                             Id = reader.GetInt64(0),
                             Name = reader.GetString(1),
-                            OwnerLogin = reader.GetString(2),
+                            OwnerLogin = ownerlog,
                             CreatedAt = reader.GetFieldValue<DateOnly>(3),
-                            IsAdmin = await GetRepoAdmins(reader.GetString(2), reader.GetString(1), UserLogin!),
+                            IsAdmin = isAdmin,
                             onlyAdmin = reader.GetBoolean(4)
                         };
                         allRepos.Add(repo);
@@ -2881,7 +2894,7 @@ public class GitHubController : ControllerBase
     [HttpGet("GetFilterLists")]
     public async Task<ActionResult> GetRepositoryAssignees()
     {
-        var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
+        var repos = (await GitHubUserClient.Repository.GetAllForCurrent()).Select(repo => repo.Id).ToList();
 
         HashSet<string> allAssignees = new HashSet<string>();
         HashSet<string> allLabels = new HashSet<string>();
@@ -2895,8 +2908,6 @@ public class GitHubController : ControllerBase
             string query = "SELECT id, name, ownerLogin, created_at FROM repositoryinfo WHERE id = ANY(@repos) ORDER BY name ASC";
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
-                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
-                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@repos", repos);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
@@ -2922,13 +2933,7 @@ public class GitHubController : ControllerBase
 
                     foreach (var label in labels)
                     {
-                        if (!label.Name.StartsWith("Priority:"))
-                        {
-                            lock (allLabels)
-                            {
-                                allLabels.Add(label.Name);
-                            }
-                        }
+                        allLabels.Add(label.Name);
                     }
                 }
                 catch (NotFoundException)
@@ -2942,8 +2947,6 @@ public class GitHubController : ControllerBase
             string query2 = "SELECT DISTINCT author FROM pullrequestinfo WHERE repoid = ANY(@repos) ORDER BY author ASC";
             using (NpgsqlCommand command = new NpgsqlCommand(query2, connection))
             {
-                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
-                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@repos", repos);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
@@ -2958,8 +2961,6 @@ public class GitHubController : ControllerBase
             string query3 = "SELECT DISTINCT unnest(assignees) as assignee FROM pullrequestinfo WHERE repoid = ANY(@repos) ORDER BY assignee ASC";
             using (NpgsqlCommand command = new NpgsqlCommand(query3, connection))
             {
-                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
-                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@repos", repos);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
@@ -2974,8 +2975,8 @@ public class GitHubController : ControllerBase
             await connection.CloseAsync();
         }
 
+        allLabels.ExceptWith(allLabels.Where(label => label.StartsWith("Priority:")));
         allLabels = allLabels.OrderBy(label => label).ToHashSet();
-
 
         var authorsWithAvatars = allAuthors.Select(author => new { Login = author, AvatarUrl = $"https://github.com/{author}.png" });
         var assigneesWithAvatars = allAssignees.Select(assignee => new { Login = assignee, AvatarUrl = $"https://github.com/{assignee}.png" });
@@ -3478,7 +3479,7 @@ public class GitHubController : ControllerBase
     // userın type ı organizasyonsa, https://api.github.com/orgs/hubreviewapp/members?role=admin request.
 
     [HttpGet("{repoOwner}/{repoName}/repoadmins/{userLogin}")]
-    public async Task<bool> GetRepoAdmins(string repoOwner, string repoName, string userLogin)
+    public async Task<bool> GetRepoAdmins(string repoOwner, string userLogin)
     {
         List<string> result = new List<string>();
 
