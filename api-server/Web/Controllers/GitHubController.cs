@@ -18,8 +18,6 @@ using Octokit.GraphQL.Core;
 using Octokit.GraphQL.Core.Introspection;
 using Octokit.GraphQL.Model;
 using static Octokit.GraphQL.Variable;
-using System.Diagnostics;
-
 
 namespace CS.Web.Controllers;
 
@@ -259,8 +257,6 @@ public class GitHubController : ControllerBase
     [HttpGet("getRepository")]
     public async Task<ActionResult> GetRepositories()
     {
-            Stopwatch stopwatch = new Stopwatch();
-            stopwatch.Start(); 
         var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
         Dictionary<string, bool> repoAdminsCache = new Dictionary<string, bool>();
@@ -305,12 +301,6 @@ public class GitHubController : ControllerBase
             await connection.CloseAsync();
         }
 
-            stopwatch.Stop();
-            TimeSpan elapsedTime = stopwatch.Elapsed;
-
-            string elapsedTimeStr = $"{elapsedTime.Hours:00}:{elapsedTime.Minutes:00}:{elapsedTime.Seconds:00}.{elapsedTime.Milliseconds / 10:00}";
-
-            Console.WriteLine($"Elapsed time: {elapsedTimeStr}");
         return Ok(new { RepoNames = allRepos });
     }
 
