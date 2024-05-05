@@ -18,6 +18,7 @@ using Octokit.GraphQL.Core;
 using Octokit.GraphQL.Core.Introspection;
 using Octokit.GraphQL.Model;
 using static Octokit.GraphQL.Variable;
+using System.Diagnostics;
 
 
 namespace CS.Web.Controllers;
@@ -258,8 +259,11 @@ public class GitHubController : ControllerBase
     [HttpGet("getRepository")]
     public async Task<ActionResult> GetRepositories()
     {
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start(); 
         var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
+        Dictionary<string, bool> repoAdminsCache = new Dictionary<string, bool>();
         List<RepoInfo> allRepos = new List<RepoInfo>();
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
@@ -274,13 +278,23 @@ public class GitHubController : ControllerBase
                 {
                     while (await reader.ReadAsync())
                     {
+                        var ownerlog = reader.GetString(2);
+
+                        bool isAdmin;
+                        if (repoAdminsCache.ContainsKey(ownerlog)){
+                            isAdmin = repoAdminsCache[ownerlog];
+                        }else {
+                            isAdmin = await GetRepoAdmins(ownerlog, UserLogin);
+                            repoAdminsCache[ownerlog] = isAdmin;
+                        }
+
                         var repo = new RepoInfo
                         {
                             Id = reader.GetInt64(0),
                             Name = reader.GetString(1),
-                            OwnerLogin = reader.GetString(2),
+                            OwnerLogin = ownerlog,
                             CreatedAt = reader.GetFieldValue<DateOnly>(3),
-                            IsAdmin = await GetRepoAdmins(reader.GetString(2), reader.GetString(1), UserLogin!),
+                            IsAdmin = isAdmin,
                             onlyAdmin = reader.GetBoolean(4)
                         };
                         allRepos.Add(repo);
@@ -291,6 +305,12 @@ public class GitHubController : ControllerBase
             await connection.CloseAsync();
         }
 
+            stopwatch.Stop();
+            TimeSpan elapsedTime = stopwatch.Elapsed;
+
+            string elapsedTimeStr = $"{elapsedTime.Hours:00}:{elapsedTime.Minutes:00}:{elapsedTime.Seconds:00}.{elapsedTime.Milliseconds / 10:00}";
+
+            Console.WriteLine($"Elapsed time: {elapsedTimeStr}");
         return Ok(new { RepoNames = allRepos });
     }
 
@@ -3466,7 +3486,7 @@ public class GitHubController : ControllerBase
     // userın type ı organizasyonsa, https://api.github.com/orgs/hubreviewapp/members?role=admin request.
 
     [HttpGet("{repoOwner}/{repoName}/repoadmins/{userLogin}")]
-    public async Task<bool> GetRepoAdmins(string repoOwner, string repoName, string userLogin)
+    public async Task<bool> GetRepoAdmins(string repoOwner, string userLogin)
     {
         List<string> result = new List<string>();
 
