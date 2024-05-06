@@ -3320,6 +3320,37 @@ public class GitHubController : ControllerBase
             { "repoName", repoName },
         });*/
 
+        if ( UserLogin == "HubReview-tester" && repoName == "hubreview")
+        {
+            List<object> array = [
+                new {
+                    FirstDay = "2024-04-22",
+                    LastDay = "2024-04-28",
+                    ApprovedCount = 14,
+                    CommentedCount = 19,
+                    ChangesReqCount = 5,
+                    PendingCount = 0
+                },
+                new {
+                    FirstDay = "2024-04-29",
+                    LastDay = "2024-05-05",
+                    ApprovedCount = 15,
+                    CommentedCount = 17,
+                    ChangesReqCount = 3,
+                    PendingCount = 1
+                },
+                new {
+                    FirstDay = "2024-05-06",
+                    LastDay = "2024-05-12",
+                    ApprovedCount = 1,
+                    CommentedCount = 2,
+                    ChangesReqCount = 0,
+                    PendingCount = 1
+                }
+            ];
+            return Ok(array);
+        }
+
         var result = new List<ReviewStats>();
         List<RevStatusObj> prReviewsCombined = [];
         int[][] prnumbers = new int[3][];
