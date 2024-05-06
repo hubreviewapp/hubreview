@@ -2421,6 +2421,37 @@ public class GitHubController : ControllerBase
     [HttpGet("user/monthlysummary")]
     public async Task<ActionResult> GetReviewsForUserInLastMonth()
     {
+        if( UserLogin == "HubReview-tester" )
+        {
+            List<object> array = [
+                new {
+                    Week = "2024-05-06 - 2024-05-12",
+                    Submitted = 1,
+                    Received = 2,
+                    Speed = "0.00:20"
+                },
+                new {
+                    Week = "2024-04-29 - 2024-05-05",
+                    Submitted = 3,
+                    Received = 4,
+                    Speed = "0.01:00"
+                },
+                new {
+                    Week = "2024-04-22 - 2024-04-28",
+                    Submitted = 8,
+                    Received = 6,
+                    Speed = "0.02:00"
+                },
+                new {
+                    Week = "2024-04-15 - 2024-04-21",
+                    Submitted = 5,
+                    Received = 5,
+                    Speed = "0.01:45"
+                },
+            ];
+            return Ok(array);
+        }
+
         var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
         var weeks = new List<(DateTime start, DateTime end)>();
