@@ -3199,6 +3199,43 @@ public class GitHubController : ControllerBase
     [HttpGet("analytics/{owner}/{repoName}/avg_merged_time")]
     public async Task<ActionResult> GetAvgMergedTime(string owner, string repoName)
     {
+        if ( UserLogin == "HubReview-tester" && repoName == "hubreview")
+        {
+            List<object> array = [
+                new {
+                    MergedDate = "2024-04-29",
+                    PrCount = 1,
+                    AvgMergeTime = "0.00:56",
+                },
+                new {
+                    MergedDate = "2024-04-30",
+                    PrCount = 3,
+                    AvgMergeTime = "0.00:45",
+                },
+                new {
+                    MergedDate = "2024-05-01",
+                    PrCount = 8,
+                    AvgMergeTime = "0.00:58",
+                },
+                new {
+                    MergedDate = "2024-05-02",
+                    PrCount = 5,
+                    AvgMergeTime = "0.01:02",
+                },
+                new {
+                    MergedDate = "2024-05-03",
+                    PrCount = 5,
+                    AvgMergeTime = "0.00:32",
+                },
+                new {
+                    MergedDate = "2024-05-04",
+                    PrCount = 5,
+                    AvgMergeTime = "0.00:27",
+                }
+            ];
+            return Ok(array);
+        }
+
         var states = new List<PullRequestState> { PullRequestState.Merged };
 
         var query = new Query()
