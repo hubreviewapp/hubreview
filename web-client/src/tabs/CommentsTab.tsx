@@ -85,14 +85,16 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
   }
 
   //[HttpDelete("pullrequest/{owner}/{repoName}/{comment_id}/deleteComment")]
-  function deletePRComment(commentId: number) {
-    setIsLoading(true);
+  function deletePRComment(commentId: number, setCommentLoading: (isLoading: boolean) => void) {
+    setCommentLoading(true);
     axios
       .delete(`${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${commentId}/deleteComment`, {
         withCredentials: true,
       })
       .then(function () {
-        fetchPRComments();
+        fetchPRComments().then(function () {
+          setCommentLoading(false);
+        });
       })
       .catch(function (error) {
         console.log(error);
@@ -110,10 +112,9 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
         withCredentials: true,
       })
       .then(function () {
-        fetchPRComments();
-      })
-      .then(function () {
-        setCommentLoading(false);
+        fetchPRComments().then(function () {
+          setCommentLoading(false);
+        });
       })
       .catch(function (error) {
         console.log(error);
@@ -138,10 +139,9 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
         withCredentials: true,
       })
       .then(function () {
-        return fetchPRComments();
-      })
-      .then(function () {
-        setCommentLoading(false);
+        return fetchPRComments().then(function () {
+          setCommentLoading(false);
+        });
       })
       .catch(function (error) {
         console.log(error);
@@ -234,7 +234,7 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
           />
         </Box>
         {pullRequestDetails.body.toString() && (
-          <Box style={{ border: "1px groove gray", borderRadius: 10, padding: "10px" }}>
+          <Box style={{ border: "0.5px groove gray", borderRadius: 10, padding: "10px" }}>
             <Text fw={700} size="md">
               {" "}
               Description:{" "}
@@ -259,7 +259,7 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
                   comment.status === "Duplicate"
                 }
                 isAIGenerated={false}
-                deletePRComment={() => deletePRComment(comment.id)}
+                deletePRComment={deletePRComment}
                 editPRComment={editPRComment}
                 replyComment={replyComment}
                 status={comment.status}
@@ -288,21 +288,21 @@ function CommentsTab({ pullRequestDetails, mergeInfo }: CommentsTabProps) {
           </Box>
         )}
         <br></br>
-        {!pullRequestDetails.merged && (
-          <SplitButton
-            mergeInfo={mergeInfo}
-            mergeStateStatus={pullRequestDetails.mergeStateStatus}
-            mergeableState={pullRequestDetails.mergeable}
-            conflictUrl={pullRequestDetails.pullRequestUrl}
-          />
-        )}
 
         <Flex justify="right">
-          {!pullRequestDetails.merged && (
-            <>
-              <ClosePRButton isClosed={pullRequestDetails.closedAt !== null} />
-            </>
-          )}
+          <Box>
+            {!pullRequestDetails.merged && (
+              <Flex justify="right" mb="sm">
+                <SplitButton
+                  mergeInfo={mergeInfo}
+                  mergeStateStatus={pullRequestDetails.mergeStateStatus}
+                  mergeableState={pullRequestDetails.mergeable}
+                  conflictUrl={pullRequestDetails.pullRequestUrl}
+                />
+              </Flex>
+            )}
+            {!pullRequestDetails.merged && <ClosePRButton isClosed={pullRequestDetails.closedAt !== null} />}
+          </Box>
         </Flex>
         <br />
         <Box style={{ border: "2px groove gray", borderRadius: 10, padding: "10px" }}>

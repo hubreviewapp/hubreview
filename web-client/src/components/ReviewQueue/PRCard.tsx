@@ -25,7 +25,7 @@ const formatDate = (dateString: string) => {
   const pastDate = new Date(dateString);
   const timeDifference = currentDate.getTime() - pastDate.getTime();
   const daysDifference = Math.floor(timeDifference / (1000 * 3600 * 24));
-  if (daysDifference == 0) {
+  if (daysDifference < 0) {
     return "today";
   } else if (daysDifference == 1) {
     return "yesterday";
@@ -98,7 +98,7 @@ function PRCard({ data: pr }: PullRequestCardProps) {
           </Group>
         </Group>
       </Link>
-      <Flex justify="space-between">
+      <Flex justify="space-between" style={{ marginBottom: "-15px" }}>
         <Box my="sm">
           <IconMessages style={{ width: rem(18), height: rem(18) }} />
           {pr.comments} comments, {"  "}

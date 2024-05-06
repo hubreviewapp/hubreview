@@ -1,7 +1,32 @@
-import { useEffect, useState } from "react";
-import { Group, Accordion, Box, rem, TextInput, Text, ScrollArea, Button } from "@mantine/core";
+import { useCallback, useEffect, useState } from "react";
+import {
+  Group,
+  Accordion,
+  Box,
+  rem,
+  TextInput,
+  Text,
+  ScrollArea,
+  Button,
+  Popover,
+  NumberInput,
+  Progress,
+  Tooltip,
+  Center,
+  Flex,
+} from "@mantine/core";
 import { Checkbox } from "@mantine/core";
-import { IconNotebook, IconSearch, IconCirclePlus } from "@tabler/icons-react";
+import {
+  IconNotebook,
+  IconSearch,
+  IconCirclePlus,
+  IconSettings,
+  IconInfoCircle,
+  IconGitPullRequestClosed,
+  IconGitMerge,
+  IconGitPullRequest,
+  IconAlarm,
+} from "@tabler/icons-react";
 import axios from "axios";
 import classes from "../../styles/NavbarSimple.module.css";
 import { Repository } from "../../models/Repository.tsx";
@@ -9,15 +34,16 @@ import { Link } from "react-scroll";
 import { UseListStateHandlers } from "@mantine/hooks";
 import { SelectedRepos } from "../../pages/ReviewQueuePage.tsx";
 import { BASE_URL, GITHUB_APP_NAME } from "../../env";
+import { useUser } from "../../providers/context-utilities";
 
 const data = [
   //{ link: "", label: "New PRs", icon: IconBellRinging },
   { link: "", label: "Needs your review" },
   { link: "", label: "Your PRs" },
-  { link: "", label: "Waiting for author" },
-  { link: "", label: "All open PRs" },
-  { link: "", label: "Merged" },
-  { link: "", label: "Closed" },
+  { link: "", label: "Waiting for author", icon: IconAlarm },
+  { link: "", label: "All open PRs", icon: IconGitPullRequest },
+  { link: "", label: "Merged", icon: IconGitMerge },
+  { link: "", label: "Closed", icon: IconGitPullRequestClosed },
 ];
 
 interface PRNavbarProps {
@@ -27,11 +53,65 @@ interface PRNavbarProps {
   selectedRepos: SelectedRepos[];
 }
 
+interface Workload {
+  currentLoad: number;
+  maxLoad: number;
+}
+
+function barColor(capacity: number, waiting: number) {
+  const workload = (waiting / capacity) * 100;
+  return workload > 80 ? "red" : workload > 60 ? "orange" : workload > 40 ? "yellow" : "green";
+}
+
 export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSelectedRepos }: PRNavbarProps) {
   //const [repository, setRepository] = useState<Repository[]>([]);
+  const { user } = useUser();
   const iconSearch = <IconSearch style={{ width: rem(16), height: rem(16) }} />;
   const iconPlus = <IconCirclePlus style={{ width: rem(16), height: rem(16) }} />;
   const [query, setQuery] = useState("");
+  const [prWorkload, setPrWorkload] = useState<string | number>(10);
+  const [opened, setOpened] = useState<boolean>(false);
+  const [userWorkload, setUserWorkload] = useState<Workload>({ currentLoad: 0, maxLoad: 1000 });
+  const iconInfoCircle = <IconInfoCircle style={{ width: rem(20), height: rem(20) }} />;
+
+  //[HttpGet("user/{userName}/workload")]
+  const getWorkload = useCallback(async () => {
+    try {
+      const res = await axios.get(`${BASE_URL}/api/github/user/${user?.login}/workload`, {
+        withCredentials: true,
+      });
+      if (res) {
+        setUserWorkload(res.data);
+      }
+    } catch (error) {
+      console.error("Error getting user workload:", error);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    getWorkload();
+  }, [getWorkload]);
+
+  //[HttpPost("user/{userLogin}/workload")]
+  function editWorkload() {
+    setOpened(false);
+    if (typeof prWorkload === "string") {
+      return;
+    }
+    axios
+      .post(`${BASE_URL}/api/github/user/${user?.login}/workload`, prWorkload, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        withCredentials: true,
+      })
+      .then(function () {
+        getWorkload();
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  }
 
   useEffect(() => {
     const getRepos = async () => {
@@ -140,8 +220,10 @@ export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSe
       key={item.label}
       onClick={() => setActiveSection(item.label)}
     >
-      {/*{item.icon && <item.icon className={classes.linkIcon} stroke={1.5} />} */}
-      <span>{item.label}</span>
+      <Flex justify="space-evenly">
+        <span>{item.label}</span>
+        {item.icon && <item.icon className={classes.linkIcon} stroke={1.5} />}
+      </Flex>
     </Link>
   ));
 
@@ -156,20 +238,57 @@ export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSe
         {links}
       </div>
 
-      {/*
       <div className={classes.footer}>
+        {/*
         <a href="#" className={classes.link} onClick={(event) => event.preventDefault()}>
           <IconActivity className={classes.linkIcon} stroke={1.5} />
           <span> Insights / Activity</span>
         </a>
+        */}
+        <Popover
+          opened={opened}
+          width={300}
+          trapFocus
+          position="bottom"
+          withArrow
+          shadow="md"
+          clickOutsideEvents={["mouseup", "touchend"]}
+        >
+          <Popover.Target>
+            <a href="#" className={classes.link} onClick={() => setOpened(true)}>
+              <IconSettings className={classes.linkIcon} stroke={1.5} />
+              <span> Set your workload </span>
+            </a>
+          </Popover.Target>
+          <Popover.Dropdown>
+            <Text>
+              {" "}
+              Current Workload: {userWorkload.currentLoad} / {userWorkload.maxLoad}{" "}
+            </Text>
+            <Tooltip label={Math.ceil((userWorkload.currentLoad / userWorkload.maxLoad) * 100) + "%"}>
+              <Progress.Root m="5px" size="lg">
+                <Progress.Section
+                  color={barColor(userWorkload.maxLoad, userWorkload.currentLoad)}
+                  value={(userWorkload.currentLoad / userWorkload.maxLoad) * 100}
+                ></Progress.Section>
+              </Progress.Root>
+            </Tooltip>
+            <br />
 
-        <a href="#" className={classes.link} onClick={(event) => event.preventDefault()}>
-          <IconSettings className={classes.linkIcon} stroke={1.5} />
-          <span> Settings </span>
-        </a>
+            <Flex justify="space-between">
+              <Text> Set Workload </Text>
+              <Tooltip label="Specify the capacity for the number of pull request reviews">{iconInfoCircle}</Tooltip>
+            </Flex>
+            <NumberInput placeholder="Enter PR workload" size="sm" value={prWorkload} onChange={setPrWorkload} />
+            <Center>
+              <Button size="sm" onClick={editWorkload}>
+                {" "}
+                Update{" "}
+              </Button>
+            </Center>
+          </Popover.Dropdown>
+        </Popover>
       </div>
-
-      */}
     </nav>
   );
 }

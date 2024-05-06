@@ -17,8 +17,18 @@ export interface PRDetailTabProps {
 }
 
 export default function PrDetailTab({ pullRequestDetails }: PRDetailTabProps) {
-  const checkSuites = pullRequestDetails.checkSuites.filter((cs) => cs.workflowRun !== null);
-
+  const checkSuites = pullRequestDetails.checkSuites.filter(
+    (cs) => cs.workflowRun !== null && cs.conclusion === APICheckConclusionState.SUCCESS,
+  );
+  const totalCheckRuns: number = checkSuites.reduce((total, checksuite) => {
+    const checkrunsLength: number = checksuite.workflowRun?.checkRuns.length ?? 0;
+    return total + checkrunsLength;
+  }, 0);
+  const totalSuccesfullCheckRuns: number = checkSuites.reduce((total, checksuite) => {
+    const checkrunsLength: number =
+      checksuite.workflowRun?.checkRuns.filter((cr) => cr.conclusion == APICheckConclusionState.SUCCESS).length ?? 0;
+    return total + checkrunsLength;
+  }, 0);
   //http get pullrequest/{owner}/{repoName}/{prnumber}/summary
   const { owner, repoName, prnumber } = useParams();
   const [aiSummary, setAiSummary] = useState("");
@@ -67,53 +77,54 @@ export default function PrDetailTab({ pullRequestDetails }: PRDetailTabProps) {
   return (
     <Box>
       <Badge leftSection={iconCheckupList} size="lg" mb={10} variant="gradient" style={{ visibility: "visible" }}>
-        Checks ( {checkSuites.filter((cs) => cs.conclusion === APICheckConclusionState.SUCCESS).length} /{" "}
-        {checkSuites.length} )
+        Checks ( {totalSuccesfullCheckRuns} / {totalCheckRuns} )
       </Badge>
       <Box display="flex" style={{ flexWrap: "wrap" }}>
-        {checkSuites.map((checkSuite) => (
-          <Card
-            key={checkSuite.id}
-            shadow="sm"
-            component="a"
-            padding="sm"
-            href={checkSuite.workflowRun?.url}
-            target="_blank"
-            withBorder
-            w="30%"
-            style={{ marginBottom: "20px", marginRight: "20px" }}
-          >
-            <Group>
-              <Text fw={500} size="lg" mt="md" style={{ marginBottom: "10px" }}>
-                {checkSuite.workflowRun?.workflow.name}
-              </Text>
+        {checkSuites.map((checkSuite) =>
+          checkSuite.workflowRun?.checkRuns.map((checkRuns) => (
+            <Card
+              key={checkRuns.name}
+              shadow="sm"
+              component="a"
+              padding="sm"
+              href={checkRuns.permalink}
+              target="_blank"
+              withBorder
+              w="30%"
+              style={{ marginBottom: "20px", marginRight: "20px" }}
+            >
+              <Group>
+                <Text fw={500} size="lg" mt="md" style={{ marginBottom: "10px" }}>
+                  {checkRuns.name}
+                </Text>
 
-              <Text fw={500} size="lg" mt="md">
-                {checkSuite.conclusion === APICheckConclusionState.SUCCESS && (
-                  <IconCircleCheck
-                    color="green"
-                    style={{ width: rem(22), height: rem(22), color: "green", marginLeft: "auto" }}
-                  />
-                )}
-                {checkSuite.conclusion === APICheckConclusionState.FAILURE && (
-                  <IconXboxX
-                    color="red"
-                    style={{ width: rem(22), height: rem(22), color: "red", marginLeft: "auto" }}
-                  />
-                )}
-              </Text>
+                <Text fw={500} size="lg" mt="md">
+                  {checkRuns.conclusion === APICheckConclusionState.SUCCESS && (
+                    <IconCircleCheck
+                      color="green"
+                      style={{ width: rem(22), height: rem(22), color: "green", marginLeft: "auto" }}
+                    />
+                  )}
+                  {checkRuns.conclusion === APICheckConclusionState.FAILURE && (
+                    <IconXboxX
+                      color="red"
+                      style={{ width: rem(22), height: rem(22), color: "red", marginLeft: "auto" }}
+                    />
+                  )}
+                </Text>
 
-              <Anchor
-                href={checkSuite.workflowRun?.url}
-                target="_blank"
-                c="blue"
-                style={{ position: "absolute", right: "15px", display: "flex" }}
-              >
-                Details
-              </Anchor>
-            </Group>
-          </Card>
-        ))}
+                <Anchor
+                  href={checkRuns.permalink}
+                  target="_blank"
+                  c="blue"
+                  style={{ position: "absolute", right: "15px", display: "flex" }}
+                >
+                  Details
+                </Anchor>
+              </Group>
+            </Card>
+          )),
+        )}
       </Box>
       <br></br>
       <Box style={{ border: "1px solid cyan", borderRadius: "10px" }} p="md" w="80%">

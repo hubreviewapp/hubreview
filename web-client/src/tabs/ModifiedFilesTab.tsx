@@ -15,121 +15,19 @@ import {
   Badge,
   Loader,
   Tooltip,
-  CheckIcon,
 } from "@mantine/core";
 import FileDiffView from "../components/ReviewsTab/FileDiffView";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import UserLogo from "../assets/icons/user.png";
-import { DiffLine, DiffLineType, DiffMarker, FileDiff } from "../utility/diff-types";
+import { FileDiff } from "../utility/diff-types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import { BASE_URL } from "../env";
-
-const parseDiffMarker = (markerLine: string): DiffMarker => {
-  // See: https://en.wikipedia.org/wiki/Diff#Unified_format
-  const match = /^@@ -(\d*),?(\d*) \+(\d*),?(\d*) @@(.*)$/.exec(markerLine);
-
-  if (match === null) throw Error(`Failed to execute regexp on marker line content: ${markerLine}`);
-
-  return {
-    deletion: {
-      startLine: parseInt(match[1]),
-      lineCount: match[2] === "" ? 1 : parseInt(match[2]),
-    },
-    addition: {
-      startLine: parseInt(match[3]),
-      lineCount: match[4] === "" ? 1 : parseInt(match[4]),
-    },
-    contextContent: match[5],
-  };
-};
-
-const parseRawDiff = (getAllPatchesResponse: GetAllPatchesResponse): FileDiff => {
-  if (getAllPatchesResponse.content === null) {
-    return {
-      sha: getAllPatchesResponse.sha,
-      status: getAllPatchesResponse.status,
-      diffstat: {
-        additions: getAllPatchesResponse.adds,
-        deletions: getAllPatchesResponse.dels,
-      },
-      fileName: getAllPatchesResponse.name,
-      lines: [
-        {
-          type: DiffLineType.Context,
-          content: "This file is not viewable from HubReview",
-          lineNumber: {},
-        },
-      ],
-    };
-  }
-
-  const trimmedRawDiff = getAllPatchesResponse.content.trim();
-  const rawDiffLines = trimmedRawDiff.split("\n");
-
-  const nextLineNumbers = {
-    before: -1,
-    after: -1,
-  };
-  const diffLines: DiffLine[] = rawDiffLines.map((l): DiffLine => {
-    if (l[0] === "@") {
-      const diffMarker = parseDiffMarker(l);
-      nextLineNumbers.before = diffMarker.deletion.startLine;
-      nextLineNumbers.after = diffMarker.addition.startLine;
-
-      return {
-        type: DiffLineType.Marker,
-        content: l,
-        lineNumber: {},
-      };
-    } else if (l[0] === "+") {
-      return {
-        type: DiffLineType.Addition,
-        content: l.slice(1),
-        lineNumber: {
-          before: undefined,
-          after: nextLineNumbers.after++,
-        },
-      };
-    } else if (l[0] === "-") {
-      return {
-        type: DiffLineType.Deletion,
-        content: l.slice(1),
-        lineNumber: {
-          before: nextLineNumbers.before++,
-          after: undefined,
-        },
-      };
-    } else if (l[0] === " ") {
-      return {
-        type: DiffLineType.Context,
-        content: l.slice(1),
-        lineNumber: {
-          before: nextLineNumbers.before++,
-          after: nextLineNumbers.after++,
-        },
-      };
-    } else if (l[0] === "\\") {
-      return {
-        type: DiffLineType.NoNewlineAtEOF,
-        content: "No newline",
-        lineNumber: {},
-      };
-    }
-    throw Error("Unexpected line in diff");
-  });
-
-  return {
-    fileName: getAllPatchesResponse.name,
-    sha: getAllPatchesResponse.sha,
-    status: getAllPatchesResponse.status,
-    diffstat: {
-      additions: getAllPatchesResponse.adds,
-      deletions: getAllPatchesResponse.dels,
-    },
-    lines: diffLines,
-  };
-};
+import { APIPullRequestDetails } from "../api/types";
+import convertHtmlToMarkdown from "../utility/convertHtmlToMarkdown";
+import Markdown from "react-markdown";
+import { parseRawDiff } from "../utility/diff-utilities";
+import { useUser } from "../providers/context-utilities";
 
 export type GetAllPatchesResponse = {
   name: string;
@@ -214,8 +112,13 @@ export interface ReviewMainComment {
   submittedAt: string;
 }
 
-function ModifiedFilesTab() {
+export interface ModifiedFilesTabProps {
+  pullRequestDetails: APIPullRequestDetails;
+}
+
+function ModifiedFilesTab({ pullRequestDetails }: ModifiedFilesTabProps) {
   const { owner, repoName, prnumber } = useParams();
+  const { user } = useUser();
 
   const [hasStartedReview, setHasStartedReview] = useState(false);
   const [isSubmitReviewEditorOpen, setIsSubmitReviewEditorOpen] = useState(false);
@@ -228,11 +131,8 @@ function ModifiedFilesTab() {
   const [comments, setComments] = useState<ReviewComment[]>([]);
   const [mainComments, setMainComments] = useState<ReviewMainComment[]>([]);
 
-  const requestChangesDisabled = pendingComments.length === 0 && editorContent.length === 0;
-
-  if (requestChangesDisabled && reviewVerdict === "reject") {
-    setReviewVerdict("comment");
-  }
+  const isReviewEmpty = pendingComments.length === 0 && editorContent.length === 0;
+  const isSelfReview = pullRequestDetails.author.login === user?.login;
 
   const onAddPendingComment = useCallback(
     (comment: ReviewComment) => {
@@ -348,6 +248,7 @@ function ModifiedFilesTab() {
     return fileDiffs.map((f) => (
       <FileDiffView
         key={f.fileName}
+        pullRequestDetails={pullRequestDetails}
         fileDiff={f}
         comments={comments.filter((c) => c.key.fileName === f.fileName)}
         pendingComments={pendingComments.filter((c) => c.key.fileName === f.fileName)}
@@ -356,7 +257,15 @@ function ModifiedFilesTab() {
         onReplyCreated={refetchReviewData}
       />
     ));
-  }, [fileDiffs, comments, pendingComments, hasStartedReview, onAddPendingComment, refetchReviewData]);
+  }, [
+    fileDiffs,
+    comments,
+    pendingComments,
+    hasStartedReview,
+    onAddPendingComment,
+    refetchReviewData,
+    pullRequestDetails,
+  ]);
 
   const createReviewMutation = useMutation({
     mutationFn: (req: { req: CreateReviewRequest }) =>
@@ -445,29 +354,27 @@ function ModifiedFilesTab() {
           <Title order={5}>Verdict</Title>
           <Radio.Group value={reviewVerdict} onChange={(val) => setReviewVerdict(val as ReviewVerdict)}>
             <Stack mt="sm">
-              <Radio
-                icon={CheckIcon}
-                value="comment"
-                label="Comment indifferently"
-                styles={{ label: { color: "lightgray" } }}
-              />
-              <Radio
-                icon={CheckIcon}
-                value="approve"
-                label="Approve"
-                styles={{ label: { color: "lime" }, radio: { border: "1px solid lime" } }}
-              />
+              <Radio value="comment" label="Comment indifferently" styles={{ label: { color: "lightgray" } }} />
+              <Tooltip label="You cannot approve your own pull request" disabled={!isSelfReview} refProp="rootRef">
+                <Radio
+                  value="approve"
+                  label="Approve"
+                  color="lime"
+                  styles={{ label: { color: "lime" }, radio: { border: "1px solid lime" } }}
+                  disabled={isSelfReview}
+                />
+              </Tooltip>
               <Tooltip
-                label="You must add at least a review body or comment to request changes"
-                disabled={!requestChangesDisabled}
+                label="You cannot request changes on your own pull request"
+                disabled={!isSelfReview}
                 refProp="rootRef"
               >
                 <Radio
-                  icon={CheckIcon}
                   value="reject"
                   label="Request changes"
+                  color="crimson"
                   styles={{ label: { color: "crimson" }, radio: { border: "1px solid crimson" } }}
-                  disabled={requestChangesDisabled}
+                  disabled={isSelfReview}
                 />
               </Tooltip>
             </Stack>
@@ -476,9 +383,20 @@ function ModifiedFilesTab() {
           <Divider my={10} />
           <Group justify="end" mt={5}>
             <Text fs="italic">Including {pendingComments.length} comments</Text>
-            <Button size="sm" color="green" onClick={submitPendingComments}>
-              Submit
-            </Button>
+            <Tooltip
+              label="You must add at least a review body or comment to submit a review besides approval"
+              disabled={!isReviewEmpty || reviewVerdict === "approve"}
+              withArrow
+            >
+              <Button
+                size="sm"
+                color="green"
+                onClick={submitPendingComments}
+                disabled={isReviewEmpty && reviewVerdict !== "approve"}
+              >
+                Submit
+              </Button>
+            </Tooltip>
           </Group>
         </Box>
       </Collapse>
@@ -504,7 +422,9 @@ function ModifiedFilesTab() {
             </Badge>
           </Group>
 
-          <Text py="sm">{c.content}</Text>
+          <Text>
+            <Markdown>{convertHtmlToMarkdown(c.content)}</Markdown>
+          </Text>
         </Paper>
       ))}
       {mainComments.length === 0 && <Text>No reviews have been made yet</Text>}

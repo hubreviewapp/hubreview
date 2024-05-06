@@ -13,6 +13,11 @@ public class PullRequestDetails
         public required string Login { get; set; }
     }
 
+    public class HeadCommitDetails
+    {
+        public required string TreeUrl { get; set; }
+    }
+
     public class ChangedFileDetails
     {
         public required int FileCount { get; set; }
@@ -146,6 +151,7 @@ public class PullRequestDetails
     public required string Body { get; set; }
     public required AuthorDetails Author { get; set; }
     public required string BaseRefName { get; set; }
+    public required HeadCommitDetails HeadCommit { get; set; }
     public required ChangedFileDetails ChangedFiles { get; set; }
     public required int CommitCount { get; set; }
     public required List<LabelDetails> Labels { get; set; }
@@ -177,6 +183,12 @@ public class PullRequestDetails
                     Login = pr.Author.Login,
                 },
                 BaseRefName = pr.BaseRef.Name,
+                HeadCommit = new()
+                {
+                    // The Octokit GraphQL library does not allow fetching the last commit here...
+                    // So we assume we can fetch a "page" of commits and get the last one as the "head commit".
+                    TreeUrl = pr.Commits(null, null, null, null).Nodes.Select(c => c.Commit.TreeUrl).ToList().Last(),
+                },
                 ChangedFiles = new()
                 {
                     FileCount = pr.ChangedFiles,

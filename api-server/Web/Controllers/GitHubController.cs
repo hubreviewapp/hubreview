@@ -19,7 +19,6 @@ using Octokit.GraphQL.Core.Introspection;
 using Octokit.GraphQL.Model;
 using static Octokit.GraphQL.Variable;
 
-
 namespace CS.Web.Controllers;
 
 [Route("api/github")]
@@ -260,6 +259,7 @@ public class GitHubController : ControllerBase
     {
         var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
+        Dictionary<string, bool> repoAdminsCache = new Dictionary<string, bool>();
         List<RepoInfo> allRepos = new List<RepoInfo>();
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
@@ -274,13 +274,26 @@ public class GitHubController : ControllerBase
                 {
                     while (await reader.ReadAsync())
                     {
+                        var ownerlog = reader.GetString(2);
+
+                        bool isAdmin;
+                        if (repoAdminsCache.ContainsKey(ownerlog))
+                        {
+                            isAdmin = repoAdminsCache[ownerlog];
+                        }
+                        else
+                        {
+                            isAdmin = await GetRepoAdmins(ownerlog, UserLogin);
+                            repoAdminsCache[ownerlog] = isAdmin;
+                        }
+
                         var repo = new RepoInfo
                         {
                             Id = reader.GetInt64(0),
                             Name = reader.GetString(1),
-                            OwnerLogin = reader.GetString(2),
+                            OwnerLogin = ownerlog,
                             CreatedAt = reader.GetFieldValue<DateOnly>(3),
-                            IsAdmin = await GetRepoAdmins(reader.GetString(2), reader.GetString(1), UserLogin!),
+                            IsAdmin = isAdmin,
                             onlyAdmin = reader.GetBoolean(4)
                         };
                         allRepos.Add(repo);
@@ -1037,6 +1050,7 @@ public class GitHubController : ControllerBase
         }
     }
 
+    [HttpGet("user/{userName}/workload")]
     public async Task<Workload> GetUserWorkload(string userName)
     {
         long result;
@@ -1208,21 +1222,11 @@ public class GitHubController : ControllerBase
     [HttpPost("prs/needsreview/filter")]
     public async Task<ActionResult> FilterNeedsYourReviewPRs([FromBody] PRFilter filter)
     {
-        /*
-        filter.assignee string
-        filter.author string
-        filter.repositories string[]
-        filter.fromDate string
-        string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
-
-        */
-
         List<object> allPRs = [];
 
         if (filter.repositories == null)
         {
-            // FIXME: ???
-            filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
+            return Ok(allPRs);
         }
 
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
@@ -1234,11 +1238,11 @@ public class GitHubController : ControllerBase
             string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'open' AND @ownerLogin = ANY(reviewers)";
             if (!string.IsNullOrEmpty(filter.author))
             {
-                query += " AND author = @author";
+                query += " AND author = '" + filter.author + "'";
             }
             if (!string.IsNullOrEmpty(filter.assignee))
             {
-                query += " AND @assignee = ANY(assignees)";
+                query += " AND '" + filter.assignee + "' = ANY(assignees)";
             }
             query += " AND reponame = ANY(@repositories)";
             if (!string.IsNullOrEmpty(filter.priority))
@@ -1250,7 +1254,7 @@ public class GitHubController : ControllerBase
                 query += " AND EXISTS (SELECT 1 FROM json_array_elements(labels) AS label WHERE label->>'name' IN (";
                 for (int i = 0; i < filter.labels.Length; i++)
                 {
-                    query += "@label" + i;
+                    query += "'" + filter.labels[i] + "'";
                     if (i < filter.labels.Length - 1)
                     {
                         query += ", ";
@@ -1258,7 +1262,7 @@ public class GitHubController : ControllerBase
                 }
                 query += "))";
             }
-            // Add date filter condition based on the selected value
+
             if (!string.IsNullOrEmpty(filter.fromDate))
             {
                 switch (filter.fromDate.ToLower())
@@ -1277,8 +1281,14 @@ public class GitHubController : ControllerBase
                         break;
                     default:
                         // Handle unsupported date filter value
+                        query += " AND createdat >= '" + filter.fromDate + "'";
                         break;
                 }
+            }
+
+            if (!string.IsNullOrEmpty(filter.name))
+            {
+                query += " AND title ILIKE '%" + filter.name + "%'";
             }
 
             if (!string.IsNullOrEmpty(filter.orderBy))
@@ -1301,37 +1311,11 @@ public class GitHubController : ControllerBase
                 }
             }
 
-            int pageSize = 7;
-            int offset = (filter.page - 1) * pageSize;
-            query += $" OFFSET {offset} LIMIT {pageSize}";
-
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                if (!string.IsNullOrEmpty(filter.author))
-                {
-                    command.Parameters.AddWithValue("@author", filter.author);
-                }
-                if (!string.IsNullOrEmpty(filter.assignee))
-                {
-                    command.Parameters.AddWithValue("@assignee", filter.assignee);
-                }
                 command.Parameters.AddWithValue("@repositories", filter.repositories);
-                if (filter.labels != null && filter.labels.Length > 0)
-                {
-                    for (int i = 0; i < filter.labels.Length; i++)
-                    {
-                        command.Parameters.AddWithValue("@label" + i, filter.labels[i]);
-                    }
-                }
-
-                /*
-                if (filter.labels != null && filter.labels.Length > 0)
-                {
-                    command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.labels));
-                }
-                */
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
                     while (await reader.ReadAsync())
@@ -1342,12 +1326,11 @@ public class GitHubController : ControllerBase
 
                         foreach (var obj in reviewers)
                         {
-                            var user = await GitHubUserClient.User.Get(obj);
                             combined_revs.Add(new ReviewObjDB
                             {
                                 login = obj,
                                 state = "PENDING",
-                                avatarUrl = user.AvatarUrl
+                                avatarUrl = "https://github.com/" + obj + ".png"
                             });
                         }
 
@@ -1355,12 +1338,11 @@ public class GitHubController : ControllerBase
                         {
                             if (!reviewers.Contains(name.login))
                             {
-                                var user = await GitHubUserClient.User.Get(name.login);
                                 combined_revs.Add(new ReviewObjDB
                                 {
                                     login = name.login,
                                     state = name.state,
-                                    avatarUrl = user.AvatarUrl
+                                    avatarUrl = "https://github.com/" + name.login + ".png"
                                 });
                             }
                         }
@@ -1403,21 +1385,11 @@ public class GitHubController : ControllerBase
     [HttpPost("prs/userprs/filter")]
     public async Task<ActionResult> FilterUserPRs([FromBody] PRFilter filter, int page = 1)
     {
-        /*
-        filter.assignee string
-        filter.author string
-        filter.repositories string[]
-        filter.fromDate string
-        string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
-
-        */
-
         List<object> allPRs = [];
 
         if (filter.repositories == null)
         {
-            // FIXME: ???
-            filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
+            return Ok(allPRs);
         }
 
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
@@ -1429,11 +1401,11 @@ public class GitHubController : ControllerBase
             string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'open' AND author = @ownerLogin";
             if (!string.IsNullOrEmpty(filter.author))
             {
-                query += " AND author = @author";
+                query += " AND author = '" + filter.author + "'";
             }
             if (!string.IsNullOrEmpty(filter.assignee))
             {
-                query += " AND @assignee = ANY(assignees)";
+                query += " AND '" + filter.assignee + "' = ANY(assignees)";
             }
             query += " AND reponame = ANY(@repositories)";
             if (!string.IsNullOrEmpty(filter.priority))
@@ -1445,7 +1417,7 @@ public class GitHubController : ControllerBase
                 query += " AND EXISTS (SELECT 1 FROM json_array_elements(labels) AS label WHERE label->>'name' IN (";
                 for (int i = 0; i < filter.labels.Length; i++)
                 {
-                    query += "@label" + i;
+                    query += "'" + filter.labels[i] + "'";
                     if (i < filter.labels.Length - 1)
                     {
                         query += ", ";
@@ -1472,10 +1444,14 @@ public class GitHubController : ControllerBase
                         break;
                     default:
                         // Handle unsupported date filter value
+                        query += " AND createdat >= '" + filter.fromDate + "'";
                         break;
                 }
             }
-
+            if (!string.IsNullOrEmpty(filter.name))
+            {
+                query += " AND title ILIKE '%" + filter.name + "%'";
+            }
             if (!string.IsNullOrEmpty(filter.orderBy))
             {
                 switch (filter.orderBy.ToLower())
@@ -1495,12 +1471,6 @@ public class GitHubController : ControllerBase
                         // Add more cases for other sorting options
                 }
             }
-            /*
-            if (filter.labels != null && filter.labels.Length > 0)
-            {
-                query += " AND labels @> @labels";
-            }
-             */
 
             int pageSize = 7;
             int offset = (filter.page - 1) * pageSize;
@@ -1510,29 +1480,7 @@ public class GitHubController : ControllerBase
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
-                if (!string.IsNullOrEmpty(filter.author))
-                {
-                    command.Parameters.AddWithValue("@author", filter.author);
-                }
-                if (!string.IsNullOrEmpty(filter.assignee))
-                {
-                    command.Parameters.AddWithValue("@assignee", filter.assignee);
-                }
                 command.Parameters.AddWithValue("@repositories", filter.repositories);
-                if (filter.labels != null && filter.labels.Length > 0)
-                {
-                    for (int i = 0; i < filter.labels.Length; i++)
-                    {
-                        command.Parameters.AddWithValue("@label" + i, filter.labels[i]);
-                    }
-                }
-
-                /*
-                if (filter.labels != null && filter.labels.Length > 0)
-                {
-                    command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.labels));
-                }
-                */
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
                     while (await reader.ReadAsync())
@@ -1543,12 +1491,11 @@ public class GitHubController : ControllerBase
 
                         foreach (var obj in reviewers)
                         {
-                            var user = await GitHubUserClient.User.Get(obj);
                             combined_revs.Add(new ReviewObjDB
                             {
                                 login = obj,
                                 state = "PENDING",
-                                avatarUrl = user.AvatarUrl
+                                avatarUrl = "https://github.com/" + obj + ".png"
                             });
                         }
 
@@ -1556,12 +1503,11 @@ public class GitHubController : ControllerBase
                         {
                             if (!reviewers.Contains(name.login))
                             {
-                                var user = await GitHubUserClient.User.Get(name.login);
                                 combined_revs.Add(new ReviewObjDB
                                 {
                                     login = name.login,
                                     state = name.state,
-                                    avatarUrl = user.AvatarUrl
+                                    avatarUrl = "https://github.com/" + name.login + ".png"
                                 });
                             }
                         }
@@ -1606,22 +1552,13 @@ public class GitHubController : ControllerBase
     [HttpPost("prs/waitingauthor/filter")]
     public async Task<ActionResult> FilterWaitingAuthors([FromBody] PRFilter filter, int page = 1)
     {
-        /*
-        filter.assignee string
-        filter.author string
-        filter.repositories string[]
-        filter.fromDate string
-        string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
-
-        */
         List<object> allPRs = new List<object>();
 
         var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
         if (filter.repositories == null)
         {
-            // FIXME: ???
-            filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
+            return Ok(allPRs);
         }
 
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
@@ -1633,11 +1570,11 @@ public class GitHubController : ControllerBase
             string query = "SELECT " + selects + " FROM pullrequestinfo WHERE ( NOT @ownerLogin = ANY(reviewers) AND EXISTS ( SELECT 1 FROM json_array_elements(reviews) AS review WHERE review->>'login' = @ownerLogin) ) AND state='open' AND @ownerLogin != author AND repoid = ANY(@repos)";
             if (!string.IsNullOrEmpty(filter.author))
             {
-                query += " AND author = @author";
+                query += " AND author = '" + filter.author + "'";
             }
             if (!string.IsNullOrEmpty(filter.assignee))
             {
-                query += " AND @assignee = ANY(assignees)";
+                query += " AND '" + filter.assignee + "' = ANY(assignees)";
             }
             query += " AND reponame = ANY(@repositories)";
             if (!string.IsNullOrEmpty(filter.priority))
@@ -1649,7 +1586,7 @@ public class GitHubController : ControllerBase
                 query += " AND EXISTS (SELECT 1 FROM json_array_elements(labels) AS label WHERE label->>'name' IN (";
                 for (int i = 0; i < filter.labels.Length; i++)
                 {
-                    query += "@label" + i;
+                    query += "'" + filter.labels[i] + "'";
                     if (i < filter.labels.Length - 1)
                     {
                         query += ", ";
@@ -1657,7 +1594,6 @@ public class GitHubController : ControllerBase
                 }
                 query += "))";
             }
-            // Add date filter condition based on the selected value
             if (!string.IsNullOrEmpty(filter.fromDate))
             {
                 switch (filter.fromDate.ToLower())
@@ -1675,9 +1611,13 @@ public class GitHubController : ControllerBase
                         query += " AND createdat >= date_trunc('year', CURRENT_DATE) AND createdat < date_trunc('year', CURRENT_DATE) + INTERVAL '1 year'";
                         break;
                     default:
-                        // Handle unsupported date filter value
+                        query += " AND createdat >= '" + filter.fromDate + "'";
                         break;
                 }
+            }
+            if (!string.IsNullOrEmpty(filter.name))
+            {
+                query += " AND title ILIKE '%" + filter.name + "%'";
             }
 
             if (!string.IsNullOrEmpty(filter.orderBy))
@@ -1699,12 +1639,6 @@ public class GitHubController : ControllerBase
                         // Add more cases for other sorting options
                 }
             }
-            /*
-            if (filter.labels != null && filter.labels.Length > 0)
-            {
-                query += " AND labels @> @labels";
-            }
-             */
 
             int pageSize = 7;
             int offset = (filter.page - 1) * pageSize;
@@ -1715,29 +1649,7 @@ public class GitHubController : ControllerBase
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@repos", repos);
-                if (!string.IsNullOrEmpty(filter.author))
-                {
-                    command.Parameters.AddWithValue("@author", filter.author);
-                }
-                if (!string.IsNullOrEmpty(filter.assignee))
-                {
-                    command.Parameters.AddWithValue("@assignee", filter.assignee);
-                }
                 command.Parameters.AddWithValue("@repositories", filter.repositories);
-                if (filter.labels != null && filter.labels.Length > 0)
-                {
-                    for (int i = 0; i < filter.labels.Length; i++)
-                    {
-                        command.Parameters.AddWithValue("@label" + i, filter.labels[i]);
-                    }
-                }
-
-                /*
-                if (filter.labels != null && filter.labels.Length > 0)
-                {
-                    command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.labels));
-                }
-                */
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
                     while (await reader.ReadAsync())
@@ -1748,12 +1660,11 @@ public class GitHubController : ControllerBase
 
                         foreach (var obj in reviewers)
                         {
-                            var user = await GitHubUserClient.User.Get(obj);
                             combined_revs.Add(new ReviewObjDB
                             {
                                 login = obj,
                                 state = "PENDING",
-                                avatarUrl = user.AvatarUrl
+                                avatarUrl = "https://github.com/" + obj + ".png"
                             });
                         }
 
@@ -1761,12 +1672,11 @@ public class GitHubController : ControllerBase
                         {
                             if (!reviewers.Contains(name.login))
                             {
-                                var user = await GitHubUserClient.User.Get(name.login);
                                 combined_revs.Add(new ReviewObjDB
                                 {
                                     login = name.login,
                                     state = name.state,
-                                    avatarUrl = user.AvatarUrl
+                                    avatarUrl = "https://github.com/" + name.login + ".png"
                                 });
                             }
                         }
@@ -1811,23 +1721,13 @@ public class GitHubController : ControllerBase
     [HttpPost("prs/open/filter")]
     public async Task<ActionResult> FilterOpenPRs([FromBody] PRFilter filter, int page = 1)
     {
-        /*
-        filter.assignee string
-        filter.author string
-        filter.repositories string[]
-        filter.fromDate string
-        string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
-
-        */
-
         List<object> allPRs = [];
 
         var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
         if (filter.repositories == null)
         {
-            // FIXME: ???
-            filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
+            return Ok(allPRs);
         }
 
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
@@ -1839,11 +1739,11 @@ public class GitHubController : ControllerBase
             string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'open' AND repoid = ANY(@repos)";
             if (!string.IsNullOrEmpty(filter.author))
             {
-                query += " AND author = @author";
+                query += " AND author = '" + filter.author + "'";
             }
             if (!string.IsNullOrEmpty(filter.assignee))
             {
-                query += " AND @assignee = ANY(assignees)";
+                query += " AND '" + filter.assignee + "' = ANY(assignees)";
             }
             query += " AND reponame = ANY(@repositories)";
             if (!string.IsNullOrEmpty(filter.priority))
@@ -1856,7 +1756,7 @@ public class GitHubController : ControllerBase
                 query += " AND EXISTS (SELECT 1 FROM json_array_elements(labels) AS label WHERE label->>'name' IN (";
                 for (int i = 0; i < filter.labels.Length; i++)
                 {
-                    query += "@label" + i;
+                    query += "'" + filter.labels[i] + "'";
                     if (i < filter.labels.Length - 1)
                     {
                         query += ", ";
@@ -1864,7 +1764,6 @@ public class GitHubController : ControllerBase
                 }
                 query += "))";
             }
-            // Add date filter condition based on the selected value
             if (!string.IsNullOrEmpty(filter.fromDate))
             {
                 switch (filter.fromDate.ToLower())
@@ -1883,10 +1782,14 @@ public class GitHubController : ControllerBase
                         break;
                     default:
                         // Handle unsupported date filter value
+                        query += " AND createdat >= '" + filter.fromDate + "'";
                         break;
                 }
             }
-
+            if (!string.IsNullOrEmpty(filter.name))
+            {
+                query += " AND title ILIKE '%" + filter.name + "%'";
+            }
             if (!string.IsNullOrEmpty(filter.orderBy))
             {
                 switch (filter.orderBy.ToLower())
@@ -1906,12 +1809,6 @@ public class GitHubController : ControllerBase
                         // Add more cases for other sorting options
                 }
             }
-            /*
-            if (filter.labels != null && filter.labels.Length > 0)
-            {
-                query += " AND labels @> @labels";
-            }
-             */
 
             int pageSize = 7;
             int offset = (filter.page - 1) * pageSize;
@@ -1922,22 +1819,7 @@ public class GitHubController : ControllerBase
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@repos", repos);
-                if (!string.IsNullOrEmpty(filter.author))
-                {
-                    command.Parameters.AddWithValue("@author", filter.author);
-                }
-                if (!string.IsNullOrEmpty(filter.assignee))
-                {
-                    command.Parameters.AddWithValue("@assignee", filter.assignee);
-                }
                 command.Parameters.AddWithValue("@repositories", filter.repositories);
-                if (filter.labels != null && filter.labels.Length > 0)
-                {
-                    for (int i = 0; i < filter.labels.Length; i++)
-                    {
-                        command.Parameters.AddWithValue("@label" + i, filter.labels[i]);
-                    }
-                }
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
@@ -1949,12 +1831,11 @@ public class GitHubController : ControllerBase
 
                         foreach (var obj in reviewers)
                         {
-                            var user = await GitHubUserClient.User.Get(obj);
                             combined_revs.Add(new ReviewObjDB
                             {
                                 login = obj,
                                 state = "PENDING",
-                                avatarUrl = user.AvatarUrl
+                                avatarUrl = "https://github.com/" + obj + ".png"
                             });
                         }
 
@@ -1962,12 +1843,11 @@ public class GitHubController : ControllerBase
                         {
                             if (!reviewers.Contains(name.login))
                             {
-                                var user = await GitHubUserClient.User.Get(name.login);
                                 combined_revs.Add(new ReviewObjDB
                                 {
                                     login = name.login,
                                     state = name.state,
-                                    avatarUrl = user.AvatarUrl
+                                    avatarUrl = "https://github.com/" + name.login + ".png"
                                 });
                             }
                         }
@@ -2011,14 +1891,6 @@ public class GitHubController : ControllerBase
     [HttpPost("prs/merged/filter")]
     public async Task<ActionResult> FilterMergedPRs([FromBody] PRFilter filter, int page = 1)
     {
-        /*
-        filter.assignee string
-        filter.author string
-        filter.repositories string[]
-        filter.fromDate string
-        string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
-
-        */
 
         List<object> allPRs = new List<object>();
 
@@ -2026,7 +1898,7 @@ public class GitHubController : ControllerBase
 
         if (filter.repositories == null)
         {
-            filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
+            return Ok(allPRs);
         }
 
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
@@ -2038,11 +1910,11 @@ public class GitHubController : ControllerBase
             string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'closed' AND merged = true AND repoid = ANY(@repos)";
             if (!string.IsNullOrEmpty(filter.author))
             {
-                query += " AND author = @author";
+                query += " AND author = '" + filter.author + "'";
             }
             if (!string.IsNullOrEmpty(filter.assignee))
             {
-                query += " AND @assignee = ANY(assignees)";
+                query += " AND '" + filter.assignee + "' = ANY(assignees)";
             }
             query += " AND reponame = ANY(@repositories)";
             if (!string.IsNullOrEmpty(filter.priority))
@@ -2054,7 +1926,7 @@ public class GitHubController : ControllerBase
                 query += " AND EXISTS (SELECT 1 FROM json_array_elements(labels) AS label WHERE label->>'name' IN (";
                 for (int i = 0; i < filter.labels.Length; i++)
                 {
-                    query += "@label" + i;
+                    query += "'" + filter.labels[i] + "'";
                     if (i < filter.labels.Length - 1)
                     {
                         query += ", ";
@@ -2062,7 +1934,6 @@ public class GitHubController : ControllerBase
                 }
                 query += "))";
             }
-            // Add date filter condition based on the selected value
             if (!string.IsNullOrEmpty(filter.fromDate))
             {
                 switch (filter.fromDate.ToLower())
@@ -2081,10 +1952,14 @@ public class GitHubController : ControllerBase
                         break;
                     default:
                         // Handle unsupported date filter value
+                        query += " AND createdat >= '" + filter.fromDate + "'";
                         break;
                 }
             }
-
+            if (!string.IsNullOrEmpty(filter.name))
+            {
+                query += " AND title ILIKE '%" + filter.name + "%'";
+            }
             if (!string.IsNullOrEmpty(filter.orderBy))
             {
                 switch (filter.orderBy.ToLower())
@@ -2104,47 +1979,14 @@ public class GitHubController : ControllerBase
                         // Add more cases for other sorting options
                 }
             }
-            /*
-            if (filter.labels != null && filter.labels.Length > 0)
-            {
-                query += " AND labels @> @labels";
-            }
-             */
-            // Calculate OFFSET based on the page number and page size
-            int pageSize = 7;
-            int offset = (filter.page - 1) * pageSize;
-
-            // Append OFFSET and LIMIT to the query
-            query += $" OFFSET {offset} LIMIT {pageSize}";
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@repos", repos);
-                if (!string.IsNullOrEmpty(filter.author))
-                {
-                    command.Parameters.AddWithValue("@author", filter.author);
-                }
-                if (!string.IsNullOrEmpty(filter.assignee))
-                {
-                    command.Parameters.AddWithValue("@assignee", filter.assignee);
-                }
                 command.Parameters.AddWithValue("@repositories", filter.repositories);
-                if (filter.labels != null && filter.labels.Length > 0)
-                {
-                    for (int i = 0; i < filter.labels.Length; i++)
-                    {
-                        command.Parameters.AddWithValue("@label" + i, filter.labels[i]);
-                    }
-                }
 
-                /*
-                if (filter.labels != null && filter.labels.Length > 0)
-                {
-                    command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.labels));
-                }
-                */
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
                     while (await reader.ReadAsync())
@@ -2155,12 +1997,11 @@ public class GitHubController : ControllerBase
 
                         foreach (var obj in reviewers)
                         {
-                            var user = await GitHubUserClient.User.Get(obj);
                             combined_revs.Add(new ReviewObjDB
                             {
                                 login = obj,
                                 state = "PENDING",
-                                avatarUrl = user.AvatarUrl
+                                avatarUrl = "https://github.com/" + obj + ".png"
                             });
                         }
 
@@ -2168,12 +2009,11 @@ public class GitHubController : ControllerBase
                         {
                             if (!reviewers.Contains(name.login))
                             {
-                                var user = await GitHubUserClient.User.Get(name.login);
                                 combined_revs.Add(new ReviewObjDB
                                 {
                                     login = name.login,
                                     state = name.state,
-                                    avatarUrl = user.AvatarUrl
+                                    avatarUrl = "https://github.com/" + name.login + ".png"
                                 });
                             }
                         }
@@ -2218,23 +2058,13 @@ public class GitHubController : ControllerBase
     [HttpPost("prs/closed/filter")]
     public async Task<ActionResult> FilterClosedPRs([FromBody] PRFilter filter, int page = 1)
     {
-        /*
-        filter.assignee string
-        filter.author string
-        filter.repositories string[]
-        filter.fromDate string
-        string priority 4--> Critical , 3 --> High, ... 1-> Low, 0-> Default
-
-        */
-
         List<object> allPRs = new List<object>();
 
         var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
         if (filter.repositories == null)
         {
-            // FIXME: ???
-            filter.repositories = new string[] { "qqqqqqqqqqqqqqqqqqsassss" };
+            return Ok(allPRs);
         }
 
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
@@ -2246,11 +2076,11 @@ public class GitHubController : ControllerBase
             string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'closed' AND merged = false AND repoid = ANY(@repos)";
             if (!string.IsNullOrEmpty(filter.author))
             {
-                query += " AND author = @author";
+                query += " AND author = '" + filter.author + "'";
             }
             if (!string.IsNullOrEmpty(filter.assignee))
             {
-                query += " AND @assignee = ANY(assignees)";
+                query += " AND '" + filter.assignee + "' = ANY(assignees)";
             }
             query += " AND reponame = ANY(@repositories)";
             if (!string.IsNullOrEmpty(filter.priority))
@@ -2262,7 +2092,7 @@ public class GitHubController : ControllerBase
                 query += " AND EXISTS (SELECT 1 FROM json_array_elements(labels) AS label WHERE label->>'name' IN (";
                 for (int i = 0; i < filter.labels.Length; i++)
                 {
-                    query += "@label" + i;
+                    query += "'" + filter.labels[i] + "'";
                     if (i < filter.labels.Length - 1)
                     {
                         query += ", ";
@@ -2289,10 +2119,14 @@ public class GitHubController : ControllerBase
                         break;
                     default:
                         // Handle unsupported date filter value
+                        query += " AND createdat >= '" + filter.fromDate + "'";
                         break;
                 }
             }
-
+            if (!string.IsNullOrEmpty(filter.name))
+            {
+                query += " AND title ILIKE '%" + filter.name + "%'";
+            }
             if (!string.IsNullOrEmpty(filter.orderBy))
             {
                 switch (filter.orderBy.ToLower())
@@ -2312,12 +2146,6 @@ public class GitHubController : ControllerBase
                         // Add more cases for other sorting options
                 }
             }
-            /*
-            if (filter.labels != null && filter.labels.Length > 0)
-            {
-                query += " AND labels @> @labels";
-            }
-             */
 
             int pageSize = 7;
             int offset = (filter.page - 1) * pageSize;
@@ -2329,29 +2157,8 @@ public class GitHubController : ControllerBase
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
                 command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@repos", repos);
-                if (!string.IsNullOrEmpty(filter.author))
-                {
-                    command.Parameters.AddWithValue("@author", filter.author);
-                }
-                if (!string.IsNullOrEmpty(filter.assignee))
-                {
-                    command.Parameters.AddWithValue("@assignee", filter.assignee);
-                }
                 command.Parameters.AddWithValue("@repositories", filter.repositories);
-                if (filter.labels != null && filter.labels.Length > 0)
-                {
-                    for (int i = 0; i < filter.labels.Length; i++)
-                    {
-                        command.Parameters.AddWithValue("@label" + i, filter.labels[i]);
-                    }
-                }
 
-                /*
-                if (filter.labels != null && filter.labels.Length > 0)
-                {
-                    command.Parameters.AddWithValue("@labels", JsonConvert.SerializeObject(filter.labels));
-                }
-                */
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
                 {
                     while (await reader.ReadAsync())
@@ -2362,12 +2169,11 @@ public class GitHubController : ControllerBase
 
                         foreach (var obj in reviewers)
                         {
-                            var user = await GitHubUserClient.User.Get(obj);
                             combined_revs.Add(new ReviewObjDB
                             {
                                 login = obj,
                                 state = "PENDING",
-                                avatarUrl = user.AvatarUrl
+                                avatarUrl = "https://github.com/" + obj + ".png"
                             });
                         }
 
@@ -2375,12 +2181,11 @@ public class GitHubController : ControllerBase
                         {
                             if (!reviewers.Contains(name.login))
                             {
-                                var user = await GitHubUserClient.User.Get(name.login);
                                 combined_revs.Add(new ReviewObjDB
                                 {
                                     login = name.login,
                                     state = name.state,
-                                    avatarUrl = user.AvatarUrl
+                                    avatarUrl = "https://github.com/" + name.login + ".png"
                                 });
                             }
                         }
@@ -3102,7 +2907,7 @@ public class GitHubController : ControllerBase
     [HttpGet("GetFilterLists")]
     public async Task<ActionResult> GetRepositoryAssignees()
     {
-        var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
+        var repos = (await GitHubUserClient.Repository.GetAllForCurrent()).Select(repo => repo.Id).ToList();
 
         HashSet<string> allAssignees = new HashSet<string>();
         HashSet<string> allLabels = new HashSet<string>();
@@ -3116,8 +2921,6 @@ public class GitHubController : ControllerBase
             string query = "SELECT id, name, ownerLogin, created_at FROM repositoryinfo WHERE id = ANY(@repos) ORDER BY name ASC";
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
-                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
-                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@repos", repos);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
@@ -3143,13 +2946,7 @@ public class GitHubController : ControllerBase
 
                     foreach (var label in labels)
                     {
-                        if (!label.Name.StartsWith("Priority:"))
-                        {
-                            lock (allLabels)
-                            {
-                                allLabels.Add(label.Name);
-                            }
-                        }
+                        allLabels.Add(label.Name);
                     }
                 }
                 catch (NotFoundException)
@@ -3163,8 +2960,6 @@ public class GitHubController : ControllerBase
             string query2 = "SELECT DISTINCT author FROM pullrequestinfo WHERE repoid = ANY(@repos) ORDER BY author ASC";
             using (NpgsqlCommand command = new NpgsqlCommand(query2, connection))
             {
-                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
-                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@repos", repos);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
@@ -3179,8 +2974,6 @@ public class GitHubController : ControllerBase
             string query3 = "SELECT DISTINCT unnest(assignees) as assignee FROM pullrequestinfo WHERE repoid = ANY(@repos) ORDER BY assignee ASC";
             using (NpgsqlCommand command = new NpgsqlCommand(query3, connection))
             {
-                ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
-                command.Parameters.AddWithValue("@ownerLogin", UserLogin);
                 command.Parameters.AddWithValue("@repos", repos);
 
                 using (NpgsqlDataReader reader = await command.ExecuteReaderAsync())
@@ -3195,8 +2988,8 @@ public class GitHubController : ControllerBase
             await connection.CloseAsync();
         }
 
+        allLabels.ExceptWith(allLabels.Where(label => label.StartsWith("Priority:")));
         allLabels = allLabels.OrderBy(label => label).ToHashSet();
-
 
         var authorsWithAvatars = allAuthors.Select(author => new { Login = author, AvatarUrl = $"https://github.com/{author}.png" });
         var assigneesWithAvatars = allAssignees.Select(assignee => new { Login = assignee, AvatarUrl = $"https://github.com/{assignee}.png" });
@@ -3271,6 +3064,50 @@ public class GitHubController : ControllerBase
         var response = await GitHubUserGraphQLConnection.Run(query);
 
         return Ok(response);
+    }
+
+    [HttpGet("user/weeklypulls")]
+    public async Task<ActionResult> GetWeeklyPulls()
+    {
+
+        List<(int pullnumber, long repoid)> pulls = [];
+
+        int open = 0, closed = 0, merged = 0;
+
+        var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
+
+        var lastWeek = DateTime.Today.AddDays(-7);
+
+        var query = $@"SELECT
+            COUNT(CASE WHEN state = 'open' THEN 1 END) AS open_count,
+            COUNT(CASE WHEN state = 'closed' AND merged = FALSE THEN 1 END) AS closed_unmerged_count,
+            COUNT(CASE WHEN state = 'closed' AND merged = TRUE THEN 1 END) AS closed_merged_count
+        FROM pullrequestinfo
+        WHERE repoid = ANY(@repos) AND createdat >= '{lastWeek:yyyy-MM-dd}' AND author = '{UserLogin}'";
+
+        using (var connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
+        {
+            await connection.OpenAsync();
+
+            using (var command = new NpgsqlCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@repos", repos);
+
+                using var reader = await command.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
+                {
+                    open = reader.GetInt32(0);
+                    closed = reader.GetInt32(1);
+                    merged = reader.GetInt32(2);
+                }
+            }
+
+            await connection.CloseAsync();
+        }
+
+        List<int> result = [open, closed, merged];
+
+        return Ok(result);
     }
 
     [HttpGet("analytics/{owner}/{repoName}")]
@@ -3397,9 +3234,6 @@ public class GitHubController : ControllerBase
     [HttpGet("analytics/{owner}/{repoName}/review_statuses")]
     public async Task<ActionResult> GetReviewStatuses(string owner, string repoName)
     {
-        //var productInformation = new Octokit.GraphQL.ProductHeaderValue("hubreviewapp", "1.0.0");
-        //var connection = new Octokit.GraphQL.Connection(productInformation, _httpContextAccessor?.HttpContext?.Session.GetString("AccessToken").ToString());
-
         /*var states = new List<PullRequestState> { PullRequestState.Open };
 
         var reviews = new List<Octokit.GraphQL.Model.PullRequestReviewState> {
@@ -3658,7 +3492,7 @@ public class GitHubController : ControllerBase
     // userın type ı organizasyonsa, https://api.github.com/orgs/hubreviewapp/members?role=admin request.
 
     [HttpGet("{repoOwner}/{repoName}/repoadmins/{userLogin}")]
-    public async Task<bool> GetRepoAdmins(string repoOwner, string repoName, string userLogin)
+    public async Task<bool> GetRepoAdmins(string repoOwner, string userLogin)
     {
         List<string> result = new List<string>();
 

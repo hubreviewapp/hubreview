@@ -1,4 +1,4 @@
-import { Flex, Paper, SegmentedControl, Text, Title } from "@mantine/core";
+import { Button, Flex, Paper, Popover, SegmentedControl, Text, Title } from "@mantine/core";
 import { DonutChart } from "@mantine/charts";
 import { AnalyticsProps } from "./ReviewStatusAnalytics.tsx";
 import { useEffect, useState } from "react";
@@ -57,12 +57,22 @@ function PriorityDataAnalytics({ repoName, owner }: AnalyticsProps) {
         ]}
       />
       <Flex justify="center">
-        {repoData.map((itm) => (
-          <Text c="dimmed" key={itm.name} mr="sm">
-            {itm.name}:{itm.value}
-          </Text>
-        ))}
+        <Popover width={200} position="bottom" withArrow shadow="md">
+          <Popover.Target>
+            <Button mt="sm" variant="light">
+              See Labels
+            </Button>
+          </Popover.Target>
+          <Popover.Dropdown>
+            {repoData.map((itm) => (
+              <Text c="dimmed" key={itm.name} mr="sm">
+                {itm.name}:{itm.value}
+              </Text>
+            ))}
+          </Popover.Dropdown>
+        </Popover>
       </Flex>
+
       <DonutChart mt="md" data={repoData} tooltipDataSource="segment" mx="auto" />
     </Paper>
   );

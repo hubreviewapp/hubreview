@@ -50,7 +50,7 @@
 }
 
 .linkIcon {
-  margin-right: var(--mantine-spacing-sm);
+  margin-left: var(--mantine-spacing-sm);
   width: 25px;
   height: 25px;
 }
