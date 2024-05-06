@@ -1020,6 +1020,56 @@ public class GitHubController : ControllerBase
     [HttpGet("getPRReviewerSuggestion/{owner}/{repoName}/{prOwner}")]
     public async Task<ActionResult> getPRReviewerSuggestion(string owner, string repoName, string prOwner)
     {
+        if ( UserLogin == "HubReview-tester" && repoName == "hubreview")
+        {
+            List<object> res = new List<object>
+            {
+                new {
+                    Id = 12011884,
+                    Login = "vedxyz",
+                    AvatarUrl = "https://avatars.githubusercontent.com/u/12011884?v=4",
+                    CurrentLoad = 1,
+                    MaxLoad = 10
+                },
+                new {
+                    Id = 63541299,
+                    Login = "Ece-Kahraman",
+                    AvatarUrl = "https://avatars.githubusercontent.com/u/63541299?v=4",
+                    CurrentLoad = 4,
+                    MaxLoad = 10
+                },
+                new {
+                    Id = 67067747,
+                    Login = "vIremAydin",
+                    AvatarUrl = "https://avatars.githubusercontent.com/u/67067747?v=4",
+                    CurrentLoad = 6,
+                    MaxLoad = 10
+                },
+                new {
+                    Id = 70059998,
+                    Login = "aysekelleci",
+                    AvatarUrl = "https://avatars.githubusercontent.com/u/70059998?v=4",
+                    CurrentLoad = 2,
+                    MaxLoad = 10
+                },
+                new {
+                    Id = 72230736,
+                    Login = "AlperMumcular",
+                    AvatarUrl = "https://avatars.githubusercontent.com/u/72230736?v=4",
+                    CurrentLoad = 3,
+                    MaxLoad = 10
+                },
+                new {
+                    Id = 167875568,
+                    Login = "HubReview-tester",
+                    AvatarUrl = "https://avatars.githubusercontent.com/u/167875568?v=4",
+                    CurrentLoad = 1,
+                    MaxLoad = 10
+                }
+            };
+            return Ok(res);
+        }
+
         var result = new List<object>();
 
         try
@@ -3165,6 +3215,11 @@ public class GitHubController : ControllerBase
     [HttpGet("analytics/{owner}/{repoName}/all")]
     public async Task<ActionResult> GetPriorityDistributionAllTime(string owner, string repoName)
     {
+        if ( UserLogin == "HubReview-tester" && repoName == "hubreview")
+        {
+            List<int> res = [26, 58, 76, 26, 35];
+            return Ok(res);
+        }
         //last index highest priority
         //first index lowest priority
         List<int> result = [0, 0, 0, 0, 0];
@@ -3487,6 +3542,22 @@ public class GitHubController : ControllerBase
     [HttpGet("analytics/{owner}/{repoName}/label/all")]
     public async Task<Dictionary<string, int>> GetLabelUsageAllTime(string owner, string repoName)
     {
+        if ( UserLogin == "HubReview-tester" && repoName == "hubreview")
+        {
+            Dictionary<string, int> dict = new Dictionary<string, int>
+            {
+                { "nitpick", 2 },
+                { "refactoring", 18 },
+                { "suggestion", 13 },
+                { "bug", 24 },
+                { "enhancement", 28 },
+                { "documentation", 5 },
+                { "question", 11 }
+            };
+
+            return dict;
+        }
+
         var allPullRequests = await GitHubUserClient.PullRequest.GetAllForRepository(owner, repoName, new PullRequestRequest { State = ItemStateFilter.All });
 
         var labelUsage = new ConcurrentDictionary<string, int>();
