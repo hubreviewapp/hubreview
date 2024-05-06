@@ -69,7 +69,7 @@ export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSe
   const iconSearch = <IconSearch style={{ width: rem(16), height: rem(16) }} />;
   const iconPlus = <IconCirclePlus style={{ width: rem(16), height: rem(16) }} />;
   const [query, setQuery] = useState("");
-  const [prWorkload, setPrWorkload] = useState<string | number>(1000);
+  const [prWorkload, setPrWorkload] = useState<string | number>(10);
   const [opened, setOpened] = useState<boolean>(false);
   const [userWorkload, setUserWorkload] = useState<Workload>({ currentLoad: 0, maxLoad: 1000 });
   const iconInfoCircle = <IconInfoCircle style={{ width: rem(20), height: rem(20) }} />;

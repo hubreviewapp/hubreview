@@ -1054,14 +1054,14 @@ public class GitHubController : ControllerBase
     public async Task<Workload> GetUserWorkload(string userName)
     {
         long result;
-        int maxWorkload = 1000;
+        int maxWorkload = 10;
 
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await connection.OpenAsync();
 
             string query = @"
-                SELECT COALESCE(SUM(additions + deletions), 0) AS total_workload
+                SELECT COUNT(*) AS total_workload                
                 FROM pullrequestinfo
                 WHERE state = 'open'
                 AND @userName = ANY(reviewers)
