@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:prod": "VITE_GITHUB_APP_NAME=hubreviewapp VITE_GITHUB_APP_CLIENT_ID=Iv1.840e3366ebf61f9d VITE_GITHUB_OAUTH_CLIENT_ID=b49ab4e90664d6240491 npm run build",
     "preview": "vite preview",
     "clean": "rimraf ./dist",
     "prettier:check": "prettier --check ./src",
