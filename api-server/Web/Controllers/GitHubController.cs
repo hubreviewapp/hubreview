@@ -1028,7 +1028,7 @@ public class GitHubController : ControllerBase
                     Id = 12011884,
                     Login = "vedxyz",
                     AvatarUrl = "https://avatars.githubusercontent.com/u/12011884?v=4",
-                    CurrentLoad = 1,
+                    CurrentLoad = 10,
                     MaxLoad = 10
                 },
                 new {
