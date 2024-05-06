@@ -1020,7 +1020,7 @@ public class GitHubController : ControllerBase
     [HttpGet("getPRReviewerSuggestion/{owner}/{repoName}/{prOwner}")]
     public async Task<ActionResult> getPRReviewerSuggestion(string owner, string repoName, string prOwner)
     {
-        if ( UserLogin == "HubReview-tester" && repoName == "hubreview")
+        if (UserLogin == "HubReview-tester" && repoName == "hubreview")
         {
             List<object> res = new List<object>
             {
@@ -2471,28 +2471,32 @@ public class GitHubController : ControllerBase
     [HttpGet("user/monthlysummary")]
     public async Task<ActionResult> GetReviewsForUserInLastMonth()
     {
-        if( UserLogin == "HubReview-tester" )
+        if (UserLogin == "HubReview-tester")
         {
             List<object> array = [
-                new {
+                new
+                {
                     Week = "2024-05-06 - 2024-05-12",
                     Submitted = 1,
                     Received = 2,
                     Speed = "0.00:20"
                 },
-                new {
+                new
+                {
                     Week = "2024-04-29 - 2024-05-05",
                     Submitted = 3,
                     Received = 4,
                     Speed = "0.01:00"
                 },
-                new {
+                new
+                {
                     Week = "2024-04-22 - 2024-04-28",
                     Submitted = 8,
                     Received = 6,
                     Speed = "0.02:00"
                 },
-                new {
+                new
+                {
                     Week = "2024-04-15 - 2024-04-21",
                     Submitted = 5,
                     Received = 5,
@@ -3215,7 +3219,7 @@ public class GitHubController : ControllerBase
     [HttpGet("analytics/{owner}/{repoName}/all")]
     public async Task<ActionResult> GetPriorityDistributionAllTime(string owner, string repoName)
     {
-        if ( UserLogin == "HubReview-tester" && repoName == "hubreview")
+        if (UserLogin == "HubReview-tester" && repoName == "hubreview")
         {
             List<int> res = [26, 58, 76, 26, 35];
             return Ok(res);
@@ -3254,35 +3258,41 @@ public class GitHubController : ControllerBase
     [HttpGet("analytics/{owner}/{repoName}/avg_merged_time")]
     public async Task<ActionResult> GetAvgMergedTime(string owner, string repoName)
     {
-        if ( UserLogin == "HubReview-tester" && repoName == "hubreview")
+        if (UserLogin == "HubReview-tester" && repoName == "hubreview")
         {
             List<object> array = [
-                new {
+                new
+                {
                     MergedDate = "2024-04-29",
                     PrCount = 1,
                     AvgMergeTime = "0.00:56",
                 },
-                new {
+                new
+                {
                     MergedDate = "2024-04-30",
                     PrCount = 3,
                     AvgMergeTime = "0.00:45",
                 },
-                new {
+                new
+                {
                     MergedDate = "2024-05-01",
                     PrCount = 8,
                     AvgMergeTime = "0.00:58",
                 },
-                new {
+                new
+                {
                     MergedDate = "2024-05-02",
                     PrCount = 5,
                     AvgMergeTime = "0.01:02",
                 },
-                new {
+                new
+                {
                     MergedDate = "2024-05-03",
                     PrCount = 5,
                     AvgMergeTime = "0.00:32",
                 },
-                new {
+                new
+                {
                     MergedDate = "2024-05-04",
                     PrCount = 5,
                     AvgMergeTime = "0.00:27",
@@ -3375,10 +3385,11 @@ public class GitHubController : ControllerBase
             { "repoName", repoName },
         });*/
 
-        if ( UserLogin == "HubReview-tester" && repoName == "hubreview")
+        if (UserLogin == "HubReview-tester" && repoName == "hubreview")
         {
             List<object> array = [
-                new {
+                new
+                {
                     FirstDay = "2024-04-22",
                     LastDay = "2024-04-28",
                     ApprovedCount = 14,
@@ -3386,7 +3397,8 @@ public class GitHubController : ControllerBase
                     ChangesReqCount = 5,
                     PendingCount = 0
                 },
-                new {
+                new
+                {
                     FirstDay = "2024-04-29",
                     LastDay = "2024-05-05",
                     ApprovedCount = 15,
@@ -3394,7 +3406,8 @@ public class GitHubController : ControllerBase
                     ChangesReqCount = 3,
                     PendingCount = 1
                 },
-                new {
+                new
+                {
                     FirstDay = "2024-05-06",
                     LastDay = "2024-05-12",
                     ApprovedCount = 1,
@@ -3542,7 +3555,7 @@ public class GitHubController : ControllerBase
     [HttpGet("analytics/{owner}/{repoName}/label/all")]
     public async Task<Dictionary<string, int>> GetLabelUsageAllTime(string owner, string repoName)
     {
-        if ( UserLogin == "HubReview-tester" && repoName == "hubreview")
+        if (UserLogin == "HubReview-tester" && repoName == "hubreview")
         {
             Dictionary<string, int> dict = new Dictionary<string, int>
             {
