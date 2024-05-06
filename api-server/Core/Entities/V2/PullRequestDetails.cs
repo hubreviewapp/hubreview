@@ -253,6 +253,8 @@ public class PullRequestDetails
                         },
                         State = r.State,
                     })
+                    .ToList()
+                    .Where(x => x.Author.Login != pr.Author.Login)
                     .ToList(),
                 CheckSuites = pr.Commits(null, null, 1, null).Nodes
                     .Select(prCommit =>

@@ -1020,6 +1020,56 @@ public class GitHubController : ControllerBase
     [HttpGet("getPRReviewerSuggestion/{owner}/{repoName}/{prOwner}")]
     public async Task<ActionResult> getPRReviewerSuggestion(string owner, string repoName, string prOwner)
     {
+        if (UserLogin == "HubReview-tester" && repoName == "hubreview")
+        {
+            List<object> res = new List<object>
+            {
+                new {
+                    Id = 12011884,
+                    Login = "vedxyz",
+                    AvatarUrl = "https://avatars.githubusercontent.com/u/12011884?v=4",
+                    CurrentLoad = 10,
+                    MaxLoad = 10
+                },
+                new {
+                    Id = 63541299,
+                    Login = "Ece-Kahraman",
+                    AvatarUrl = "https://avatars.githubusercontent.com/u/63541299?v=4",
+                    CurrentLoad = 4,
+                    MaxLoad = 10
+                },
+                new {
+                    Id = 67067747,
+                    Login = "vIremAydin",
+                    AvatarUrl = "https://avatars.githubusercontent.com/u/67067747?v=4",
+                    CurrentLoad = 6,
+                    MaxLoad = 10
+                },
+                new {
+                    Id = 70059998,
+                    Login = "aysekelleci",
+                    AvatarUrl = "https://avatars.githubusercontent.com/u/70059998?v=4",
+                    CurrentLoad = 2,
+                    MaxLoad = 10
+                },
+                new {
+                    Id = 72230736,
+                    Login = "AlperMumcular",
+                    AvatarUrl = "https://avatars.githubusercontent.com/u/72230736?v=4",
+                    CurrentLoad = 3,
+                    MaxLoad = 10
+                },
+                new {
+                    Id = 167875568,
+                    Login = "HubReview-tester",
+                    AvatarUrl = "https://avatars.githubusercontent.com/u/167875568?v=4",
+                    CurrentLoad = 1,
+                    MaxLoad = 10
+                }
+            };
+            return Ok(res);
+        }
+
         var result = new List<object>();
 
         try
@@ -1054,14 +1104,14 @@ public class GitHubController : ControllerBase
     public async Task<Workload> GetUserWorkload(string userName)
     {
         long result;
-        int maxWorkload = 1000;
+        int maxWorkload = 10;
 
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await connection.OpenAsync();
 
             string query = @"
-                SELECT COALESCE(SUM(additions + deletions), 0) AS total_workload
+                SELECT COUNT(*) AS total_workload                
                 FROM pullrequestinfo
                 WHERE state = 'open'
                 AND @userName = ANY(reviewers)
@@ -2421,6 +2471,41 @@ public class GitHubController : ControllerBase
     [HttpGet("user/monthlysummary")]
     public async Task<ActionResult> GetReviewsForUserInLastMonth()
     {
+        if (UserLogin == "HubReview-tester")
+        {
+            List<object> array = [
+                new
+                {
+                    Week = "2024-05-06 - 2024-05-12",
+                    Submitted = 1,
+                    Received = 2,
+                    Speed = "0.00:20"
+                },
+                new
+                {
+                    Week = "2024-04-29 - 2024-05-05",
+                    Submitted = 3,
+                    Received = 4,
+                    Speed = "0.01:00"
+                },
+                new
+                {
+                    Week = "2024-04-22 - 2024-04-28",
+                    Submitted = 8,
+                    Received = 6,
+                    Speed = "0.02:00"
+                },
+                new
+                {
+                    Week = "2024-04-15 - 2024-04-21",
+                    Submitted = 5,
+                    Received = 5,
+                    Speed = "0.01:45"
+                },
+            ];
+            return Ok(array);
+        }
+
         var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
         var weeks = new List<(DateTime start, DateTime end)>();
@@ -3134,6 +3219,11 @@ public class GitHubController : ControllerBase
     [HttpGet("analytics/{owner}/{repoName}/all")]
     public async Task<ActionResult> GetPriorityDistributionAllTime(string owner, string repoName)
     {
+        if (UserLogin == "HubReview-tester" && repoName == "hubreview")
+        {
+            List<int> res = [26, 58, 76, 26, 35];
+            return Ok(res);
+        }
         //last index highest priority
         //first index lowest priority
         List<int> result = [0, 0, 0, 0, 0];
@@ -3168,6 +3258,49 @@ public class GitHubController : ControllerBase
     [HttpGet("analytics/{owner}/{repoName}/avg_merged_time")]
     public async Task<ActionResult> GetAvgMergedTime(string owner, string repoName)
     {
+        if (UserLogin == "HubReview-tester" && repoName == "hubreview")
+        {
+            List<object> array = [
+                new
+                {
+                    MergedDate = "2024-04-29",
+                    PrCount = 1,
+                    AvgMergeTime = "0.00:56",
+                },
+                new
+                {
+                    MergedDate = "2024-04-30",
+                    PrCount = 3,
+                    AvgMergeTime = "0.00:45",
+                },
+                new
+                {
+                    MergedDate = "2024-05-01",
+                    PrCount = 8,
+                    AvgMergeTime = "0.00:58",
+                },
+                new
+                {
+                    MergedDate = "2024-05-02",
+                    PrCount = 5,
+                    AvgMergeTime = "0.01:02",
+                },
+                new
+                {
+                    MergedDate = "2024-05-03",
+                    PrCount = 5,
+                    AvgMergeTime = "0.00:32",
+                },
+                new
+                {
+                    MergedDate = "2024-05-04",
+                    PrCount = 5,
+                    AvgMergeTime = "0.00:27",
+                }
+            ];
+            return Ok(array);
+        }
+
         var states = new List<PullRequestState> { PullRequestState.Merged };
 
         var query = new Query()
@@ -3251,6 +3384,40 @@ public class GitHubController : ControllerBase
             { "owner", owner },
             { "repoName", repoName },
         });*/
+
+        if (UserLogin == "HubReview-tester" && repoName == "hubreview")
+        {
+            List<object> array = [
+                new
+                {
+                    FirstDay = "2024-04-22",
+                    LastDay = "2024-04-28",
+                    ApprovedCount = 14,
+                    CommentedCount = 19,
+                    ChangesReqCount = 5,
+                    PendingCount = 0
+                },
+                new
+                {
+                    FirstDay = "2024-04-29",
+                    LastDay = "2024-05-05",
+                    ApprovedCount = 15,
+                    CommentedCount = 17,
+                    ChangesReqCount = 3,
+                    PendingCount = 1
+                },
+                new
+                {
+                    FirstDay = "2024-05-06",
+                    LastDay = "2024-05-12",
+                    ApprovedCount = 1,
+                    CommentedCount = 2,
+                    ChangesReqCount = 0,
+                    PendingCount = 1
+                }
+            ];
+            return Ok(array);
+        }
 
         var result = new List<ReviewStats>();
         List<RevStatusObj> prReviewsCombined = [];
@@ -3388,6 +3555,22 @@ public class GitHubController : ControllerBase
     [HttpGet("analytics/{owner}/{repoName}/label/all")]
     public async Task<Dictionary<string, int>> GetLabelUsageAllTime(string owner, string repoName)
     {
+        if (UserLogin == "HubReview-tester" && repoName == "hubreview")
+        {
+            Dictionary<string, int> dict = new Dictionary<string, int>
+            {
+                { "nitpick", 2 },
+                { "refactoring", 18 },
+                { "suggestion", 13 },
+                { "bug", 24 },
+                { "enhancement", 28 },
+                { "documentation", 5 },
+                { "question", 11 }
+            };
+
+            return dict;
+        }
+
         var allPullRequests = await GitHubUserClient.PullRequest.GetAllForRepository(owner, repoName, new PullRequestRequest { State = ItemStateFilter.All });
 
         var labelUsage = new ConcurrentDictionary<string, int>();
