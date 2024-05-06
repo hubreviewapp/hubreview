@@ -101,7 +101,7 @@ export interface ReviewComment {
   isResolved: boolean;
 }
 
-export type ReviewVerdict = "comment" | "approve" | "reject";
+export type ReviewVerdict = "comment" | "approve" | "reject" | "dismissed" | "pending";
 export interface ReviewMainComment {
   verdict: ReviewVerdict;
   content: string;
@@ -174,8 +174,13 @@ function ModifiedFilesTab({ pullRequestDetails }: ModifiedFilesTabProps) {
           return "approve";
         case "CHANGES_REQUESTED":
           return "reject";
+        case "DISMISSED":
+          return "dismissed";
+        case "PENDING":
+          return "pending";
         default:
-          throw Error(`Unexpected comment state: "${state}"`);
+          console.warn(`Unexpected comment state: "${state}"`);
+          return "comment";
       }
     };
 
@@ -417,9 +422,16 @@ function ModifiedFilesTab({ pullRequestDetails }: ModifiedFilesTabProps) {
                 })}
               </Text>
             </div>
-            <Badge ml="auto" color={c.verdict === "approve" ? "lime" : c.verdict === "reject" ? "crimson" : "gray"}>
-              {c.verdict === "approve" ? "Approved" : c.verdict === "reject" ? "Requested changes" : "Comment"}
-            </Badge>
+            <Box ml="auto">
+              <Badge color={c.verdict === "approve" ? "lime" : c.verdict === "reject" ? "crimson" : "gray"}>
+                {c.verdict === "approve" ? "Approved" : c.verdict === "reject" ? "Requested changes" : "Comment"}
+              </Badge>
+              {["approve", "reject", "comment"].includes(c.verdict) === false && (
+                <Badge ml="xs" color="indigo">
+                  {c.verdict}
+                </Badge>
+              )}
+            </Box>
           </Group>
 
           <Text>
