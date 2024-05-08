@@ -2477,30 +2477,30 @@ public class GitHubController : ControllerBase
                 new
                 {
                     Week = "2024-05-06 - 2024-05-12",
-                    Submitted = 1,
-                    Received = 2,
-                    Speed = "0.00:20"
+                    Submitted = 5,
+                    Received = 3,
+                    Speed = "00.12:45"
                 },
                 new
                 {
                     Week = "2024-04-29 - 2024-05-05",
-                    Submitted = 3,
-                    Received = 4,
-                    Speed = "0.01:00"
+                    Submitted = 4,
+                    Received = 5,
+                    Speed = "00.16:15"
                 },
                 new
                 {
                     Week = "2024-04-22 - 2024-04-28",
                     Submitted = 8,
                     Received = 6,
-                    Speed = "0.02:00"
+                    Speed = "01.09:37"
                 },
                 new
                 {
                     Week = "2024-04-15 - 2024-04-21",
                     Submitted = 5,
                     Received = 5,
-                    Speed = "0.01:45"
+                    Speed = "01.00:20"
                 },
             ];
             return Ok(array);
@@ -3265,37 +3265,37 @@ public class GitHubController : ControllerBase
                 {
                     MergedDate = "2024-04-29",
                     PrCount = 1,
-                    AvgMergeTime = "0.00:56",
+                    AvgMergeTime = "0.01:56",
                 },
                 new
                 {
                     MergedDate = "2024-04-30",
                     PrCount = 3,
-                    AvgMergeTime = "0.00:45",
+                    AvgMergeTime = "0.01:32",
                 },
                 new
                 {
                     MergedDate = "2024-05-01",
                     PrCount = 8,
-                    AvgMergeTime = "0.00:58",
+                    AvgMergeTime = "0.01:58",
                 },
                 new
                 {
                     MergedDate = "2024-05-02",
                     PrCount = 5,
-                    AvgMergeTime = "0.01:02",
+                    AvgMergeTime = "0.02:02",
                 },
                 new
                 {
                     MergedDate = "2024-05-03",
                     PrCount = 5,
-                    AvgMergeTime = "0.00:32",
+                    AvgMergeTime = "0.01:04",
                 },
                 new
                 {
                     MergedDate = "2024-05-04",
                     PrCount = 5,
-                    AvgMergeTime = "0.00:27",
+                    AvgMergeTime = "0.00:55",
                 }
             ];
             return Ok(array);
