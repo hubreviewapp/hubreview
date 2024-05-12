@@ -1,4 +1,4 @@
-import { Button, Center, Group, Paper, Popover, SegmentedControl, Text, Title } from "@mantine/core";
+import { Button, Center, Paper, Popover, SegmentedControl, Text, Title } from "@mantine/core";
 import { DonutChart } from "@mantine/charts";
 import { AnalyticsProps } from "./ReviewStatusAnalytics.tsx";
 import { useEffect, useState } from "react";
@@ -62,17 +62,16 @@ function RepoLabel({ repoName, owner }: AnalyticsProps) {
           { label: "Active PRs", value: "active" },
         ]}
       />
-      <Group>
-        {repoData.length == 0 ? (
-          <Center>
-            <Paper m="xl" p="md" withBorder>
-              No Data Available.
-            </Paper>
-          </Center>
-        ) : (
-          <></>
-        )}
-      </Group>
+
+      {repoData.length == 0 ? (
+        <Center>
+          <Paper m="xl" p="md" withBorder>
+            No Data Available.
+          </Paper>
+        </Center>
+      ) : (
+        <></>
+      )}
 
       <Popover width={200} position="bottom" withArrow shadow="md">
         <Popover.Target>

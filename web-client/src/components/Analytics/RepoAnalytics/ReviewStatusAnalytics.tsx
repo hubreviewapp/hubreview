@@ -52,12 +52,14 @@ function ReviewStatusAnalytics({ repoName, owner }: AnalyticsProps) {
         data={repoData}
         dataKey="week"
         series={[
-          { name: "commentedCount", color: "violet.6" },
-          { name: "pendingCount", color: "blue.6" },
-          { name: "approvedCount", color: "teal.6" },
-          { name: "changesReqCount", color: "pink.6" },
+          { name: "commentedCount", label: "Commented", color: "violet.6" },
+          { name: "pendingCount", label: "Pending", color: "blue.6" },
+          { name: "approvedCount", label: "Approved", color: "teal.6" },
+          { name: "changesReqCount", label: "Change Requested", color: "pink.6" },
         ]}
         tickLine="y"
+        withLegend
+        legendProps={{ verticalAlign: "bottom" }}
       />
     </Paper>
   );
