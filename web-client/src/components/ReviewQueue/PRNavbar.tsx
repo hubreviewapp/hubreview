@@ -255,7 +255,7 @@ export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSe
           clickOutsideEvents={["mouseup", "touchend"]}
         >
           <Popover.Target>
-            <a href="#" className={classes.link} onClick={() => setOpened(true)}>
+            <a href="#" className={classes.link} onClick={() => setOpened((o) => !o)}>
               <IconSettings className={classes.linkIcon} stroke={1.5} />
               <span> Set your workload </span>
             </a>
@@ -276,12 +276,19 @@ export function PRNavbar({ setActiveSection, activeSection, selectedRepos, setSe
             <br />
 
             <Flex justify="space-between">
-              <Text> Set Workload </Text>
+              <Text> Set Workload (1-50) </Text>
               <Tooltip label="Specify the capacity for the number of pull request reviews">{iconInfoCircle}</Tooltip>
             </Flex>
-            <NumberInput placeholder="Enter PR workload" size="sm" value={prWorkload} onChange={setPrWorkload} />
+            <NumberInput
+              placeholder="Enter PR workload"
+              size="sm"
+              value={prWorkload}
+              onChange={setPrWorkload}
+              min={1}
+              max={50}
+            />
             <Center>
-              <Button size="sm" onClick={editWorkload}>
+              <Button size="sm" onClick={editWorkload} style={{ marginTop: "8px" }}>
                 {" "}
                 Update{" "}
               </Button>
