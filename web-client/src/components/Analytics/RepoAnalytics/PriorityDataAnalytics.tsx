@@ -1,4 +1,4 @@
-import { Button, Flex, Paper, Popover, SegmentedControl, Text, Title } from "@mantine/core";
+import { Button, Center, Flex, Paper, Popover, SegmentedControl, Text, Title } from "@mantine/core";
 import { DonutChart } from "@mantine/charts";
 import { AnalyticsProps } from "./ReviewStatusAnalytics.tsx";
 import { useEffect, useState } from "react";
@@ -56,6 +56,15 @@ function PriorityDataAnalytics({ repoName, owner }: AnalyticsProps) {
           { label: "Active PRs", value: "active" },
         ]}
       />
+      {repoData.length == 0 ? (
+        <Center>
+          <Paper m="xl" p="md" withBorder>
+            No Data Available.
+          </Paper>
+        </Center>
+      ) : (
+        <></>
+      )}
       <Flex justify="center">
         <Popover width={200} position="bottom" withArrow shadow="md">
           <Popover.Target>
