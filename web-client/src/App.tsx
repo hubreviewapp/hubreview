@@ -64,7 +64,7 @@ function AppRoutes() {
             */}
           </>
         ) : (
-          <Route path="*" element={<Navigate to="/signIn" state={{ previousLocation: location.pathname }} />} />
+          <Route path="*" element={<Navigate to="/signIn" replace state={{ previousLocation: location.pathname }} />} />
         )}
       </Routes>
     </>
