@@ -58,7 +58,7 @@ export default function PrDetailTab({ pullRequestDetails }: PRDetailTabProps) {
       }
     };
 
-    fetchDiffFile();
+    //fetchDiffFile();
     setIsLoading(false);
 
 
@@ -67,10 +67,7 @@ export default function PrDetailTab({ pullRequestDetails }: PRDetailTabProps) {
     const fetchData = async () => {
       try {
         const res = await axios.get(
-          `${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/summary?regen=true`,
-          {
-            withCredentials: true,
-          },
+          `https://6tcuyl5ikh.execute-api.us-west-1.amazonaws.com/Testing?prompt="hello world"`,
         );
         if (res) {
           setAiSummary(res.data);
@@ -82,7 +79,7 @@ export default function PrDetailTab({ pullRequestDetails }: PRDetailTabProps) {
     };
 
 
-    //fetchData().then();
+    fetchData().then();
   }
 
   useEffect(() => {
