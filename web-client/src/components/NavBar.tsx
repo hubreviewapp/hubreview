@@ -44,7 +44,7 @@ function NavBar() {
         <Grid.Col span={2.5}>
           <Center h="100%" w="100%">
             <Link to="/" style={{ color: "white", textDecoration: "none" }}>
-              <Image h={28} src={Logo} />
+              <Image h={28} w={200} src={Logo} />
             </Link>
           </Center>
         </Grid.Col>
