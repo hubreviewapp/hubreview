@@ -36,9 +36,7 @@ function SignInPage() {
   return (
     <Box h={600} p={5} m={0} w="100%">
       <Group p="20px">
-        <Box>
-          <Image h={36} src={Logo} alt="HubReview" />
-        </Box>
+        <Image h={36} w={300} src={Logo} alt="HubReview" />
         <Text>The NextGen Code Review Hub</Text>
       </Group>
       <Grid m="30px">

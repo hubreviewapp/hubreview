@@ -75,9 +75,11 @@ function RepoLabel({ repoName, owner }: AnalyticsProps) {
 
       <Popover width={200} position="bottom" withArrow shadow="md">
         <Popover.Target>
-          <Button mt="sm" variant="light">
-            See Labels
-          </Button>
+          <Center>
+            <Button mt="sm" variant="light">
+              See Labels
+            </Button>
+          </Center>
         </Popover.Target>
         <Popover.Dropdown>
           {repoData.map((itm) => (
