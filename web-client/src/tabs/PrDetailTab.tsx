@@ -36,43 +36,22 @@ export default function PrDetailTab({ pullRequestDetails }: PRDetailTabProps) {
 
   function regenerate() {
     setIsLoading(true);
-    let diff = "" ;
-
-    //get diff
-    const fetchDiffFile= async () => {
+    const fetchData = async () => {
       try {
         const res = await axios.get(
-          `${BASE_URL}/api/github/pullrequests/${owner}/${repoName}/${prnumber}/files`,
+          `${BASE_URL}/api/github/pullrequest/${owner}/${repoName}/${prnumber}/summary?regen=true`,
           {
             withCredentials: true,
           },
         );
         if (res) {
-          diff = res.data[0].content;
-          console.log(diff)
-          setAiSummary(diff);
-        }
-      } catch (error) {
-        console.error("Error fetching ai summary:", error);
-      }
-    };
-
-    fetchDiffFile();
-
-    const fetchData = async () => {
-      try {
-        const res = await axios.get(
-          `https://u2zgscvzzf.execute-api.us-west-1.amazonaws.com/Test?prompt=${"generate summary for this code change:" + diff}&pr_id=${prnumber}`,
-        );
-        if (res) {
-          setAiSummary(res.data.body);
+          setAiSummary(res.data);
           setIsLoading(false);
         }
       } catch (error) {
         console.error("Error fetching ai summary:", error);
       }
     };
-
 
     fetchData().then();
   }

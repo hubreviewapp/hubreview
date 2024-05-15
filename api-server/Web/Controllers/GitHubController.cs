@@ -244,7 +244,6 @@ public class GitHubController : ControllerBase
         {
             Login = user.Login,
             AvatarUrl = user.AvatarUrl,
-            EmailAddress = user.Email
         });
     }
 
@@ -1112,7 +1111,7 @@ public class GitHubController : ControllerBase
             await connection.OpenAsync();
 
             string query = @"
-                SELECT COUNT(*) AS total_workload
+                SELECT COUNT(*) AS total_workload                
                 FROM pullrequestinfo
                 WHERE state = 'open'
                 AND @userName = ANY(reviewers)
