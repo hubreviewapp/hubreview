@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { BASE_URL } from "../env.ts";
 import Markdown from "react-markdown";
+import { useUser } from "../providers/context-utilities";
 
 const iconCheckupList = <IconCheckupList style={{ width: rem(27), height: rem(27) }} />;
 
@@ -33,23 +34,23 @@ export default function PrDetailTab({ pullRequestDetails }: PRDetailTabProps) {
   const { owner, repoName, prnumber } = useParams();
   const [aiSummary, setAiSummary] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const { user } = useUser();
+  const [diffFiles, setDiffFiles] = useState("")
 
   function regenerate() {
     setIsLoading(true);
-    let diff = "" ;
+    let diff = "";
 
     //get diff
-    const fetchDiffFile= async () => {
+    const fetchDiffFile = async () => {
       try {
-        const res = await axios.get(
-          `${BASE_URL}/api/github/pullrequests/${owner}/${repoName}/${prnumber}/files`,
-          {
-            withCredentials: true,
-          },
-        );
+        const res = await axios.get(`${BASE_URL}/api/github/pullrequests/${owner}/${repoName}/${prnumber}/files`, {
+          withCredentials: true,
+        });
         if (res) {
           diff = res.data[0].content;
-          console.log(diff)
+          console.log(diff);
+          setDiffFiles(diff)
           setAiSummary(diff);
         }
       } catch (error) {
@@ -61,18 +62,20 @@ export default function PrDetailTab({ pullRequestDetails }: PRDetailTabProps) {
 
     const fetchData = async () => {
       try {
-        const res = await axios.get(
-          `https://u2zgscvzzf.execute-api.us-west-1.amazonaws.com/Test?prompt=${"generate summary for this code change:" + diff}&pr_id=${prnumber}`,
+        const res = await axios.post(
+          `https://47t9lyiee9.execute-api.us-west-1.amazonaws.com/Test?target=irem.aydin@ug.bilkent.edu.tr&pr_id=${prnumber}`, {prompt: "Now, take a deep breath and focus on the task. You need to create a summary for the following pull request. Your summary should only be about the following PR. Here is the PR's diff file:" + diffFiles}
         );
+
         if (res) {
           setAiSummary(res.data.body);
+          console.log("res", res)
+
           setIsLoading(false);
         }
       } catch (error) {
         console.error("Error fetching ai summary:", error);
       }
     };
-
 
     fetchData().then();
   }

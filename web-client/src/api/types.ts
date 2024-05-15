@@ -1,6 +1,7 @@
 export interface APICurrentUser {
   login: string;
   avatarUrl?: string;
+  emailAddress?: string;
 }
 
 export enum APIMergeableState {
