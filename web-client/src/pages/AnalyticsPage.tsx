@@ -89,7 +89,7 @@ function AnalyticsPage() {
               <Flex direction="column" justify="center" align="center">
                 {repoList.repoNames.map((r: Repo) => (
                   <Link to={`${r.name}/${r.ownerLogin}`} key={r.id} style={{ textDecoration: "none" }}>
-                    <Button mb="sm" variant="outline" color="blue">
+                    <Button w={250} mb="sm" variant="outline" color="blue">
                       {r.name}
                     </Button>
                   </Link>

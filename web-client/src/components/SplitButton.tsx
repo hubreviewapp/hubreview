@@ -31,19 +31,16 @@ function SplitButton({ mergeInfo, mergeableState, mergeStateStatus, conflictUrl 
           <Box
             style={{
               position: "relative",
-              backgroundColor: isMergeable && mergeStateStatus === APIMergeStateStatus.CLEAN ? "green" : "gray",
-              width: 140,
+              backgroundColor: isMergeable && mergeStateStatus === APIMergeStateStatus.CLEAN ? "green" : "#C80000",
+              width: 200,
               borderRadius: 10,
               display: "flex",
             }}
           >
             {(!isMergeable || mergeStateStatus !== APIMergeStateStatus.CLEAN) && (
               <>
-                <IconGitMerge
-                  color="darkred"
-                  style={{ width: rem(50), height: rem(50), marginTop: 0, marginLeft: 10 }}
-                />
-                <Text size="sm" fw={700} c="darkred">
+                <IconGitMerge color="white" style={{ width: rem(40), height: rem(40), marginTop: 0, marginLeft: 10 }} />
+                <Text style={{ marginTop: "5px" }} size="md" fw={500} c="white">
                   {" "}
                   Not Able to Merge
                 </Text>
