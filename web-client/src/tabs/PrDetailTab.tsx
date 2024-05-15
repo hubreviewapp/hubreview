@@ -58,8 +58,8 @@ export default function PrDetailTab({ pullRequestDetails }: PRDetailTabProps) {
       }
     };
 
-    //fetchDiffFile();
-    setIsLoading(false);
+    fetchDiffFile();
+
 
 
 
@@ -67,10 +67,10 @@ export default function PrDetailTab({ pullRequestDetails }: PRDetailTabProps) {
     const fetchData = async () => {
       try {
         const res = await axios.get(
-          `https://6tcuyl5ikh.execute-api.us-west-1.amazonaws.com/Testing?prompt="hello world"`,
+          `https://u2zgscvzzf.execute-api.us-west-1.amazonaws.com/Test?prompt=${"generate summary for this code change:" + diff}`,
         );
         if (res) {
-          setAiSummary(res.data);
+          setAiSummary(res.data.body);
           setIsLoading(false);
         }
       } catch (error) {
