@@ -63,6 +63,9 @@ function SignInPage() {
           </Card>
         </Grid.Col>
       </Grid>
+      <Text ta="center" c="dimmed" size="sm">
+        For the best experience, we recommend using either Google Chrome or Mozilla Firefox as your web browser.
+      </Text>
     </Box>
   );
 }
