@@ -1433,7 +1433,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpPost("prs/userprs/filter")]
-    public async Task<ActionResult> FilterUserPRs([FromBody] PRFilter filter)
+    public async Task<ActionResult> FilterUserPRs([FromBody] PRFilter filter, int page = 1)
     {
         List<object> allPRs = [];
 
@@ -1522,6 +1522,9 @@ public class GitHubController : ControllerBase
                 }
             }
 
+            int pageSize = 7;
+            int offset = (filter.page - 1) * pageSize;
+            query += $" OFFSET {offset} LIMIT {pageSize}";
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
@@ -1597,7 +1600,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpPost("prs/waitingauthor/filter")]
-    public async Task<ActionResult> FilterWaitingAuthors([FromBody] PRFilter filter)
+    public async Task<ActionResult> FilterWaitingAuthors([FromBody] PRFilter filter, int page = 1)
     {
         List<object> allPRs = new List<object>();
 
@@ -1687,6 +1690,10 @@ public class GitHubController : ControllerBase
                 }
             }
 
+            int pageSize = 7;
+            int offset = (filter.page - 1) * pageSize;
+            query += $" OFFSET {offset} LIMIT {pageSize}";
+
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
@@ -1762,7 +1769,7 @@ public class GitHubController : ControllerBase
     }
 
     [HttpPost("prs/open/filter")]
-    public async Task<ActionResult> FilterOpenPRs([FromBody] PRFilter filter)
+    public async Task<ActionResult> FilterOpenPRs([FromBody] PRFilter filter, int page = 1)
     {
         List<object> allPRs = [];
 
@@ -1853,6 +1860,9 @@ public class GitHubController : ControllerBase
                 }
             }
 
+            int pageSize = 7;
+            int offset = (filter.page - 1) * pageSize;
+            query += $" OFFSET {offset} LIMIT {pageSize}";
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
@@ -1933,6 +1943,14 @@ public class GitHubController : ControllerBase
     {
 
         List<object> allPRs = new List<object>();
+        // Calculate OFFSET based on the page number and page size
+        int pageSize = 3;
+        int offset = (filter.page - 1) * pageSize;
+        // Batch size for fetching multiple pull requests in one query
+        int batchSize = 10; // Adjust this based on your needs
+
+        // Calculate the number of batches required
+        int totalBatches = (pageSize + batchSize - 1) / batchSize;
 
         var repos = GitHubUserClient.Repository.GetAllForCurrent().Result.Select(repo => repo.Id).ToList();
 
@@ -1944,8 +1962,10 @@ public class GitHubController : ControllerBase
         using (NpgsqlConnection connection = new NpgsqlConnection(_coreConfiguration.DbConnectionString))
         {
             await connection.OpenAsync();
+            for (int batch = 0; batch < totalBatches; batch++)
+            {
 
-            string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
+                string selects = "pullid, title, pullnumber, author, authoravatarurl, createdat, updatedat, reponame, additions, deletions, changedfiles, comments, labels, repoowner, checks, checks_complete, checks_incomplete, checks_success, checks_fail, assignees, reviews, reviewers";
 
             string query = "SELECT " + selects + " FROM pullrequestinfo WHERE state = 'closed' AND merged = true AND repoid = ANY(@repos)";
             if (!string.IsNullOrEmpty(filter.author))
@@ -2020,7 +2040,6 @@ public class GitHubController : ControllerBase
                 }
             }
 
-
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
                 ArgumentNullException.ThrowIfNullOrWhiteSpace(UserLogin);
@@ -2059,45 +2078,45 @@ public class GitHubController : ControllerBase
                             }
                         }
 
-                        var pr = new
-                        {
-                            Id = reader.GetInt64(0),
-                            Title = reader.GetString(1),
-                            PRNumber = reader.GetInt32(2),
-                            Author = reader.GetString(3),
-                            AuthorAvatarURL = reader.GetString(4),
-                            CreatedAt = reader.GetFieldValue<DateOnly>(5),
-                            UpdatedAt = reader.GetFieldValue<DateOnly>(6),
-                            RepoName = reader.GetString(7),
-                            Additions = reader.GetInt32(8),
-                            Deletions = reader.GetInt32(9),
-                            Files = reader.GetInt32(10),
-                            Comments = reader.GetInt32(11),
-                            Labels = JsonConvert.DeserializeObject<object[]>(reader.GetString(12)),
-                            RepoOwner = reader.GetString(13),
-                            Checks = JsonConvert.DeserializeObject<object[]>(reader.GetString(14)),
-                            ChecksComplete = reader.GetInt32(15),
-                            ChecksIncomplete = reader.GetInt32(16),
-                            ChecksSuccess = reader.GetInt32(17),
-                            ChecksFail = reader.GetInt32(18),
-                            Assignees = reader.IsDBNull(19) ? new string[] { } : ((object[])reader.GetValue(19)).Select(obj => obj.ToString()).ToArray(),
-                            Reviews = combined_revs
-                        };
+                            var pr = new
+                            {
+                                Id = reader.GetInt64(0),
+                                Title = reader.GetString(1),
+                                PRNumber = reader.GetInt32(2),
+                                Author = reader.GetString(3),
+                                AuthorAvatarURL = reader.GetString(4),
+                                CreatedAt = reader.GetFieldValue<DateOnly>(5),
+                                UpdatedAt = reader.GetFieldValue<DateOnly>(6),
+                                RepoName = reader.GetString(7),
+                                Additions = reader.GetInt32(8),
+                                Deletions = reader.GetInt32(9),
+                                Files = reader.GetInt32(10),
+                                Comments = reader.GetInt32(11),
+                                Labels = JsonConvert.DeserializeObject<object[]>(reader.GetString(12)),
+                                RepoOwner = reader.GetString(13),
+                                Checks = JsonConvert.DeserializeObject<object[]>(reader.GetString(14)),
+                                ChecksComplete = reader.GetInt32(15),
+                                ChecksIncomplete = reader.GetInt32(16),
+                                ChecksSuccess = reader.GetInt32(17),
+                                ChecksFail = reader.GetInt32(18),
+                                Assignees = reader.IsDBNull(19) ? new string[] { } : ((object[])reader.GetValue(19)).Select(obj => obj.ToString()).ToArray(),
+                                Reviews = combined_revs
+                            };
 
 
-                        allPRs.Add(pr);
+                            allPRs.Add(pr);
+                        }
                     }
                 }
             }
 
             await connection.CloseAsync();
         }
-
         return Ok(allPRs);
     }
 
     [HttpPost("prs/closed/filter")]
-    public async Task<ActionResult> FilterClosedPRs([FromBody] PRFilter filter)
+    public async Task<ActionResult> FilterClosedPRs([FromBody] PRFilter filter, int page = 1)
     {
         List<object> allPRs = new List<object>();
 
@@ -2188,6 +2207,10 @@ public class GitHubController : ControllerBase
                 }
             }
 
+            int pageSize = 7;
+            int offset = (filter.page - 1) * pageSize;
+
+            query += $" OFFSET {offset} LIMIT {pageSize}";
 
             using (NpgsqlCommand command = new NpgsqlCommand(query, connection))
             {
